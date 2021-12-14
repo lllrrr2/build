@@ -1,0 +1,18 @@
+<script type="text/javascript">//<![CDATA[
+	XHR.poll(2, '<%=luci.dispatcher.build_url("admin", "services", "ddnsto", "status")%>', null,
+		function(x, data) {
+			var tb = document.getElementById('ddnsto_status');
+			if (data && tb) {
+				if (data.running) {
+					tb.innerHTML = '<em><b>ddnsto <font color=green><%:RUNNING%></font></b></em>';
+				} else {
+					tb.innerHTML = '<em><b>ddnsto <font color=red><%:NOT RUNNING%></font></b></em>';
+				}
+			}
+		}
+	);//]]>
+</script>
+
+<fieldset class="cbi-section">
+	<p id="ddnsto_status"><em><%:Collecting data...%></em></p>
+</fieldset>

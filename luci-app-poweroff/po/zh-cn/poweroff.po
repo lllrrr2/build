@@ -1,0 +1,20 @@
+msgid "Power Off"
+msgstr "关机"
+
+msgid "Shut down your router"
+msgstr "关闭路由器电源"
+
+msgid "Warning: There are unsaved changes that will get lost on shutting down!"
+msgstr "警告：没保存的设置会关机后丢失！" 
+
+msgid "Waiting for device..."
+msgstr "正在关机中，请稍后 ......."
+
+msgid "Perform PowerOff"
+msgstr "执行关机"
+
+msgid "Device unreachable"
+msgstr "设备无法访问"
+
+msgid "Router is shutting down..."
+msgstr "正在关机..."
