@@ -13,7 +13,7 @@ define Package/$(PKG_NAME)
   SECTION:=luci
   CATEGORY:=LuCI
   SUBMENU:=3. Applications
-  DEPENDS:=@(aarch64||arm||x86_64||mipsel) +parted +blkid +e2fsprogs
+  DEPENDS:=@(aarch64||arm||x86_64||mipsel) +parted +e2fsprogs
   TITLE:=LuCI Support for Software Center
   PKGARCH:=all
 endef

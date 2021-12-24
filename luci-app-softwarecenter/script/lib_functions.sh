@@ -64,34 +64,34 @@ entware_set() {
 	cat >"/etc/init.d/entware" <<-\ENTWARE
 		#!/bin/sh /etc/rc.common
 		START=51
-		
+
 		get_entware_path(){
-		  for mount_point in `lsblk -s | awk '/mnt/{print $7}'`; do
+		  for mount_point in `mount | awk '/mnt/{print $3}'`; do
 		    if [ -e "$mount_point/opt/etc/init.d/rc.unslung" ]; then
 		      echo "$mount_point"
 		      break
 		    fi
 		  done
 		}
-		
+
 		start(){
 		  [ -d opt ] || mkdir -p /opt
 		  entware_path=`get_entware_path`
 		  [ $entware_path ] || entware_path=`uci get softwarecenter.main.disk_mount`
 		  mount -o bind $entware_path/opt /opt
 		}
-		
+
 		stop(){
 		  /opt/etc/init.d/rc.unslung stop
 		  umount -lf /opt
 		  rm -r /opt
 		}
-		
+
 		restart(){
 		  stop
 		  start
 		}
-		
+
 	ENTWARE
 
 	chmod +x /etc/init.d/entware
@@ -140,7 +140,7 @@ install_soft() {
 # 软件包卸载 参数: $1:卸载列表 说明：本函数将负责强制卸载指定的软件包
 remove_soft() {
 	for ipk in $@; do
-		echo_time "正在卸载 $ipk\c"
+		echo_time "正在卸载 ${ipk}\c"
 		opkg remove --force-depends $ipk >/dev/null 2>&1
 		status
 	done
@@ -154,8 +154,8 @@ echo_time() {
 system_check() {
 	[ $1 ] && Partition_disk=${1} || Partition_disk="$(uci get softwarecenter.main.Partition_disk)1"
 
-	if [ -n "$(lsblk -p | grep ${Partition_disk})" ]; then
-		filesystem="$(blkid -s TYPE | grep ${Partition_disk/mnt/dev} | cut -d'"' -f2)"
+	if [ "$(mount | grep ${Partition_disk})" ]; then
+		filesystem="$(mount | grep ${Partition_disk} | awk '{print $5}')"
 		if [ "$filesystem" = "ext4" ]; then
 			echo_time "磁盘 $1 符合安装要求"
 		else
@@ -244,7 +244,7 @@ amule() {
 			mv -f /tmp/AmuleWebUI-Reloaded-master /opt/share/amule/webserver/AmuleWebUI-Reloaded
 			sed -i 's/ajax.googleapis.com/ajax.lug.ustc.edu.cn/g' /opt/share/amule/webserver/AmuleWebUI-Reloaded/*.php
 		else
-			echo_time AmuleWebUI-Reloaded 下载失败，使用原版UI。
+			echo_time "AmuleWebUI-Reloaded 下载失败，使用原版UI。"
 		fi
 		pp=$(echo -n admin | md5sum | awk '{print $1}')
 		sed -i "{
@@ -258,43 +258,40 @@ amule() {
 		s|^IncomingDir=.*|IncomingDir=/opt/downloads|g
 		}" /opt/var/amule/amule.conf
 	else
-		echo_time amule 安装失败，再重试安装！ && exit 1
+		echo_time "amule 安装失败，再重试安装！" && exit 1
 	fi
 	ln -sf /opt/var/amule/amule.conf /opt/etc/config/amule.conf
 	/opt/etc/init.d/S57amuled restart >/dev/null 2>&1
-	[ $? -eq "0" ] && echo_time amule 已经运行 || echo_time amule 没有运行
+	[ $? -eq "0" ] && echo_time "amule 已经运行" || echo_time "amule 没有运行"
 	echo
 }
 
 aria2() {
 	if opkg_install aria2; then
-		Pro="/opt/var/aria2"
-		make_dir $Pro >/dev/null && cd $Pro
-		if
-			for i in aria2.conf clean.sh delete.sh tracker.sh dht.dat core dht6.dat; do
-				if [ ! -s $i ]; then
-					wget -N -t2 -T3 https://raw.githubusercontent.com/P3TERX/aria2.conf/master/$i || \
-					curl -fsSLO https://raw.githubusercontent.com/P3TERX/aria2.conf/master/$i || \
-					wget -N -t2 -T3 https://cdn.jsdelivr.net/gh/P3TERX/aria2.conf/$i || \
-					curl -fsSLO https://cdn.jsdelivr.net/gh/P3TERX/aria2.conf/$i
-					[ -s $i ] && echo_time "$i 下载成功 !" || echo_time "$i 下载失败 !"
-				fi
-			done
-			sed -i -e "s|session.dat|aria2.session|g;s|=/opt/etc|=$Pro|" /opt/etc/init.d/S81aria2
-			sed -i -e 's|dir=.*|dir=/opt/downloads|g;s|/root/.aria2|'"$Pro"'|g;s/^rpc-se.*/rpc-secret=Passw0rd/g' aria2.conf
-			sed -i -e '/^INFO/d;/^ERROR/d;/^FONT/d;/^LIGHT/d;/^WARRING/d' core
-			sed -i -e '/^INFO/d;/^ERROR/d;/^FONT/d;/^LIGHT/d' tracker.sh
+		rm -rf /opt/var/aria2/downloads
+		pro="/opt/var/aria2"
+		make_dir $pro >/dev/null && cd $pro
+		for i in core aria2.conf clean.sh delete.sh tracker.sh dht.dat dht6.dat script.conf; do
+				wget -qN -t2 -T3 raw.githubusercontent.com/P3TERX/aria2.conf/master/$i || \
+				wget -qN -t2 -T3 cdn.jsdelivr.net/gh/P3TERX/aria2.conf/$i || \
+				curl -fsSLO p3terx.github.io/aria2.conf/$i
+				[ -s $i ] && echo_time " $i 下载成功 !" || echo_time " $i 下载失败 !"
+		done
+		[ -s aria2.conf ] && {
+			sed -i "s|/opt/var/aria2/session.dat|$pro/aria2.session|g; s|=/opt/etc|=$pro|" /opt/etc/init.d/S81aria2
+			sed -i "s|^dir=.*|dir=/opt/downloads|; s|/root/\.aria2|$pro|g; s|^rpc-se.*|rpc-secret=Passw0rd|" aria2.conf
+			sed -i '/033/d' core
+			sed -i '/033/d' tracker.sh
 			sed -i 's|\#!/usr.*|\#!/bin/sh|g' *.sh
-		then
 			chmod +x *.sh && sh ./tracker.sh >/dev/null 2>&1
-			ln -sf $Pro/aria2.conf /opt/etc/config/aria2.conf
-			rm /opt/etc/aria2.conf
-		fi
+			ln -sf $pro/aria2.conf /opt/etc/config/aria2.conf
+			# rm /opt/etc/aria2.conf
+		}
 	else
-		echo_time aria2 安装失败，再重试安装！ && exit 1
+		echo_time "aria2 安装失败，再重试安装！" && exit 1
 	fi
 	/opt/etc/init.d/S81aria2 restart >/dev/null 2>&1
-	[ $? -eq "0" ] && echo_time aria2 已经运行 || echo_time aria2 没有运行
+	[ $? -eq "0" ] && echo_time "aria2 已经运行" || echo_time "aria2 没有运行"
 	echo
 }
 
@@ -307,16 +304,14 @@ deluge() {
 		/opt/etc/init.d/S81deluge-web stop >/dev/null 2>&1
 		sed -i 's|root/Down|opt/down|g' /opt/etc/deluge/core.conf
 		sed -i 's|"language.*|"language": "zh_CN",|g' /opt/etc/deluge/web.conf
-		ln -sf /opt/etc/deluge/core.conf /opt/etc/config/deluge.conf
 		sed -i '/deluged -l/a\\tsleep 5\n\t/opt/etc/init.d/S81deluge-web start' /opt/etc/init.d/S80deluged
 		sed -i '/killall deluged/a\\tsleep 5\n\t/opt/etc/init.d/S81deluge-web stop' /opt/etc/init.d/S80deluged
+		ln -sf /opt/etc/deluge/core.conf /opt/etc/config/deluge.conf
 	else
-		echo_time deluge 安装失败，再重试安装！ && exit 1
+		echo_time "deluge 安装失败，再重试安装！" && exit 1
 	fi
 	/opt/etc/init.d/S80deluged restart >/dev/null 2>&1
-	[ $? = "0" ] && echo_time deluge 已经运行 || echo_time deluge 没有运行
-	# /opt/etc/init.d/S81deluge-web restart >/dev/null 2>&1
-	# [ $? = "0" ] && echo_time deluge-web 已经运行 || echo_time deluge-web 没有运行
+	[ $? = "0" ] && echo_time "deluge 已经运行" || echo_time "deluge 没有运行"
 	echo
 }
 
@@ -337,10 +332,10 @@ Downloads\SavePath=/opt/downloads/
 EOF
 		ln -sf /opt/etc/qBittorrent_entware/config/qBittorrent.conf /opt/etc/config/qBittorrent.conf
 	else
-		echo_time qBittorrent 安装失败，再重试安装！ && exit 1
+		echo_time "qBittorrent 安装失败，再重试安装！" && exit 1
 	fi
 	/opt/etc/init.d/S89qbittorrent restart >/dev/null 2>&1
-	[ "$(pidof qbittorrent-nox)" ] && echo_time qbittorrent 已经运行 || echo_time qbittorrent 没有运行
+	[ "$(pidof qbittorrent-nox)" ] && echo_time "qbittorrent 已经运行" || echo_time "qbittorrent 没有运行"
 	echo
 }
 
@@ -354,7 +349,7 @@ rtorrent() {
 			echo "server.port = $web_port" >>$www_cfg
 		fi
 	else
-		echo_time rtorrent 安装失败，再重试安装！ && exit 1
+		echo_time "rtorrent 安装失败，再重试安装！" && exit 1
 	fi
 
 	install_soft ffmpeg mediainfo unrar php7-mod-json git-http >/dev/null
@@ -381,7 +376,7 @@ rtorrent() {
 			;; canChangeStatusBar = yes
 			;; canChangeCategory = yes
 			;; canBeShutdowned = yes
-			
+
 			[default]
 			enabled = user-defined
 			canChangeToolbar = yes
@@ -392,9 +387,9 @@ rtorrent() {
 			canChangeStatusBar = yes
 			canChangeCategory = yes
 			canBeShutdowned = yes
-			
+
 			;; Default
-			
+
 			[autodl-irssi]
 			enabled = user-defined
 			[cookies]
@@ -437,7 +432,7 @@ rtorrent() {
 			enabled = user-defined
 			[unpack]
 			enabled = user-defined
-			
+
 			;; Enabled
 			[_getdir]
 			enabled = yes
@@ -465,7 +460,7 @@ rtorrent() {
 			enabled = yes
 			[tracklabels]
 			enabled = yes
-			
+
 			;; Disabled
 			[check_port]
 			enabled = yes
@@ -568,9 +563,8 @@ EOF
 	ln -sf /opt/etc/rtorrent/rtorrent.conf /opt/etc/config/rtorrent.conf
 	echo -e '[ $1 = start ] && /opt/etc/init.d/S80lighttpd start > /dev/null 2>&1\n[ $1 = stop ] && /opt/etc/init.d/S80lighttpd stop > /dev/null 2>&1\n[ $1 = restart ] && /opt/etc/init.d/S80lighttpd restart > /dev/null 2>&1' >>/opt/etc/init.d/S85rtorrent
 	/opt/etc/init.d/S85rtorrent restart >/dev/null 2>&1
-	[ -n "$(pidof rtorrent)" ] && echo_time rtorrent 已经运行 || echo_time rtorrent 没有运行
-	# /opt/etc/init.d/S80lighttpd restart >/dev/null 2>&1 && \
-	[ -n "$(pidof lighttpd)" ] && echo_time lighttpd 已经运行 || echo_time lighttpd 没有运行
+	[ -n "$(pidof rtorrent)" ] && echo_time "rtorrent 已经运行" || echo_time "rtorrent 没有运行"
+	[ -n "$(pidof lighttpd)" ] && echo_time "lighttpd 已经运行" || echo_time "lighttpd 没有运行"
 	echo
 }
 
@@ -591,10 +585,10 @@ transmission() {
 		sed -i -e 's|/torrent||g;s|root|admin|g;s|.*rpc-password.*|    "rpc-password": "admin",|g' /opt/etc/transmission/settings.json
 		ln -sf /opt/etc/transmission/settings.json /opt/etc/config/transmission.json
 	else
-		echo_time transmission 安装失败，再重试安装！ && exit 1
+		echo_time "transmission 安装失败，再重试安装！" && exit 1
 	fi
 	/opt/etc/init.d/S88transmission start >/dev/null 2>&1
-	[ "$(pidof transmission-daemon)" ] && echo_time transmission 已经运行 || echo_time transmission 没有运行
+	[ "$(pidof transmission-daemon)" ] && echo_time "transmission 已经运行" || echo_time "transmission 没有运行"
 	echo
 }
 
@@ -608,12 +602,9 @@ if [ $1 ]; then
 	S85rtorrent) rtorrent >>$log ;;
 	S89qbittorrent) qbittorrent >>$log ;;
 	S88transmission)
-		if [ $# -eq 1 ]; then
-			transmission >>$log
-		else
-			[ $2 = 1 ] && transmission >>$log
-			[ $2 = 2 ] && transmission 277 >>$log
-		fi
+		shift
+		[ $1 = 1 ] && transmission >>$log || \
+					  transmission 277 >>$log
 		;;
 	system_check) system_check >>$log ;;
 	opkg_install) opkg_install >>$log ;;

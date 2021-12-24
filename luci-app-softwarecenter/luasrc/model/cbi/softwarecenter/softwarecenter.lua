@@ -16,15 +16,14 @@ s:tab("entware", translate("ONMP部署"))
 p = s:taboption("entware", Flag, "entware_enable", translate("启用"), translate("部署ONMP环境"))
 local model = luci.sys.exec("uname -m")
 local cpu_model = s:taboption("entware", Value, "cpu_model", translate("CPU架构"),
-translate("检测到CPU架构是：<font color=\"green\"><b>") .. model .. ("</b></font> (如有错误自定义)"))
--- cpu_model:value(" ", translate("-- 系统检测到CPU架构 --"))
+translate("检测到CPU架构是：<font color=\"green\"><b>") .. model .. ("</b></font> "))
 cpu_model:value(model)
 cpu_model:depends("entware_enable", 1)
 
-local disk_size = luci.sys.exec("/usr/bin/softwarecenter/check_available_size.sh 2")
+local disk_size = luci.sys.exec("/usr/bin/softwarecenter/check_available_size.sh 1")
 p = s:taboption("entware", ListValue,"disk_mount", translate("安装路径"),
 translatef("已挂载磁盘：(如没检测到加入的磁盘先用<code>磁盘分区</code>)<br><b style=\"color:green\">") .. disk_size .. ("</b><b style=\"color:red\">磁盘如不是EXT4文件系统将重新格式化，里面的数据也同时清空！</b>"))
-	for list_disk_mount in luci.util.execi("mount | awk '/ext.*|.*fat|.*ntfs|fuseblk|btrfs|ufsd/{print $3}' | grep -Ev '/opt|/boot|/root|/overlay' | cut -d/ -f1-3 | uniq") do
+	for list_disk_mount in luci.util.execi("/usr/bin/softwarecenter/check_available_size.sh 2") do
 		p:value(list_disk_mount)
 	end
 p:depends("entware_enable", 1)
@@ -54,8 +53,6 @@ p:depends("mysql_enabled", 1)
 deploy_mysql:depends("deploy_entware", 1)
 
 s:tab("Partition", translate("磁盘分区"))
-p = s:taboption("Partition", ListValue, "Partition_disk", translate("可用磁盘"),
-translate("当加入的磁盘没有分区，此工具可简单的分区挂载"))
 local o = nixio.util.consume((nixio.fs.glob("/dev/sd[a-g]")), o)
 local size = {}
 for i, l in ipairs(o) do
@@ -63,8 +60,10 @@ for i, l in ipairs(o) do
 	size[l] = s and math.floor(s / 2048 / 1024)
 	t="%s"%{nixio.fs.readfile("/sys/class/block/%s/device/model"%nixio.fs.basename(l))}
 end
+p = s:taboption("Partition", ListValue, "Partition_disk", translate("可用磁盘"),
+translate("当加入的磁盘没有分区，此工具可简单的分区挂载"))
 for i, a in ipairs(o) do
-	p:value(size[a], a and "%s | %s | 可用:%sGB" % {t, a, size[a]})
+	p:value(a,translate("%s | %s | 可用:%sGB" % {a, t, size[a]}))
 end
 
 p = s:taboption("Partition", Button, "_rescan", translate("扫描磁盘"),
@@ -80,7 +79,7 @@ p = s:taboption("Partition", Button, "_add",translate("磁盘分区"), translate
 p.inputtitle = translate("开始分区")
 p.inputstyle = "apply"
 	function p.write(self, section)
-		luci.sys.call("/usr/bin/softwarecenter/lib_functions.sh system_check &")
+		luci.util.exec("/usr/bin/softwarecenter/lib_functions.sh system_check &")
 		luci.http.redirect(luci.dispatcher.build_url("admin/services/softwarecenter/log"))
 	end
 
@@ -96,7 +95,8 @@ local size = {}
 		size[q] = s and math.floor(s / 2048 / 1024)
 	end
 	for i, d in ipairs(f) do
-		p:value(d, size[d] and "%s ( %s GB )" % {d, size[d]})
+--		p:value(d, size[d] and "%s ( %s GB )" % {d, size[d]})
+		p:value(d, translate("%s ( %s GB )" % {d, size[d]}))
 	end
 p:depends("swap_enabled", 1)
 

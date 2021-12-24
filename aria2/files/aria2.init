@@ -185,7 +185,7 @@ aria2_start() {
 	fi
 	[ -n "$dir" ] && _make_dir "$dir" || { _info "请设置下载目录。"; return 1; }
 
-	config_file="$a/$NAME.conf.$section"
+	config_file="$a/$NAME.$section.conf"
 	config_file_tmp="$a/$NAME.conf.tmp"
 	session_file="$a/$NAME.session"
 

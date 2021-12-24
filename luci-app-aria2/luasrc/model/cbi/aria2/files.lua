@@ -9,7 +9,7 @@ else
 	config_dir = i:get("aria2", "main", "config_dir") or ""
 end
 
-local s = "%s/aria2.conf.main"%config_dir
+local s = "%s/aria2.main.conf"%config_dir
 local h = "%s/aria2.session"%config_dir
 local i = "/etc/config/aria2"%config_dir
 t = SimpleForm("aria2", "%s - %s"%{translate("Aria2"), translate("Files")},
