@@ -594,7 +594,6 @@ transmission() {
 
 if [ $1 ]; then
 	log="/tmp/log/softwarecenter.log"
-	make_dir "/opt/downloads" >/dev/null 2>&1
 	case $1 in
 	S57amuled) amule >>$log ;;
 	S81aria2) aria2 >>$log ;;
