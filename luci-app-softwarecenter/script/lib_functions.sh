@@ -344,13 +344,9 @@ qbittorrent() {
 
 rtorrent() {
 	if opkg_install rtorrent-easy-install; then
-		web_port=1099
 		www_cfg=/opt/etc/lighttpd/conf.d/99-rtorrent-fastcgi-scgi-auth.conf
-		if [ "$(grep -q 'server.port' $www_cfg)" ]; then
-			sed -i "s/^server.port =.*/server.port = $web_port/g" $www_cfg
-		else
-			echo "server.port = $web_port" >>$www_cfg
-		fi
+		sed -i '/server.port/d' $www_cfg && \
+		echo "server.port = 1099" >>$www_cfg
 	else
 		echo_time "rtorrent 安装失败，再重试安装！" && exit 1
 	fi
@@ -491,17 +487,16 @@ rtorrent() {
 			enabled = no
 		ENTWARE
 
-		rut_cfg=/opt/share/www/rutorrent/conf/config.php
-		sed -i 's|/tmp/errors.log|/opt/var/log/rutorrent_errors.log|g' $rut_cfg
-		sed -i 's|$scgi_port = 5|// $scgi_port = 5|g' $rut_cfg
-		sed -i 's|$scgi_host = "1|// $scgi_host = "1|g' $rut_cfg
-		sed -i 's|// $scgi_port = 0|$scgi_port = 0|g' $rut_cfg
-		sed -i 's|// $scgi_host = "unix:///tmp|$scgi_host = "unix:///opt/var|g' $rut_cfg
-		sed -i "s|\"php\" 	=> ''|\"php\" 	=> '/opt/bin/php-cgi'|" $rut_cfg
-		sed -i "s|\"curl\"	=> ''|\"curl\"	=> '/opt/bin/curl'|" $rut_cfg
-		sed -i "s|\"gzip\"	=> ''|\"gzip\"	=> '/opt/bin/gzip'|" $rut_cfg
-		sed -i "s|\"id\"	=> ''|\"id\"	=> '/opt/bin/id'|" $rut_cfg
-		sed -i "s|\"stat\"	=> ''|\"stat\"	=> '/opt/bin/stat'|" $rut_cfg
+		sed -i "{
+		/scgi_port/ {s|5000|0|}
+		/\"id\"/   {s|''|'/opt/bin/id'|}
+		/\"curl\"/ {s|''|'/opt/bin/curl'|}
+		/\"gzip\"/ {s|''|'/opt/bin/gzip'|}
+		/\"stat\"/ {s|''|'/opt/bin/stat'|}
+		/\"php\"/  {s|''|'/opt/bin/php-cgi'|}
+		/scgi_host/ {s|127.0.0.1|unix:///opt/var/rpc.socket|}
+		s|/tmp/errors.log|/opt/var/log/rutorrent_errors.log|
+		}" /opt/share/www/rutorrent/conf/config.php
 		sed -i 's|this.request("?action=getplugins|this.requestWithoutTimeout("?action=getplugins|g' /opt/share/www/rutorrent/js/webui.js
 		sed -i 's|this.request("?action=getuisettings|this.requestWithoutTimeout("?action=getuisettings|g' /opt/share/www/rutorrent/js/webui.js
 	fi
