@@ -12,6 +12,8 @@ m = Map("softwarecenter",translate("应用安装"), translate("所有配置文�
 s = m:section(TypedSection, "softwarecenter")
 s.anonymous = true
 
+p = s:option(Value, "download_dir", translate("文件保存路径"), translate("所有文件下载的统一保存路径"))
+p.datatype=""
 -- p = s:option(Value, "delaytime", translate("延时启动"), translate("开机后延时启动Entware的应用，单位：秒。"))
 -- p.default=60
 

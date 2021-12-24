@@ -2,7 +2,7 @@
 #Write for Almquist Shell version: 1.8
 # Copyright (C) 2019 Jianpeng Xiang (1505020109@mail.hnust.edu.cn)
 # This is free software, licensed under the GNU General Public License v3.
-
+download_dir=$(uci get softwarecenter.main.download_dir)
 status() {
 	local p=$?
 	# echo -en "\\033[40G[ "
@@ -62,36 +62,31 @@ entware_set() {
 	}
 
 	cat >"/etc/init.d/entware" <<-\ENTWARE
-		#!/bin/sh /etc/rc.common
-		START=51
-
-		get_entware_path(){
-		  for mount_point in `mount | awk '/mnt/{print $3}'`; do
-		    if [ -e "$mount_point/opt/etc/init.d/rc.unslung" ]; then
-		      echo "$mount_point"
-		      break
-		    fi
-		  done
-		}
-
-		start(){
-		  [ -d opt ] || mkdir -p /opt
-		  entware_path=`get_entware_path`
-		  [ $entware_path ] || entware_path=`uci get softwarecenter.main.disk_mount`
-		  mount -o bind $entware_path/opt /opt
-		}
-
-		stop(){
-		  /opt/etc/init.d/rc.unslung stop
-		  umount -lf /opt
-		  rm -r /opt
-		}
-
-		restart(){
-		  stop
-		  start
-		}
-
+	#!/bin/sh /etc/rc.common
+	START=51
+	get_entware_path(){
+	  for mount_point in `mount | awk '/mnt/{print $3}'`; do
+		if [ -e "$mount_point/opt/etc/init.d/rc.unslung" ]; then
+		  echo "$mount_point"
+		  break
+		fi
+	  done
+	}
+	start(){
+	  [ -d opt ] || mkdir -p /opt
+	  entware_path=`get_entware_path`
+	  [ $entware_path ] || entware_path=`uci get softwarecenter.main.disk_mount`
+	  mount -o bind $entware_path/opt /opt
+	}
+	stop(){
+	  /opt/etc/init.d/rc.unslung stop
+	  umount -lf /opt
+	  rm -r /opt
+	}
+	restart(){
+	  stop
+	  start
+	}
 	ENTWARE
 
 	chmod +x /etc/init.d/entware
@@ -120,7 +115,8 @@ entware_unset() {
 
 # 软件包安装 参数: $@:安装列表 说明：本函数将负责安装指定列表的软件到外置存储区，请保证区域指向正常且空间充足
 install_soft() {
-	source /etc/profile >/dev/null 2>&1 && opkg update >/dev/null 2>&1
+	source /etc/profile >/dev/null 2>&1
+	[ -s /opt/tmp/opkg.lock ] || opkg update >/dev/null 2>&1
 	for ipk in $@; do
 		if [ "$(which $ipk)" ]; then
 			echo_time "$ipk	已经安装"
@@ -224,7 +220,7 @@ check_available_size() {
 
 opkg_install() {
 	source /etc/profile >/dev/null 2>&1 && echo_time "更新软件源中" && opkg update >/dev/null 2>&1
-	make_dir /opt/etc/config /opt/downloads >/dev/null 2>&1
+	make_dir /opt/etc/config $download_dir >/dev/null 2>&1
 	for i in $@; do
 		if [ "$(opkg list | awk '{print $1}' | grep -w $i)" ]; then
 			echo_time "请耐心等待 $i 安装中"
@@ -255,7 +251,7 @@ amule() {
 		s/^UPnPECE.*/UPnPECEnabled=1/g
 		s/^Template=.*/Template=AmuleWebUI-Reloaded/g
 		s/^AcceptExternal.*/AcceptExternalConnections=1/g
-		s|^IncomingDir=.*|IncomingDir=/opt/downloads|g
+		s|^IncomingDir=.*|IncomingDir=$download_dir|g
 		}" /opt/var/amule/amule.conf
 	else
 		echo_time "amule 安装失败，再重试安装！" && exit 1
@@ -279,7 +275,7 @@ aria2() {
 		done
 		[ -s aria2.conf ] && {
 			sed -i "s|/opt/var/aria2/session.dat|$pro/aria2.session|g; s|=/opt/etc|=$pro|" /opt/etc/init.d/S81aria2
-			sed -i "s|^dir=.*|dir=/opt/downloads|; s|/root/\.aria2|$pro|g; s|^rpc-se.*|rpc-secret=Passw0rd|" aria2.conf
+			sed -i "s|^dir=.*|dir=$download_dir|; s|/root/\.aria2|$pro|g; s|^rpc-se.*|rpc-secret=Passw0rd|" aria2.conf
 			sed -i '/033/d' core
 			sed -i '/033/d' tracker.sh
 			sed -i 's|\#!/usr.*|\#!/bin/sh|g' *.sh
@@ -309,7 +305,7 @@ deluge() {
 		sleep 10
 		/opt/etc/init.d/S80deluged stop >/dev/null 2>&1
 		/opt/etc/init.d/S81deluge-web stop >/dev/null 2>&1
-		sed -i 's|root/Down|opt/down|g' /opt/etc/deluge/core.conf
+		sed -i "s|/root/Downloads|$download_dir|g" /opt/etc/deluge/core.conf
 		sed -i 's|"language.*|"language": "zh_CN",|g' /opt/etc/deluge/web.conf
 		sed -i '/deluged -l/a\\tsleep 5\n\t/opt/etc/init.d/S81deluge-web start' /opt/etc/init.d/S80deluged
 		sed -i '/killall deluged/a\\tsleep 5\n\t/opt/etc/init.d/S81deluge-web stop' /opt/etc/init.d/S80deluged
@@ -326,17 +322,17 @@ qbittorrent() {
 	if opkg_install qbittorrent; then
 		/opt/etc/init.d/S89qbittorrent start >/dev/null 2>&1 && sleep 5
 		QBT_INI_FILE="/opt/etc/qBittorrent_entware/config/qBittorrent.conf"
-		cat >"$QBT_INI_FILE" <<EOF
-[Preferences]
-Connection\PortRangeMin=44667
-Queueing\QueueingEnabled=false
-WebUI\CSRFProtection=false
-WebUI\Port=9080
-WebUI\Username=admin
-General\Locale=zh
-Downloads\UseIncompleteExtension=true
-Downloads\SavePath=/opt/downloads/
-EOF
+		cat >"$QBT_INI_FILE" <<-EOF
+		[Preferences]
+		Connection\PortRangeMin=44667
+		Queueing\QueueingEnabled=false
+		WebUI\CSRFProtection=false
+		WebUI\Port=9080
+		WebUI\Username=admin
+		General\Locale=zh
+		Downloads\UseIncompleteExtension=true
+		Downloads\SavePath=$download_dir/
+		EOF
 		ln -sf /opt/etc/qBittorrent_entware/config/qBittorrent.conf /opt/etc/config/qBittorrent.conf
 	else
 		echo_time "qBittorrent 安装失败，再重试安装！" && exit 1
@@ -511,76 +507,88 @@ rtorrent() {
 	fi
 
 	if [ -z "$(grep execute /opt/etc/rtorrent/rtorrent.conf)" ]; then
-		cat >/opt/etc/rtorrent/rtorrent.conf <<EOF
-# 高级设置：任务信息文件路径。用来生成任务信息文件，记录种子下载的进度等信息
-session.path.set = /opt/etc/rtorrent/session
-# 监听种子文件夹
-schedule2 = watch_directory,5,5,load_start=/opt/etc/rtorrent/watchdir/*.torrent
-# 监听目录中的新的种子文件，并停止那些已经被删除部分的种子
-schedule2 = untied_directory,5,5,stop_untied=
-# 当磁盘空间不足时停止下载
-schedule2 = low_diskspace,5,60,close_low_diskspace=100M
-# 高级设置：绑定 IP
-network.bind_address.set = 0.0.0.0
-# 选项将指定选用哪一个端口去侦听。建议使用高于 49152 的端口。虽然 rTorrent 允许使用多个的端口，还是建议使用单个的端口。
-network.port_range.set = 51411-51411
-# 是否使用随机端口
-# yes 是 / no 否
-# port_random = no
-network.port_random.set = no
-# 下载完成或 rTorrent 重新启动时对文件进行 Hash 校验。这将确保你下载/做种的文件没有错误( auto 自动/ yes 启动 / no 禁用)
-pieces.hash.on_completion.set = yes
-# 高级设置：支持 UDP 伺服器
-trackers.use_udp.set = yes
-# 如下例中的值将允许将接入连接加密，开始时以非加密方式作为连接的输出方式，
-# 如行不通则以加密方式进行重试，在加密握手后，优先选择将纯文本以 RC4 加密
-protocol.encryption.set = allow_incoming,enable_retry,prefer_plaintext
-# 是否启用 DHT 支持。
-# 如果你使用了 public trackers，你可能希望使能 DHT 以获得更多的连接。
-# 如果你仅仅使用了私有的连接 privite trackers ，请不要启用 DHT，因为这将降低你的速度，并可能造成一些泄密风险，如泄露 passkey。一些 PT 站点甚至会因为检测到你使用 DHT 而向你发出警告。
-# disable 完全禁止/ off 不启用/ auto 按需启用(即PT种子不启用，BT种子启用)/ on 启用
-dht.mode.set = auto
-# 启用 DHT 监听的 UDP 端口
-dht.port.set = 51412
-# 对未标记为私有的种子启用/禁用用户交换。默认情况下禁用。
-# yes 启用 / no 禁用
-protocol.pex.set = yes
-# 本地挂载点路径
-network.scgi.open_local = /opt/var/rpc.socket
-# 编码类型(UTF-8 支持中文显示，避免乱码)
-encoding.add = utf8
-# 每个种子的最大同时上传连接数
-throttle.max_uploads.set = 8
-# 全局上传通道数
-throttle.max_uploads.global.set = 32
-# 全局下载通道数
-throttle.max_downloads.global.set = 64
-# 全局的下载速度限制，“0”表示无限制
-# 默认单位为 B/s (设置为 4(B) 表示 4B/s；4K表示 4KB/s；4M 表示4MB/s；4G 表示 4GB/s)
-throttle.global_down.max_rate.set_kb = 0
-# 全局的上传速度限制，“0”表示无限制
-# 默认单位为 B/s (设置为 4(B) 表示 4B/s；4K表示 4KB/s；4M 表示4MB/s；4G 表示 4GB/s)
-throttle.global_up.max_rate.set_kb = 0
-# 默认下载路径(不支持绝对路径，如~/torrents)
-directory.default.set = /opt/downloads
-# 免登陆 Web 服务初始化 rutorrent 的插件
-execute = {sh,-c,/opt/bin/php-cgi /opt/share/www/rutorrent/php/initplugins.php $user &}
-EOF
+		cat >/opt/etc/rtorrent/rtorrent.conf <<-EOF
+		# 高级设置：任务信息文件路径。用来生成任务信息文件，记录种子下载的进度等信息
+		session.path.set = /opt/etc/rtorrent/session
+		# 监听种子文件夹
+		schedule2 = watch_directory,5,5,load_start=/opt/etc/rtorrent/watchdir/*.torrent
+		# 监听目录中的新的种子文件，并停止那些已经被删除部分的种子
+		schedule2 = untied_directory,5,5,stop_untied=
+		# 当磁盘空间不足时停止下载
+		schedule2 = low_diskspace,5,60,close_low_diskspace=100M
+		# 高级设置：绑定 IP
+		network.bind_address.set = 0.0.0.0
+		# 选项将指定选用哪一个端口去侦听。建议使用高于 49152 的端口。虽然 rTorrent 允许使用多个的端口，还是建议使用单个的端口。
+		network.port_range.set = 51411-51411
+		# 是否使用随机端口
+		# yes 是 / no 否
+		# port_random = no
+		network.port_random.set = no
+		# 下载完成或 rTorrent 重新启动时对文件进行 Hash 校验。这将确保你下载/做种的文件没有错误( auto 自动/ yes 启动 / no 禁用)
+		pieces.hash.on_completion.set = yes
+		# 高级设置：支持 UDP 伺服器
+		trackers.use_udp.set = yes
+		# 如下例中的值将允许将接入连接加密，开始时以非加密方式作为连接的输出方式，
+		# 如行不通则以加密方式进行重试，在加密握手后，优先选择将纯文本以 RC4 加密
+		protocol.encryption.set = allow_incoming,enable_retry,prefer_plaintext
+		# 是否启用 DHT 支持。
+		# 如果你使用了 public trackers，你可能希望使能 DHT 以获得更多的连接。
+		# 如果你仅仅使用了私有的连接 privite trackers ，请不要启用 DHT，因为这将降低你的速度，并可能造成一些泄密风险，如泄露 passkey。一些 PT 站点甚至会因为检测到你使用 DHT 而向你发出警告。
+		# disable 完全禁止/ off 不启用/ auto 按需启用(即PT种子不启用，BT种子启用)/ on 启用
+		dht.mode.set = auto
+		# 启用 DHT 监听的 UDP 端口
+		dht.port.set = 51412
+		# 对未标记为私有的种子启用/禁用用户交换。默认情况下禁用。
+		# yes 启用 / no 禁用
+		protocol.pex.set = yes
+		# 本地挂载点路径
+		network.scgi.open_local = /opt/var/rpc.socket
+		# 编码类型(UTF-8 支持中文显示，避免乱码)
+		encoding.add = utf8
+		# 每个种子的最大同时上传连接数
+		throttle.max_uploads.set = 8
+		# 全局上传通道数
+		throttle.max_uploads.global.set = 32
+		# 全局下载通道数
+		throttle.max_downloads.global.set = 64
+		# 全局的下载速度限制，“0”表示无限制
+		# 默认单位为 B/s (设置为 4(B) 表示 4B/s；4K表示 4KB/s；4M 表示4MB/s；4G 表示 4GB/s)
+		throttle.global_down.max_rate.set_kb = 0
+		# 全局的上传速度限制，“0”表示无限制
+		# 默认单位为 B/s (设置为 4(B) 表示 4B/s；4K表示 4KB/s；4M 表示4MB/s；4G 表示 4GB/s)
+		throttle.global_up.max_rate.set_kb = 0
+		# 默认下载路径(不支持绝对路径，如~/torrents)
+		directory.default.set = $download_dir
+		# 免登陆 Web 服务初始化 rutorrent 的插件
+		execute = {sh,-c,/opt/bin/php-cgi /opt/share/www/rutorrent/php/initplugins.php $(uci get softwarecenter.main.user) &}
+		EOF
 	fi
 	ln -sf /opt/etc/rtorrent/rtorrent.conf /opt/etc/config/rtorrent.conf
-	echo -e '[ $1 = start ] && /opt/etc/init.d/S80lighttpd start > /dev/null 2>&1\n[ $1 = stop ] && /opt/etc/init.d/S80lighttpd stop > /dev/null 2>&1\n[ $1 = restart ] && /opt/etc/init.d/S80lighttpd restart > /dev/null 2>&1' >>/opt/etc/init.d/S85rtorrent
-	/opt/etc/init.d/S85rtorrent restart >/dev/null 2>&1
-	[ -n "$(pidof rtorrent)" ] && echo_time "rtorrent 已经运行" || echo_time "rtorrent 没有运行"
+	cat >> /opt/etc/init.d/S80lighttpd <<-\EOF
+	case $1 in
+	start)
+	/opt/etc/init.d/S85rtorrent start > /dev/null 2>&1
+	;;
+	stop)
+	/opt/etc/init.d/S85rtorrent stop > /dev/null 2>&1
+	;;
+	restart)
+	/opt/etc/init.d/S85rtorrent restart > /dev/null 2>&1
+	;;
+	esac
+	EOF
+	/opt/etc/init.d/S80lighttpd restart >/dev/null 2>&1
 	[ -n "$(pidof lighttpd)" ] && echo_time "lighttpd 已经运行" || echo_time "lighttpd 没有运行"
+	[ -n "$(pidof rtorrent)" ] && echo_time "rtorrent 已经运行" || echo_time "rtorrent 没有运行"
 	echo
 }
 
 transmission() {
 	[ $1 ] && r="transmission-cfp-cli transmission-cfp-daemon" || r="transmission-cli transmission-daemon"
 	if opkg_install $r; then
-		if wget -O /tmp/tr.zip https://github.com/ronggang/transmission-web-control/archive/master.zip; then
+		if wget -qO /tmp/tr.zip github.com/ronggang/transmission-web-control/archive/master.zip; then
 			make_dir "/opt/share/transmission" >/dev/null 2>&1
-			unzip -d /tmp /tmp/tr.zip >/dev/null 2>&1
+			unzip -oq /tmp/tr.zip -d /tmp
 			mv /tmp/transmission-web-control-master/src /opt/share/transmission/web
 			sed -i '/original/d' /opt/share/transmission/web/index.html
 			sed -i '/original/d' /opt/share/transmission/web/index.mobile.html
@@ -589,7 +597,7 @@ transmission() {
 			echo_time "使用 Entware transmission-web-control"
 		fi
 		[ -e /opt/etc/init.d/S88transmission-cfp ] && mv /opt/etc/init.d/S88transmission-cfp /opt/etc/init.d/S88transmission
-		sed -i -e 's|/torrent||g;s|root|admin|g;s|.*rpc-password.*|    "rpc-password": "admin",|g' /opt/etc/transmission/settings.json
+		sed -i "s|/opt/downloads/torrent|$download_dir|g; s|root|admin|g; s|rpc-password.*|    rpc-password\": \"admin\",|g" /opt/etc/transmission/settings.json
 		ln -sf /opt/etc/transmission/settings.json /opt/etc/config/transmission.json
 	else
 		echo_time "transmission 安装失败，再重试安装！" && exit 1
@@ -601,7 +609,6 @@ transmission() {
 
 if [ $1 ]; then
 	log="/tmp/log/softwarecenter.log"
-	make_dir "/opt/downloads" >/dev/null 2>&1
 	case $1 in
 	S57amuled) amule >>$log ;;
 	S81aria2) aria2 >>$log ;;
