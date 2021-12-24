@@ -287,6 +287,13 @@ aria2() {
 			ln -sf $pro/aria2.conf /opt/etc/config/aria2.conf
 			# rm /opt/etc/aria2.conf
 		}
+		 if wget -qO /tmp/ariang.zip github.com/mayswind/AriaNg/releases/download/1.2.3/AriaNg-1.2.3.zip; then
+			unzip -oq /tmp/ariang.zip -d /opt/share/www/ariang/
+		 fi
+		 if wget -qO /tmp/webui-aria2.zip github.com/ziahamza/webui-aria2/archive/refs/heads/master.zip; then
+			 unzip -oq /tmp/webui-aria2.zip -d /opt/share/www/
+			 mv /opt/share/www/webui-aria2-master /opt/share/www/webui-aria2
+		 fi
 	else
 		echo_time "aria2 安装失败，再重试安装！" && exit 1
 	fi
@@ -594,6 +601,7 @@ transmission() {
 
 if [ $1 ]; then
 	log="/tmp/log/softwarecenter.log"
+	make_dir "/opt/downloads" >/dev/null 2>&1
 	case $1 in
 	S57amuled) amule >>$log ;;
 	S81aria2) aria2 >>$log ;;

@@ -95,8 +95,7 @@ local size = {}
 		size[q] = s and math.floor(s / 2048 / 1024)
 	end
 	for i, d in ipairs(f) do
---		p:value(d, size[d] and "%s ( %s GB )" % {d, size[d]})
-		p:value(d, translate("%s ( %s GB )" % {d, size[d]}))
+		p:value(d, size[d] and "%s ( %s GB )" % {d, size[d]})
 	end
 p:depends("swap_enabled", 1)
 
