@@ -116,7 +116,6 @@ handle_website() {
 start() {
 
 	CDG() {
-
 		config_load softwarecenter
 		get_config="entware_enable deploy_entware deploy_nginx deploy_mysql nginx_enabled mysql_enabled swap_enabled Partition_disk disk_mount cpu_model swap_size swap_path user pass delaytime"
 
@@ -130,12 +129,14 @@ start() {
 		source /etc/profile >/dev/null 2>&1
 		if [ $entware_enable ]; then
 			if [ ! -e /etc/init.d/entware ]; then
-				echo_time "开始部署entware环境\n" && entware_set $disk_mount $cpu_model
+				echo_time "开始部署entware环境\n"
+				entware_set $disk_mount $cpu_model
 				source /etc/profile >/dev/null 2>&1
 			fi
 		else
 			if [ -x /etc/init.d/entware ]; then
-				echo_time "entware环境已删除\n" && entware_unset
+				echo_time "entware环境已删除\n"
+				entware_unset
 			fi
 			return
 		fi
@@ -169,9 +170,9 @@ start() {
 		[ $swap_enabled ] && config_swap_init $swap_size $swap_path || config_swap_del $swap_path
 
 		start_up() {
-			if ! pidof $1 2>/dev/null; then
+			if ! pidof $1 >/dev/null 2>&1; then
 				[ $delaytime ] && sleep $delaytime
-				if $(ls /opt/etc/init.d/*$p) start 2>/dev/null; then
+				if $(ls /opt/etc/init.d/*$p) start >/dev/null 2>&1; then
 					echo_time "$p 启动成功"
 				else
 					echo_time "$p 启动失败"
@@ -182,7 +183,7 @@ start() {
 		}
 
 		for p in $(awk '/_boot/{print $2}' /etc/config/softwarecenter | cut -d_ -f1); do
-			if [ "$(uci get softwarecenter.main.${p}_boot 2>/dev/null)" = 1 ]; then
+			if [ "$(uci get softwarecenter.main.${p}_boot)" = 1 ]; then
 				[ $p = aria2 ] && start_up "aria2c"
 				[ $p = amuled ] && start_up "amuled"
 				[ $p = deluged ] && start_up "deluged"
@@ -191,9 +192,7 @@ start() {
 				[ $p = transmission ] && start_up "transmission-daemon"
 			fi
 		done
-
 	}
-
 	CDG >>/tmp/log/softwarecenter.log
 }
 
