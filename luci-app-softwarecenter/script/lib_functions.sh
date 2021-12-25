@@ -219,7 +219,13 @@ check_available_size() {
 }
 
 opkg_install() {
-	source /etc/profile >/dev/null 2>&1 && echo_time "更新软件源中" && opkg update >/dev/null 2>&1
+	source /etc/profile >/dev/null 2>&1
+	echo_time "更新软件源中"
+	opkg update >/dev/null 2>&1
+	[ $? = 0 ] || \
+	rm /opt/tmp/opkg.lock \
+	opkg update >/dev/null 2>&1
+	
 	make_dir /opt/etc/config $download_dir >/dev/null 2>&1
 	for i in $@; do
 		if [ "$(opkg list | awk '{print $1}' | grep -w $i)" ]; then
@@ -231,7 +237,7 @@ opkg_install() {
 	done
 }
 
-amule() {
+install_amule() {
 	if opkg_install amule; then
 		/opt/etc/init.d/S57amuled start >/dev/null 2>&1 && sleep 5
 		/opt/etc/init.d/S57amuled stop >/dev/null 2>&1
@@ -262,7 +268,7 @@ amule() {
 	echo
 }
 
-aria2() {
+install_aria2() {
 	if opkg_install aria2; then
 		rm -rf /opt/var/aria2/downloads
 		pro="/opt/var/aria2"
@@ -298,7 +304,7 @@ aria2() {
 	echo
 }
 
-deluge() {
+install_deluge() {
 	if opkg_install deluge-ui-web; then
 		/opt/etc/init.d/S80deluged start >/dev/null 2>&1
 		/opt/etc/init.d/S81deluge-web start >/dev/null 2>&1
@@ -318,7 +324,7 @@ deluge() {
 	echo
 }
 
-qbittorrent() {
+install_qbittorrent() {
 	if opkg_install qbittorrent; then
 		/opt/etc/init.d/S89qbittorrent start >/dev/null 2>&1 && sleep 5
 		QBT_INI_FILE="/opt/etc/qBittorrent_entware/config/qBittorrent.conf"
@@ -342,7 +348,7 @@ qbittorrent() {
 	echo
 }
 
-rtorrent() {
+install_rtorrent() {
 	if opkg_install rtorrent-easy-install; then
 		www_cfg=/opt/etc/lighttpd/conf.d/99-rtorrent-fastcgi-scgi-auth.conf
 		sed -i '/server.port/d' $www_cfg && \
@@ -578,7 +584,7 @@ rtorrent() {
 	echo
 }
 
-transmission() {
+install_transmission() {
 	[ $1 ] && r="transmission-cfp-cli transmission-cfp-daemon" || r="transmission-cli transmission-daemon"
 	if opkg_install $r; then
 		if wget -qO /tmp/tr.zip github.com/ronggang/transmission-web-control/archive/master.zip; then
@@ -605,15 +611,15 @@ transmission() {
 if [ $1 ]; then
 	log="/tmp/log/softwarecenter.log"
 	case $1 in
-	S57amuled) amule >>$log ;;
-	S81aria2) aria2 >>$log ;;
-	S80deluged) deluge >>$log ;;
-	S85rtorrent) rtorrent >>$log ;;
-	S89qbittorrent) qbittorrent >>$log ;;
-	S88transmission)
+	amuled) install_amule >>$log ;;
+	aria2) install_aria2 >>$log ;;
+	deluged) install_deluge >>$log ;;
+	rtorrent) install_rtorrent >>$log ;;
+	qbittorrent) install_qbittorrent >>$log ;;
+	transmission)
 		shift
-		[ $1 = 1 ] && transmission >>$log || \
-					  transmission 277 >>$log
+		[ $1 = 1 ] && install_transmission >>$log || \
+					  install_transmission 277 >>$log
 		;;
 	system_check) system_check >>$log ;;
 	opkg_install) opkg_install >>$log ;;

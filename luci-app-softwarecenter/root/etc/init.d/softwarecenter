@@ -169,34 +169,26 @@ start() {
 		[ $swap_enabled ] && config_swap_init $swap_size $swap_path || config_swap_del $swap_path
 
 		start_up() {
-
-			if ! pidof $1 >/dev/null 2>&1; then
-				/opt/etc/init.d/$p start >/dev/null 2>&1
-				sleep 5
-				if pidof $1 >/dev/null 2>&1; then
-					echo_time "$1 启动成功"
+			if ! pidof $1 2>/dev/null; then
+				[ $delaytime ] && sleep $delaytime
+				if $(ls /opt/etc/init.d/*$p) start 2>/dev/null; then
+					echo_time "$p 启动成功"
 				else
-					echo_time "$1 启动失败"
+					echo_time "$p 启动失败"
 				fi
 			# else
-				# echo_time $1 已经启动！
+				# echo_time "$p 已经启动！"
 			fi
 		}
 
-		# sleep $delaytime
 		for p in $(awk '/_boot/{print $2}' /etc/config/softwarecenter | cut -d_ -f1); do
-			if [ "$(uci get softwarecenter.main.${p}_boot 2>/dev/null)" ]; then
-				if [ -s /opt/etc/init.d/$p ]; then
-					[ $p = S81aria2 ] && start_up "aria2c"
-					[ $p = S57amuled ] && start_up "amuled" && \
-					sleep 10 && /opt/etc/init.d/S57amuled restart >/dev/null 2>&1 &
-					[ $p = S80deluged ] && start_up "deluged"
-					[ $p = S85rtorrent ] && start_up "rtorrent"
-					[ $p = S89qbittorrent ] && start_up "qbittorrent-nox"
-					[ $p = S88transmission ] && start_up "transmission-daemon"
-				else
-					/usr/bin/softwarecenter/lib_functions.sh $p
-				fi
+			if [ "$(uci get softwarecenter.main.${p}_boot 2>/dev/null)" = 1 ]; then
+				[ $p = aria2 ] && start_up "aria2c"
+				[ $p = amuled ] && start_up "amuled"
+				[ $p = deluged ] && start_up "deluged"
+				[ $p = rtorrent ] && start_up "rtorrent"
+				[ $p = qbittorrent ] && start_up "qbittorrent-nox"
+				[ $p = transmission ] && start_up "transmission-daemon"
 			fi
 		done
 
