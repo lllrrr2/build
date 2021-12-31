@@ -123,7 +123,7 @@ else
 	p.inputstyle = "apply"
 	p.forcewrite = true
 	p.write = function()
-		luci.util.exec("/usr/bin/softwarecenter/lib_functions.sh S81aria2 &")
+		luci.util.exec("/usr/bin/softwarecenter/lib_functions.sh aria2 &")
 		luci.http.redirect(luci.dispatcher.build_url("admin/services/softwarecenter/log"))
 	end
 	p.description = translate("<b>当前状态</b>：") .. font_red .. "没有安装" .. font_off
@@ -159,7 +159,7 @@ if nixio.fs.access("/opt/etc/init.d/S80deluged") then
 			luci.util.exec("/opt/etc/init.d/S80deluged stop")
 			luci.http.redirect(luci.dispatcher.build_url("admin/services/softwarecenter/app"))
 		end
-		p.description = translate("WebUI默认端口为 888，密码: deluge<br><b>当前状态</b>：" .. op_webui .. "888')\"/>")
+		p.description = translate("WebUI默认端口为 888，密码: admin<br><b>当前状态</b>：" .. op_webui .. "888')\"/>")
 		p:depends("deluged_enable", 1)
 	else
 		p = s:option(Button, "acc", translate(" "))

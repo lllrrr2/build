@@ -1,7 +1,7 @@
 -- Copyright (C) 2019 Jianpeng Xiang (1505020109@mail.hnust.edu.cn)
 
 --得到Map对象，并初始化。参一：指定cbi文件，参二：设置标题，参三：设置标题下的注释
-m = Map("softwarecenter", translate("Entware"), translate("Entware是一个适用于嵌入式系统的软件包库，提供超过2000多个不同平台的软件包<br>可以自动部署Entware-opt/Nginx/MySQ/PHP(ONMP)和应用安装<br>原项目地址：<a href='https://github.com/jsp1256/openwrt-package' target='_blank'> github</a>。"))
+m = Map("softwarecenter", translate("Entware"), translate("Entware是一个适用于嵌入式系统的软件包库，提供超过2000多个不同平台的软件包<br>可以自动部署Entware-opt/Nginx/MySQ/PHP(ONMP)和应用安装，原项目地址：<a href='https://github.com/jsp1256/openwrt-package' target='_blank'> github</a>"))
 
 local software_status = (luci.sys.call("pidof nginx > /dev/null") == 0)
 if software_status then
@@ -52,7 +52,7 @@ p.password = true
 p:depends("mysql_enabled", 1)
 deploy_mysql:depends("deploy_entware", 1)
 
-s:tab("Partition", translate("磁盘分区"))
+s:tab("partition", translate("磁盘分区"))
 local o = nixio.util.consume((nixio.fs.glob("/dev/sd[a-g]")), o)
 local size = {}
 for i, l in ipairs(o) do
@@ -60,13 +60,13 @@ for i, l in ipairs(o) do
 	size[l] = s and math.floor(s / 2048 / 1024)
 	t="%s"%{nixio.fs.readfile("/sys/class/block/%s/device/model"%nixio.fs.basename(l))}
 end
-p = s:taboption("Partition", ListValue, "Partition_disk", translate("可用磁盘"),
+p = s:taboption("partition", ListValue, "partition_disk", translate("可用磁盘"),
 translate("当加入的磁盘没有分区，此工具可简单的分区挂载"))
 for i, a in ipairs(o) do
 	p:value(a,translate("%s | %s | 可用:%sGB" % {a, t, size[a]}))
 end
 
-p = s:taboption("Partition", Button, "_rescan", translate("扫描磁盘"),
+p = s:taboption("partition", Button, "_rescan", translate("扫描磁盘"),
 translate("重新加载加入后没有显示的磁盘"))
 p.inputtitle = translate("开始扫描")
 p.inputstyle = "reload"
@@ -75,7 +75,7 @@ function p.write(self, section, value)
   luci.util.exec("echo '- - -' | tee /sys/class/scsi_host/host*/scan > /dev/null")
 end
 
-p = s:taboption("Partition", Button, "_add",translate("磁盘分区"), translate("默认只分一个区，并格式化EXT4文件系统。如已挂载要先缷载<br><b style=\"color:red\">注意：分区前确认选择的磁盘没有重要数据，分区后数据不可恢复！</b>"))
+p = s:taboption("partition", Button, "_add",translate("磁盘分区"), translate("默认只分一个区，并格式化EXT4文件系统。如已挂载要先缷载<br><b style=\"color:red\">注意：分区前确认选择的磁盘没有重要数据，分区后数据不可恢复！</b>"))
 p.inputtitle = translate("开始分区")
 p.inputstyle = "apply"
 	function p.write(self, section)
