@@ -5,7 +5,6 @@
 START=52
 STOP=10
 
-# 导入函数库
 . /usr/bin/softwarecenter/website_manager.sh
 . /usr/bin/softwarecenter/mysql_install.sh
 . /usr/bin/softwarecenter/nginx_install.sh
@@ -51,34 +50,32 @@ clean_vhost_config() {
 
 # 网站迭代处理，本函数迭代的配置网站（处理逻辑也许可以更好的优化？）
 handle_website() {
-	website_config="website_enabled autodeploy_enable customdeploy_enabled redis_enabled website_dir website_select port"
+	website_config="autodeploy_enable customdeploy_enabled port redis_enabled website_dir website_enabled website_select"
 	for pl in $website_config; do
 		config_get_bool $pl $1 $pl
 		config_get $pl $1 $pl
 	done
 
-	# 获取网站名称
 	if [ "$autodeploy_enable" ]; then
-		website_name=$(website_name_mapping $website_select)
-	else
-		return
-	fi
-
-	if [ "$autodeploy_enable" ] && [ ! -f /opt/etc/*/*/$website_name.conf ]; then
-		install_website $website_select $port
-		if [ "$website_enabled" ]; then
-			echo_time " $name 安装完成"
-			echo_time "浏览器地址栏输入：$localhost:$port 即可访问\n"
-		else
-			echo_time " $name 安装完成，但没有开启！\n"
+		local website_name=$(website_name_mapping $website_select) # 获取网站名称
+		if [ ! -f /opt/etc/*/*/$website_name.conf ]; then
+			install_website $website_select $port
+			if [ "$website_enabled" ]; then
+				echo_time " $name 安装完成"
+				echo_time "浏览器地址栏输入：$localhost:$port 即可访问\n"
+			else
+				echo_time " $name 安装完成，但没有开启！\n"
+			fi
 		fi
+	else
+		return 1
 	fi
 
 	if [ "$website_enabled" ]; then
 		if [ -f /opt/etc/nginx/no_use/$website_name.conf ]; then
 			echo_time "启用 $website_name "
 			mv /opt/etc/nginx/no_use/$website_name.conf /opt/etc/nginx/vhost/$website_name.conf
-			port_custom /opt/etc/nginx/vhost/$website_name.conf
+			port_custom "/opt/etc/nginx/vhost/$website_name.conf"
 		fi
 
 		if [ "$autodeploy_enable" ] && [ "$website_name" = "Nextcloud" ] || [ "$website_name" = "Owncloud" ]; then
@@ -98,7 +95,7 @@ handle_website() {
 		if [ -f /opt/etc/nginx/vhost/$website_name.conf ]; then
 			mv /opt/etc/nginx/vhost/$website_name.conf /opt/etc/nginx/no_use/$website_name.conf
 			/opt/etc/init.d/S80nginx reload >/dev/null 2>&1 && \
-			echo_time " $website_name 已关闭\n"
+			echo_time " 已关闭 $website_name\n"
 		fi
 	fi
 	website_config_list="$website_config_list $website_name"
@@ -134,11 +131,11 @@ start() {
 		if [ $deploy_nginx ]; then
 			[ ! -x /opt/etc/init.d/S80nginx ] && echo_time "========= 开始安装Nginx =========\n" && init_nginx
 			if [ $nginx_enabled ]; then
-				[ "$(pidof nginx)" ] || nginx_manage start >/dev/null 2>&1
+				[ "$(pidof nginx)" ] || nginx_manage start
 				config_foreach handle_website website test
 				clean_vhost_config
 			else
-				nginx_manage stop >/dev/null 2>&1
+				nginx_manage stop
 			fi
 		else
 			[ -x /opt/etc/init.d/S80nginx ] && echo_time "========= 卸载Nginx相关的软件包 =========\n" && del_nginx

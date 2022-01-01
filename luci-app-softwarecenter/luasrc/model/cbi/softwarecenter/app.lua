@@ -103,7 +103,7 @@ if nixio.fs.access("/opt/etc/init.d/S81aria2") then
 			luci.util.exec("/opt/etc/init.d/S81aria2 stop")
 			luci.http.redirect(luci.dispatcher.build_url("admin/services/softwarecenter/app"))
 		end
-		p.description = translate(("RPC的端口为 6800，密码: Passw0rd。添加了") .. [[<a href="https://github.com/P3TERX/aria2.conf"target="_blank">]] .. " P3TERX </a>的增强和扩展功能<br><b>当前状态</b>：" .. font_green .. "运行中&nbsp;&nbsp;&nbsp;" .. font_off .. font_apply .. "打开AriNG管理 \" onclick=\"window.open('http://ariang.mayswind.net/latest')\"/>&nbsp;&nbsp;&nbsp;" .. font_apply .. "打开WebUI-Aria2管理 \" onclick=\"window.open('http://webui-aria2.1ge.fun/')\"/><br><br>" .. font_apply .. "打开AriNG本地WebUI管理" .. font_op .. "/ariang')\"/>&nbsp;&nbsp;&nbsp;" .. font_apply .. "打开WebUI-Aria2本地WebUI管理" .. font_op .. "/webui-aria2')\"/>")
+		p.description = translate(("RPC的端口为 6800，密码: admin。添加了") .. [[<a href="https://github.com/P3TERX/aria2.conf"target="_blank">]] .. " P3TERX </a>的增强和扩展功能<br><b>当前状态</b>：" .. font_green .. "运行中&nbsp;&nbsp;&nbsp;" .. font_off .. font_apply .. "打开AriNG管理 \" onclick=\"window.open('http://ariang.mayswind.net/latest')\"/>&nbsp;&nbsp;&nbsp;" .. font_apply .. "打开WebUI-Aria2管理 \" onclick=\"window.open('http://webui-aria2.1ge.fun/')\"/><br><br>" .. font_apply .. "打开AriNG本地WebUI管理" .. font_op .. "/ariang')\"/>&nbsp;&nbsp;&nbsp;" .. font_apply .. "打开WebUI-Aria2本地WebUI管理" .. font_op .. "/webui-aria2')\"/>")
 		p:depends("aria2_enable", 1)
 	else
 		p = s:option(Button, "abc", translate(" "))

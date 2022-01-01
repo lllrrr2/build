@@ -3,22 +3,24 @@
 
 # 加载库函数
 . /usr/bin/softwarecenter/lib_functions.sh
-pkglist_php7="coreutils-stat php7 php7-cgi php7-cli php7-fastcgi php7-fpm php7-mod-bcmath php7-mod-calendar php7-mod-ctype php7-mod-curl php7-mod-dom php7-mod-exif php7-mod-fileinfo php7-mod-filter php7-mod-ftp php7-mod-gd php7-mod-gettext php7-mod-gmp php7-mod-iconv php7-mod-imap php7-mod-intl php7-mod-json php7-mod-ldap php7-mod-mbstring php7-mod-mysqli php7-mod-mysqlnd php7-mod-opcache php7-mod-openssl php7-mod-pcntl php7-mod-pdo php7-mod-pdo-pgsql php7-mod-pdo-sqlite php7-mod-pgsql php7-mod-phar php7-mod-session php7-mod-shmop php7-mod-simplexml php7-mod-snmp php7-mod-soap php7-mod-sockets php7-mod-sqlite3 php7-mod-sysvmsg php7-mod-sysvsem php7-mod-sysvshm php7-mod-tokenizer php7-mod-xml php7-mod-xmlreader php7-mod-xmlwriter php7-mod-zip php7-pecl-dio php7-pecl-http php7-pecl-libevent php7-pecl-propro php7-pecl-raphf php7-pecl-redis redis-utils snmp-mibs snmp-utils zoneinfo-core"
+
+pkglist_nginx="nginx-extras"
+pkglist_php7="coreutils-stat php7 php7-cgi php7-cli php7-fastcgi php7-fpm"
+phpmod="php7-mod-calendar php7-mod-ctype php7-mod-curl php7-mod-dom php7-mod-exif php7-mod-fileinfo php7-mod-filter php7-mod-ftp php7-mod-gd php7-mod-gettext php7-mod-gmp php7-mod-iconv php7-mod-intl php7-mod-json php7-mod-ldap php7-mod-mbstring php7-mod-mysqli php7-mod-opcache php7-mod-openssl php7-mod-pcntl php7-mod-pdo php7-mod-pdo-mysql php7-mod-phar php7-mod-session php7-mod-shmop php7-mod-simplexml php7-mod-snmp php7-mod-soap php7-mod-sockets php7-mod-sqlite3 php7-mod-sysvmsg php7-mod-sysvsem php7-mod-sysvshm php7-mod-tokenizer php7-mod-xml php7-mod-xmlreader php7-mod-xmlwriter php7-mod-zip php7-pecl-dio php7-pecl-http php7-pecl-libevent php7-pecl-propro php7-pecl-raphf php7-pecl-redis redis-utils snmp-mibs snmp-utils zoneinfo-core"
 
 # PHP初始化
 init_php() {
-
 	# 安装php
-	install_soft $pkglist_php7
+	install_soft $pkglist_php7 $phpmod
 	make_dir /opt/usr/php/tmp/
 
 	sed -i "{
-	/^doc_root/d
-	/^memory_limit/ {s|= .*|= 128M|}
-	/^post_max_size/ {s|= .*|= 8000M|}
-	/^output_buffering/ {s|= .*|= 4096|}
-	/^max_execution_time/ {s|= .*|= 2000|}
-	/^upload_max_filesize/ {s|= .*|= 8000M|}
+		/^doc_root/d
+		/^memory_limit/ {s|= .*|= 128M|}
+		/^post_max_size/ {s|= .*|= 8000M|}
+		/^output_buffering/ {s|= .*|= 4096|}
+		/^max_execution_time/ {s|= .*|= 2000|}
+		/^upload_max_filesize/ {s|= .*|= 8000M|}
 	}" /opt/etc/php.ini
 	sed -i "/listen.mode/ {s|= .*|= 0666|}" /opt/etc/php7-fpm.d/www.conf
 
@@ -44,14 +46,15 @@ init_php() {
 	env[TMPDIR] = /opt/tmp
 	env[TEMP] = /opt/tmp
 	PHPFPM
+	echo_time " PHP 安装完成\n"
 }
 
 # 安装nginx
 init_nginx() {
 	get_env
-	echo_time "安装php环境" && init_php
-	# 安装nginx软件包
-	install_soft "nginx"
+	echo_time "开始安装 php 环境\n"
+	init_php
+	install_soft "$pkglist_nginx"
 	make_dir /opt/etc/nginx/vhost /opt/etc/nginx/no_use /opt/etc/nginx/conf
 
 	# 初始化nginx配置文件
@@ -94,6 +97,7 @@ init_nginx() {
 
 	# 初始化redis
 	echo -e "unixsocket /opt/var/run/redis.sock\nunixsocketperm 777" >> /opt/etc/redis.conf
+	echo_time " nginx 安装完成\n"
 }
 
 # 卸载nginx
@@ -104,7 +108,21 @@ del_nginx() {
 	rm -rf /opt/etc/nginx
 	/usr/bin/find -name "*nginx*" -exec rm -rf {} \;
 	rm /opt/etc/redis.conf
+}
 
+# 卸载PHP
+del_php() {
+	remove_soft "$pkglist_php7" "$phpmod"
+	rm /opt/etc/php.ini
+	/usr/bin/find /opt -name "php*" -exec rm -rf {} \;
+}
+
+# Nginx Server管理 参数：$1:动作
+nginx_manage() {
+	/opt/etc/init.d/S47snmpd $1 >/dev/null 2>&1
+	/opt/etc/init.d/S70redis $1 >/dev/null 2>&1
+	/opt/etc/init.d/S80nginx $1 >/dev/null 2>&1
+	/opt/etc/init.d/S79php7-fpm $1 >/dev/null 2>&1
 }
 
 # 特定程序的nginx配置
@@ -300,19 +318,4 @@ nginx_special_conf() {
 		}
 	OOO
 
-}
-
-# 卸载PHP
-del_php() {
-	remove_soft "$pkglist_php7"
-	rm /opt/etc/php.ini;
-	/usr/bin/find /opt -name "php*" -exec rm -rf {} \;
-}
-
-# Nginx Server管理 参数：$1:动作
-nginx_manage() {
-	/opt/etc/init.d/S47snmpd $1 > /dev/null 2>&1
-	/opt/etc/init.d/S70redis $1 > /dev/null 2>&1
-	/opt/etc/init.d/S80nginx $1 > /dev/null 2>&1
-	/opt/etc/init.d/S79php7-fpm $1 > /dev/null 2>&1
 }

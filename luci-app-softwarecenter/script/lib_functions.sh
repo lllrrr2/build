@@ -1,7 +1,5 @@
 #!/bin/sh
-#Write for Almquist Shell version: 1.8
-# Copyright (C) 2019 Jianpeng Xiang (1505020109@mail.hnust.edu.cn)
-# This is free software, licensed under the GNU General Public License v3.
+
 download_dir=$(uci get softwarecenter.main.download_dir)
 status() {
 	local p=$?
@@ -36,6 +34,27 @@ _pidof() {
 	done
 }
 
+network() {
+    #超时时间
+    local timeout=1
+    #目标网站
+    local target=bin.entware.net
+    #获取响应状态码
+    local ret_code=`curl -I -s --connect-timeout ${timeout} ${target} -w %{http_code} | tail -n1`
+    if [ "x$ret_code" != "x200" ]; then
+        echo_time "${target} 网络不畅通"
+        return 1
+    else
+		[ -e /tmp/ping ] || echo_time "${target} 网络平均响应时间 `ping -c 3 ${target} | awk -F/ '/avg/{print $4}' | tee /tmp/ping`毫秒"
+		# echo_time "${target} 网络平均响应时间 `ping -c 3 ${target} | awk -F/ '/avg/{print $4}'`毫秒"
+        return 0
+    fi
+}
+
+echo_time() {
+	echo -e "[ $(date +"%m月%d日 %H:%M:%S") ]  $@" | sed '/\\\033/d'
+}
+
 # entware环境设定 参数：$1:安装位置 $2:设备底层架构 说明：此函数用于写入新配置
 entware_set() {
 	entware_unset
@@ -53,7 +72,7 @@ entware_set() {
 		mipsel) INST_URL=http://bin.entware.net/mipselsf-k3.4/installer/generic.sh ;;
 		mips)	INST_URL=http://bin.entware.net/mipselsf-k3.4/installer/generic.sh ;;
 		aarch64) INST_URL=http://bin.entware.net/aarch64-k3.10/installer/generic.sh ;;
-		armv7)	INST_URL=http://bin.entware.net/armv7sf-k3.2/installer/generic.sh ;;
+		armv7*)	INST_URL=http://bin.entware.net/armv7sf-k3.2/installer/generic.sh ;;
 	esac
 
 	if [ $INST_URL ]; then
@@ -121,27 +140,6 @@ entware_unset() {
 	source /etc/profile >/dev/null 2>&1
 	umount -lf /opt
 	rm -rf /opt
-}
-
-network() {
-    #超时时间
-    local timeout=1
-    #目标网站
-    local target=bin.entware.net
-    #获取响应状态码
-    local ret_code=`curl -I -s --connect-timeout ${timeout} ${target} -w %{http_code} | tail -n1`
-    if [ "x$ret_code" != "x200" ]; then
-        echo_time "${target} 网络不畅通"
-        return 1
-    else
-		[ -e /tmp/ping ] || echo_time "${target} 网络平均响应时间 `ping -c 3 ${target} | awk -F/ '/avg/{print $4}' | tee /tmp/ping`毫秒"
-		# echo_time "${target} 网络平均响应时间 `ping -c 3 ${target} | awk -F/ '/avg/{print $4}'`毫秒"
-        return 0
-    fi
-}
-
-echo_time() {
-	echo -e "[ $(date +"%m月%d日 %H:%M:%S") ]  $@" | sed '/\\\033/d'
 }
 
 # 磁盘分区挂载
@@ -271,31 +269,32 @@ install_amule() {
 	opkg_install amule && {
 		/opt/etc/init.d/S57amuled start >/dev/null 2>&1 && sleep 5
 		/opt/etc/init.d/S57amuled stop >/dev/null 2>&1
-		if wget -t5 -qO /tmp/AmuleWebUI.zip https://codeload.github.com/MatteoRagni/AmuleWebUI-Reloaded/zip/master; then
+		wget -t5 -qO /tmp/AmuleWebUI.zip https://codeload.github.com/MatteoRagni/AmuleWebUI-Reloaded/zip/master && {
 			unzip -d /tmp /tmp/AmuleWebUI.zip >/dev/null 2>&1
 			mv -f /tmp/AmuleWebUI-Reloaded-master /opt/share/amule/webserver/AmuleWebUI-Reloaded
 			sed -i 's/ajax.googleapis.com/ajax.lug.ustc.edu.cn/g' /opt/share/amule/webserver/AmuleWebUI-Reloaded/*.php
-		else
+		} || {
 			echo_time "AmuleWebUI-Reloaded 下载失败，使用原版UI。"
-		fi
+		}
 		pp=$(echo -n admin | md5sum | awk '{print $1}')
 		sed -i "{
-		s/^Enabled=.*/Enabled=1/g
-		s/^ECPas.*/ECPassword=$pp/g
-		s/^UPnPEn.*/UPnPEnabled=1/g
-		s/^Password=.*/Password=$pp/g
-		s/^UPnPECE.*/UPnPECEnabled=1/g
-		s/^Template=.*/Template=AmuleWebUI-Reloaded/g
-		s/^AcceptExternal.*/AcceptExternalConnections=1/g
-		s|^IncomingDir=.*|IncomingDir=$download_dir|g
+			s/^Enabled=.*/Enabled=1/
+			s/^ECPas.*/ECPassword=$pp/
+			s/^UPnPEn.*/UPnPEnabled=1/
+			s/^Password=.*/Password=$pp/
+			s/^UPnPECE.*/UPnPECEnabled=1/
+			s/^Template=.*/Template=AmuleWebUI-Reloaded/
+			s/^AcceptExternal.*/AcceptExternalConnections=1/
+			s|^IncomingDir=.*|IncomingDir=$download_dir|
 		}" /opt/var/amule/amule.conf
-		ln -sf /opt/var/amule/amule.conf /opt/etc/config/amule.conf
-		/opt/etc/init.d/S57amuled restart >/dev/null 2>&1
-		_pidof amuled
-
 	} || {
-		echo_time "amule 安装失败，再重试安装！" && exit 1
+		echo_time "amule 安装失败，再重试安装！"
+		exit 1
 	}
+	ln -sf /opt/var/amule/amule.conf /opt/etc/config/amule.conf
+	/opt/etc/init.d/S57amuled restart >/dev/null 2>&1
+	_pidof amuled
+
 }
 
 install_aria2() {
@@ -319,7 +318,7 @@ install_aria2() {
 			sed -i "{
 				s|/root/\.aria2|$pro|g
 				s|^dir=.*|dir=$download_dir|
-				s|^rpc-se.*|rpc-secret=Passw0rd|
+				s|^rpc-se.*|rpc-secret=admin|
 			}" aria2.conf
 			sed -i '/033/d' core
 			sed -i '/033/d' tracker.sh
@@ -343,7 +342,8 @@ install_aria2() {
 		_pidof aria2c
 
 	} || {
-		echo_time "aria2 安装失败，再重试安装！" && exit 1
+		echo_time "aria2 安装失败，再重试安装！"
+		exit 1
 	}
 }
 
@@ -358,14 +358,14 @@ install_deluge() {
 		/opt/etc/init.d/S80deluged stop >/dev/null 2>&1
 		sleep 5
 		sed -i "{
-		/random_port/ {s|true|false|}
-		/queue_new_to_top/ {s|false|true|}
-		/new_release_check/ {s|true|false|}
-		/listen_random_port/ {s|55554|null|}
-		/pre_allocate_storage/ {s|false|true|}
-		/download_location/ {s|: \".*\"|: \"$download_dir\"|}
-		/move_completed_path/ {s|: \".*\"|: \"$download_dir\"|}
-		/torrentfiles_location/ {s|: \".*\"|: \"$download_dir\"|}
+			/random_port/ {s|true|false|}
+			/queue_new_to_top/ {s|false|true|}
+			/new_release_check/ {s|true|false|}
+			/listen_random_port/ {s|55554|null|}
+			/pre_allocate_storage/ {s|false|true|}
+			/download_location/ {s|: \".*\"|: \"$download_dir\"|}
+			/move_completed_path/ {s|: \".*\"|: \"$download_dir\"|}
+			/torrentfiles_location/ {s|: \".*\"|: \"$download_dir\"|}
 		}" /opt/etc/deluge/core.conf
 		sed -i '{
 		/language/ {s|: ".*"|: "zh_CN"|}
@@ -374,8 +374,8 @@ install_deluge() {
 		/pwd_sha1/ {s|: ".*"|: "7f53a6eb03aa6d6e6b865de8bbede61741651a26"|}
 		}' /opt/etc/deluge/web.conf
 		[ $deluge_web_port ] && sed -i "s/888/$deluge_web_port/" /opt/etc/init.d/S81deluge-web
-		wget -t5 -qO /opt/*/*/*/*/*/zh_CN/*/deluge.mo raw.githubusercontent.com/hong0980/Deluge_zh_CN/main/deluge/i18n/zh_CN/LC_MESSAGES/deluge.mo
 		ln -sf /opt/etc/deluge/core.conf /opt/etc/config/deluge.conf
+		wget -t5 -qO /opt/*/*/*/*/*/zh_CN/*/deluge.mo raw.githubusercontent.com/hong0980/Deluge_zh_CN/main/deluge/i18n/zh_CN/LC_MESSAGES/deluge.mo
 		/opt/etc/init.d/S80deluged start >/dev/null 2>&1
 		_pidof deluged
 
@@ -401,11 +401,13 @@ install_qbittorrent() {
 		Downloads\SavePath=$download_dir
 		EOF
 		ln -sf /opt/etc/qBittorrent_entware/config/qBittorrent.conf /opt/etc/config/qBittorrent.conf
+		/opt/etc/init.d/S89qbittorrent start >/dev/null 2>&1
+		_pidof qbittorrent-nox
+
 	} || {
-		echo_time "qBittorrent 安装失败，再重试安装！" && exit 1
+		echo_time "qBittorrent 安装失败，再重试安装！"
+		exit 1
 	}
-	/opt/etc/init.d/S89qbittorrent start >/dev/null 2>&1
-	_pidof qbittorrent-nox
 }
 
 install_rtorrent() {
@@ -552,14 +554,14 @@ install_rtorrent() {
 			ENTWARE
 
 			sed -i "{
-			/scgi_port/ {s|5000|0|}
-			/\"id\"/   {s|''|'/opt/bin/id'|}
-			/\"curl\"/ {s|''|'/opt/bin/curl'|}
-			/\"gzip\"/ {s|''|'/opt/bin/gzip'|}
-			/\"stat\"/ {s|''|'/opt/bin/stat'|}
-			/\"php\"/  {s|''|'/opt/bin/php-cgi'|}
-			/scgi_host/ {s|127.0.0.1|unix:///opt/var/rpc.socket|}
-			s|/tmp/errors.log|/opt/var/log/rutorrent_errors.log|
+				/scgi_port/ {s|5000|0|}
+				/\"id\"/   {s|''|'/opt/bin/id'|}
+				/\"curl\"/ {s|''|'/opt/bin/curl'|}
+				/\"gzip\"/ {s|''|'/opt/bin/gzip'|}
+				/\"stat\"/ {s|''|'/opt/bin/stat'|}
+				/\"php\"/  {s|''|'/opt/bin/php-cgi'|}
+				/scgi_host/ {s|127.0.0.1|unix:///opt/var/rpc.socket|}
+				s|/tmp/errors.log|/opt/var/log/rutorrent_errors.log|
 			}" /opt/share/www/rutorrent/conf/config.php
 		}
 
@@ -632,18 +634,19 @@ install_rtorrent() {
 			;;
 			esac
 		EOF
-
 		ln -sf /opt/etc/rtorrent/rtorrent.conf /opt/etc/config/rtorrent.conf
 		/opt/etc/init.d/S85rtorrent start >/dev/null 2>&1
 		_pidof rtorrent lighttpd
+
 	} || {
-		echo_time "rtorrent 安装失败，再重试安装！" && exit 1
+		echo_time "rtorrent 安装失败，再重试安装！"
+		exit 1
 	}
 }
 
 install_transmission() {
-	[ $1 ] && r="transmission-cfp-cli transmission-cfp-daemon" || r="transmission-cli transmission-daemon"
-	opkg_install $r && {
+	[ $1 ] && pr="transmission-cfp-cli transmission-cfp-daemon" || pr="transmission-cli transmission-daemon"
+	opkg_install $pr && {
 		wget -t5 -qO /tmp/tr.zip github.com/ronggang/transmission-web-control/archive/master.zip && {
 			make_dir "/opt/share/transmission"
 			unzip -oq /tmp/tr.zip -d /tmp
@@ -657,19 +660,19 @@ install_transmission() {
 		}
 		[ -e /opt/etc/init.d/S88transmission-cfp ] && mv /opt/etc/init.d/S88transmission-cfp /opt/etc/init.d/S88transmission
 		sed -i "{
-		/rpc-username/ {s|: \".*\"|: \"admin\"|}
-		/rpc-password/ {s|: \".*\"|: \"admin\"|}
-		/port-forwarding-enabled/ {s|false|true|}
-		/download-dir/ {s|: \".*\"|: \"$download_dir\"|}
+			/rpc-username/ {s|: \".*\"|: \"admin\"|}
+			/rpc-password/ {s|: \".*\"|: \"admin\"|}
+			/port-forwarding-enabled/ {s|false|true|}
+			/download-dir/ {s|: \".*\"|: \"$download_dir\"|}
 		}" /opt/etc/transmission/settings.json
 		ln -sf /opt/etc/transmission/settings.json /opt/etc/config/transmission.json
 		/opt/etc/init.d/S88transmission start >/dev/null 2>&1
 		_pidof transmission
 
 	} || {
-		echo_time "transmission 安装失败，再重试安装！" && exit 1
+		echo_time "transmission 安装失败，再重试安装！"
+		exit 1
 	}
-
 }
 
 if [ $1 ]; then
