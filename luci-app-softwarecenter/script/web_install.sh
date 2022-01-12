@@ -1,6 +1,4 @@
 #!/bin/sh
-#网站管理脚本 version 1.5
-
 . /usr/bin/softwarecenter/lib_functions.sh
 
 # Web程序
@@ -19,7 +17,7 @@ url_h5ai="https://release.larsjung.de/h5ai/h5ai-0.30.0.zip"
 # (6) Lychee（一个很好看，易于使用的Web相册）
 url_Lychee="https://github.com/electerious/Lychee/archive/master.zip"
 # (7) Kodexplorer（可道云aka芒果云在线文档管理器）
-url_Kodexplorer="https://static.kodcloud.com/update/download/kodbox.1.25.zip"
+url_Kodexplorer="https://static.kodcloud.com/update/download/kodbox.1.26.zip"
 # (8) Typecho (流畅的轻量级开源博客程序)
 url_Typecho="http://typecho.org/downloads/1.1-17.10.30-release.tar.gz"
 # (9) Z-Blog (体积小，速度快的PHP博客程序)
@@ -65,7 +63,7 @@ web_installer() {
 
 	# 下载程序并解压
 	echo_time "正在下载安装包 $name.$suffix 请耐心等待..."
-	wget -qO /opt/tmp/$name.$suffix $filelink && {
+	wget -qO /opt/tmp/$name.$suffix $filelink --show-progress && {
 		make_dir /opt/wwwroot/$hookdir
 		mv /opt/tmp/$name.* /opt/wwwroot/
 
@@ -130,7 +128,7 @@ port_settings() {
 
 	find_port() {
 	for f in `seq 2100 2120`; do
-		netstat -lntp | awk '{print $4}' | awk -F':' '{print $2}' | grep -qw $f || {
+		/opt/bin/lsof -i:$f >/dev/null 2>&1 || {
 			port=$f
 			break
 		}
@@ -138,7 +136,7 @@ port_settings() {
 	}
 
 	if [ -n "$port" ]; then
-		netstat -lntp | awk '{print $4}' | awk -F':' '{print $2}' | grep -qw $port && {
+		/opt/bin/lsof -i:$port >/dev/null 2>&1 && {
 			echo_time "$name 设置的端口 $port 已在用，查找可用端口。"
 			find_port
 			echo_time "$name 使用空闲 $port 的端口"
@@ -163,22 +161,23 @@ port_custom() {
 
 # 端口修改
 port_modification() {
-	if [ $port ]; then
-		if [ `awk '/listen/{print $2}' $1 | sed 's/;//'` -ne $port ]; then
-			name=$website_name
-			port_settings
-			sed -i "s|listen.*|listen $port;|" $1
-			echo_time "$name 端口修改完成\n"
+	local name=$website_name
+	for kj in $@; do
+		local pu=$(awk '/listen/{print $2}' $kj | sed 's/;//')
+		if [ $port ]; then
+			if [ $pu -ne $port ]; then
+				port_settings
+				sed -i "s|listen.*|listen $port;|" $kj
+				echo_time "$name 端口修改完成\n"
+			fi
+		else
+			if [ $pu -lt 2100 -o $pu -gt 2120 ]; then
+				port_settings
+				sed -i "s|listen.*|listen $port;|" $kj
+				echo_time "$name 端口修改完成\n"
+			fi
 		fi
-	else
-		if [ $(awk '/listen/{print $2}' $1 | sed 's/;//') -lt 2100 -o $(awk '/listen/{print $2}' $1 | sed 's/;//') -gt 2120 ]; then
-			port=""
-			name=$website_name
-			port_settings
-			sed -i "s|listen.*|listen $port;|" $1
-			echo_time "$name 端口修改完成\n"
-		fi
-	fi
+	done
 }
 
 # 网站删除 参数：$1:conf文件位置 $2:website_dir 说明：本函数仅删除配置文件和目录，并不负责重载Nginx服务器配置，请调用层负责处理
@@ -192,7 +191,7 @@ delete_website() {
 vhost_config_list() {
 	get_env
 	if [ "$#" -eq "1" ]; then
-		path=`awk '/wwwroo/{print $2}' $1 | sed 's/;//'`
+		path=`awk -F/ '/wwwroo/{print $NF}' $1 | sed 's/;//'`
 		port=`awk '/listen/{print $2}' $1 | sed 's/;//'`
 		echo -e "$path $localhost:$port"
 	fi
@@ -220,6 +219,98 @@ redis() {
 		);
 	EOF
 	echo_time "$name已开启Redis"
+}
+
+website_config_list=""
+#本函数负责清理未写入配置的网站
+clean_vhost_config() {
+	local_config_list="$(ls /opt/etc/nginx/vhost | sed 's/.conf//')"
+	local_no_use_config_list="$(ls /opt/etc/nginx/no_use | sed 's/.conf//')"
+	delete_config_list=""
+
+	# 获取要删除的网站
+	for i in $local_config_list; do
+		flag=""
+		for j in $website_config_list; do
+			if [ "$i" == "$j" ]; then
+				flag="1"
+				break
+			fi
+		done
+		if [ -z $flag ]; then
+			delete_config_list="$delete_config_list /opt/etc/nginx/vhost/$i.conf"
+		fi
+	done
+	for i in $local_no_use_config_list; do
+		flag=""
+		for j in $website_config_list; do
+			if [ "$i" == "$j" ]; then
+				flag="1"
+				break
+			fi
+		done
+		if [ -z $flag ]; then
+			delete_config_list="$delete_config_list /opt/etc/nginx/no_use/$i.conf"
+		fi
+	done
+
+	for conf in $delete_config_list; do
+		webdir=$(vhost_config_list $conf | awk '{print $1}')
+		delete_website $conf $webdir
+	done
+}
+
+# 网站迭代处理，本函数迭代的配置网站（处理逻辑也许可以更好的优化？）
+handle_website() {
+	website_config="autodeploy_enable customdeploy_enabled port redis_enabled website_dir website_enabled website_select"
+	for pl in $website_config; do
+		config_get_bool $pl $1 $pl
+		config_get $pl $1 $pl
+	done
+
+	if [ "$autodeploy_enable" ]; then
+		local website_name=$(website_name_mapping $website_select) # 获取网站名称
+		if [ ! -f /opt/etc/*/*/$website_name.conf ]; then
+			install_website $website_select $port
+			if [ "$website_enabled" ]; then
+				echo_time " $name 安装完成"
+				echo_time "浏览器地址栏输入：$localhost:$port 即可访问\n"
+			else
+				echo_time " $name 安装完成，但没有开启！\n"
+			fi
+		fi
+	else
+		return 1
+	fi
+
+	if [ "$website_enabled" ]; then
+		if [ -f /opt/etc/nginx/no_use/$website_name.conf ]; then
+			echo_time "启用 $website_name "
+			mv /opt/etc/nginx/no_use/$website_name.conf /opt/etc/nginx/vhost/$website_name.conf
+			port_custom "/opt/etc/nginx/vhost/$website_name.conf"
+		fi
+
+		if [ "$autodeploy_enable" ] && [ "$website_name" = "Nextcloud" ] || [ "$website_name" = "Owncloud" ]; then
+			if [ "$redis_enabled" ]; then
+				if [ -d /opt/wwwroot/$website_name ] && [ ! -f /opt/wwwroot/$website_name/redis_enabled ]; then
+					touch /opt/wwwroot/$website_name/redis_enabled
+					redis "/opt/wwwroot/$website_name"
+				fi
+			else
+				rm -rf /opt/wwwroot/$website_name/config/config.php
+				rm -rf /opt/wwwroot/$website_name/redis_enabled
+			fi
+		fi
+		port_modification "/opt/etc/nginx/vhost/$website_name.conf"
+		/opt/etc/init.d/S80nginx reload >/dev/null 2>&1
+	else
+		if [ -f /opt/etc/nginx/vhost/$website_name.conf ]; then
+			mv /opt/etc/nginx/vhost/$website_name.conf /opt/etc/nginx/no_use/$website_name.conf
+			/opt/etc/init.d/S80nginx reload >/dev/null 2>&1 && \
+			echo_time " 已关闭 $website_name\n"
+		fi
+	fi
+	website_config_list="$website_config_list $website_name"
 }
 
 install_tz() {
@@ -292,6 +383,8 @@ install_h5ai() {
 		/lang/ {s|: ".*"|: "zh-cn"|}
 		/alwaysVisible/ {s|false|true|}
 	}' /opt/wwwroot/h5ai/_h5ai/private/conf/options.json
+	ln -s $download_dir /opt/wwwroot/h5ai
+	ln -s /opt/etc/config /opt/wwwroot/h5ai
 	echo_time "配置文件在/opt/wwwroot/$name/_h5ai/private/conf/options.json"
 	echo_time "你可以通过修改它来获取更多功能"
 	}

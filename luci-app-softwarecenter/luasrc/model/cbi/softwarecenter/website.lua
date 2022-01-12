@@ -3,7 +3,7 @@ translate("在正常运行 Nginx/PHP/MySQL 后再选择要部署的网站。可�
 m:section(SimpleSection).template = "softwarecenter/website_status"
 
 s = m:section(TypedSection, "website", translate("网站部署"), 
-translate("自动快速的部署网站。自动获取端口是在 2100 以上的空闲端口，Redis选项只有Owncloud和Nextcloud可使用。"))
+translate("自动快速的部署网站。自动获取端口是在 2100 以上的空闲端口，自定义建议1024--5000之间。"))
 s.anonymous = true
 s.addremove = false
 s.sortable = true

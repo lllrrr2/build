@@ -1,12 +1,12 @@
 font_green = [[<b><font color="green">]]
 font_red = [[<b><font color="red">]]
 font_off = [[</font></b>]]
-font_op = "\"onclick=\"window.open('http://'+window.location.hostname+':"
-font_apply = "<input class=\"cbi-button cbi-button-apply\" type=\"button\"value=\""
-function titlesplit(e)
-	return "<p style=\"font-size:15px; font-weight:600; color:DodgerBlue\">" .. translate(e) .. "</p>"
-end
+font_op = [["onclick="window.open('http://'+window.location.hostname+':]]
+font_apply = [[<input class="cbi-button cbi-button-apply" type="button"value="]]
 op_webui = font_green .. "运行中&nbsp;&nbsp;&nbsp;" .. font_off .. font_apply .. "打开WebUI管理" .. font_op
+function titlesplit(e)
+	return [[<p style="font-size:15px; font-weight:600; color:DodgerBlue">]] .. translate(e) .. "</p>"
+end
 
 m = Map("softwarecenter",translate("应用安装"), translate("所有配置文件都软链接在 /opt/etc/config下，方便查看和修改"))
 s = m:section(TypedSection, "softwarecenter")
@@ -14,6 +14,12 @@ s.anonymous = true
 
 p = s:option(Value, "download_dir", translate("文件保存路径"), translate("所有文件下载的统一保存路径"))
 p.default="/opt/downloads"
+
+p = s:option(Value, "webui_name", translate("WebUI用户名"), translate("统一设置qBittorrent，Transmission的初始用户名"))
+p.default="admin"
+
+p = s:option(Value, "webui_pass", translate("WebUI密码"), translate("统一设置aMule，Aria2，Deluge，qBittorrent，Transmission的初始密码"))
+p.default="admin"
 
 p = s:option(Value, "delaytime", translate("延时启动"), translate("开机后延时启动以下的应用，单位：秒。"))
 p.default=20
@@ -47,7 +53,7 @@ if nixio.fs.access("/opt/etc/init.d/S57amuled") then
 			luci.util.exec("/opt/etc/init.d/S57amuled stop")
 			luci.http.redirect(luci.dispatcher.build_url("admin/services/softwarecenter/app"))
 		end
-		p.description = translate("WebUI默认端口为 4711，密码: admin<br><b>当前状态</b>：" .. op_webui .. "4711')\"/>")
+		p.description = translate("WebUI默认端口为 4711<br><b>当前状态</b>：" .. op_webui .. "4711')\"/>")
 		p:depends("amuled_enable", 1)
 	else
 		p = s:option(Button, "aac", translate(" "))
@@ -67,7 +73,7 @@ else
 	p.inputstyle = "apply"
 	p.forcewrite = true
 	function p.write(self, section)
-		luci.util.exec("/usr/bin/softwarecenter/lib_functions.sh amuled &")
+		luci.util.exec("/usr/bin/softwarecenter/app_install.sh amuled &")
 		luci.http.redirect(luci.dispatcher.build_url("admin/services/softwarecenter/log"))
 	end
 	p.description = translate("<b>当前状态</b>：" .. font_red .. "没有安装" .. font_off )
@@ -103,7 +109,7 @@ if nixio.fs.access("/opt/etc/init.d/S81aria2") then
 			luci.util.exec("/opt/etc/init.d/S81aria2 stop")
 			luci.http.redirect(luci.dispatcher.build_url("admin/services/softwarecenter/app"))
 		end
-		p.description = translate(("RPC的端口为 6800，密码: admin。添加了") .. [[<a href="https://github.com/P3TERX/aria2.conf"target="_blank">]] .. " P3TERX </a>的增强和扩展功能<br><b>当前状态</b>：" .. font_green .. "运行中&nbsp;&nbsp;&nbsp;" .. font_off .. font_apply .. "打开AriNG管理 \" onclick=\"window.open('http://ariang.mayswind.net/latest')\"/>&nbsp;&nbsp;&nbsp;" .. font_apply .. "打开WebUI-Aria2管理 \" onclick=\"window.open('http://webui-aria2.1ge.fun/')\"/><br><br>" .. font_apply .. "打开AriNG本地WebUI管理" .. font_op .. "/ariang')\"/>&nbsp;&nbsp;&nbsp;" .. font_apply .. "打开WebUI-Aria2本地WebUI管理" .. font_op .. "/webui-aria2')\"/>")
+		p.description = translate(("RPC的端口为 6800。添加了") .. [[<a href="https://github.com/P3TERX/aria2.conf"target="_blank">]] .. " P3TERX </a>的增强和扩展功能<br><b>当前状态</b>：" .. font_green .. "运行中&nbsp;&nbsp;&nbsp;" .. font_off .. font_apply .. [[打开AriNG管理 "onclick="window.open('http://ariang.mayswind.net/latest')"/>&nbsp;&nbsp;&nbsp;]] .. font_apply ..[[打开WebUI-Aria2管理 "onclick="window.open('http://webui-aria2.1ge.fun/')"/><br><br>]] .. font_apply .. "打开AriNG本地WebUI管理" .. font_op .. "/ariang')\"/>&nbsp;&nbsp;&nbsp;" .. font_apply .. "打开WebUI-Aria2本地WebUI管理" .. font_op .. "/webui-aria2')\"/>")
 		p:depends("aria2_enable", 1)
 	else
 		p = s:option(Button, "abc", translate(" "))
@@ -123,7 +129,7 @@ else
 	p.inputstyle = "apply"
 	p.forcewrite = true
 	p.write = function()
-		luci.util.exec("/usr/bin/softwarecenter/lib_functions.sh aria2 &")
+		luci.util.exec("/usr/bin/softwarecenter/app_install.sh aria2 &")
 		luci.http.redirect(luci.dispatcher.build_url("admin/services/softwarecenter/log"))
 	end
 	p.description = translate("<b>当前状态</b>：") .. font_red .. "没有安装" .. font_off
@@ -159,7 +165,7 @@ if nixio.fs.access("/opt/etc/init.d/S80deluged") then
 			luci.util.exec("/opt/etc/init.d/S80deluged stop")
 			luci.http.redirect(luci.dispatcher.build_url("admin/services/softwarecenter/app"))
 		end
-		p.description = translate("WebUI默认端口为 888，密码: admin<br><b>当前状态</b>：" .. op_webui .. "888')\"/>")
+		p.description = translate("WebUI默认端口为 888<br><b>当前状态</b>：" .. op_webui .. "888')\"/>")
 		p:depends("deluged_enable", 1)
 	else
 		p = s:option(Button, "acc", translate(" "))
@@ -179,7 +185,7 @@ else
 	p.inputstyle = "apply"
 	p.forcewrite = true
 	p.write = function(self, section)
-		luci.util.exec("/usr/bin/softwarecenter/lib_functions.sh deluged &")
+		luci.util.exec("/usr/bin/softwarecenter/app_install.sh deluged &")
 		luci.http.redirect(luci.dispatcher.build_url("admin/services/softwarecenter/log"))
 	end
 	p.description = translate("<b>当前状态</b>：" .. font_red .. "没有安装" .. font_off)
@@ -215,7 +221,7 @@ if nixio.fs.access("/opt/etc/init.d/S89qbittorrent") then
 			luci.util.exec("/opt/etc/init.d/S89qbittorrent stop")
 			luci.http.redirect(luci.dispatcher.build_url("admin/services/softwarecenter/app"))
 		end
-		p.description = translate("WebUI默认端口为 9080，用启名: admin，密码: adminadmin<br><b>当前状态</b>：" .. op_webui .. "9080')\"/>")
+		p.description = translate("WebUI默认端口为 9080<br><b>当前状态</b>：" .. op_webui .. "9080')\"/>")
 		p:depends("qbittorrent_enable", 1)
 	else
 		p = s:option(Button, "adc", translate(" "))
@@ -235,7 +241,7 @@ else
 	p.inputstyle = "apply"
 	p.forcewrite = true
 	p.write = function(self, section)
-		luci.util.exec("/usr/bin/softwarecenter/lib_functions.sh qbittorrent &")
+		luci.util.exec("/usr/bin/softwarecenter/app_install.sh qbittorrent &")
 		luci.http.redirect(luci.dispatcher.build_url("admin/services/softwarecenter/log"))
 	end
 	p.description = translate("<b>当前状态</b>：" .. font_red .. "没有安装" .. font_off )
@@ -271,7 +277,7 @@ if nixio.fs.access("/opt/etc/init.d/S85rtorrent") then
 			luci.util.exec("/opt/etc/init.d/S85rtorrent stop")
 			luci.http.redirect(luci.dispatcher.build_url("admin/services/softwarecenter/app"))
 		end
-		p.description = translate(("WebUI默认端口为 1099，Rutorrent替换为") .. [[<a href="https://github.com/Novik/ruTorrent"target="_blank">]] .. " Novik </a>的稳定插件版<br><b>当前状态</b>：" .. op_webui .. "1099/rutorrent')\"/>")
+		p.description = translate(("WebUI默认端口为 1099，ruTorrent替换为") .. [[<a href="https://github.com/Novik/ruTorrent"target="_blank">]] .. " Novik </a>的稳定插件版<br><b>当前状态</b>：" .. op_webui .. "1099/rutorrent')\"/>")
 		p:depends("rtorrent_enable", 1)
 	else
 		p = s:option(Button, "aec", translate(" "))
@@ -291,7 +297,7 @@ else
 	p.inputstyle = "apply"
 	p.forcewrite = true
 	p.write = function(self, section)
-		luci.util.exec("/usr/bin/softwarecenter/lib_functions.sh rtorrent &")
+		luci.util.exec("/usr/bin/softwarecenter/app_install.sh rtorrent &")
 		luci.http.redirect(luci.dispatcher.build_url("admin/services/softwarecenter/log"))
 	end
 	p.description = translate("<b>当前状态</b>：" .. font_red .. "没有安装" .. font_off )
@@ -327,7 +333,7 @@ if nixio.fs.access("/opt/etc/init.d/S88transmission") then
 			luci.util.exec("/opt/etc/init.d/S88transmission stop")
 			luci.http.redirect(luci.dispatcher.build_url("admin/services/softwarecenter/app"))
 		end
-		p.description = translate("WebUI默认端口为 9091，用启名: admin，密码: admin<br><b>当前状态</b>：" .. op_webui .. "9091')\"/>")
+		p.description = translate("WebUI默认端口为 9091<br><b>当前状态</b>：" .. op_webui .. "9091')\"/>")
 		p:depends("transmission_enable", 1)
 	else
 		p = s:option(Button, "afc", translate(" "))
@@ -347,7 +353,7 @@ else
 	p.inputstyle = "apply"
 	p.forcewrite = true
 	p.write = function(self, section)
-		luci.util.exec("/usr/bin/softwarecenter/lib_functions.sh transmission 1 &")
+		luci.util.exec("/usr/bin/softwarecenter/app_install.sh transmission 1 &")
 		luci.http.redirect(luci.dispatcher.build_url("admin/services/softwarecenter/log"))
 	end
 	p:depends("transmission_enable", 1)
@@ -357,7 +363,7 @@ else
 	p.inputstyle = "apply"
 	p.forcewrite = true
 	function p.write(self, section)
-		luci.util.exec("/usr/bin/softwarecenter/lib_functions.sh transmission 2 &")
+		luci.util.exec("/usr/bin/softwarecenter/app_install.sh transmission 2 &")
 		luci.http.redirect(luci.dispatcher.build_url("admin/services/softwarecenter/log"))
 	end
 	p.description = translate("<b>当前状态</b>：" .. font_red .. "没有安装" .. font_off )
