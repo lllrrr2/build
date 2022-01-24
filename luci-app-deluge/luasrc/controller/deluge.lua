@@ -14,14 +14,14 @@ function index()
 	-- entry({"admin", "nas", "deluge", "log"}, firstchild(), _("Operation log"), 3)
 	-- entry({"admin", "nas", "deluge", "log", "view"}, template("deluge/log"))
 	-- entry({"admin", "nas", "deluge", "log", "read"}, call("action_log_read"))
-	-- entry({"admin", "nas", "deluge", "status"}, call("act_status"))
+	 entry({"admin", "nas", "deluge", "status"}, call("act_status"))
 end
 
--- function act_status()
-	-- local e = { running = luci.sys.call("ps | grep /usr/bin/deluge | grep -v grep >/dev/null") == 0 }
-	-- luci.http.prepare_content("application/json")
-	-- luci.http.write_json(e)
--- end
+ function act_status()
+	 local e = { running = (luci.sys.call("ps 2>/dev/null | grep 'deluge' 2>/dev/null | grep '/usr/bin/' >/dev/null") == 0) }
+	 luci.http.prepare_content("application/json")
+	 luci.http.write_json(e)
+ end
 
 -- function action_log_read()
 	-- local data = { log = "", syslog = "" }
