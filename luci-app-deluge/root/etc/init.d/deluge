@@ -1,0 +1,23 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+
+start() {
+
+	config_load deluge
+	get_config="user profile_dir download_dir log_dir Locale Password port enabled"
+
+	for rt in $get_config; do
+		config_get_bool $rt main $rt
+		config_get $rt main $rt
+	done
+	# [ $enabled ] && {
+		/usr/bin/python3 /usr/bin/deluged -c $profile_dir -u $user -l $log_dir/deluge.log -L error
+		/usr/bin/python3 /usr/bin/deluge-web -c $profile_dir -p $port -l $log_dir/deluge.log -L error
+	# }
+}
+
+stop() {
+	kill $(ps -w | grep -w /usr/bin/deluged | grep -v grep | awk '{print $1}') >/dev/null 2>&1
+	kill $(ps -w | grep -w deluge-web | grep -v grep | awk '{print $1}') >/dev/null 2>&1
+}

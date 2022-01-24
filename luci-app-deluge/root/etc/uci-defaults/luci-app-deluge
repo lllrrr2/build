@@ -1,0 +1,11 @@
+#!/bin/sh
+
+uci -q batch <<-EOF >/dev/null
+	delete ucitrack.@deluge[-1]
+	add ucitrack deluge
+	set ucitrack.@deluge[-1].init=deluge
+	commit ucitrack
+EOF
+
+rm -f /tmp/luci-indexcache
+exit 0

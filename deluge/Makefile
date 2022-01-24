@@ -63,7 +63,7 @@ define Package/deluge-ui-web/install
 	$(INSTALL_DIR) $(1)$(PYTHON3_PKG_DIR)/deluge/ui $(1)/usr/bin $(1)/etc/init.d $(1)/etc/deluge/state
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/deluge-web $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)$(PYTHON3_PKG_DIR)/deluge/ui/web $(1)$(PYTHON3_PKG_DIR)/deluge/ui/
-	$(INSTALL_BIN) ./files/deluge-web $(1)/etc/init.d
+	# $(INSTALL_BIN) ./files/deluge-web $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/deluge-web-reset_password $(1)/usr/bin
 	$(call Python3/FixShebang,$(1)/usr/bin/*)
 endef
