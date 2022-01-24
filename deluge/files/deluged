@@ -46,7 +46,7 @@ start_instance() {
 	config_get home "$s" 'home'
 	[ -n "$home" ] || {
 		home=$(grep "^${user}:" /etc/passwd | cut -d ':' -f 6)
-	fi
+	}
 	[ -d "$home" ] || {
 		error "home directory '$home' for user '$uid' dos not exist"
 		return 1
@@ -57,7 +57,7 @@ start_instance() {
 	HOME="$home" \
 	SERVICE_UID="$uid" \
 	SERVICE_GID="$gid" \
-	service_start /usr/bin/python2.6 /usr/bin/deluged --do-not-daemonize $options
+	service_start /usr/bin/python /usr/bin/deluged --do-not-daemonize $options
 }
 
 stop_instance() {
@@ -70,17 +70,15 @@ stop_instance() {
 
 	SERVICE_UID="$uid" \
 	SERVICE_GID="$gid" \
-	service_stop /usr/bin/python2.6
+	service_stop /usr/bin/python
 }
 
-start()
-{
+start() {
 	config_load 'deluged'
 	config_foreach start_instance 'deluged'
 }
 
-stop()
-{
+stop() {
 	config_load 'deluged'
 	config_foreach stop_instance 'deluged'
 }
