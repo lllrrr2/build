@@ -79,17 +79,6 @@ endef
 TARGET_CFLAGS += $(if $(CONFIG_SOFT_FLOAT),-DBOOST_NO_FENV_H) -fPIC
 EXTRA_CXXFLAGS += $(if $(CONFIG_GCC_VERSION_4_8),-std=gnu++11,-std=gnu++14)
 TARGET_LDFLAGS += -latomic $(if $(INTL_FULL),-liconv) $(if $(INTL_FULL),-lintl)
-CONFIGURE_ARGS += \
-	--disable-debug \
-	--disable-rpath \
-	--enable-encryption \
-	--enable-deprecated-functions \
-	--with-gnu-ld \
-	--with-openssl=$(STAGING_DIR)/usr \
-	--with-boost=$(STAGING_DIR)/usr \
-	--with-libiconv \
-	--with-libiconv-prefix=$(ICONV_PREFIX)
-
 TARGET_CXXFLAGS += -DBOOST_BIND_GLOBAL_PLACEHOLDERS
 
 CMAKE_OPTIONS += \

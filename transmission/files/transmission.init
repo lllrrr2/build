@@ -58,6 +58,10 @@ transmission() {
 	config_get config_overwrite "$cfg" config_overwrite 1
 	config_get nice "$cfg" nice 0
 	config_get web_home "$cfg" 'web_home'
+	local ca_bundle
+	config_get_bool ca_bundle "$cfg" ca_bundle 1
+	[ "$ca_bundle" -gt 0 ] && ca_bundle_file="/etc/ssl/certs/ca-certificates.crt"
+	local seccomp_path
 	
 	MEM=$(sed -ne 's!^MemTotal:[[:space:]]*\([0-9]*\) kB$!\1!p' /proc/meminfo)
 	if test "$MEM" -gt 1; then
@@ -146,7 +150,9 @@ transmission() {
 	procd_add_jail_mount_rw "$config_dir/blocklists"
 	procd_add_jail_mount_rw "$config_dir/stats.json"
 	procd_add_jail_mount_rw "$download_dir"
-	[ -d "$web_home" ] && procd_add_jail_mount_rw "$web_home"
+	web_home="${web_home:-/usr/share/transmission/web}"
+	[ -d "$web_home" ] && procd_add_jail_mount "$web_home"
+	[ -f "$ca_bundle_file" ] && procd_add_jail_mount "$ca_bundle_file"
 	procd_close_instance
 }
 

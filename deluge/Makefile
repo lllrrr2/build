@@ -48,23 +48,22 @@ define Package/deluge/description
 endef
 
 define Package/deluge/install
-	$(INSTALL_DIR) $(1)$(PYTHON3_PKG_DIR) $(1)/usr/bin $(1)/etc/init.d
-	$(CP) $(PKG_INSTALL_DIR)$(PYTHON3_PKG_DIR)/* $(1)$(PYTHON3_PKG_DIR)/
+	$(INSTALL_DIR) $(1)/usr/bin
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
-	$(INSTALL_BIN) ./files/deluged $(1)/etc/init.d
-	rm -rf $(1)$(PYTHON3_PKG_DIR)/deluge/ui/gtk3
+	$(INSTALL_DIR) $(1)$(PYTHON3_PKG_DIR)
+	$(CP) $(PKG_INSTALL_DIR)$(PYTHON3_PKG_DIR)/* $(1)$(PYTHON3_PKG_DIR)/
 	rm -rf $(1)$(PYTHON3_PKG_DIR)/deluge/ui/web
+	rm -rf $(1)$(PYTHON3_PKG_DIR)/deluge/ui/gtk3
 	rm -rf $(1)/usr/bin/deluge-gtk
 	rm -rf $(1)/usr/bin/deluge-web
 	$(call Python3/FixShebang,$(1)/usr/bin/* $(1)$(PYTHON3_PKG_DIR)/deluge/path_*.py)
 endef
 
 define Package/deluge-ui-web/install
-	$(INSTALL_DIR) $(1)$(PYTHON3_PKG_DIR)/deluge/ui $(1)/usr/bin $(1)/etc/init.d $(1)/etc/deluge/state
+	$(INSTALL_DIR) $(1)/usr/bin
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/deluge-web $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)$(PYTHON3_PKG_DIR)/deluge/ui
 	$(CP) $(PKG_INSTALL_DIR)$(PYTHON3_PKG_DIR)/deluge/ui/web $(1)$(PYTHON3_PKG_DIR)/deluge/ui/
-	# $(INSTALL_BIN) ./files/deluge-web $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/deluge-web-reset_password $(1)/usr/bin
 	$(call Python3/FixShebang,$(1)/usr/bin/*)
 endef
 

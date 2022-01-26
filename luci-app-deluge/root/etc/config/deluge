@@ -1,3 +1,4 @@
 
 config deluge 'main'
+enabled​ 0
 
