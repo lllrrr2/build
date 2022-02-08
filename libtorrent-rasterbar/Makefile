@@ -8,9 +8,18 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/arvidn/libtorrent/tar.gz/v$(PKG_VERSION)?
 PKG_HASH:=15b41c319955bb4df4be34458b04c483b7b0dbc366a3ac43511d2ca989600d05
 
-PKG_MAINTAINER:=David Yang <mmyangfl@gmail.com>
-PKG_LICENSE:=BSD-3-Clause
-PKG_LICENSE_FILES:=COPYING
+PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
+
+# PKG_SOURCE_PROTO:=git
+# PKG_SOURCE_URL:=https://github.com/arvidn/libtorrent.git
+# PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+# PKG_SOURCE_VERSION:=9c5b26b8d9bdb168256566a2986c563187638e5a
+# PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+# PKG_MIRROR_HASH:=15c9d37a56cf09b22b9d1eeec8a0c21eff7c9fb6b30b04c4cba9a61d5201d57a
+
+# PKG_MAINTAINER:=David Yang <mmyangfl@gmail.com>
+# PKG_LICENSE:=BSD-3-Clause
+# PKG_LICENSE_FILES:=COPYING
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
@@ -25,7 +34,7 @@ define Package/libtorrent-rasterbar
 	CATEGORY:=Libraries
 	TITLE:=Rasterbar BitTorrent library
 	URL:=https://www.libtorrent.org/
-	DEPENDS:=+librt +libpthread +boost-system +libatomic +libopenssl +libstdcpp $(ICONV_DEPENDS) $(INTL_DEPENDS)
+	DEPENDS:=+boost-system +libatomic +libc +libgcc +libopenssl +libstdcpp +USE_GLIBC:libpthread $(ICONV_DEPENDS) $(INTL_DEPENDS)
 endef
 
 define Package/rblibtorrent
@@ -33,7 +42,7 @@ define Package/rblibtorrent
 	CATEGORY:=Libraries
 	TITLE:=Rasterbar BitTorrent library
 	URL:=https://www.libtorrent.org/
-	DEPENDS:=+boost +boost-chrono +boost-random +boost-system +libgcc +libopenssl +libstdcpp $(ICONV_DEPENDS) $(INTL_DEPENDS)
+	DEPENDS:=+boost-system +libatomic +libopenssl +libstdcpp $(ICONV_DEPENDS) $(INTL_DEPENDS)
 endef
 
 define Package/python3-libtorrent
@@ -59,27 +68,27 @@ define Package/python3-libtorrent/description
 	$(call Package/libtorrent-rasterbar/description)
 endef
 
-define Download/try_signal
-	VERSION:=334fd139e2bb387017b42d36753a03935e3bca75
-	SUBDIR:=deps/try_signal
-	FILE:=$(PKG_NAME)-try_signal-$$(VERSION).tar.xz
-	URL:=https://github.com/arvidn/try_signal.git
-	MIRROR_HASH:=c85d65352c20713cb6cfb005942b46ab7579dc7eef3b876666bff9347149d47f
-	PROTO:=git
-endef
-$(eval $(call Download,try_signal))
-PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
-
-define Build/Prepare
-	$(Build/Prepare/Default)
-	$(eval $(Download/try_signal))
-	xzcat $(DL_DIR)/$(FILE) | tar -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
-endef
-
+TARGET_CXXFLAGS += -DBOOST_BIND_GLOBAL_PLACEHOLDERS
+TARGET_LDFLAGS += -latomic $(if $(INTL_FULL),-liconv) $(if $(INTL_FULL),-lintl)
 TARGET_CFLAGS += $(if $(CONFIG_SOFT_FLOAT),-DBOOST_NO_FENV_H) -fPIC
 EXTRA_CXXFLAGS += $(if $(CONFIG_GCC_VERSION_4_8),-std=gnu++11,-std=gnu++14)
-TARGET_LDFLAGS += -latomic $(if $(INTL_FULL),-liconv) $(if $(INTL_FULL),-lintl)
-TARGET_CXXFLAGS += -DBOOST_BIND_GLOBAL_PLACEHOLDERS
+
+# CONFIGURE_ARGS += \
+	# --enable-shared=yes \
+	# --enable-static=yes \
+	# --disable-debug \
+	# --disable-rpath \
+	# --enable-encryption \
+	# --enable-deprecated-functions \
+	# --with-gnu-ld \
+	# --with-openssl=$(STAGING_DIR)/usr \
+	# --with-boost=$(STAGING_DIR)/usr \
+	# --with-libiconv \
+	# --with-libiconv-prefix=$(ICONV_PREFIX) \
+	# --enable-python-binding \
+	# --with-libgeoip=system \
+	# --with-lib-geoip \
+	# --with-boost-python=boost_python3
 
 CMAKE_OPTIONS += \
 	-Dpython-bindings:BOOL=ON \
@@ -88,10 +97,18 @@ CMAKE_OPTIONS += \
 	-DPYTHON_SITE_PACKAGES="/usr/lib/python$(PYTHON3_VERSION)/site-packages" \
 	-DPYTHON_EXT_SUFFIX=""
 
+# define Build/Configure
+	# cd $(PKG_BUILD_DIR) ; \
+		# sh autotool.sh
+	# $(call Build/Configure/Default)
+# endef
+
 define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/lib $(1)/usr/include $(1)/usr/lib/pkgconfig
+	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/libtorrent $(1)/usr/include/
+	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libtorrent-rasterbar.so* $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libtorrent-rasterbar.pc $(1)/usr/lib/pkgconfig/
 endef
 
@@ -107,8 +124,7 @@ endef
 
 define Package/python3-libtorrent/install
 	$(INSTALL_DIR) $(1)/usr/lib/python$(PYTHON3_VERSION)/site-packages
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON3_VERSION)/site-packages/*.so \
-	$(1)/usr/lib/python$(PYTHON3_VERSION)/site-packages/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON3_VERSION)/site-packages/*.so $(1)/usr/lib/python$(PYTHON3_VERSION)/site-packages
 endef
 
 $(eval $(call BuildPackage,rblibtorrent))

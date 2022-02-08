@@ -1,96 +1,111 @@
 #!/bin/sh /etc/rc.common
+#
+# Copyright (C) 2015 OpenWrt-dist
+# Copyright (C) 2022 hong0980 <win3gp@gmail.com>
+#
+# This is free software, licensed under the GNU General Public License v3.
+# See /LICENSE for more information.
+#
 
 START=99
 
 _boot() {
-	[ $port ] && port="-p $port"
-	[ $user ] && user="-u $user"
-	[ $log_level ] && log_level="-L $log_level"
-	[ $log_dir ] && log_dir="-l $log_dir/deluge.log"
-	[ -d $profile_dir ] || mkdir -m 755 -p $profile_dir
+	[ $user ] && user="-U $user"
+	[ -d $profile_dir  ] || mkdir -m 755 -p $profile_dir
 	[ -d $download_dir ] || mkdir -m 755 -p $download_dir
+	if [ $enable_logging = 1 ]; then
+		[ $log_level ] && log_level="-L $log_level"
+		[ -d $log_dir  ] || mkdir -m 755 -p $log_dir
+		[ $log_dir ] && log_dir="-l $log_dir/deluge.log"
+	else
+		log_dir=""
+		log_level=""
+	fi
 	[ -f $profile_dir/core.conf ] && {
 		sed -i "{
 			/random_port/ {s|true|false|}
-			/cache_size/ {s|:.*,|: 32768,|}
 			/queue_new_to_top/ {s|false|true|}
 			/new_release_check/ {s|true|false|}
-			/listen_random_port/ {s|55554|null|}
-			/pre_allocate_storage/ {s|false|true|}
+			/listen_random_por/ {s|55554|null|}
+			/pre_allocate_stor/ {s|false|true|}
+			/cache_size/ {s|:.*,|: $cache_size,|}
 			/download_location/ {s|: \".*\"|: \"$download_dir\"|}
-			/move_completed_path/ {s|: \".*\"|: \"$download_dir\"|}
-			/torrentfiles_location/ {s|: \".*\"|: \"$download_dir\"|}
+			/move_completed_pa/ {s|: \".*\"|: \"$download_dir\"|}
+			/torrentfiles_loca/ {s|: \".*\"|: \"$download_dir\"|}
 		}" $profile_dir/core.conf
-	} || {
-		cat <<-EOF >$profile_dir/core.conf
-			{
-			"cache_size": 32768,
-			"random_port": false,
-			"queue_new_to_top": true,
-			"new_release_check": false,
-			"listen_random_port": null,
-			"pre_allocate_storage": true,
-			"download_location": "$download_dir",
-			"move_completed_path": "$download_dir",
-			"torrentfiles_location": "$download_dir"
-			}
-		EOF
 	}
-	dwsalt="$(cat /dev/urandom | tr -dc 'a-e0-9' | head -c 40 | xargs)"
-	dwp="$(/usr/bin/python3 $profile_dir/python_sha1.py $password $dwsalt)"
-	[ -f $profile_dir/web.conf ] && {
-		sed -i "{
-			/show_session_speed/ {s|false|true|}
-			/pwd_sha1/ {s|: \".*\"|: \"$dwp\"|}
-			/pwd_salt/ {s|: \".*\"|: \"$dwsalt\"|}
-			/language/ {s|: \".*\",|: \"$Locale\",|}
-		}" $profile_dir/web.conf
-	} || {
-		cat <<-EOF >$profile_dir/python_sha1.py
+	[ -f $profile_dir/sha1.py ] || {
+		cat <<-EOF >$profile_dir/sha1.py
 			#!/usr/bin/env python
-			import hashlib
 			import sys
+			import hashlib
 			password = sys.argv[1]
-			salt = sys.argv[2]
+			pwd_sha1 = sys.argv[2]
 			s = hashlib.sha1()
-			s.update(salt.encode('utf-8'))
+			s.update(pwd_sha1.encode('utf-8'))
 			s.update(password.encode('utf-8'))
 			print (s.hexdigest())
 		EOF
+	}
+	dwsalt="$(cat /dev/urandom | tr -dc 'a-e0-9' | head -c 40 | xargs)"
+	dwsha1="$(/usr/bin/python3 $profile_dir/sha1.py $password $dwsalt)"
+	[ $https = "https" ] && https=true || https=false
+	[ -f $profile_dir/web.conf ] && {
+		sed -i '{
+			/port/ {s|:.*,|: '"$port"',|}
+			/https/ {s|:.*,|: '"$https"',|}
+			/show_session_speed/ {s|false|true|}
+			/pwd_salt/ {s|: ".*"|: "'"$dwsalt"'"|}
+			/pwd_sha1/ {s|: ".*"|: "'"$dwsha1"'"|}
+			/language/ {s|: ".*"|: "'"$Locale"'"|}
+		}' $profile_dir/web.conf
+	} || {
 		cat <<-EOF >$profile_dir/web.conf
-			{
+		{
+			"port": $port,
 			"language": "$Locale",
 			"pwd_salt": "$dwsalt",
-			"pwd_sha1": "$dwp",
-			"show_session_speed": true
-			}
+			"pwd_sha1": "$dwsha1"
+		}
 		EOF
 	}
-	[ $profile_dir ] && profile_dir="-c $profile_dir"
-	/usr/bin/python3 /usr/bin/deluged    $profile_dir $user $log_dir $log_level &
-	/usr/bin/python3 /usr/bin/deluge-web $profile_dir $port $log_dir $log_level &
+	if [ ! -f $profile_dir/.configured ]; then
+		echo "Setting default deluge ui to console ... "
+		/usr/bin/deluge -s console
+		touch $profile_dir/.configured
+	fi
+	port="-p $port"
+	profile_dir="-c $profile_dir"
+	/usr/bin/python3 /usr/bin/deluged    $profile_dir $log_dir $log_level
+	/usr/bin/python3 /usr/bin/deluge-web $profile_dir $log_dir $log_level $user $port
+	# /usr/bin/python3 /usr/bin/deluged $user $profile_dir $log_dir $log_level
+	# /usr/bin/python3 /usr/bin/deluge-web    $profile_dir $log_dir $log_level
+	logger -t deluge 'Start deluge service'
 }
 
 start() {
 	config_load deluge
-	get_config="Locale download_dir enabled log_dir log_level password port profile_dir user"
+	get_config="Locale cache_size download_dir enabled enable_logging log_dir log_level https password port profile_dir user"
 	for rt in $get_config; do
 		config_get_bool $rt main $rt
 		config_get $rt main $rt
 	done
-	[ "$enabled" ] && {
+	[ $enabled = 1 ] && {
 		[ -d $profile_dir ] && {
 			_boot
 		} || {
 			_boot && sleep 3
 			restart
 		}
+	} || {
+		exit 0
 	}
 }
 
 stop() {
 	kill $(ps -w | grep deluge | awk '/usr/{print $1}') >/dev/null 2>&1
 	kill $(ps -w | grep deluge | awk '/web/{print $1}') >/dev/null 2>&1
+	logger -t deluge 'Stop deluge service'
 }
 
 restart() {
@@ -98,4 +113,3 @@ restart() {
 	sleep 2
 	start
 }
-

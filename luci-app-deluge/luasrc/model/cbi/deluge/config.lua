@@ -18,8 +18,8 @@ for t in luci.util.execi("cut -d: -f1 /etc/passwd") do
 	e:value(t)
 end
 
-e = t:taboption("basic", Value, "profile_dir", translate("配置文件路径"), translate("默认保存在/var/deluge"))
-e.default = '/var/deluge'
+e = t:taboption("basic", Value, "profile_dir", translate("配置文件路径"), translate("默认保存在/etc/deluge"))
+e.default = '/etc/deluge'
 
 e = t:taboption("basic", Value, "download_dir", translate("下载文件路径"))
 e.placeholder = "/mnt/sd3/download"
@@ -36,8 +36,16 @@ e.default = "8112"
 e = t:taboption("basic", Value, "password", translate("WebUI密码"), translate("默认密码：deluge"))
 e.default = "deluge"
 
+e = t:taboption("basic", Value, "https", translate("WebUI使用https"), translate("默认不使用"))
+e:value("http", translate("不使用"))
+e:value("https", translate("使用"))
+e.default = "http"
+
+e = t:taboption("basic", Value, "cache_size", translate("缓存大小"), translate("单位：KiB"))
+e.default = "32768"
+
 e = t:taboption("basic", Flag, "enable_logging", translate("启用日志"))
-e.rmempty = false
+e.rmempty = "false"
 
 e = t:taboption("basic", Value, "log_dir", translate("日志保存路径"), translate("默认保存在/var/log/deluge.log"))
 e:depends("enable_logging", "1")
