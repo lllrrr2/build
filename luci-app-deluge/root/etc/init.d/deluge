@@ -76,7 +76,7 @@ _boot() {
 	fi
 	port="-p $port"
 	profile_dir="-c $profile_dir"
-	/usr/bin/python3 /usr/bin/deluged    $profile_dir $log_dir $log_level
+	/usr/bin/python3 /usr/bin/deluged    $profile_dir $log_dir $log_level $user
 	/usr/bin/python3 /usr/bin/deluge-web $profile_dir $log_dir $log_level $user $port
 	# /usr/bin/python3 /usr/bin/deluged $user $profile_dir $log_dir $log_level
 	# /usr/bin/python3 /usr/bin/deluge-web    $profile_dir $log_dir $log_level
