@@ -1,5 +1,6 @@
 local e=require"nixio.fs"
 local s=luci.util.trim(luci.sys.exec("HOME=/tmp ddnsto -v"))
+local p=luci.util.trim(luci.sys.exec("logread | awk -F= '/routerId/{print $3}' | awk 'NR==1{print $1}'"))
 m=Map("ddnsto", translate("DDNSTO 内网穿透"))
 m.description = translate("DDNSTO是koolshare小宝开发支持HTTP2.0快速远程穿透的工具。") .. 
 translate("<br><br><input class=\"cbi-button cbi-button-apply\" type=\"button\" value=\"" .. 
@@ -12,7 +13,7 @@ t.anonymous=true
 t.addremove=false
 
 e=t:option(Flag, "enable", translate("启用"))
-e.description = e.description .. translatef("当前DDNSTO的版本: <b style = \"color:green\"> %s", s) .. "</b>"
+e.description = e.description .. translatef("当前DDNSTO的版本: <b style = \"color:red\"> %s", s) .. "</b><br>" .. translatef("DDNSTO运行的ID: <b style = \"color:red\"> %s", p) .. "</b>"
 e.default=0
 e.rmempty=false
 
