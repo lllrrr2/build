@@ -18,7 +18,7 @@ e.default=0
 e.rmempty=false
 
 e=t:option(Value, "token", translate('ddnsto令牌'))
-e.description = translatef("当前DDNSTO的版本: <b style = \"color:green\"> %s", s) .. "</b>"
+e.description = translatef("DDNSTO运行的ID: <b style = \"color:green\"> %s", p) .. "</b>"
 e.password=true
 e.rmempty=false
 
