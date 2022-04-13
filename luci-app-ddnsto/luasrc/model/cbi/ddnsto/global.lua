@@ -13,11 +13,12 @@ t.anonymous=true
 t.addremove=false
 
 e=t:option(Flag, "enable", translate("启用"))
-e.description = e.description .. translatef("当前DDNSTO的版本: <b style = \"color:red\"> %s", s) .. "</b><br>" .. translatef("DDNSTO运行的ID: <b style = \"color:red\"> %s", p) .. "</b>"
+e.description = translatef("当前DDNSTO的版本: <b style = \"color:green\"> %s", s) .. "</b>"
 e.default=0
 e.rmempty=false
 
 e=t:option(Value, "token", translate('ddnsto令牌'))
+e.description = translatef("当前DDNSTO的版本: <b style = \"color:green\"> %s", s) .. "</b>"
 e.password=true
 e.rmempty=false
 
