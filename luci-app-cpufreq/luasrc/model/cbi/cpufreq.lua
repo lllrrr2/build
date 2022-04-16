@@ -43,12 +43,15 @@ for _, e in ipairs(freq_array) do
 	if e ~= "" then maxfreq:value(e) end
 end
 
-upthreshold = s:option(Value, "upthreshold", translate("CPU Switching Threshold"))
-upthreshold.datatype="range(1,99)"
-upthreshold.rmempty = false
-upthreshold.description = translate("Kernel make a decision on whether it should increase the frequency (%)")
-upthreshold.placeholder = 50
-upthreshold.default = 50
+local file=io.open("/sys/devices/system/cpu/cpufreq/ondemand")
+if file then
+	upthreshold = s:option(Value, "upthreshold", translate("CPU Switching Threshold"))
+	upthreshold.datatype="range(1,99)"
+	upthreshold.rmempty = false
+	upthreshold.description = translate("Kernel make a decision on whether it should increase the frequency (%)")
+	upthreshold.placeholder = 50
+	upthreshold.default = 50
+end
 
 factor = s:option(Value, "factor", translate("CPU Switching Sampling rate"))
 factor.datatype="range(1,100000)"
