@@ -32,7 +32,7 @@ String.prototype.replaceAll = function(search, replacement) {
     }
   }
   function renamePath(filename) {
-    var newname = prompt('输入新名字:', filename);
+    var newname = prompt('输入新的名称:', filename);
     if (newname) {
       newname = newname.trim();
       if (newname != filename) {
@@ -135,16 +135,15 @@ String.prototype.replaceAll = function(search, replacement) {
           listHtml += '<tr class="cbi-section-table-row cbi-rowstyle-' + (1 + i%2)
             + '" data-filename="' + o.filename + '" data-isdir="' + Number(f[1][0] === 'd' || f[1][0] === 'z') + '"'
             + ((f[1][0] === 'z' || f[1][0] === 'l') ? (' data-linktarget="' + f[9].split(' -> ')[1]) : '')
-            + '">'
-            + '<td class="cbi-value-field ' + o.icon + '">'
-            +   '<strong>' + o.displayname + '</strong>'
-            + '</td>'
+            + '">' + '<td class="cbi-value-field ' + o.icon + '">'
+            + '<strong>' + o.displayname + '</strong>'+'</td>'
             + '<td class="cbi-value-field cbi-value-owner">'+o.owner+'</td>'
-            + '<td class="cbi-value-field cbi-value-date">'+o.date+'</td>'
-            + '<td class="cbi-value-field cbi-value-size">'+o.size+'</td>'
-            + '<td class="cbi-value-field cbi-value-perm">'+o.perms+'</td>'
-            + '<td class="cbi-section-table-cell"><button class="cbi-button cbi-button-edit">重命名</button>\
-                <button class="cbi-button cbi-button-remove">删除</button></td>'
+            + '<td class="cbi-value-field cbi-value-size">' +o.size+ '</td>'
+            + '<td class="cbi-value-field cbi-value-date">' +o.date+ '</td>'
+            + '<td class="cbi-value-field cbi-value-perm">' +o.perms+'</td>'
+            + '<td class="cbi-section-table-cell">\
+               <button class="cbi-button cbi-button-edit">重命名</button>\
+               <button class="cbi-button cbi-button-remove">删除</button></td>'
             + '</tr>';
         }
       }
