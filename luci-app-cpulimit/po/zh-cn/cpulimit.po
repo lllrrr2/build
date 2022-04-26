@@ -190,8 +190,8 @@ msgstr "加密"
 msgid "Pre-Authentication"
 msgstr "预认证"
 
-msgid ""
-msgstr ""
+msgid "Target Platform"
+msgstr "目标平台"
 
 msgid ""
 msgstr ""
