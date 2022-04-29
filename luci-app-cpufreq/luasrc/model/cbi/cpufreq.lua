@@ -51,13 +51,13 @@ if file then
 	upthreshold.description = translate("Kernel make a decision on whether it should increase the frequency (%)")
 	upthreshold.placeholder = 50
 	upthreshold.default = 50
-end
 
-factor = s:option(Value, "factor", translate("CPU Switching Sampling rate"))
-factor.datatype="range(1,100000)"
-factor.rmempty = false
-factor.description = translate("The sampling rate determines how frequently the governor checks to tune the CPU (ms)")
-factor.placeholder = 10
-factor.default = 10
+	factor = s:option(Value, "factor", translate("CPU Switching Sampling rate"))
+	factor.datatype="range(1,100000)"
+	factor.rmempty = false
+	factor.description = translate("The sampling rate determines how frequently the governor checks to tune the CPU (ms)")
+	factor.placeholder = 10
+	factor.default = 10
+end
 
 return mp
