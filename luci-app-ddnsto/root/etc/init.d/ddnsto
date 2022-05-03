@@ -22,7 +22,6 @@ get_config() {
 	config_get token $1 token
 }
 
-
 start() {
 	config_load $CONFIG
 	config_foreach get_config global
@@ -31,6 +30,16 @@ start() {
 	[ -n "$start_delay" ] && sleep $start_delay && logger -t ddnsto "延时$start_delay秒启动 ddnsto"
 	service_start /usr/bin/ddnsto -u $token -d >/dev/null 2>&1 &
 	logger -t ddnsto 'Start ddnsto service'
+	ping -c 2 223.5.5.5 >/dev/null 2>&1 && {
+		while :; do
+			if [ -s /tmp/ddnsto_id ]; then
+				break
+			else
+				logread | awk -F= '/router_id/{print $NF}' | sed -n '1p' > /tmp/ddnsto_id
+				sleep 3
+			fi
+		done
+	}
 }
 
 stop() {
@@ -42,4 +51,3 @@ stop() {
 	}
 	logger -t ddnsto 'Stop ddnsto service'
 }
-

@@ -142,13 +142,15 @@ run_bridge() {
 		save_apply
 	else
 		#恢复配置&删除备份
-		sed -i "/$ip_tables/d" $firewall_user
-		for p in /etc/config/*_backup; do
-			while read line; do uci -q batch $line; done <"$p"
-			rm $p
-		done
-		uci -q set firewall.@zone[0].name='lan'
-		save_apply
+		ls /etc/config/*_backup >/dev/null 2>&1 && {
+			sed -i "/$ip_tables/d" $firewall_user
+			for p in /etc/config/*_backup; do
+				while read line; do uci -q batch $line; done <"$p"
+				rm $p
+			done
+			uci -q set firewall.@zone[0].name='lan'
+			save_apply
+		}
 	fi
 }
 

@@ -1,30 +1,26 @@
-local e=require"nixio.fs"
-local s=luci.util.trim(luci.sys.exec("HOME=/tmp ddnsto -v"))
-local p=luci.util.trim(luci.sys.exec("logread | awk -F= '/routerId/{print $3}' | awk 'NR==1{print $1}'"))
-m=Map("ddnsto", translate("DDNSTO 内网穿透"))
+local e = require"nixio.fs"
+m = Map("ddnsto", translate("DDNSTO 内网穿透"))
 m.description = translate("DDNSTO是koolshare小宝开发支持HTTP2.0快速远程穿透的工具。") .. 
 translate("<br><br><input class=\"cbi-button cbi-button-apply\" type=\"button\" value=\"" .. 
 translate("注册与教程") ..
 "\" onclick=\"window.open('https://www.ddnsto.com')\"/>")
-m:section(SimpleSection).template="ddnsto/ddnsto_status"
+m:section(SimpleSection).template = "ddnsto/ddnsto_status"
 
-t=m:section(TypedSection, "global")
-t.anonymous=true
-t.addremove=false
+t = m:section(TypedSection, "global")
+t.anonymous = true
+t.addremove = false
 
-e=t:option(Flag, "enable", translate("启用"))
-e.description = translatef("当前DDNSTO的版本: <b style = \"color:green\"> %s", s) .. "</b>"
-e.default=0
-e.rmempty=false
+e = t:option(Flag, "enable", translate("启用"))
+e.default = 0
+e.rmempty = false
 
-e=t:option(Value, "token", translate('ddnsto令牌'))
-e.description = translatef("DDNSTO运行的ID: <b style = \"color:green\"> %s", p) .. "</b>"
-e.password=true
-e.rmempty=false
+e = t:option(Value, "token", translate('ddnsto令牌'))
+e.password = true
+e.rmempty = false
 
-e=t:option(Value, "start_delay", translate("延迟启动"), translate("单位：秒"))
-e.datatype="uinteger"
-e.default="20"
-e.rmempty=true
+e = t:option(Value, "start_delay", translate("延迟启动"), translate("单位：秒"))
+e.datatype = "uinteger"
+e.default = "20"
+e.rmempty = true
 
 return m

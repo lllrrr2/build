@@ -1,5 +1,5 @@
 #!/bin/sh
-[ -f /etc/init.d/cpufreq ] && chmod +x /etc/init.d/cpufreq
+
 uci -q batch <<-EOF >/dev/null
 	delete ucitrack.@cpufreq[-1]
 	add ucitrack cpufreq
