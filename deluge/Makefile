@@ -23,37 +23,18 @@ define Package/deluge
 	$(call Package/deluge/Default)
 	TITLE+= (console UI & daemon)
 	DEPENDS:= \
-	    +python3-asyncio \
-	    +python3-base \
-	    +python3-cffi \
-	    +python3-cgitb \
 	    +python3-chardet \
-	    +python3-codecs \
-	    +python3-ctypes \
-	    +python3-dbm \
-	    +python3-decimal \
-	    +python3-distutils \
 	    +python3-libtorrent \
-	    +python3-logging \
-	    +python3-lzma \
 	    +python3-mako \
 	    +python3-markupsafe \
-	    +python3-multiprocessing \
-	    +python3-ncurses \
-	    +python3-openssl \
 	    +python3-pillow \
-	    +python3-pip \
-	    +python3-ply \
-	    +python3-pyasn1-modules \
+	    +python3-pyopenssl \
 	    +python3-pyxdg \
-	    +python3-readline \
 	    +python3-rencode \
+	    +python3-service-identity \
 	    +python3-setproctitle \
 	    +python3-setuptools \
-	    +python3-sqlite3 \
-	    +python3-twisted \
-	    +python3-unittest \
-	    +python3-uuid
+	    +python3-twisted
 endef
 
 define Package/deluge-ui-web
