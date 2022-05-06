@@ -4,9 +4,9 @@
 			var tb = document.getElementById('ddnsto_status');
 			if (data && tb) {
 				if (data.running) {
-					tb.innerHTML = '<em><b>当前DDNSTO的版本: <font color=green>' + data.s + '</font><b>&nbsp;&nbsp;&nbsp;&nbsp;<%:运行的ID: %><font color=green>' + data.p + '</font><br><font color=green><%:RUNNING%></font></b></em>';
+					tb.innerHTML = '<em><b><font color=green><%:RUNNING%></font><br><%:版本: %><font color=green>' + data.s + '</font>&nbsp;&nbsp;&nbsp;&nbsp;<%:ID: %><font color=green>' + data.p + '</font></b></em>';
 				} else {
-					tb.innerHTML = '<em><b>当前DDNSTO的版本: <font color=green>' + data.s + '</font><br><font color=red><%:NOT RUNNING%></font></b></em>';
+					tb.innerHTML = '<em><b><font color=red><%:NOT RUNNING%></font><br><%:版本: %><font color=green>' + data.s + '</font></b></em>';
 				}
 			}
 		}
