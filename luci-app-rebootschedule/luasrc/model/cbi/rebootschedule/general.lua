@@ -61,7 +61,7 @@ command:value('ifdown wan', translate("关闭联网"))
 command:value('ifup wan', translate("打开联网"))
 command:value('wifi down', translate("关闭WIFI"))
 command:value('wifi up', translate("打开WIFI"))
-command:value('sync && echo 1 > /proc/sys/vm/drop_caches', translate("释放内存"))
+command:value('sync && echo 3 > /proc/sys/vm/drop_caches', translate("释放内存"))
 command:value('poweroff', translate("关闭电源"))
 command.default = 'sleep 5 && touch /etc/banner && reboot'
 
