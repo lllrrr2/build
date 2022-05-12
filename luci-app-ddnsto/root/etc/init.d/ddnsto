@@ -32,7 +32,7 @@ start() {
 	ping -c 2 223.5.5.5 >/dev/null 2>&1 && {
 		while :; do
 			if [ ! -s /tmp/ddnsto_id ]; then
-				logread | awk -F= '/routerId/{print $3}' | awk '{print $1}' | sed -n '1p' > /tmp/ddnsto_id
+				logread | awk -F= '/routerId/{print $3}' | awk 'NR==1{print $1}' > /tmp/ddnsto_id
 				sleep 3
 			else
 				break
