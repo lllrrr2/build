@@ -15,4 +15,4 @@ config crontab
 	option hour '5'
 	option minute '0'
 	option week '*'
-	option command 'sync && echo 1 > /proc/sys/vm/drop_caches'
+	option command 'sync && echo 3 > /proc/sys/vm/drop_caches'
