@@ -7,7 +7,7 @@ function index()
 	end
 	entry({"admin", "services", "softwarecenter"}, alias("admin", "services", "softwarecenter", "softwarecenter"), _("Entware部署"), 30).dependent = true
 	entry({"admin", "services", "softwarecenter", "softwarecenter"}, cbi("softwarecenter/softwarecenter"), _("常用配置"), 40).leaf = true
-	if fs.access("/opt/etc/init.d/S80nginx") and fs.access("/opt/etc/init.d/S70mysqld") and fs.access("/opt/etc/init.d/S79php7-fpm") then
+	if fs.access("/opt/etc/init.d/S80nginx") and fs.access("/opt/etc/init.d/S70mysqld") and fs.access("/opt/etc/init.d/S79php8-fpm") then
 		entry({"admin", "services", "softwarecenter", "website"}, cbi("softwarecenter/website"), _("网站管理"), 60).leaf = true
 		entry({"admin", "services", "softwarecenter", "errorlog"}, form("softwarecenter/errorlog"), _("nginx日志"), 70).leaf = true
 	end
@@ -69,7 +69,7 @@ local function mysql_installed_report()
 end
 
 local function php_install_report()
-	return luci.sys.call("ls /opt/etc/init.d/S79php7-fpm >/dev/null") == 0
+	return luci.sys.call("ls /opt/etc/init.d/S79php8-fpm >/dev/null") == 0
 end 
 
 local function get_website_list()
