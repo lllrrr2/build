@@ -92,9 +92,11 @@ install_aria2() {
 install_deluge() {
 	local time_out="timeout 3m"
 	if opkg_install deluge-ui-web; then
+		dwsalt="$(cat /dev/urandom | tr -dc 'a-eA-Z0-9' | head -c 40 | xargs)"
+		dwsha1="$(/opt/bin/python /opt/share/python_sha1.py ${webui_pass} ${dwsalt})"
 		sed -i '{
-			/deluged -l/a\\tsleep 5\n\t/opt/etc/init.d/S81deluge-web start
-			/killall deluged/a\\tsleep 5\n\t/opt/etc/init.d/S81deluge-web stop
+			/deluged -l/a\\tsleep 3\n\t/opt/etc/init.d/S81deluge-web start
+			/killall deluged/a\\tsleep 3\n\t/opt/etc/init.d/S81deluge-web stop
 		}' /opt/etc/init.d/S80deluged
 		cat <<-EOF >/opt/share/python_sha1.py # Deluge Password Calculatation
 			#!/opt/bin/env python
@@ -107,38 +109,30 @@ install_deluge() {
 			s.update(password.encode('utf-8'))
 			print (s.hexdigest())
 		EOF
-		/opt/etc/init.d/S80deluged start >/dev/null 2>&1
-		sleep 8
-		/opt/etc/init.d/S80deluged stop >/dev/null 2>&1
-
-		dwsalt="$(cat /dev/urandom | tr -dc 'a-eA-Z0-9' | head -c 40 | xargs)"
-		dwp="$(/opt/bin/python /opt/share/python_sha1.py ${webui_pass} ${dwsalt})"
-
-		sed -i "{
-			/random_port/ {s|true|false|}
-			/cache_size/ {s|:.*,|: 32768,|}
-			/queue_new_to_top/ {s|false|true|}
-			/new_release_check/ {s|true|false|}
-			/listen_random_port/ {s|55554|null|}
-			/pre_allocate_storage/ {s|false|true|}
-			/download_location/ {s|: \".*\"|: \"$download_dir\"|}
-			/move_completed_path/ {s|: \".*\"|: \"$download_dir\"|}
-			/torrentfiles_location/ {s|: \".*\"|: \"$download_dir\"|}
-		}" /opt/etc/deluge/core.conf
-
-		sed -i "{
-			/pwd_sha1/ {s|: \".*\"|: \"$dwp\"|}
-			/language/ {s|: \".*\"|: \"zh_CN\"|}
-			/show_session_speed/ {s|false|true|}
-			/pwd_salt/ {s|: \".*\"|: \"$dwsalt\"|}
-		}" /opt/etc/deluge/web.conf
-
+		cat <<-EOF >/opt/etc/deluge/web.conf
+		{
+			"language": "zh_CN",
+			"pwd_salt": "$dwsalt",
+			"pwd_sha1": "$dwsha1"
+		}
+		EOF
+		cat <<-EOF >/opt/etc/deluge/core.conf
+		{
+			"cache_size": 32768,
+			"queue_new_to_top": true,
+			"new_release_check": false,
+			"listen_random_port": null,
+			"pre_allocate_storage": true,
+			"download_location": "$download_dir",
+			"move_completed_path": "$download_dir",
+			"torrentfiles_location": "$download_dir"
+		}
+		EOF
 		ln -sf /opt/etc/deluge/core.conf /opt/etc/config/deluge.conf
-		wget -t5 -qO /opt/*/*/*/*/*/zh_CN/*/deluge.mo raw.githubusercontent.com/hong0980/diy/master/deluge.mo
-		/opt/etc/init.d/S80deluged start >/dev/null 2>&1
+		/opt/etc/init.d/S80deluged start >/dev/null 2>&1 && sleep 4
+		/opt/etc/init.d/S80deluged restart >/dev/null 2>&1
 		echo_time "登录WebUI的用户名 $webui_name 密码 $webui_pass"
 		_pidof deluged
-
 	else
 		echo_time "deluge 安装失败，再重试安装！"
 		exit 1
