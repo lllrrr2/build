@@ -72,7 +72,6 @@ opkg_install() {
 			fi
 		else
 			echo_time "$ipk 不在 Entware 软件源，跳过安装！"
-			return 1
 		fi
 	done
 }

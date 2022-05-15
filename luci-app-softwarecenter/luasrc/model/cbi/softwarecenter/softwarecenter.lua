@@ -33,9 +33,9 @@ translate("安装过程可以在运行日志中查看进度<br>如只安装应�
 p:depends("entware_enable", 1)
 
 deploy_nginx = s:taboption("entware", Flag, "deploy_nginx", translate("部署Nginx/PHP"),
-translate("自动部署Nginx服务器和其所需的PHP7运行环境<br><b style=\"color:red\">安装后如取消选择会删除以有的部署</b>"))
+translate("自动部署Nginx服务器和其所需的PHP8运行环境<br><b style=\"color:red\">安装后如取消选择会删除以有的部署</b>"))
 p = s:taboption("entware", Flag, "nginx_enabled", translate("Enabled"),
-translate("部署完成后启动Nginx/PHP7(依赖Entware软件仓库)"))
+translate("部署完成后启动Nginx/PHP8(依赖Entware软件仓库)"))
 p:depends("deploy_nginx", 1)
 deploy_nginx:depends("deploy_entware", 1)
 

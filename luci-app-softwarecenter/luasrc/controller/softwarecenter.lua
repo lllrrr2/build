@@ -57,7 +57,7 @@ local function mysql_status_report()
 end
 
 local function php_status_report()
-	return luci.sys.call("pidof php-fpm >/dev/null") == 0
+	return luci.sys.call("pidof php8-fpm >/dev/null") == 0
 end
 
 local function nginx_installed_report()
