@@ -92,8 +92,6 @@ install_aria2() {
 install_deluge() {
 	local time_out="timeout 3m"
 	if opkg_install deluge-ui-web; then
-		dwsalt="$(cat /dev/urandom | tr -dc 'a-eA-Z0-9' | head -c 40 | xargs)"
-		dwsha1="$(/opt/bin/python /opt/share/python_sha1.py ${webui_pass} ${dwsalt})"
 		sed -i '{
 			/deluged -l/a\\tsleep 3\n\t/opt/etc/init.d/S81deluge-web start
 			/killall deluged/a\\tsleep 3\n\t/opt/etc/init.d/S81deluge-web stop
@@ -109,6 +107,8 @@ install_deluge() {
 			s.update(password.encode('utf-8'))
 			print (s.hexdigest())
 		EOF
+		dwsalt="$(cat /dev/urandom | tr -dc 'a-eA-Z0-9' | head -c 40 | xargs)"
+		dwsha1="$(/opt/bin/python /opt/share/python_sha1.py ${webui_pass} ${dwsalt})"
 		cat <<-EOF >/opt/etc/deluge/web.conf
 		{
 			"language": "zh_CN",
@@ -142,18 +142,27 @@ install_deluge() {
 install_qbittorrent() {
 	local time_out="timeout 1m"
 	if opkg_install qbittorrent; then
-		/opt/etc/init.d/S89qbittorrent start >/dev/null 2>&1 && sleep 5
-		/opt/etc/init.d/S89qbittorrent stop >/dev/null 2>&1
+		/opt/etc/init.d/S89qbittorrent start >/dev/null 2>&1 && sleep 2
 
 		if [ -z $(command -v qbpass) ]; then
 			wget -qO /opt/bin/qbpass github.com/KozakaiAya/libqbpasswd/releases/download/v0.2/qb_password_gen_static
 			chmod +x /opt/bin/qbpass
 		fi
 
-		cat >"/opt/etc/qBittorrent_entware/config/qBittorrent.conf" <<-EOF
+		cat <<-EOF >/opt/etc/qBittorrent_entware/config/qBittorrent.conf
+			[AutoRun]
+			enabled=false
+			program=
+			[LegalNotice]
+			Accepted=true
+			[Network]
+			Cookies=@Invalid()
 			[BitTorrent]
 			Session\MultiConnectionsPerIp=true
 			[Preferences]
+			Advanced\AutoBanUnknownPeer=true
+			Bittorrent\AutoUpdateTrackers=true
+			Bittorrent\CustomizeTrackersListUrl=https://trackerslist.com/all.txt
 			Connection\PortRangeMin=44667
 			Queueing\QueueingEnabled=false
 			WebUI\CSRFProtection=false
@@ -170,18 +179,22 @@ install_qbittorrent() {
 		EOF
 
 		cd /opt/share/www
+		[ -d CzBiX-qb-web ] || {
 		if wget -qO CzBiX-qb-web.zip github.com/$(curl -Ls github.com/CzBiX/qb-web/releases | grep -oE "CzBiX/qb-web/releases/download.*zip" | head -1); then
 			unzip -qo CzBiX-qb-web.zip
 			mv -f dist CzBiX-qb-web
 			rm -f CzBiX-qb-web.zip
 		fi
+		}
 
+		[ -d miniers-qb-web ] || {
 		if curl -sL api.github.com/repos/miniers/qb-web/releases/latest | sed "s|,|\n|g" | grep browser_download_url  | grep -oP "https.*zip" | xargs wget -O miniers-qb-web.zip; then
 			unzip -qo miniers-qb-web.zip -d miniers-qb-web
 			rm -rf miniers-qb-web.zip
 		fi
+		}
 		ln -sf /opt/etc/qBittorrent_entware/config/qBittorrent.conf /opt/etc/config/qBittorrent.conf
-		/opt/etc/init.d/S89qbittorrent start >/dev/null 2>&1
+		/opt/etc/init.d/S89qbittorrent restart >/dev/null 2>&1
 		echo_time "登录WebUI的用户名 $webui_name 密码 $webui_pass"
 		_pidof qbittorrent-nox
 
@@ -442,13 +455,13 @@ install_transmission() {
 		fi
 
 		[ -e /opt/etc/init.d/S88transmission-cfp ] && mv /opt/etc/init.d/S88transmission-cfp /opt/etc/init.d/S88transmission
-		sed -i "{
+		sed -i '{
 			/forwarding/ {s|false|true|}
 			/authentication/ {s|false|true|}
-			/username/ {s|: \".*\"|: \"$webui_name\"|}
-			/password/ {s|: \".*\"|: \"$webui_pass\"|}
-			/download-dir/ {s|: \".*\"|: \"$download_dir\"|}
-		}" /opt/etc/transmission/settings.json
+			/username/s|: ".*"|: "'"$webui_name"'"|
+			/password/s|: ".*"|: "'"$webui_pass"'"|
+			/download/s|: ".*"|: "'"$download_dir"'"|
+		}' /opt/etc/transmission/settings.json
 		ln -sf /opt/etc/transmission/settings.json /opt/etc/config/transmission.json
 		/opt/etc/init.d/S88transmission start >/dev/null 2>&1
 		echo_time "登录WebUI的用户名 $webui_name 密码 $webui_pass"
