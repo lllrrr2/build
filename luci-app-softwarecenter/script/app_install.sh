@@ -446,7 +446,7 @@ install_transmission() {
 			/authentication/ {s|false|true|}
 			/username/s|: ".*"|: "'"$webui_name"'"|
 			/password/s|: ".*"|: "'"$webui_pass"'"|
-			/download/s|: ".*"|: "'"$download_dir"'"|
+			/download-dir/s|: ".*"|: "'"$download_dir"'"|
 		}' /opt/etc/transmission/settings.json
 		ln -sf /opt/etc/transmission/settings.json /opt/etc/config/transmission.json
 		/opt/etc/init.d/S88transmission start >/dev/null 2>&1
