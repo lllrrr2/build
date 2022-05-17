@@ -44,8 +44,7 @@ install_aria2() {
 	if opkg_install aria2; then
 		pro="/opt/etc/aria2"
 		rm -rf /opt/var/aria2
-		make_dir $pro
-		cd $pro
+		make_dir $pro && cd $pro
 		for i in core aria2.conf clean.sh delete.sh tracker.sh dht.dat dht6.dat script.conf; do
 				wget -qN -t2 -T3 raw.githubusercontent.com/P3TERX/aria2.conf/master/$i || \
 				wget -qN -t2 -T3 cdn.jsdelivr.net/gh/P3TERX/aria2.conf/$i || \
@@ -63,8 +62,7 @@ install_aria2() {
 				s|^dir=.*|dir=$download_dir|
 				s|^rpc-se.*|rpc-secret=$webui_pass|
 			}" aria2.conf
-			sed -i '/033/d' core
-			sed -i '/033/d' tracker.sh
+			sed -i '/033/d' {core,tracker.sh}
 			sed -i 's|\#!/usr.*|\#!/bin/sh|g' *.sh
 			chmod +x *.sh && sh ./tracker.sh >/dev/null 2>&1
 			rm /opt/etc/aria2.conf
@@ -211,7 +209,7 @@ install_rtorrent() {
 		/opt/etc/init.d/S85rtorrent start >/dev/null 2>&1 && sleep 5
 		/opt/etc/init.d/S85rtorrent stop >/dev/null 2>&1
 
-		opkg_install ffmpeg mediainfo unrar php7-mod-json
+		opkg_install ffmpeg mediainfo unrar
 		if wget -qO /tmp/rutorrent.zip github.com/$(curl -Ls github.com/Novik/ruTorrent/releases | grep -oE "Novik/ruTorrent/archive/refs/tags/v.*zip" | head -1); then
 			[ -d /opt/share/www/rutorrent ] && rm -rf /opt/share/www/rutorrent
 			unzip -oq /tmp/rutorrent.zip -d /opt/share/www/ && \
@@ -415,19 +413,7 @@ install_rtorrent() {
 			execute2 = {sh,-c,/opt/bin/php-cgi /opt/share/www/rutorrent/php/initplugins.php $USER &}
 		EOF
 
-		cat >>/opt/etc/init.d/S85rtorrent <<-\EOF
-			case $1 in
-			start)
-			/opt/etc/init.d/S80lighttpd start >/dev/null 2>&1
-			;;
-			stop)
-			/opt/etc/init.d/S80lighttpd stop >/dev/null 2>&1
-			;;
-			restart)
-			/opt/etc/init.d/S80lighttpd restart >/dev/null 2>&1
-			;;
-			esac
-		EOF
+		echo '. /opt/etc/init.d/S80lighttpd $1 >/dev/null 2>&1' >> /opt/etc/init.d/S85rtorrent
 		/opt/etc/init.d/S85rtorrent restart >/dev/null 2>&1
 		ln -sf /opt/etc/rtorrent/rtorrent.conf /opt/etc/config/rtorrent.conf
 		_pidof rtorrent
