@@ -56,18 +56,6 @@ opkg_install() {
 	}
 
 	for ipk in $@; do
-		# if [[ $ipk =~ php7 ]]; then
-			# grep -q 'archive' /opt/etc/opkg.conf || {
-				# sed -i '/src/s|$|/archive|' /opt/etc/opkg.conf
-				# /opt/bin/opkg update >/dev/null 2>&1
-			# }
-		# else
-			# grep -q 'archive' /opt/etc/opkg.conf && {
-				# sed -i 's|/archive||' /opt/etc/opkg.conf
-				# /opt/bin/opkg update >/dev/null 2>&1
-			# }
-		# fi
-
 		if [ "$(/opt/bin/opkg list 2>/dev/null | awk '{print $1}' | grep -w $ipk)" ]; then
 			if which $ipk | grep -q opt; then
 				echo_time "$ipk	已经安装 $(which $ipk | grep -q opt)"

@@ -173,7 +173,7 @@ install_qbittorrent() {
 		EOF
 		qbittorrent_port=$(uci get softwarecenter.main.qbittorrent_port) && \
 		sed -i "s/\(WebUI\Port\).*/\1=$qbittorrent_port/" /opt/etc/qBittorrent_entware/config/qBittorrent.conf
-		[ $cpu_model = x86_64 ] && {
+		[ $cpu_model == x86_64 ] && {
 			if [ -z $(command -v qbpass) ]; then
 				wget -qO /opt/bin/qbpass github.com/KozakaiAya/libqbpasswd/releases/download/v0.2/qb_password_gen_static
 				chmod +x /opt/bin/qbpass

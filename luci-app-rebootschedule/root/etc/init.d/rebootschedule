@@ -13,11 +13,11 @@ uci_get_by_type() {
 
 start() {
 	grep -q 'option enable .1.' /etc/config/rebootschedule && {
-		[ -s $CRON_FILE ] || mcronrst=1
+		[[ -s $CRON_FILE ]] || mcronrst=1
 		sed -i '/rebootschedule/d' $CRON_FILE
 		sum=$(grep -c 'config crontab' /etc/config/rebootschedule)
 		for x in $(seq 0 $((sum-1))); do
-			if [[ `uci_get_by_type $x enable` == "1" ]]; then
+			[[ `uci_get_by_type $x enable` -eq 1 ]] && {
 				day=`uci_get_by_type $x day` || day="*"
 				week=`uci_get_by_type $x week` || week="*"
 				hour=`uci_get_by_type $x hour` || hour="*"
@@ -25,9 +25,9 @@ start() {
 				minute=`uci_get_by_type $x minute` || minute="*"
 				command=`uci_get_by_type $x command` || command="echo 'Reboot schedule tested.'"
 				echo "$minute $hour $day $month $week $command #rebootschedule" >> $CRON_FILE
-			fi
+			}
 		done
-		[ $mcronrst ] && /etc/init.d/cron restart
+		[[ $mcronrst -eq 1 ]] && /etc/init.d/cron restart
 	}
 }
 
