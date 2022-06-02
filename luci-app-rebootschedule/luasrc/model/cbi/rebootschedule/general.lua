@@ -3,7 +3,7 @@ m = Map("rebootschedule", translate("定时任务 Plus+"),
 translate("<font color=\"green\"><b>让定时任务更加易用的插件。是用 wulishui@gmail.com 的原版修改，支持 wulishui 点击下面的 </font><font color=\"red\"> 查看示例 </font><font color=\"green\"> 后扫描二维码打赏</font></b><br><br>") ..
 translate("CRON表达式的字符串是五个有空格分隔加执行命令字段组成：<font color=red> * * * * * [command]</font><br>") ..
 translate("五个星号按照位置分别表示 (分) (时) (日) (月) (周)， commond 表示所需执行的命令。<br>") ..
-translate("允许的数值范围是，分(1-59), 时(0-23), 日(1-31)，月(1-12), 周(0-6)。<br><br>") ..
+translate("允许的数值范围是，分(0-59), 时(0-23), 日(1-31)，月(1-12), 周(1-7)。<br><br>") ..
 translate("<font color=orange>▼</font>每一个字段都可以使用范围之内的数值或者以下半角的特殊字符组合组成：<br>") .. font_color ..
 translate("1) 星号 (*) 表示<code>任意值</code>。在“分钟”字段使用*, 表示每分钟执行命令。<br>") .. font_color ..
 translate("2) 连字符 (-) 表示<code>范围</code>。在“分钟”字段使用5-20，表示从每小时中5分到20分时段每分钟执行命令。<br>") .. font_color ..
@@ -70,12 +70,11 @@ command.default = 'sleep 5 && touch /etc/banner && reboot'
 -- p.inputstyle  =  "apply"
 -- p.forcewrite  =  true
 -- p.write  =  function(self, section)
-	 -- uci:get("rebootschedule", '@crontab[0]', 'command', section)
+	-- uci:get("rebootschedule", '@crontab[0]', 'command', section)
 -- end
 
-local open = luci.http.formvalue("cbi.apply")
-if open then
-  io.popen("/etc/init.d/rebootschedule restart")
+if luci.http.formvalue("cbi.apply") then
+  io.popen("sleep 3 && /etc/init.d/rebootschedule restart >/dev/null 2>&1 &")
 end
 
 return m

@@ -1,32 +1,12 @@
 #!/bin/sh /etc/rc.common
-#
-# Copyright (C) 2015 OpenWrt-dist
-# Copyright (C) 2016 fw867 <ffkykzs@gmail.com>
-#
-# This is free software, licensed under the GNU General Public License v3.
-# See /LICENSE for more information.
-#
 
 START=99
 STOP=13
-SERVICE_USE_PID=1
-SERVICE_WRITE_PID=1
-SERVICE_DAEMONIZE=1
-
-CONFIG=ddnsto
-LOGFILE=/var/log/$CONFIG.log
-start_delay=$(uci get ddnsto.@global[0].start_delay)
-
-get_config() {
-	config_get enable $1 enable 0
-	config_get token $1 token
-}
+token=$(uci get ddnsto.@global[0].token)
+enable=$(uci get ddnsto.@global[0].enable)
 
 start() {
-	config_load $CONFIG
-	config_foreach get_config global
-	[ $enable != 1 ] && exit 0
-	[ -n "$start_delay" ] && sleep $start_delay && logger -t ddnsto "延时$start_delay秒启动 ddnsto"
+	[ "$enable" == "1" ] || exit 0
 	service_start /usr/bin/ddnsto -u $token -d >/dev/null 2>&1 &
 	logger -t ddnsto 'Start ddnsto service'
 	ping -c 2 223.5.5.5 >/dev/null 2>&1 && {
@@ -49,4 +29,13 @@ stop() {
 		done
 	}
 	logger -t ddnsto 'Stop ddnsto service'
+}
+
+boot() {
+	delay_start=$(uci get ddnsto.@global[0].start_delay || echo 0)
+	if [ "$delay_start" -gt 0 ] && [ "$enable" == "1" ]; then
+		logger -t ddnsto "延时$delay_start秒启动 ddnsto"
+		sleep "$delay_start"
+	fi
+	start
 }

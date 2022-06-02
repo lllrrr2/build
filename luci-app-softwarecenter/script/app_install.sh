@@ -1,5 +1,6 @@
 #!/bin/sh
 . /usr/bin/softwarecenter/lib_functions.sh
+cpu_model=$(uci get softwarecenter.main.cpu_model)
 webui_name=$(uci get softwarecenter.main.webui_name)
 webui_pass=$(uci get softwarecenter.main.webui_pass)
 download_dir=$(uci get softwarecenter.main.download_dir)
@@ -69,6 +70,8 @@ install_aria2() {
 			ln -sf $pro/aria2.conf /opt/etc/aria2.conf
 			ln -sf $pro/aria2.conf /opt/etc/config/aria2.conf
 		fi
+		aria2_port=$(uci get softwarecenter.main.aria2_port) && \
+		sed -i "s/\(rpc-listen-port\).*/\1=$aria2_port/" $pro/aria2.conf
 
 		wget -qO /tmp/ariang.zip github.com/$(curl -Ls github.com/mayswind/AriaNg/releases | grep -oE "/mayswind/AriaNg/releases/download/.*/AriaNg.*[0-9].zip" | head -1) && \
 		unzip -oq /tmp/ariang.zip -d /opt/share/www/ariang-aria2
@@ -126,6 +129,8 @@ install_deluge() {
 			"torrentfiles_location": "$download_dir"
 		}
 		EOF
+		deluged_port=$(uci get softwarecenter.main.deluged_port) && \
+		sed -i "/-p 888/s/888/$deluged_port/" /opt/etc/init.d/S81deluge-web
 		ln -sf /opt/etc/deluge/core.conf /opt/etc/config/deluge.conf
 		/opt/etc/init.d/S80deluged start >/dev/null 2>&1 && sleep 4
 		/opt/etc/init.d/S80deluged restart >/dev/null 2>&1
@@ -141,12 +146,6 @@ install_qbittorrent() {
 	local time_out="timeout 1m"
 	if opkg_install qbittorrent; then
 		/opt/etc/init.d/S89qbittorrent start >/dev/null 2>&1 && sleep 2
-
-		if [ -z $(command -v qbpass) ]; then
-			wget -qO /opt/bin/qbpass github.com/KozakaiAya/libqbpasswd/releases/download/v0.2/qb_password_gen_static
-			chmod +x /opt/bin/qbpass
-		fi
-
 		cat <<-EOF >/opt/etc/qBittorrent_entware/config/qBittorrent.conf
 			[AutoRun]
 			enabled=false
@@ -165,9 +164,6 @@ install_qbittorrent() {
 			Queueing\QueueingEnabled=false
 			WebUI\CSRFProtection=false
 			WebUI\Port=9080
-			WebUI\Username=$webui_name
-			WebUI\Password_ha1=@ByteArray($pp)
-			WebUI\Password_PBKDF2="@ByteArray($(/opt/bin/qbpass $webui_pass))"
 			WebUI\LocalHostAuth=false
 			WebUI\RootFolder=/opt/share/www/CzBiX-qb-web/
 			General\Locale=zh
@@ -175,6 +171,19 @@ install_qbittorrent() {
 			Downloads\SavePath=$download_dir
 			Downloads\PreAllocation=true
 		EOF
+		qbittorrent_port=$(uci get softwarecenter.main.qbittorrent_port) && \
+		sed -i "s/\(WebUI\Port\).*/\1=$qbittorrent_port/" /opt/etc/qBittorrent_entware/config/qBittorrent.conf
+		[ $cpu_model = x86_64 ] && {
+			if [ -z $(command -v qbpass) ]; then
+				wget -qO /opt/bin/qbpass github.com/KozakaiAya/libqbpasswd/releases/download/v0.2/qb_password_gen_static
+				chmod +x /opt/bin/qbpass
+			fi
+			cat <<-EOF >>/opt/etc/qBittorrent_entware/config/qBittorrent.conf
+				WebUI\Username=$webui_name
+				WebUI\Password_ha1=@ByteArray($pp)
+				WebUI\Password_PBKDF2="@ByteArray($(/opt/bin/qbpass $webui_pass))"
+			EOF
+		}
 
 		cd /opt/share/www
 		[ -d CzBiX-qb-web ] || {
@@ -186,7 +195,7 @@ install_qbittorrent() {
 		}
 
 		[ -d miniers-qb-web ] || {
-		if curl -sL api.github.com/repos/miniers/qb-web/releases/latest | sed "s|,|\n|g" | grep browser_download_url  | grep -oP "https.*zip" | xargs wget -O miniers-qb-web.zip; then
+		if curl -sL api.github.com/repos/miniers/qb-web/releases/latest | grep -oE "https://github.*download.*zip" | xargs wget -O miniers-qb-web.zip; then
 			unzip -qo miniers-qb-web.zip -d miniers-qb-web
 			rm -rf miniers-qb-web.zip
 		fi
@@ -195,7 +204,6 @@ install_qbittorrent() {
 		/opt/etc/init.d/S89qbittorrent restart >/dev/null 2>&1
 		echo_time "登录WebUI的用户名 $webui_name 密码 $webui_pass"
 		_pidof qbittorrent-nox
-
 	else
 		echo_time "qBittorrent 安装失败，再重试安装！"
 		exit 1
@@ -209,8 +217,8 @@ install_rtorrent() {
 		/opt/etc/init.d/S85rtorrent start >/dev/null 2>&1 && sleep 5
 		/opt/etc/init.d/S85rtorrent stop >/dev/null 2>&1
 
-		opkg_install ffmpeg mediainfo unrar
-		if wget -qO /tmp/rutorrent.zip github.com/$(curl -Ls github.com/Novik/ruTorrent/releases | grep -oE "Novik/ruTorrent/archive/refs/tags/v.*zip" | head -1); then
+		opkg_install ffmpeg mediainfo unrar php7-mod-json
+		if wget -qO /tmp/rutorrent.zip github.com/$(curl -Ls github.com/Novik/ruTorrent/releases | grep -oE "Novik/.*/v.*zip" | head -1); then
 			[ -d /opt/share/www/rutorrent ] && rm -rf /opt/share/www/rutorrent
 			unzip -oq /tmp/rutorrent.zip -d /opt/share/www/ && \
 			mv /opt/share/www/ruTorrent* /opt/share/www/rutorrent
@@ -429,7 +437,7 @@ install_transmission() {
 	[ $1 ] && pr="transmission-cfp-daemon transmission-cfp-cli transmission-cfp-remote" || pr="transmission-daemon transmission-cli transmission-remote"
 
 	if opkg_install $pr; then
-		if wget -qO /tmp/tr.zip github.com/$(curl -Ls github.com/ronggang/transmission-web-control/releases | grep  -oE  "/ronggang/transmission-web-control/archive/refs/tags/v.*.zip" | head -1); then
+		if wget -qO /tmp/tr.zip github.com/$(curl -Ls github.com/ronggang/transmission-web-control/releases | grep  -oE  "/ronggang/.*/v.*.zip" | head -1); then
 			make_dir /opt/share/transmission
 			unzip -oq /tmp/tr.zip -d /tmp
 			mv /tmp/transmission-web-control*/src/ /opt/share/transmission/web
@@ -448,6 +456,8 @@ install_transmission() {
 			/password/s|: ".*"|: "'"$webui_pass"'"|
 			/download-dir/s|: ".*"|: "'"$download_dir"'"|
 		}' /opt/etc/transmission/settings.json
+		transmission_port=$(uci get softwarecenter.main.transmission_port) && \
+		sed -i "/rpc-port/s/9091/$transmission_port/" /opt/etc/config/transmission.json
 		ln -sf /opt/etc/transmission/settings.json /opt/etc/config/transmission.json
 		/opt/etc/init.d/S88transmission start >/dev/null 2>&1
 		echo_time "登录WebUI的用户名 $webui_name 密码 $webui_pass"

@@ -1,29 +1,37 @@
 #!/bin/sh /etc/rc.common
 # Author=wulishui , 20200908-0915 ; <wulishui@gmail.com>
 
-START=55
+START=99
+STOP=15
+
+SERVICE_DAEMONIZE=1
+CRON_FILE=/etc/crontabs/root
+
+uci_get_by_type() {
+	uci get rebootschedule.@crontab[$1].$2 2>/dev/null
+}
 
 start() {
-if [ "`grep 'option enable .1.' /etc/config/rebootschedule 2>/dev/null`" ]; then
-	[ -s /etc/crontabs/root ] || mcronrst=1
-	sed -i '/rebootschedule/d' /etc/crontabs/root 2>/dev/null
-	sum=$(grep -c 'config crontab' /etc/config/rebootschedule 2>/dev/null)
-	for x in $(seq 0 $((sum-1))); do
-		enable=`uci get rebootschedule.@crontab[$x].enable 2>/dev/null`
-		if [ $enable -eq 1 ]; then
-			month=`uci get rebootschedule.@crontab[$x].month 2>/dev/null` || month="*"
-			day=`uci get rebootschedule.@crontab[$x].day 2>/dev/null` || day="*"
-			week=`uci get rebootschedule.@crontab[$x].week 2>/dev/null` || week="*"
-			hour=`uci get rebootschedule.@crontab[$x].hour 2>/dev/null` || hour="*"
-			minute=`uci get rebootschedule.@crontab[$x].minute 2>/dev/null` || minute="*"
-			command=`uci get rebootschedule.@crontab[$x].command 2>/dev/null` || command="echo "Reboot schedule tested.""
-			echo "$minute $hour $day $month $week $command #rebootschedule" >> /etc/crontabs/root
-		fi
-	done
-	[ $mcronrst ] && /etc/init.d/cron restart
-fi
+	grep -q 'option enable .1.' /etc/config/rebootschedule && {
+		[ -s $CRON_FILE ] || mcronrst=1
+		sed -i '/rebootschedule/d' $CRON_FILE
+		sum=$(grep -c 'config crontab' /etc/config/rebootschedule)
+		for x in $(seq 0 $((sum-1))); do
+			if [[ `uci_get_by_type $x enable` == "1" ]]; then
+				day=`uci_get_by_type $x day` || day="*"
+				week=`uci_get_by_type $x week` || week="*"
+				hour=`uci_get_by_type $x hour` || hour="*"
+				month=`uci_get_by_type $x month` || month="*"
+				minute=`uci_get_by_type $x minute` || minute="*"
+				command=`uci_get_by_type $x command` || command="echo 'Reboot schedule tested.'"
+				echo "$minute $hour $day $month $week $command #rebootschedule" >> $CRON_FILE
+			fi
+		done
+		[ $mcronrst ] && /etc/init.d/cron restart
+	}
 }
 
 stop() {
-	sed -i '/rebootschedule/d' /etc/crontabs/root 2>/dev/nul
+	sed -i '/rebootschedule/d' $CRON_FILE
+    /etc/init.d/cron restart
 }
