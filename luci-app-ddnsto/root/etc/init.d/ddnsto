@@ -1,33 +1,17 @@
 #!/bin/sh /etc/rc.common
 
 START=99
-STOP=13
 token=$(uci get ddnsto.@global[0].token)
 enable=$(uci get ddnsto.@global[0].enable)
 
 start() {
-	[[ $enable -ne 1 ]] && exit 0
+	[[ $enable == 0 ]] && exit 0
 	service_start /usr/bin/ddnsto -u $token -d >/dev/null 2>&1 &
 	logger -t ddnsto "Start ddnsto service"
-	ping -c 2 223.5.5.5 >/dev/null 2>&1 && {
-		while :; do
-			[[ -s /tmp/ddnsto_id ]] && {
-				break
-			} || {
-				logread | awk -F= '/routerId/{print $3}' | awk 'NR==1{print $1}' > /tmp/ddnsto_id
-				sleep 3
-			}
-		done
-	}
 }
 
 stop() {
-	pids=`pgrep /usr/bin/ddnsto`
-	[[ -n $pids ]] && {
-		for pid in $pids; do
-			kill -9 $pid >/dev/null 2>&1 &
-		done
-	}
+	killall ddnsto 2>/dev/null
 	logger -t ddnsto "Stop ddnsto service"
 }
 
