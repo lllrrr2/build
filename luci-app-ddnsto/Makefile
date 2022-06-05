@@ -1,7 +1,6 @@
 # Copyright (C) 2017 XiaoShan https://www.mivm.cn
 
 include $(TOPDIR)/rules.mk
-
 PKG_ARCH_DDNSTO:=$(ARCH)
 PKG_NAME:=luci-app-ddnsto
 PKG_VERSION:=1.0.0
@@ -19,9 +18,8 @@ define Package/$(PKG_NAME)
 	SECTION:=luci
 	CATEGORY:=LuCI
 	SUBMENU:=3. Applications
-	TITLE:=LuCI Support for ddnsto
-	PKGARCH:=all
-	DEPENDS:=
+	TITLE:=LuCI Support for ddnst
+	DEPENDS:=@(aarch64||arm||x86_64||mipsel)
 endef
 
 define Package/$(PKG_NAME)/description

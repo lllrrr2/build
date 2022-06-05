@@ -1,12 +1,12 @@
 <script type="text/javascript">//<![CDATA[
-	XHR.poll(2, '<%=luci.dispatcher.build_url("admin", "services", "ddnsto", "status")%>', null,
+	XHR.poll(2, '<%=luci.dispatcher.build_url("admin/services/ddnsto/status")%>', null,
 		function(x, data) {
 			var tb = document.getElementById('ddnsto_status');
 			if (data && tb) {
 				if (data.running) {
-					tb.innerHTML = '<em><b><font color=green><%:RUNNING%></font><br><%:版本: %><font color=green>' + data.s + '</font>&nbsp;&nbsp;&nbsp;&nbsp;<%:ID: %><font color=green>' + data.p + '</font></b></em>';
+					tb.innerHTML = '<em><b>DDNSTO <font color=green><%:运行中%></font><br><%:版本: %><font color=green>' + data.v + '</font>&nbsp;&nbsp;&nbsp;&nbsp;<%:ID: %><font color=green>' + data.id + '</font></b></em>';
 				} else {
-					tb.innerHTML = '<em><b><font color=red><%:NOT RUNNING%></font><br><%:版本: %><font color=green>' + data.s + '</font></b></em>';
+					tb.innerHTML = '<em><b>DDNSTO <font color=red><%:NOT RUNNING%></font></b></em>';
 				}
 			}
 		}
