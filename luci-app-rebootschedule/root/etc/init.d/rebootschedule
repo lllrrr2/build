@@ -1,10 +1,7 @@
 #!/bin/sh /etc/rc.common
 # Author=wulishui , 20200908-0915 ; <wulishui@gmail.com>
 
-START=99
-STOP=15
-
-SERVICE_DAEMONIZE=1
+START=95
 CRON_FILE=/etc/crontabs/root
 
 uci_get_by_type() {
@@ -13,21 +10,22 @@ uci_get_by_type() {
 
 start() {
 	grep -q 'option enable .1.' /etc/config/rebootschedule && {
-		[[ -s $CRON_FILE ]] || mcronrst=1
+		[[ -s "$CRON_FILE" ]] || mcronrst=1
 		sed -i '/rebootschedule/d' $CRON_FILE
 		sum=$(grep -c 'config crontab' /etc/config/rebootschedule)
 		for x in $(seq 0 $((sum-1))); do
 			[[ `uci_get_by_type $x enable` -eq 1 ]] && {
-				day=`uci_get_by_type $x day` || day="*"
-				week=`uci_get_by_type $x week` || week="*"
-				hour=`uci_get_by_type $x hour` || hour="*"
-				month=`uci_get_by_type $x month` || month="*"
-				minute=`uci_get_by_type $x minute` || minute="*"
-				command=`uci_get_by_type $x command` || command="echo 'Reboot schedule tested.'"
+				day=`uci_get_by_type $x day || echo *`
+				week=`uci_get_by_type $x week || echo *`
+				hour=`uci_get_by_type $x hour || echo *`
+				month=`uci_get_by_type $x month || echo *`
+				minute=`uci_get_by_type $x minute || echo 0`
+				command=`uci_get_by_type $x command || echo "echo 'Reboot schedule tested.'"`
+				[[ "$minute" == "*" ]] && minute="0"
 				echo "$minute $hour $day $month $week $command #rebootschedule" >> $CRON_FILE
 			}
 		done
-		[[ $mcronrst -eq 1 ]] && /etc/init.d/cron restart
+		[[ "$mcronrst" == "1" ]] && /etc/init.d/cron restart
 	}
 }
 
