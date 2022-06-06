@@ -21,7 +21,7 @@ start() {
 				month=`uci_get_by_type $x month || echo *`
 				minute=`uci_get_by_type $x minute || echo 0`
 				command=`uci_get_by_type $x command || echo "echo 'Reboot schedule tested.'"`
-				[[ "$minute" == "*" ]] && minute="0"
+				[[ -n "`echo $minute | grep '*$'`" ]] && minute="0"
 				echo "$minute $hour $day $month $week $command #rebootschedule" >> $CRON_FILE
 			}
 		done

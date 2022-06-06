@@ -12,33 +12,34 @@ translate("[ * ]星号表示<strong>所有可能的值</strong>。在月域中�
 translate("<font color='green'><b>设置方法也可点击下面查看示例或在  crontab文件  中行尾是　#rebootschedule　的命令前5个字段去验证是否正确</b></font><br>") ..
 translate("<input class='cbi-button cbi-button-apply' type='button' value='查看示例'  onclick=\"window.open('http://'+window.location.hostname+'/reboothelp.jpg')\"/>&nbsp;&nbsp;&nbsp;&nbsp;") ..
 translate("<input class='cbi-button cbi-button-apply' type='button' value='查看/验证' onclick=\"window.open('https://tool.lu/crontab')\"/>"))
+m.template = "rebootschedule/index"
 
 s = m:section(TypedSection, "crontab", "")
-s.template  =  "cbi/tblsection"
-s.anonymous  =  true -- 删除
-s.addremove  =  true -- 添加
+s.template = "cbi/tblsection"
+s.anonymous = true -- 删除
+s.addremove = true -- 添加
 -- s.extedit  =  true -- 修改
 -- s.sortable  =  true -- 移动
 
 enable = s:option(Flag, "enable", translate("启用"))
-enable.rmempty  =  false
+enable.rmempty = false
 enable.default = 0
 
 minute = s:option(Value, "minute", translate("分"))
-minute.default  =  '0'
-minute.size  =  8
+minute.default = '0'
+minute.size = 8
 
 hour = s:option(Value, "hour", translate("时"))
-hour.default  =  '5'
-hour.size  =  8
+hour.default = '5'
+hour.size = 8
 
 day = s:option(Value, "day", translate("日"))
-day.default  =  '*'
-day.size  =  8
+day.default = '*'
+day.size = 8
 
 month = s:option(Value, "month", translate("月"))
-month.default  =  '*'
-month.size  =  8
+month.default = '*'
+month.size = 8
 
 week = s:option(Value, "week", translate("周"))
 week:value('*', translate("每天"))
@@ -63,16 +64,27 @@ command:value('wifi up', translate("打开WIFI"))
 command:value('sync && echo 3 > /proc/sys/vm/drop_caches', translate("释放内存"))
 command:value('poweroff', translate("关闭电源"))
 command.default = 'sleep 5 && touch /etc/banner && reboot'
-command.rmempty  =  false
+command.rmempty = false
 
--- p  =  s:option(Button, "_baa", translate("立即执行"))
--- p.inputtitle  =  translate("执行")
--- p.inputstyle  =  "apply"
--- p.forcewrite  =  true
--- function p.write(self, section, scope)
-	-- local pp = uci:get("rebootschedule", '@crontab[1]', 'command')
-	-- util.exec("sh" .. pp)
--- end
+btn = s:option(Button, "_baa", translate("立即执行"))
+btn.inputtitle = translate("执行")
+btn.inputstyle = "apply"
+btn.disabled = false
+btn.template = "rebootschedule/awake"
+
+function gen_uuid(format)
+    local uuid = sys.exec("echo -n $(cat /proc/sys/kernel/random/uuid)")
+    if format == nil then
+		uuid = string.gsub(uuid, "-", "")
+    end
+    return uuid
+end
+
+function s.create(e, t)
+    local uuid = gen_uuid()
+    t = uuid
+    TypedSection.create(e, t)
+end
 
 if luci.http.formvalue("cbi.apply") then
   io.popen("sleep 3 && /etc/init.d/rebootschedule restart &")
