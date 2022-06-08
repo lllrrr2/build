@@ -63,7 +63,7 @@ command:value('wifi down', translate("关闭WIFI"))
 command:value('wifi up', translate("打开WIFI"))
 command:value('sync && echo 3 > /proc/sys/vm/drop_caches', translate("释放内存"))
 command:value('poweroff', translate("关闭电源"))
-command.default = 'sleep 5 && touch /etc/banner && reboot'
+--command.default = 'sleep 5 && touch /etc/banner && reboot'
 command.rmempty = false
 
 btn = s:option(Button, "_baa", translate("立即执行"))
