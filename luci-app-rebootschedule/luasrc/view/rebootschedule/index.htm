@@ -70,15 +70,15 @@
 		`;
 		var head = document.getElementsByTagName('head')[0];
 		head.innerHTML += style		//头部加入样式,注意不可使用document.write()写入文件,否则出错
-	
+
 		const body = document.getElementsByTagName('body')[0];
-		
+
 		var alertMask = document.createElement('div');
 		var alertContainer = document.createElement('div');
 		var alertDes = document.createElement('div');
 		var alertConfirmParent = document.createElement('div');
-		var alertConfirmBtn = document.createElement('button');	
-	
+		var alertConfirmBtn = document.createElement('button');
+
 		body.append(alertMask);
 		alertMask.classList.add('alertMask');
 		alertMask.classList.add('box-sizing');
@@ -90,12 +90,12 @@
 		alertDes.classList.add('box-sizing');
 		alertContainer.append(alertConfirmParent);
 		alertConfirmParent.classList.add('alertConfirmParent');
-		alertConfirmParent.classList.add('box-sizing');	
+		alertConfirmParent.classList.add('box-sizing');
 		alertConfirmParent.append(alertConfirmBtn);
 		alertConfirmBtn.classList.add('alertConfirmBtn');
 		alertConfirmBtn.classList.add('box-sizing');
 		alertConfirmBtn.innerText = buttonVal;
-		//加载提示信息	
+		//加载提示信息
 		alertDes.innerHTML = msg;
 		//关闭当前alert弹窗
 		function alertBtnClick(){
