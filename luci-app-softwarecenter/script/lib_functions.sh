@@ -196,7 +196,8 @@ entware_set() {
 	}
 	sed -i '/^ansi/d' /opt/etc/init.d/rc.func
 	/opt/bin/opkg install e2fsprogs lsof coreutils-timeout >/dev/null 2>&1
-	echo_time "Entware 安装成功！\n"
+	rm -rf /tmp/luci-*
+	[ -s /opt/etc/init.d/rc.func ] && echo_time "Entware 安装成功！\n"
 }
 
 # entware环境解除 说明：此函数用于删除OPKG配置设定

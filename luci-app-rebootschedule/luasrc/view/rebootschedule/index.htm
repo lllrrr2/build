@@ -110,11 +110,10 @@
 		var x = id.split(".");
 		return x[2];
 	}
+
 	function onclick_awake(id) {
 		var section = _id2section(id);
-		var btnXHR = new XHR();
-		btnXHR.post('<%=url("admin/services/rebootschedule/awake")%>/' + section, { token: '<%=token%>' },
-			function(x, data) {
+		(new XHR()).post('<%=url("admin/services/rebootschedule/awake")%>/' + section, { token: '<%=token%>' }, (x, data) => {
 				alert( JSON.parse(x.response).data );
 			}
 		);
