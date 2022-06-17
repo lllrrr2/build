@@ -6,7 +6,7 @@
 		var zIndex = 999999;							//修改弹出层z-index,应为最顶层,避免被覆盖
 		var desColor = '#1f0000'						//提示信息字体颜色
 		var buttonVal = '关闭';							//确定按钮名称
-		var btnBgColor = '#f61717';						//确定按钮背景颜色
+		var btnBgColor = '#000384';						//确定按钮背景颜色
 		var btnColor = '#fff';							//确定按钮字体颜色
 		var btnAlign = 'right';							//按钮在水平位置,默认居中,变量值:left,center,right
 		var style = `
@@ -15,7 +15,7 @@
 					box-sizing: border-box;
 				}
 				.alertMask{
-					position: fixed;	/*生成绝对定位的元素，相对于浏览器窗口进行定位*/
+					position: fixed;		/*生成绝对定位的元素，相对于浏览器窗口进行定位*/
 					display: flex;
 					display: webkit-flex;
 					flex-direction: row;
@@ -30,9 +30,9 @@
 				}
 				.alertContainer{
 					// min-width: 240px;	/*容器最小240px*/
-					max-width: 640px;	/*容器最大320px*/
+					// max-width: 640px;	/*容器最大320px*/
 					// width： 320px;
-					// min-height: auto;
+					height: auto;
 					background:#fff;
 					border: 1px solid `+maskBg+`;
 					border-radius: 3px;
@@ -41,7 +41,7 @@
 				}
 				.alertDes{
 					padding: 35px 30px;
-					text-align: center;
+					text-align: left;		/*字体位置,默认居中,变量值:left,center,right*/
 					letter-spacing: 1px;
 					font-size: 14px;
 					color: `+desColor+`;
@@ -110,11 +110,13 @@
 		var x = id.split(".");
 		return x[2];
 	}
-
 	function onclick_awake(id) {
-		var section = _id2section(id);
-		(new XHR()).post('<%=url("admin/services/rebootschedule/awake")%>/' + section, { token: '<%=token%>' }, (x, data) => {
-				alert( JSON.parse(x.response).data );
+		// var section = _id2section(id);
+		// var btnXHR = new XHR();
+		// btnXHR.post('<%=url("admin/services/rebootschedule/awake")%>/' + section, { token: '<%=token%>' },
+		// 	function(x, data) {
+		(new XHR()).post('<%=url("admin/services/rebootschedule/awake")%>/' + _id2section(id), { token: '<%=token%>' }, (x, data) => {
+				alert( JSON.parse( x.response).data );
 			}
 		);
 	}

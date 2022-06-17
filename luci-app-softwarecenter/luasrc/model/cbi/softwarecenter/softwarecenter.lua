@@ -52,36 +52,36 @@ p.password = true
 p:depends("mysql_enabled", 1)
 deploy_mysql:depends("deploy_entware", 1)
 
-s:tab("partition", translate("磁盘分区"))
-local o = nixio.util.consume((nixio.fs.glob("/dev/sd[a-g]")), o)
-local size = {}
-for i, l in ipairs(o) do
-	local s = tonumber((nixio.fs.readfile("/sys/class/block/%s/size" % l:sub(6))))
-	size[l] = s and math.floor(s / 2048 / 1024)
-	t="%s"%{nixio.fs.readfile("/sys/class/block/%s/device/model"%nixio.fs.basename(l))}
-end
-p = s:taboption("partition", ListValue, "partition_disk", translate("可用磁盘"),
-translate("当加入的磁盘没有分区，此工具可简单的分区挂载"))
-for i, a in ipairs(o) do
-	p:value(a,translate("%s | %s | 可用:%sGB" % {a, t, size[a]}))
-end
+-- s:tab("partition", translate("磁盘分区"))
+-- local o = nixio.util.consume((nixio.fs.glob("/dev/sd[a-g]")), o)
+-- local size = {}
+-- for i, l in ipairs(o) do
+	-- local s = tonumber((nixio.fs.readfile("/sys/class/block/%s/size" % l:sub(6))))
+	-- size[l] = s and math.floor(s / 2048 / 1024)
+	-- t="%s"%{nixio.fs.readfile("/sys/class/block/%s/device/model"%nixio.fs.basename(l))}
+-- end
+-- p = s:taboption("partition", ListValue, "partition_disk", translate("可用磁盘"),
+-- translate("当加入的磁盘没有分区，此工具可简单的分区挂载"))
+-- for i, a in ipairs(o) do
+	-- p:value(a,translate("%s | %s | 可用:%sGB" % {a, t, size[a]}))
+-- end
 
-p = s:taboption("partition", Button, "_rescan", translate("扫描磁盘"),
-translate("重新加载加入后没有显示的磁盘"))
-p.inputtitle = translate("开始扫描")
-p.inputstyle = "reload"
-p.forcewrite = true
-function p.write(self, section, value)
-  luci.util.exec("echo '- - -' | tee /sys/class/scsi_host/host*/scan > /dev/null")
-end
+-- p = s:taboption("partition", Button, "_rescan", translate("扫描磁盘"),
+-- translate("重新加载加入后没有显示的磁盘"))
+-- p.inputtitle = translate("开始扫描")
+-- p.inputstyle = "reload"
+-- p.forcewrite = true
+-- function p.write(self, section, value)
+  -- luci.util.exec("echo '- - -' | tee /sys/class/scsi_host/host*/scan > /dev/null")
+-- end
 
-p = s:taboption("partition", Button, "_add",translate("磁盘分区"), translate("默认只分一个区，并格式化EXT4文件系统。如已挂载要先缷载<br><b style=\"color:red\">注意：分区前确认选择的磁盘没有重要数据，分区后数据不可恢复！</b>"))
-p.inputtitle = translate("开始分区")
-p.inputstyle = "apply"
-	function p.write(self, section)
-		luci.util.exec("/usr/bin/softwarecenter/lib_functions.sh system_check &")
-		luci.http.redirect(luci.dispatcher.build_url("admin/services/softwarecenter/log"))
-	end
+-- p = s:taboption("partition", Button, "_add",translate("磁盘分区"), translate("默认只分一个区，并格式化EXT4文件系统。如已挂载要先缷载<br><b style=\"color:red\">注意：分区前确认选择的磁盘没有重要数据，分区后数据不可恢复！</b>"))
+-- p.inputtitle = translate("开始分区")
+-- p.inputstyle = "apply"
+	-- function p.write(self, section)
+		-- luci.util.exec("/usr/bin/softwarecenter/lib_functions.sh system_check &")
+		-- luci.http.redirect(luci.dispatcher.build_url("admin/services/softwarecenter/log"))
+	-- end
 
 s:tab("swap", translate("swap交换分区设置"))
 swap_enable = s:taboption("swap", Flag, "swap_enabled", translate("Enabled"),
