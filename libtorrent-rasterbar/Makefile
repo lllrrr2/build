@@ -23,7 +23,7 @@ define Package/libtorrent-rasterbar
 	$(call Package/libtorrent-rasterbar/Default)
 	SECTION:=libs
 	CATEGORY:=Libraries
-	DEPENDS:=+boost-system +libopenssl +libatomic +libstdcpp $(ICONV_DEPENDS) $(INTL_DEPENDS)
+	DEPENDS:=+boost +boost-system +libopenssl +libatomic +libstdcpp $(ICONV_DEPENDS) $(INTL_DEPENDS)
 endef
 
 define Package/python3-libtorrent
