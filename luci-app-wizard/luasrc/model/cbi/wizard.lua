@@ -4,12 +4,10 @@ s = m:section(TypedSection, 'wizard')
 s.addremove = false
 s.anonymous = true
 
-s:tab('wansetup', translate('外网设置'), translatef('Three different ways to access the Internet, please choose according to your own situation.'))
+s:tab('wansetup', translate('Wan Settings'), translatef('Three different ways to access the Internet, please choose according to your own situation.'))
 
 o = s:taboption('wansetup', ListValue, 'wan_proto', translate('Protocol'))
-o:depends('dhcp')
 o:value('dhcp', translate('DHCP client'))
-o:value('static', translate('Static address'))
 o:value('pppoe', translate('PPPoE'))
 
 o = s:taboption('wansetup', Value, 'wan_pppoe_user', translate('PAP/CHAP username'))
@@ -19,22 +17,7 @@ o = s:taboption('wansetup', Value, 'wan_pppoe_pass', translate('PAP/CHAP passwor
 o:depends('wan_proto', 'pppoe')
 o.password = true
 
-o = s:taboption('wansetup', Value, 'wan_ipaddr', translate('IPv4 address'))
-o:depends('wan_proto', 'static')
-o.datatype='ip4addr'
-
-o = s:taboption('wansetup', Value, 'wan_netmask', translate('IPv4 netmask'))
-o:depends('wan_proto', 'static')
-o.datatype='ip4addr'
-o:value('255.255.255.0')
-o:value('255.255.0.0')
-o:value('255.0.0.0')
-
-o = s:taboption('wansetup', Value, 'wan_gateway', translate('IPv4 gateway'))
-o:depends('wan_proto', 'static')
-o.datatype='ip4addr'
-
-dns = s:taboption('wansetup', DynamicList, 'wan_dns', translate('Use custom DNS servers'), translate("可以设置主路由的IP，或可到<a href='https://dnsdaquan.com' target='_blank'> DNS大全 </a>获取更多"))
+dns = s:taboption('wansetup', Value, 'lan_dns', translate('Use custom DNS servers'), translate("可以设置主路由的IP，或可到<a href='https://dnsdaquan.com' target='_blank'> DNS大全 </a>获取更多"))
 dns:value("223.5.5.5", translate("阿里DNS：223.5.5.5"))
 dns:value("223.6.6.6", translate("阿里DNS：223.6.6.6"))
 dns:value("101.226.4.6", translate("DNS派：101.226.4.6"))
@@ -42,20 +25,44 @@ dns:value("218.30.118.6", translate("DNS派：218.30.118.6"))
 dns:value("180.76.76.76", translate("百度DNS：180.76.76.76"))
 dns:value("114.114.114.114", translate("114DNS：114.114.114.114"))
 dns:value("114.114.115.115", translate("114DNS：114.114.115.115"))
-dns.rmempty = true
+dns.placeholder = "223.5.5.5"
+dns.anonymous = false
 dns.datatype = "ip4addr"
 dns.cast = "string"
 
 s:tab("lansetup", translate("Lan Settings"))
-o = s:taboption("lansetup", Value, "lan_ipaddr", translate("IPv4 address"))
-o.datatype="ip4addr"
-o = s:taboption('lansetup', Value, 'lan_netmask', translate('IPv4 netmask'))
-o.datatype='ip4addr'
-o:value('255.255.255.0')
-o:value('255.255.0.0')
-o:value('255.0.0.0')
 
-if nixio.fs.access("/etc/config/wireless") then
+ipaddr = s:taboption("lansetup", Value, "lan_ipaddr", translate("IPv4 address"), "主路由同网段未冲突的IP地址，<b><font color=\"red\">即是该路由web访问的IP</font></b>")
+for own_ip in luci.util.execi("uci get network.lan.ipaddr") do
+	ipaddr:value(own_ip, translate(own_ip .. " --当前路由的IP--"))
+end
+ipaddr.datatype="ip4addr"
+ipaddr.anonymous = false
+
+netmask = s:taboption('lansetup', Value, 'lan_netmask', translate('IPv4 netmask'))
+netmask:value("255.255.255.0", translate("255.255.255.0"))
+netmask:value("255.255.0.0", translate("255.255.0.0"))
+netmask:value("255.0.0.0", translate("255.0.0.0"))
+netmask.placeholder = "255.255.255.0"
+netmask.datatype='ip4addr'
+netmask.anonymous = false
+
+o = s:taboption('lansetup', Flag, 'siderouter', translate('Siderouter'))
+o.rmempty = false
+
+o = s:taboption('lansetup', Value, 'lan_gateway', translate('IPv4 gateway'), translate('这里输入主路由IP地址'))
+o:depends('siderouter', '1')
+o.datatype = 'ip4addr'
+o.rmempty = false
+
+o = s:taboption('lansetup', Flag, 'dhcp', translate('DHCP Server'), translate('开启此DHCP则需要关闭主路由的DHCP<br><b><font color=\"red\">关闭主路由DHCP则需要手动将所有上网设备的网关和DNS改为此旁路由的IP</font></b>'))
+o:depends('siderouter', '1')
+-- o.default = o.enabled
+
+o = s:taboption('lansetup', Flag, 'ipv6', translate('Enable IPv6'), translate('Enable/Disable IPv6'))
+
+local current_node = luci.sys.exec(string.format("[ -f '/etc/config/wireless' ] && echo -n $(cat /etc/config/wireless)"))
+if current_node and current_node ~= "" and current_node ~= "nil" then
 	s:tab('wifisetup', translate('Wireless Settings'), translate('Set the router\'s wireless name and password. For more advanced settings, please go to the Network-Wireless page.'))
 	o = s:taboption('wifisetup', Value, 'wifi_ssid', translate('<abbr title\"Extended Service Set Identifier\">ESSID</abbr>'))
 	o.datatype = 'maxlength(32)'

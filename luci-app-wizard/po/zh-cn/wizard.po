@@ -7,11 +7,14 @@ msgstr "设置向导"
 msgid "Inital Router Setup"
 msgstr "路由器设置向导"
 
-msgid "Net Settings"
-msgstr "网络设置"
-
 msgid "Wireless Settings"
 msgstr "无线设置"
+
+msgid "Lan Settings"
+msgstr "内网设置"
+
+msgid "Wan Settings"
+msgstr "外网设置"
 
 msgid "If you are using this router for the first time, please configure it here."
 msgstr "如果你首次使用这个路由器，请在这里简单设置。"
@@ -30,15 +33,3 @@ msgstr "启用IPv6"
 
 msgid "Enable/Disable IPv6"
 msgstr "一键开启/关闭 IPv6"
-
-msgid "Firmware Settings"
-msgstr "固件设置"
-
-msgid "Packages Auto Upgrade"
-msgstr "软件包自动更新"
-
-msgid "Firmware Upgrade Notice"
-msgstr "固件更新提醒"
-
-msgid "Persistent cookies"
-msgstr "持久化登录"
