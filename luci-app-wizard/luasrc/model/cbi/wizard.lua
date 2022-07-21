@@ -25,7 +25,7 @@ dns:value("218.30.118.6", translate("DNS派：218.30.118.6"))
 dns:value("180.76.76.76", translate("百度DNS：180.76.76.76"))
 dns:value("114.114.114.114", translate("114DNS：114.114.114.114"))
 dns:value("114.114.115.115", translate("114DNS：114.114.115.115"))
-dns.placeholder = "223.5.5.5"
+dns.default = "223.5.5.5"
 dns.anonymous = false
 dns.datatype = "ip4addr"
 dns.cast = "string"
@@ -35,6 +35,7 @@ s:tab("lansetup", translate("Lan Settings"))
 ipaddr = s:taboption("lansetup", Value, "lan_ipaddr", translate("IPv4 address"), "主路由同网段未冲突的IP地址，<b><font color=\"red\">即是该路由web访问的IP</font></b>")
 for own_ip in luci.util.execi("uci get network.lan.ipaddr") do
 	ipaddr:value(own_ip, translate(own_ip .. " --当前路由的IP--"))
+	ipaddr.default = own_ip
 end
 ipaddr.datatype="ip4addr"
 ipaddr.anonymous = false
@@ -43,7 +44,7 @@ netmask = s:taboption('lansetup', Value, 'lan_netmask', translate('IPv4 netmask'
 netmask:value("255.255.255.0", translate("255.255.255.0"))
 netmask:value("255.255.0.0", translate("255.255.0.0"))
 netmask:value("255.0.0.0", translate("255.0.0.0"))
-netmask.placeholder = "255.255.255.0"
+netmask.default = "255.255.255.0"
 netmask.datatype='ip4addr'
 netmask.anonymous = false
 
@@ -61,8 +62,8 @@ o:depends('siderouter', '1')
 
 o = s:taboption('lansetup', Flag, 'ipv6', translate('Enable IPv6'), translate('Enable/Disable IPv6'))
 
-local current_node = luci.sys.exec(string.format("[ -f '/etc/config/wireless' ] && echo -n $(cat /etc/config/wireless)"))
-if current_node and current_node ~= "" and current_node ~= "nil" then
+local wireless = luci.sys.exec(string.format("[ -f '/etc/config/wireless' ] && echo -n $(cat /etc/config/wireless)"))
+if wireless and wireless ~= "" and wireless ~= "nil" then
 	s:tab('wifisetup', translate('Wireless Settings'), translate('Set the router\'s wireless name and password. For more advanced settings, please go to the Network-Wireless page.'))
 	o = s:taboption('wifisetup', Value, 'wifi_ssid', translate('<abbr title\"Extended Service Set Identifier\">ESSID</abbr>'))
 	o.datatype = 'maxlength(32)'
