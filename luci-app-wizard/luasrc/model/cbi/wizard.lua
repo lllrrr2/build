@@ -32,7 +32,7 @@ dns.cast = "string"
 
 s:tab("lansetup", translate("Lan Settings"))
 
-ipaddr = s:taboption("lansetup", Value, "lan_ipaddr", translate("IPv4 address"), "主路由同网段未冲突的IP地址，<b><font color=\"red\">即是该路由web访问的IP</font></b>")
+ipaddr = s:taboption("lansetup", Value, "lan_ipaddr", translate("IPv4 address"), "LAN网口IP (<b><font color=\"red\">即是该路由web访问的IP</font></b>)")
 for own_ip in luci.util.execi("uci get network.lan.ipaddr") do
 	ipaddr:value(own_ip, translate(own_ip .. " --当前路由的IP--"))
 	ipaddr.default = own_ip
