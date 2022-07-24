@@ -27,19 +27,19 @@ enable.default = 0
 
 minute = s:option(Value, "minute", translate("分"))
 minute.default = '0'
-minute.size = 8
+minute.size = 4
 
 hour = s:option(Value, "hour", translate("时"))
 hour.default = '5'
-hour.size = 8
+hour.size = 4
 
 day = s:option(Value, "day", translate("日"))
 day.default = '*'
-day.size = 8
+day.size = 4
 
 month = s:option(Value, "month", translate("月"))
 month.default = '*'
-month.size = 8
+month.size = 4
 
 week = s:option(Value, "week", translate("周"))
 week:value('*', translate("每天"))
@@ -63,7 +63,6 @@ command:value('wifi down', translate("关闭WIFI"))
 command:value('wifi up', translate("打开WIFI"))
 command:value('sync && echo 3 > /proc/sys/vm/drop_caches', translate("释放内存"))
 command:value('poweroff', translate("关闭电源"))
---command.default = 'sleep 5 && touch /etc/banner && reboot'
 command.rmempty = false
 
 btn = s:option(Button, "_baa", translate("立即执行"))
