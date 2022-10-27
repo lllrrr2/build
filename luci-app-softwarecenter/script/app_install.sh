@@ -1,9 +1,9 @@
 #!/bin/sh
 . /usr/bin/softwarecenter/lib_functions.sh
-cpu_model=$(uci get softwarecenter.main.cpu_model)
-webui_name=$(uci get softwarecenter.main.webui_name)
-webui_pass=$(uci get softwarecenter.main.webui_pass)
-download_dir=$(uci get softwarecenter.main.download_dir)
+cpu_model=$(uci get softwarecenter.main.cpu_model) >/dev/null 2>&1
+webui_name=$(uci get softwarecenter.main.webui_name) >/dev/null 2>&1
+webui_pass=$(uci get softwarecenter.main.webui_pass) >/dev/null 2>&1
+download_dir=$(uci get softwarecenter.main.download_dir) >/dev/null 2>&1
 pp=$(echo -n $webui_pass | md5sum | awk '{print $1}')
 make_dir /opt/share/www /opt/etc/config $download_dir
 
@@ -73,7 +73,7 @@ install_aria2() {
 		aria2_port=$(uci get softwarecenter.main.aria2_port) && \
 		sed -i "s/\(rpc-listen-port\).*/\1=$aria2_port/" $pro/aria2.conf
 
-		wget -qO /tmp/ariang.zip github.com/$(curl -Ls github.com/mayswind/AriaNg/releases | grep -oE "/mayswind/AriaNg/releases/download/.*/AriaNg.*[0-9].zip" | head -1) && \
+		wget -qO /tmp/ariang.zip `curl -Ls api.github.com/repos/mayswind/AriaNg/releases | grep -oE "https.*[0-9].zip" | head -1` && \
 		unzip -oq /tmp/ariang.zip -d /opt/share/www/ariang-aria2
 
 		if wget -qO /tmp/webui.zip github.com/ziahamza/webui-aria2/archive/refs/heads/master.zip; then
@@ -187,7 +187,7 @@ install_qbittorrent() {
 
 		cd /opt/share/www
 		[ -d CzBiX-qb-web ] || {
-		if wget -qO CzBiX-qb-web.zip github.com/$(curl -Ls github.com/CzBiX/qb-web/releases | grep -oE "CzBiX/qb-web/releases/download.*zip" | head -1); then
+		if wget -qO CzBiX-qb-web.zip $(curl -sL api.github.com/repos/CzBiX/qb-web/releases | grep -oE "https.*download.*zip" | head -1); then
 			unzip -qo CzBiX-qb-web.zip
 			mv -f dist CzBiX-qb-web
 			rm -f CzBiX-qb-web.zip
@@ -195,7 +195,7 @@ install_qbittorrent() {
 		}
 
 		[ -d miniers-qb-web ] || {
-		if curl -sL api.github.com/repos/miniers/qb-web/releases/latest | grep -oE "https://github.*download.*zip" | xargs wget -O miniers-qb-web.zip; then
+		if curl -sL api.github.com/repos/miniers/qb-web/releases | grep -oE "https.*download.*zip" | head -1 | xargs wget -O miniers-qb-web.zip; then
 			unzip -qo miniers-qb-web.zip -d miniers-qb-web
 			rm -rf miniers-qb-web.zip
 		fi
@@ -218,7 +218,7 @@ install_rtorrent() {
 		/opt/etc/init.d/S85rtorrent stop >/dev/null 2>&1
 
 		opkg_install ffmpeg mediainfo unrar php7-mod-json
-		if wget -qO /tmp/rutorrent.zip github.com/$(curl -Ls github.com/Novik/ruTorrent/releases | grep -oE "Novik/.*/v.*zip" | head -1); then
+		if wget -qO /tmp/rutorrent.zip https://github.com/Novik/ruTorrent/archive/refs/tags/$(curl -sL api.github.com/repos/Novik/ruTorrent/releases | grep zipball_url | sed -r 's/.*zipball\/(.*)",/\1/' | head -1).zip; then
 			[ -d /opt/share/www/rutorrent ] && rm -rf /opt/share/www/rutorrent
 			unzip -oq /tmp/rutorrent.zip -d /opt/share/www/ && \
 			mv /opt/share/www/ruTorrent* /opt/share/www/rutorrent
@@ -437,7 +437,7 @@ install_transmission() {
 	[ $1 ] && pr="transmission-cfp-daemon transmission-cfp-cli transmission-cfp-remote" || pr="transmission-daemon transmission-cli transmission-remote"
 
 	if opkg_install $pr; then
-		if wget -qO /tmp/tr.zip github.com/$(curl -Ls github.com/ronggang/transmission-web-control/releases | grep  -oE  "/ronggang/.*/v.*.zip" | head -1); then
+		if wget -qO /tmp/tr.zip https://github.com/ronggang/transmission-web-control/archive/refs/tags/$(curl -sL api.github.com/repos/ronggang/transmission-web-control/releases | grep zipball_url | sed -r 's/.*zipball\/(.*)",/\1/' | head -1).zip; then
 			make_dir /opt/share/transmission
 			unzip -oq /tmp/tr.zip -d /tmp
 			mv /tmp/transmission-web-control*/src/ /opt/share/transmission/web

@@ -1,11 +1,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=deluge
-PKG_VERSION:=2.0.5
-PKG_RELEASE:=6
+PKG_VERSION:=2.1.1
+PKG_RELEASE:=1
 
 PYPI_NAME:=deluge
-PKG_HASH:=a00a3920413c6c191e89e0cb22184f05387f5f26062fdb2c3ed8753adede385b
+PKG_HASH:=d6ea7e1f5bdd75f40cbd1d56f0c97cd1b5b74bc9e03783858c7daa81063dd4b9
 
 include $(TOPDIR)/feeds/packages/lang/python/pypi.mk
 include $(INCLUDE_DIR)/package.mk
@@ -15,8 +15,8 @@ define Package/deluge/Default
 	SUBMENU:=BitTorrent
 	SECTION:=net
 	CATEGORY:=Network
-	TITLE:=A lightweight BitTorrent client
-	URL:=http://deluge-torrent.org/
+	TITLE:=a lightweight BitTorrent client
+	URL:=https://deluge-torrent.org
 endef
 
 define Package/deluge
@@ -48,26 +48,39 @@ define Package/deluge/description
 endef
 
 define Package/deluge/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)$(PYTHON3_PKG_DIR)
-	$(CP) $(PKG_INSTALL_DIR)$(PYTHON3_PKG_DIR)/* $(1)$(PYTHON3_PKG_DIR)/
+	$(CP) \
+	    $(PKG_INSTALL_DIR)$(PYTHON3_PKG_DIR)/* \
+	    $(1)$(PYTHON3_PKG_DIR)/
+	rm -rf $(1)$(PYTHON3_PKG_DIR)/deluge/ui/gtk3
+	rm -rf $(1)$(PYTHON3_PKG_DIR)/deluge/ui/web
+
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(CP) \
+	    $(PKG_INSTALL_DIR)/usr/bin/* \
+	    $(1)/usr/bin/
 	rm -rf $(1)/usr/bin/deluge-gtk
 	rm -rf $(1)/usr/bin/deluge-web
-	rm -rf $(1)$(PYTHON3_PKG_DIR)/deluge/ui/web
-	rm -rf $(1)$(PYTHON3_PKG_DIR)/deluge/ui/gtk3
-	$(call Python3/FixShebang,$(1)/usr/bin/* $(1)$(PYTHON3_PKG_DIR)/deluge/path_*.py)
+	$(call Python3/FixShebang,$(1)/usr/bin/* \
+	$(1)$(PYTHON3_PKG_DIR)/deluge/path_*.py)
 endef
 
 define Package/deluge-ui-web/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/deluge-web $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)$(PYTHON3_PKG_DIR)/deluge/ui
-	$(CP) $(PKG_INSTALL_DIR)$(PYTHON3_PKG_DIR)/deluge/ui/web $(1)$(PYTHON3_PKG_DIR)/deluge/ui/
+	$(CP) \
+	    $(PKG_INSTALL_DIR)$(PYTHON3_PKG_DIR)/deluge/ui/web \
+	    $(1)$(PYTHON3_PKG_DIR)/deluge/ui/
+
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(CP) \
+	    $(PKG_INSTALL_DIR)/usr/bin/deluge-web \
+	    $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/etc/deluge/state
 	$(call Python3/FixShebang,$(1)/usr/bin/*)
 endef
 
 $(eval $(call Py3Package,deluge))
 $(eval $(call BuildPackage,deluge))
+
 $(eval $(call Py3Package,deluge-ui-web))
 $(eval $(call BuildPackage,deluge-ui-web))

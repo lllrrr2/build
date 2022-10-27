@@ -10,18 +10,18 @@
 START=99
 
 _boot() {
-	[ $user ] && user="-U $user"
-	[ -d $profile_dir  ] || mkdir -m 755 -p $profile_dir
-	[ -d $download_dir ] || mkdir -m 755 -p $download_dir
-	if [ $enable_logging = 1 ]; then
-		[ $log_level ] && log_level="-L $log_level"
-		[ -d $log_dir  ] || mkdir -m 755 -p $log_dir
-		[ $log_dir ] && log_dir="-l $log_dir/deluge.log"
+	[ -n "$user" ] && user="-U $user"
+	[ -d "$profile_dir"  ] || mkdir -m 755 -p "$profile_dir"
+	[ -d "$download_dir" ] || mkdir -m 755 -p "$download_dir"
+	if [ "$enable_logging" -eq "1" ]; then
+		[ -n "$log_level" ] && log_level="-L $log_level"
+		[ -d "$log_dir"  ] || mkdir -m 755 -p "$log_dir"
+		[ -n "$log_dir" ] && log_dir="-l $log_dir/deluge.log"
 	else
 		log_dir=""
 		log_level=""
 	fi
-	[ -f $profile_dir/core.conf ] && {
+	if [ -f "$profile_dir/core.conf" ]; then
 		sed -i "{
 			/random_port/ {s|true|false|}
 			/queue_new_to_top/ {s|false|true|}
@@ -32,10 +32,10 @@ _boot() {
 			/download_location/ {s|: \".*\"|: \"$download_dir\"|}
 			/move_completed_pa/ {s|: \".*\"|: \"$download_dir\"|}
 			/torrentfiles_loca/ {s|: \".*\"|: \"$download_dir\"|}
-		}" $profile_dir/core.conf
-	}
-	[ -f $profile_dir/sha1.py ] || {
-		cat <<-EOF >$profile_dir/sha1.py
+		}" "$profile_dir/core.conf"
+	fi
+	if [ ! -f "$profile_dir/sha1.py" ]; then
+		cat <<-EOF > "$profile_dir/sha1.py"
 			#!/usr/bin/env python
 			import sys
 			import hashlib
@@ -46,65 +46,65 @@ _boot() {
 			s.update(password.encode('utf-8'))
 			print (s.hexdigest())
 		EOF
-	}
-	dwsalt="$(cat /dev/urandom | tr -dc 'a-e0-9' | head -c 40 | xargs)"
+	fi
+	dwsalt="$(head /dev/urandom | tr -dc 'a-e0-9' 2>&1 | head -c 40; echo)"
 	dwsha1="$(/usr/bin/python3 $profile_dir/sha1.py $password $dwsalt)"
-	[ $https = "https" ] && https=true || https=false
-	[ -f $profile_dir/web.conf ] && {
+	[ "$https" = "https" ] && https=true || https=false
+	if [ -f "$profile_dir/web.conf" ]; then
 		sed -i '{
 			/port/ {s|:.*,|: '"$port"',|}
 			/https/ {s|:.*,|: '"$https"',|}
 			/show_session_speed/ {s|false|true|}
 			/pwd_salt/ {s|: ".*"|: "'"$dwsalt"'"|}
 			/pwd_sha1/ {s|: ".*"|: "'"$dwsha1"'"|}
-			/language/ {s|: ".*"|: "'"$Locale"'"|}
-		}' $profile_dir/web.conf
-	} || {
-		cat <<-EOF >$profile_dir/web.conf
+			/language/ {s|: ".*"|: "'"$language"'"|}
+		}' "$profile_dir/web.conf"
+	else
+		cat <<-EOF > "$profile_dir/web.conf"
 		{
 			"port": $port,
-			"language": "$Locale",
+			"language": "$language",
 			"pwd_salt": "$dwsalt",
 			"pwd_sha1": "$dwsha1"
 		}
 		EOF
-	}
-	if [ ! -f $profile_dir/.configured ]; then
+	fi
+	if [ ! -f "$profile_dir/.configured" ]; then
 		echo "Setting default deluge ui to console ... "
 		/usr/bin/deluge -s console
-		touch $profile_dir/.configured
+		touch "$profile_dir/.configured"
 	fi
 	port="-p $port"
 	profile_dir="-c $profile_dir"
 	/usr/bin/python3 /usr/bin/deluged    $profile_dir $log_dir $log_level $user
 	/usr/bin/python3 /usr/bin/deluge-web $profile_dir $log_dir $log_level $user $port
-	# /usr/bin/python3 /usr/bin/deluged $user $profile_dir $log_dir $log_level
-	# /usr/bin/python3 /usr/bin/deluge-web    $profile_dir $log_dir $log_level
-	logger -t deluge 'Start deluge service'
+	sleep 3
+	ps | grep deluge | awk '/usr/{print $1}' >/dev/null 2>&1 && logger -t deluge 'Start deluge service'
+	ps | grep deluge | awk '/web/{print $1}' >/dev/null 2>&1 && logger -t deluge 'Start deluge-web service'
 }
 
 start() {
 	config_load deluge
-	get_config="Locale cache_size download_dir enabled enable_logging log_dir log_level https password port profile_dir user"
+	get_config="language cache_size download_dir enabled enable_logging log_dir log_level https password port profile_dir user"
 	for rt in $get_config; do
 		config_get_bool $rt main $rt
 		config_get $rt main $rt
 	done
-	[ $enabled = 1 ] && {
-		[ -d $profile_dir ] && {
+	if [ -n "$enabled" ]; then
+		if [ -d "$profile_dir" ]; then
 			_boot
-		} || {
+		else
 			_boot && sleep 3
 			restart
-		}
-	} || {
+		fi
+	else
 		exit 0
-	}
+	fi
 }
 
 stop() {
-	kill $(ps -w | grep deluge | awk '/usr/{print $1}') >/dev/null 2>&1
-	kill $(ps -w | grep deluge | awk '/web/{print $1}') >/dev/null 2>&1
+	kill "$(ps | grep deluge | awk '/usr/{print $1}')" >/dev/null 2>&1
+	kill "$(ps | grep deluge | awk '/web/{print $1}')" >/dev/null 2>&1
 	logger -t deluge 'Stop deluge service'
 }
 

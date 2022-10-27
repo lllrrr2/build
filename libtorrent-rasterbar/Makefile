@@ -1,38 +1,41 @@
+#
+# Copyright (C) 2007-2021
+#
+
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libtorrent-rasterbar
-PKG_VERSION:=1.2.15
-PKG_RELEASE:=1
+PKG_VERSION:=2.0.8
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/arvidn/libtorrent/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=15b41c319955bb4df4be34458b04c483b7b0dbc366a3ac43511d2ca989600d05
-PKG_BUILD_DIR:=$(BUILD_DIR)/libtorrent-$(PKG_VERSION)
+PKG_SOURCE_URL:=https://github.com/arvidn/libtorrent/releases/download/v$(PKG_VERSION)
+PKG_HASH:=09dd399b4477638cf140183f5f85d376abffb9c192bc2910002988e27d69e13e
+
+PKG_MAINTAINER:=David Yang <mmyangfl@gmail.com>
+PKG_LICENSE:=BSD-3-Clause
+PKG_LICENSE_FILES:=COPYING
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
-include $(INCLUDE_DIR)/nls.mk
 include $(TOPDIR)/feeds/packages/lang/python/python3-version.mk
 
-define Package/libtorrent-rasterbar/Default
-	TITLE:=Rasterbar BitTorrent library
-	URL:=https://libtorrent.org/
-endef
-
 define Package/libtorrent-rasterbar
-	$(call Package/libtorrent-rasterbar/Default)
-	SECTION:=libs
-	CATEGORY:=Libraries
-	DEPENDS:=+boost +boost-system +libopenssl +libatomic +libstdcpp $(ICONV_DEPENDS) $(INTL_DEPENDS)
+  SECTION:=libs
+  CATEGORY:=Libraries
+  TITLE:=C++ bittorrent library by Rasterbar Software
+  URL:=https://www.libtorrent.org
+  DEPENDS:=+boost-system +libatomic +libopenssl +libstdcpp +libgcc
+  ABI_VERSION:=2.0
 endef
 
 define Package/python3-libtorrent
-	$(call Package/libtorrent-rasterbar/Default)
-	SECTION:=lang
-	CATEGORY:=Languages
-	SUBMENU:=Python
-	TITLE+= (Python 3)
-	DEPENDS:=+libtorrent-rasterbar +boost-python3
+  $(call Package/libtorrent-rasterbar)
+  SECTION:=lang
+  CATEGORY:=Languages
+  SUBMENU:=Python
+  TITLE+= (Python 3)
+  DEPENDS:=+libtorrent-rasterbar +boost-python3
 endef
 
 define Package/libtorrent-rasterbar/description
@@ -45,17 +48,30 @@ define Package/python3-libtorrent/description
 	This package contains Python 3 bindings for the libtorrent-rasterbar library.
 endef
 
+define Download/try_signal
+  VERSION:=751a7e5a5be14892bcfdff1e63c653bcbf71cf39
+  SUBDIR:=deps/try_signal
+  FILE:=$(PKG_NAME)-try_signal-$$(VERSION).tar.xz
+  URL:=https://github.com/arvidn/try_signal.git
+  MIRROR_HASH:=32a432e35e81c79f21c49744f00696c112e0deab45d15d91c61ceb63fe25a5f8
+  PROTO:=git
+endef
+$(eval $(call Download,try_signal))
+
+PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
+
+define Build/Prepare
+	$(Build/Prepare/Default)
+	$(eval $(Download/try_signal))
+	xzcat $(DL_DIR)/$(FILE) | tar -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
+endef
+
 TARGET_CXXFLAGS += -DBOOST_BIND_GLOBAL_PLACEHOLDERS
-TARGET_CFLAGS += $(if $(CONFIG_SOFT_FLOAT),-DBOOST_NO_FENV_H) -fPIC
-TARGET_LDFLAGS += -latomic $(if $(INTL_FULL),-liconv) $(if $(INTL_FULL),-lintl)
-EXTRA_CXXFLAGS += $(if $(CONFIG_GCC_VERSION_4_8),-std=gnu++11,-std=gnu++14)
+TARGET_LDFLAGS += -latomic
 
 CMAKE_OPTIONS += \
-	-Dpython-bindings:BOOL=ON \
-	-Dboost-python-module-name="python" \
-	-DPYTHON_EXECUTABLE:FILEPATH=$(STAGING_DIR_HOSTPKG)/bin/python$(PYTHON3_VERSION) \
-	-DPYTHON_SITE_PACKAGES="/usr/lib/python$(PYTHON3_VERSION)/site-packages" \
-	-DPYTHON_EXT_SUFFIX=""
+	-Dpython-bindings=$(if $(CONFIG_PACKAGE_python3-libtorrent),ON,OFF) \
+	-Dpython-egg-info=$(if $(CONFIG_PACKAGE_python3-libtorrent),ON,OFF)
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
@@ -68,7 +84,7 @@ endef
 
 define Package/libtorrent-rasterbar/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libtorrent-rasterbar.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libtorrent-rasterbar.so.* $(1)/usr/lib
 endef
 
 define Package/python3-libtorrent/install

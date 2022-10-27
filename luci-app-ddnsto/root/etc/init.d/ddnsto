@@ -4,26 +4,26 @@ START=99
 enable=$(uci get ddnsto.@global[0].enable 2>/dev/null)
 
 start() {
-	[[ $enable -eq 0 ]] && exit 0
+	[ $enable -eq "0" ] && exit 0
 	token=$(uci get ddnsto.@global[0].token 2>/dev/null) || {
-		logger -t ddnsto "tokenå€¼ä¸ºç©º"
+		logger -t ddnsto "tokenÖµÎª¿Õ"
 		exit 0
 	}
 	/usr/bin/ddnsto -u $token -d >/dev/null 2>&1 && \
-	logger -t ddnsto "å¯åŠ¨ ddnsto æœåŠ¡"
+	logger -t ddnsto "Æô¶¯ ddnsto ·şÎñ"
 }
 
 stop() {
 	pidof ddnsto >/dev/null && {
 		killall ddnsto 2>/dev/null && \
-		logger -t ddnsto "å…³é—­ ddnsto æœåŠ¡"
+		logger -t ddnsto "¹Ø±Õ ddnsto ·şÎñ"
 	}
 }
 
 boot() {
 	delay_start=$(uci get ddnsto.@global[0].start_delay 2>/dev/null || echo 0)
-	[[ $delay_start -gt 0 && $enable -eq 1 ]] && {
-		logger -t ddnsto "å»¶æ—¶$delay_startç§’å¯åŠ¨ ddnsto"
+	[ $delay_start -gt "0" ] && [ $enable -eq "1" ] && {
+		logger -t ddnsto "ÑÓÊ±$delay_startÃëÆô¶¯ ddnsto"
 		sleep "$delay_start"
 	}
 	start
