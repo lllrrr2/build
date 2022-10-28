@@ -10,14 +10,24 @@
 START=99
 
 get_config(){
-	while [[ "$*" != "" ]]; do
+	while [ x"$*" != x ]; do
 		eval ${1}='`uci get deluge.main.$1`' 2>/dev/null
 		shift
 	done
 }
 
 _boot() {
-	[ -n "$user" ] && user="-U $user"
+	[ -f $profile_dir_web ] && {
+		_port=`jq -r '.port' $profile_dir_web | grep -v "null" 2>/dev/null`
+		_https=`jq -r '.https' $profile_dir_web | grep -v "null" 2>/dev/null`
+		_pwd_salt=`jq -r '.pwd_salt' $profile_dir_web | grep -v "null" 2>/dev/null`
+		_pwd_sha1=`jq -r '.pwd_sha1' $profile_dir_web | grep -v "null" 2>/dev/null`
+		_language=`jq -r '.language' $profile_dir_web | grep -v "null" 2>/dev/null`
+		_cache_size=`jq -r '.cache_size' $profile_dir_core | grep -v "null" 2>/dev/null`
+		_download_location=`jq -r '.download_location' $profile_dir_core | grep -v "null" 2>/dev/null`
+		_move_completed_path=`jq -r '.move_completed_path' $profile_dir_core | grep -v "null" 2>/dev/null`
+		_torrentfiles_location=`jq -r '.torrentfiles_location' $profile_dir_core | grep -v "null" 2>/dev/null`
+	}
 	[ -d "$profile_dir"  ] || mkdir -m 755 -p "$profile_dir"
 	[ -d "$download_dir" ] || mkdir -m 755 -p "$download_dir"
 	if [ "$enable_logging" -eq "1" ]; then
@@ -88,12 +98,13 @@ _boot() {
 		}
 		EOF
 	fi
-	# if [ ! -f "$profile_dir/.configured" ]; then
-		# logger -t deluge "Setting default deluge ui to console ... "
-		# /usr/bin/deluge -s console
-		# touch "$profile_dir/.configured"
-	# fi
+	if [ ! -f "$profile_dir/.configured" ]; then
+		/usr/bin/deluge -s console
+		touch "$profile_dir/.configured"
+		logger -t deluge "Setting default deluge ui to console ... "
+	fi
 	port="-p $port"
+	user="-U $user"
 	profile_dir="-c $profile_dir"
 	/usr/bin/python3 /usr/bin/deluged    $profile_dir $log_dir $log_level $user
 	/usr/bin/python3 /usr/bin/deluge-web $profile_dir $log_dir $log_level $user $port
@@ -106,20 +117,11 @@ start() {
 	get_config `awk '/option/{print $2}' /etc/config/deluge`
 	profile_dir_web="$profile_dir/web.conf"
 	profile_dir_core="$profile_dir/core.conf"
-	_port=`jq -r '.port' $profile_dir_web | grep -v "null" 2>/dev/null`
-	_https=`jq -r '.https' $profile_dir_web | grep -v "null" 2>/dev/null`
-	_pwd_salt=`jq -r '.pwd_salt' $profile_dir_web | grep -v "null" 2>/dev/null`
-	_pwd_sha1=`jq -r '.pwd_sha1' $profile_dir_web | grep -v "null" 2>/dev/null`
-	_language=`jq -r '.language' $profile_dir_web | grep -v "null" 2>/dev/null`
-	_cache_size=`jq -r '.cache_size' $profile_dir_core | grep -v "null" 2>/dev/null`
-	_download_location=`jq -r '.download_location' $profile_dir_core | grep -v "null" 2>/dev/null`
-	_move_completed_path=`jq -r '.move_completed_path' $profile_dir_core | grep -v "null" 2>/dev/null`
-	_torrentfiles_location=`jq -r '.torrentfiles_location' $profile_dir_core | grep -v "null" 2>/dev/null`
-	if [ -n "$enabled" ]; then
+	if [ "$enabled" = "1" ]; then
 		if [ -d "$profile_dir" ]; then
 			_boot
 		else
-			_boot && sleep 3
+			_boot
 			restart
 		fi
 	else
@@ -131,10 +133,4 @@ stop() {
 	kill "$(ps | grep deluge | awk '/usr/{print $1}')" >/dev/null 2>&1
 	kill "$(ps | grep deluge | awk '/web/{print $1}')" >/dev/null 2>&1
 	logger -t deluge 'Stop deluge service'
-}
-
-restart() {
-	stop
-	sleep 3
-	start
 }
