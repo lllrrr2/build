@@ -1,9 +1,9 @@
 #!/bin/sh
 . /usr/bin/softwarecenter/lib_functions.sh
-cpu_model=$(uci get softwarecenter.main.cpu_model) >/dev/null 2>&1
-webui_name=$(uci get softwarecenter.main.webui_name) >/dev/null 2>&1
-webui_pass=$(uci get softwarecenter.main.webui_pass) >/dev/null 2>&1
-download_dir=$(uci get softwarecenter.main.download_dir) >/dev/null 2>&1
+cpu_model=$(uci get softwarecenter.main.cpu_model 2>/dev/null)
+webui_name=$(uci get softwarecenter.main.webui_name 2>/dev/null)
+webui_pass=$(uci get softwarecenter.main.webui_pass 2>/dev/null)
+download_dir=$(uci get softwarecenter.main.download_dir 2>/dev/null)
 pp=$(echo -n $webui_pass | md5sum | awk '{print $1}')
 make_dir /opt/share/www /opt/etc/config $download_dir
 
@@ -70,7 +70,7 @@ install_aria2() {
 			ln -sf $pro/aria2.conf /opt/etc/aria2.conf
 			ln -sf $pro/aria2.conf /opt/etc/config/aria2.conf
 		fi
-		aria2_port=$(uci get softwarecenter.main.aria2_port) && \
+		aria2_port=$(uci get softwarecenter.main.aria2_port 2>/dev/null) && \
 		sed -i "s/\(rpc-listen-port\).*/\1=$aria2_port/" $pro/aria2.conf
 
 		wget -qO /tmp/ariang.zip `curl -Ls api.github.com/repos/mayswind/AriaNg/releases | grep -oE "https.*[0-9].zip" | head -1` && \
@@ -129,7 +129,7 @@ install_deluge() {
 			"torrentfiles_location": "$download_dir"
 		}
 		EOF
-		deluged_port=$(uci get softwarecenter.main.deluged_port) && \
+		deluged_port=$(uci get softwarecenter.main.deluged_port 2>/dev/null) && \
 		sed -i "/-p 888/s/888/$deluged_port/" /opt/etc/init.d/S81deluge-web
 		ln -sf /opt/etc/deluge/core.conf /opt/etc/config/deluge.conf
 		/opt/etc/init.d/S80deluged start >/dev/null 2>&1 && sleep 4
@@ -171,7 +171,7 @@ install_qbittorrent() {
 			Downloads\SavePath=$download_dir
 			Downloads\PreAllocation=true
 		EOF
-		qbittorrent_port=$(uci get softwarecenter.main.qbittorrent_port) && \
+		qbittorrent_port=$(uci get softwarecenter.main.qbittorrent_port 2>/dev/null) && \
 		sed -i "s/\(WebUI\Port\).*/\1=$qbittorrent_port/" /opt/etc/qBittorrent_entware/config/qBittorrent.conf
 		[ $cpu_model == x86_64 ] && {
 			if [ -z $(command -v qbpass) ]; then
@@ -456,7 +456,7 @@ install_transmission() {
 			/password/s|: ".*"|: "'"$webui_pass"'"|
 			/download-dir/s|: ".*"|: "'"$download_dir"'"|
 		}' /opt/etc/transmission/settings.json
-		transmission_port=$(uci get softwarecenter.main.transmission_port) && \
+		transmission_port=$(uci get softwarecenter.main.transmission_port 2>/dev/null) && \
 		sed -i "/rpc-port/s/9091/$transmission_port/" /opt/etc/config/transmission.json
 		ln -sf /opt/etc/transmission/settings.json /opt/etc/config/transmission.json
 		/opt/etc/init.d/S88transmission start >/dev/null 2>&1

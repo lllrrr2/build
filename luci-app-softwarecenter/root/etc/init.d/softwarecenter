@@ -68,7 +68,7 @@ start() {
 
 		grep -q "_boot" /etc/config/softwarecenter && {
 			for pk in $(awk '/_boot/{print $2}' /etc/config/softwarecenter | sed 's/_boot//'); do
-				[ "$(uci get softwarecenter.main.${pk}_boot) >/dev/null 2>&1" = 1 ] && {
+				[ "$(uci get softwarecenter.main.${pk}_boot 2>/dev/null 2>&1)" = 1 ] && {
 					jd=`find /opt/etc/init.d/ -perm '-u+x' -name "*$pk"`
 					if [ -x "$jd" ]; then
 						if ! _pidof "$pk" >/dev/null 2>&1; then

@@ -9,6 +9,13 @@
 
 START=99
 
+get_config(){
+	while [[ "$*" != "" ]]; do
+		eval ${1}='`uci get deluge.main.$1`' 2>/dev/null
+		shift
+	done
+}
+
 _boot() {
 	[ -n "$user" ] && user="-U $user"
 	[ -d "$profile_dir"  ] || mkdir -m 755 -p "$profile_dir"
@@ -21,18 +28,26 @@ _boot() {
 		log_dir=""
 		log_level=""
 	fi
-	if [ -f "$profile_dir/core.conf" ]; then
-		sed -i "{
-			/random_port/ {s|true|false|}
-			/queue_new_to_top/ {s|false|true|}
-			/new_release_check/ {s|true|false|}
-			/listen_random_por/ {s|55554|null|}
-			/pre_allocate_stor/ {s|false|true|}
-			/cache_size/ {s|:.*,|: $cache_size,|}
-			/download_location/ {s|: \".*\"|: \"$download_dir\"|}
-			/move_completed_pa/ {s|: \".*\"|: \"$download_dir\"|}
-			/torrentfiles_loca/ {s|: \".*\"|: \"$download_dir\"|}
-		}" "$profile_dir/core.conf"
+	if [ -f $profile_dir_core ]; then
+		[ "$cache_size" != "$_cache_size" ] && sed -i "/cache_size/ {s|:.*,|: $cache_size,|}" $profile_dir_core
+		[ "$download_dir" != "$_download_dir" ] && {
+		sed -i "/download_location/ {s|: \".*\"|: \"$download_dir\"|}" $profile_dir_core
+		sed -i "/move_completed_pa/ {s|: \".*\"|: \"$download_dir\"|}" $profile_dir_core
+		sed -i "/torrentfiles_loca/ {s|: \".*\"|: \"$download_dir\"|}" $profile_dir_core
+		}
+	else
+		cat <<-EOF > $profile_dir_core
+		{
+			"random_port": false,
+			"queue_new_to_top": true,
+			"new_release_check": false,
+			"listen_random_port": null,
+			"pre_allocate_storage": true,
+			"download_location": "$download_dir",
+			"move_completed_path": "$download_dir",
+			"torrentfiles_location": "$download_dir"
+		}
+		EOF
 	fi
 	if [ ! -f "$profile_dir/sha1.py" ]; then
 		cat <<-EOF > "$profile_dir/sha1.py"
@@ -47,23 +62,22 @@ _boot() {
 			print (s.hexdigest())
 		EOF
 	fi
+	[ -n $_pwd_salt ] && dwsalt=$_pwd_salt || \
 	dwsalt="$(head /dev/urandom | tr -dc 'a-e0-9' 2>&1 | head -c 40; echo)"
 	dwsha1="$(/usr/bin/python3 $profile_dir/sha1.py $password $dwsalt)"
 	[ "$https" = "https" ] && https=true || https=false
-	if [ -f "$profile_dir/web.conf" ]; then
-		sed -i '{
-			/port/ {s|:.*,|: '"$port"',|}
-			/https/ {s|:.*,|: '"$https"',|}
-			/show_session_speed/ {s|false|true|}
-			/pwd_salt/ {s|: ".*"|: "'"$dwsalt"'"|}
-			/pwd_sha1/ {s|: ".*"|: "'"$dwsha1"'"|}
-			/language/ {s|: ".*"|: "'"$language"'"|}
-		}' "$profile_dir/web.conf"
+	if [ -f $profile_dir_web ]; then
+		[ "$port" != "$_port" ] && sed -i '/port/ {s|:.*,|: '"$port"',|}' $profile_dir_web
+		[ "$https" != "$_https" ] && sed -i '/https/ {s|:.*,|: '"$https"',|}' $profile_dir_web
+		[ "$dwsha1" != "$_dwsha1" ] && sed -i '/pwd_sha1/ {s|: ".*"|: "'"$dwsha1"'"|}' $profile_dir_web
+		[ "$language" != "$_language" ] && sed -i '/language/ {s|: ".*"|: "'"$language"'"|}' $profile_dir_web
 	else
-		cat <<-EOF > "$profile_dir/web.conf"
+		cat <<-EOF > $profile_dir_web
 		{
 			"port": $port,
+			"https": $https,
 			"language": "$language",
+			"show_session_speed": true,
 			"pwd_salt": "$dwsalt",
 			"pwd_sha1": "$dwsha1"
 		}
@@ -84,12 +98,18 @@ _boot() {
 }
 
 start() {
-	config_load deluge
-	get_config="language cache_size download_dir enabled enable_logging log_dir log_level https password port profile_dir user"
-	for rt in $get_config; do
-		config_get_bool $rt main $rt
-		config_get $rt main $rt
-	done
+	get_config `awk '/option/{print $2}' /etc/config/deluge`
+	profile_dir_web="$profile_dir/web.conf"
+	profile_dir_core="$profile_dir/core.conf"
+	_port=`jq -r '.port' $profile_dir_web | grep -v "null" 2>/dev/null`
+	_https=`jq -r '.https' $profile_dir_web | grep -v "null" 2>/dev/null`
+	_pwd_salt=`jq -r '.pwd_salt' $profile_dir_web | grep -v "null" 2>/dev/null`
+	_pwd_sha1=`jq -r '.pwd_sha1' $profile_dir_web | grep -v "null" 2>/dev/null`
+	_language=`jq -r '.language' $profile_dir_web | grep -v "null" 2>/dev/null`
+	_cache_size=`jq -r '.cache_size' $profile_dir_core | grep -v "null" 2>/dev/null`
+	_download_location=`jq -r '.download_location' $profile_dir_core | grep -v "null" 2>/dev/null`
+	_move_completed_path=`jq -r '.move_completed_path' $profile_dir_core | grep -v "null" 2>/dev/null`
+	_torrentfiles_location=`jq -r '.torrentfiles_location' $profile_dir_core | grep -v "null" 2>/dev/null`
 	if [ -n "$enabled" ]; then
 		if [ -d "$profile_dir" ]; then
 			_boot
@@ -110,6 +130,6 @@ stop() {
 
 restart() {
 	stop
-	sleep 2
+	sleep 3
 	start
 }
