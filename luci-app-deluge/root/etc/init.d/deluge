@@ -21,20 +21,24 @@ _boot() {
 	[ -d "$profile_dir"  ] || mkdir -m 755 -p "$profile_dir"
 	[ -d "$download_dir" ] || mkdir -m 755 -p "$download_dir"
 	if [ "$enable_logging" -eq "1" ]; then
-		[ -n "$log_level" ] && log_level="-L $log_level"
+		[ -n $log_level ] && log_level="-L $log_level"
 		[ -d "$log_dir"  ] || mkdir -m 755 -p "$log_dir"
-		[ -n "$log_dir" ] && log_dir="-l $log_dir/deluge.log"
+		[ -n $log_dir ] && log_dir="-l $log_dir/deluge.log"
 	else
 		log_dir=""
 		log_level=""
 	fi
 	if [ -f $profile_dir_core ]; then
 		[ "$cache_size" != "$_cache_size" ] && sed -i "/cache_size/ {s|:.*,|: $cache_size,|}" $profile_dir_core
-		[ "$download_dir" != "$_download_dir" ] && {
-		sed -i "/download_location/ {s|: \".*\"|: \"$download_dir\"|}" $profile_dir_core
-		sed -i "/move_completed_pa/ {s|: \".*\"|: \"$download_dir\"|}" $profile_dir_core
-		sed -i "/torrentfiles_loca/ {s|: \".*\"|: \"$download_dir\"|}" $profile_dir_core
-		}
+		[ "$download_dir" != "$_download_dir" ] && sed -i "/download_location/ {s|: \".*\"|: \"$download_dir\"|}" $profile_dir_core
+		[ $move_completed_enabled = "1" ] && {
+			sed -i "/move_completed\"/ {s|:.*,|: true,|}" $profile_dir_core
+			sed -i "/move_completed_path/ {s|: \".*\"|: \"$move_completed_path\"|}" $profile_dir_core
+		} || sed -i "/move_completed\"/ {s|:.*,|: false,|}" $profile_dir_core
+		[ $copy_torrent_file_enabled = "1" ] && {
+			sed -i "/copy_torrent_file/ {s|:.*,|: true,|}" $profile_dir_core
+			sed -i "/torrentfiles_location/ {s|: \".*\"|: \"$torrentfiles_location\"|}" $profile_dir_core
+		} || sed -i "/copy_torrent_file/ {s|:.*,|: false,|}" $profile_dir_core
 	else
 		cat <<-EOF > $profile_dir_core
 		{
@@ -44,8 +48,8 @@ _boot() {
 			"listen_random_port": null,
 			"pre_allocate_storage": true,
 			"download_location": "$download_dir",
-			"move_completed_path": "$download_dir",
-			"torrentfiles_location": "$download_dir"
+			"move_completed_path": "$move_completed_path",
+			"torrentfiles_location": "$torrentfiles_location"
 		}
 		EOF
 	fi
@@ -62,7 +66,7 @@ _boot() {
 			print (s.hexdigest())
 		EOF
 	fi
-	[ -n $_pwd_salt ] && dwsalt=$_pwd_salt || \
+	[ x$_pwd_salt != x ] && dwsalt=$_pwd_salt || \
 	dwsalt="$(head /dev/urandom | tr -dc 'a-e0-9' 2>&1 | head -c 40; echo)"
 	dwsha1="$(/usr/bin/python3 $profile_dir/sha1.py $password $dwsalt)"
 	[ "$https" = "https" ] && https=true || https=false
@@ -78,16 +82,17 @@ _boot() {
 			"https": $https,
 			"language": "$language",
 			"show_session_speed": true,
+			"geoip_db_location": "$geoip_db_location/GeoIP.dat",
 			"pwd_salt": "$dwsalt",
 			"pwd_sha1": "$dwsha1"
 		}
 		EOF
 	fi
-	if [ ! -f "$profile_dir/.configured" ]; then
-		echo "Setting default deluge ui to console ... "
-		/usr/bin/deluge -s console
-		touch "$profile_dir/.configured"
-	fi
+	# if [ ! -f "$profile_dir/.configured" ]; then
+		# logger -t deluge "Setting default deluge ui to console ... "
+		# /usr/bin/deluge -s console
+		# touch "$profile_dir/.configured"
+	# fi
 	port="-p $port"
 	profile_dir="-c $profile_dir"
 	/usr/bin/python3 /usr/bin/deluged    $profile_dir $log_dir $log_level $user
