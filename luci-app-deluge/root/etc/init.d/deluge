@@ -2,14 +2,10 @@
 #
 # Copyright (C) 2015 OpenWrt-dist
 # Copyright (C) 2022 hong0980 <win3gp@gmail.com>
-#
-# This is free software, licensed under the GNU General Public License v3.
-# See /LICENSE for more information.
-#
 
 START=99
 
-get_config(){
+get_config() {
 	while [ x"$*" != x ]; do
 		eval ${1}='`uci get deluge.main.$1`' 2>/dev/null
 		shift
@@ -41,16 +37,16 @@ _boot() {
 		log_level=""
 	fi
 	if [ -f $profile_dir_core ]; then
-		[ "$cache_size" != "$_cache_size" ] && sed -i "/cache_size/ {s|:.*,|: $cache_size,|}" $profile_dir_core
-		[ "$download_location" != "$_download_location" ] && sed -i "/download_location/ {s|: \".*\"|: \"$download_location\"|}" $profile_dir_core
+		[ "$cache_size" = "$_cache_size" ] || sed -i "/cache_size/ {s|:.*,|: $cache_size,|}" $profile_dir_core
+		[ "$download_location" = "$_download_location" ] || sed -i "/download_location/ {s|: \".*\"|: \"$download_location\"|}" $profile_dir_core
 		[ x$move_completed_enabled != x1 ] && sed -i "/move_completed\"/ {s|:.*,|: false,|}" $profile_dir_core || {
 			sed -i "/move_completed\"/ {s|:.*,|: true,|}" $profile_dir_core
-			[ "$move_completed_path" != "$_move_completed_path" ] && \
+			[ "$move_completed_path" = "$_move_completed_path" ] || \
 			sed -i "/move_completed_path/ {s|: \".*\"|: \"$move_completed_path\"|}" $profile_dir_core
 		}
 		[ x$copy_torrent_file_enabled != x1 ] && sed -i "/copy_torrent_file/ {s|:.*,|: false,|}" $profile_dir_core || {
 			sed -i "/copy_torrent_file/ {s|:.*,|: true,|}" $profile_dir_core
-			[ "$torrentfiles_location" != "$_torrentfiles_location" ] && \
+			[ "$torrentfiles_location" = "$_torrentfiles_location" ] || \
 			sed -i "/torrentfiles_location/ {s|: \".*\"|: \"$torrentfiles_location\"|}" $profile_dir_core
 		}
 	else
@@ -85,10 +81,10 @@ _boot() {
 	dwsha1="$(/usr/bin/python3 $profile_dir/sha1.py $password $dwsalt)"
 	[ "$https" = "https" ] && https=true || https=false
 	if [ -f $profile_dir_web ]; then
-		[ "$port" != "$_port" ] && sed -i '/port/ {s|:.*,|: '"$port"',|}' $profile_dir_web
-		[ "$https" != "$_https" ] && sed -i '/https/ {s|:.*,|: '"$https"',|}' $profile_dir_web
-		[ "$dwsha1" != "$_dwsha1" ] && sed -i '/pwd_sha1/ {s|: ".*"|: "'"$dwsha1"'"|}' $profile_dir_web
-		[ "$language" != "$_language" ] && sed -i '/language/ {s|: ".*"|: "'"$language"'"|}' $profile_dir_web
+		[ "$port" = "$_port" ] || sed -i '/port/ {s|:.*,|: '"$port"',|}' $profile_dir_web
+		[ "$https" = "$_https" ] || sed -i '/https/ {s|:.*,|: '"$https"',|}' $profile_dir_web
+		[ "$dwsha1" = "$_dwsha1" ] || sed -i '/pwd_sha1/ {s|: ".*"|: "'"$dwsha1"'"|}' $profile_dir_web
+		[ "$language" = "$_language" ] || sed -i '/language/ {s|: ".*"|: "'"$language"'"|}' $profile_dir_web
 	else
 		cat <<-EOF > $profile_dir_web
 		{
