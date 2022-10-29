@@ -30,10 +30,10 @@ _boot() {
 	}
 	[ -d "$profile_dir"  ] || mkdir -m 755 -p "$profile_dir"
 	[ -d "$download_dir" ] || mkdir -m 755 -p "$download_dir"
-	if [ "$enable_logging" -eq "1" ]; then
-		[ -n $log_level ] && log_level="-L $log_level"
+	if [ x$enable_logging = x1 ]; then
 		[ -d "$log_dir"  ] || mkdir -m 755 -p "$log_dir"
-		[ -n $log_dir ] && log_dir="-l $log_dir/deluge.log"
+		[ -n "$log_level" ] && log_level="-L $log_level"
+		[ -n "$log_dir" ] && log_dir="-l $log_dir/deluge.log"
 	else
 		log_dir=""
 		log_level=""
@@ -115,12 +115,12 @@ start() {
 	get_config `awk '/option/{print $2}' /etc/config/deluge`
 	profile_dir_web="$profile_dir/web.conf"
 	profile_dir_core="$profile_dir/core.conf"
-	if [ x$enabled == x1 ]; then
-		if [ ! -d "$profile_dir" ]; then
+	if [ x$enabled = x1 ]; then
+		if [ -d "$profile_dir" ]; then
 			_boot
-			restart
 		else
 			_boot
+			restart
 		fi
 	else
 		return 1
