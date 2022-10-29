@@ -41,13 +41,11 @@ _boot() {
 	if [ -f $profile_dir_core ]; then
 		[ "$cache_size" != "$_cache_size" ] && sed -i "/cache_size/ {s|:.*,|: $cache_size,|}" $profile_dir_core
 		[ "$download_dir" != "$_download_dir" ] && sed -i "/download_location/ {s|: \".*\"|: \"$download_dir\"|}" $profile_dir_core
-		[ $move_completed_enabled = "1" ] && {
-			sed -i "/move_completed\"/ {s|:.*,|: true,|}" $profile_dir_core
-			sed -i "/move_completed_path/ {s|: \".*\"|: \"$move_completed_path\"|}" $profile_dir_core
+		[ x$move_completed_enabled = x1 ] && {
+			sed -i "/move_completed\"/ {s|:.*,|: true,|}; /move_completed_path/ {s|: \".*\"|: \"$move_completed_path\"|}" $profile_dir_core
 		} || sed -i "/move_completed\"/ {s|:.*,|: false,|}" $profile_dir_core
-		[ $copy_torrent_file_enabled = "1" ] && {
-			sed -i "/copy_torrent_file/ {s|:.*,|: true,|}" $profile_dir_core
-			sed -i "/torrentfiles_location/ {s|: \".*\"|: \"$torrentfiles_location\"|}" $profile_dir_core
+		[ x$copy_torrent_file_enabled = x1 ] && {
+			sed -i "/copy_torrent_file/ {s|:.*,|: true,|}; /torrentfiles_location/ {s|: \".*\"|: \"$torrentfiles_location\"|}" $profile_dir_core
 		} || sed -i "/copy_torrent_file/ {s|:.*,|: false,|}" $profile_dir_core
 	else
 		cat <<-EOF > $profile_dir_core
@@ -99,9 +97,9 @@ _boot() {
 		EOF
 	fi
 	if [ ! -f "$profile_dir/.configured" ]; then
+		logger -t deluge "Setting default deluge ui to console ... "
 		/usr/bin/deluge -s console
 		touch "$profile_dir/.configured"
-		logger -t deluge "Setting default deluge ui to console ... "
 	fi
 	port="-p $port"
 	user="-U $user"
@@ -117,15 +115,15 @@ start() {
 	get_config `awk '/option/{print $2}' /etc/config/deluge`
 	profile_dir_web="$profile_dir/web.conf"
 	profile_dir_core="$profile_dir/core.conf"
-	if [ "$enabled" = "1" ]; then
-		if [ -d "$profile_dir" ]; then
-			_boot
-		else
+	if [ x$enabled == x1 ]; then
+		if [ ! -d "$profile_dir" ]; then
 			_boot
 			restart
+		else
+			_boot
 		fi
 	else
-		exit 0
+		return 1
 	fi
 }
 
