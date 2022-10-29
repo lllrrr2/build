@@ -42,7 +42,7 @@ e:value("debug", translate("Debug"))
 e.default = "error"
 
 t:tab("download", translate("下载设置"))
-e = t:taboption("download", Value, "download_dir", translate("下载文件路径"))
+e = t:taboption("download", Value, "download_location", translate("下载文件路径"))
 e.placeholder = "/mnt/sda3/download"
 
 e = t:taboption("download", Flag, "move_completed_enabled", translate("将已完成的任务移动到"))

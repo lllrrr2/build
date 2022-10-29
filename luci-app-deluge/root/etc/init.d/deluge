@@ -23,13 +23,15 @@ _boot() {
 		_pwd_salt=`jq -r '.pwd_salt' $profile_dir_web | grep -v "null" 2>/dev/null`
 		_pwd_sha1=`jq -r '.pwd_sha1' $profile_dir_web | grep -v "null" 2>/dev/null`
 		_language=`jq -r '.language' $profile_dir_web | grep -v "null" 2>/dev/null`
+	}
+	[ -f $profile_dir_core ] && {
 		_cache_size=`jq -r '.cache_size' $profile_dir_core | grep -v "null" 2>/dev/null`
 		_download_location=`jq -r '.download_location' $profile_dir_core | grep -v "null" 2>/dev/null`
 		_move_completed_path=`jq -r '.move_completed_path' $profile_dir_core | grep -v "null" 2>/dev/null`
 		_torrentfiles_location=`jq -r '.torrentfiles_location' $profile_dir_core | grep -v "null" 2>/dev/null`
 	}
 	[ -d "$profile_dir"  ] || mkdir -m 755 -p "$profile_dir"
-	[ -d "$download_dir" ] || mkdir -m 755 -p "$download_dir"
+	[ -d "$download_location" ] || mkdir -m 755 -p "$download_location"
 	if [ x$enable_logging = x1 ]; then
 		[ -d "$log_dir"  ] || mkdir -m 755 -p "$log_dir"
 		[ -n "$log_level" ] && log_level="-L $log_level"
@@ -40,13 +42,17 @@ _boot() {
 	fi
 	if [ -f $profile_dir_core ]; then
 		[ "$cache_size" != "$_cache_size" ] && sed -i "/cache_size/ {s|:.*,|: $cache_size,|}" $profile_dir_core
-		[ "$download_dir" != "$_download_dir" ] && sed -i "/download_location/ {s|: \".*\"|: \"$download_dir\"|}" $profile_dir_core
-		[ x$move_completed_enabled = x1 ] && {
-			sed -i "/move_completed\"/ {s|:.*,|: true,|}; /move_completed_path/ {s|: \".*\"|: \"$move_completed_path\"|}" $profile_dir_core
-		} || sed -i "/move_completed\"/ {s|:.*,|: false,|}" $profile_dir_core
-		[ x$copy_torrent_file_enabled = x1 ] && {
-			sed -i "/copy_torrent_file/ {s|:.*,|: true,|}; /torrentfiles_location/ {s|: \".*\"|: \"$torrentfiles_location\"|}" $profile_dir_core
-		} || sed -i "/copy_torrent_file/ {s|:.*,|: false,|}" $profile_dir_core
+		[ "$download_location" != "$_download_location" ] && sed -i "/download_location/ {s|: \".*\"|: \"$download_location\"|}" $profile_dir_core
+		[ x$move_completed_enabled != x1 ] && sed -i "/move_completed\"/ {s|:.*,|: false,|}" $profile_dir_core || {
+			sed -i "/move_completed\"/ {s|:.*,|: true,|}" $profile_dir_core
+			[ "$move_completed_path" != "$_move_completed_path" ] && \
+			sed -i "/move_completed_path/ {s|: \".*\"|: \"$move_completed_path\"|}" $profile_dir_core
+		}
+		[ x$copy_torrent_file_enabled != x1 ] && sed -i "/copy_torrent_file/ {s|:.*,|: false,|}" $profile_dir_core || {
+			sed -i "/copy_torrent_file/ {s|:.*,|: true,|}" $profile_dir_core
+			[ "$torrentfiles_location" != "$_torrentfiles_location" ] && \
+			sed -i "/torrentfiles_location/ {s|: \".*\"|: \"$torrentfiles_location\"|}" $profile_dir_core
+		}
 	else
 		cat <<-EOF > $profile_dir_core
 		{
@@ -55,7 +61,7 @@ _boot() {
 			"new_release_check": false,
 			"listen_random_port": null,
 			"pre_allocate_storage": true,
-			"download_location": "$download_dir",
+			"download_location": "$download_location",
 			"move_completed_path": "$move_completed_path",
 			"torrentfiles_location": "$torrentfiles_location"
 		}
