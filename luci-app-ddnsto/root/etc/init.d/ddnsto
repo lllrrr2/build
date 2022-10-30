@@ -7,7 +7,7 @@ start() {
 	[ x$enable = x1 ] || return 1
 	token=$(uci get ddnsto.@global[0].token 2>/dev/null) || {
 		logger -t ddnsto "token值为空"
-		exit 0
+		return 1
 	}
 	/usr/bin/ddnsto -u $token -d >/dev/null 2>&1 && \
 	logger -t ddnsto "启动 ddnsto 服务"
@@ -24,7 +24,6 @@ boot() {
 	delay_start=$(uci get ddnsto.@global[0].start_delay 2>/dev/null)
 	[[ x$enable = x1 && x$delay_start != x ]] && {
 		logger -t ddnsto "延时$delay_start秒启动 ddnsto"
-		sleep "$delay_start"
-		start
-	} || exit 0
+		sleep "$delay_start" && start
+	} || return 1
 }
