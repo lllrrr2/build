@@ -41,11 +41,13 @@ _boot() {
 		[ "$download_location" = "$_download_location" ] || sed -i "/download_location/ {s|: \".*\"|: \"$download_location\"|}" $profile_dir_core
 		[ x$move_completed_enabled != x1 ] && sed -i "/move_completed\"/ {s|:.*,|: false,|}" $profile_dir_core || {
 			sed -i "/move_completed\"/ {s|:.*,|: true,|}" $profile_dir_core
+			[ -d "$move_completed_path"  ] || mkdir -m 755 -p "$move_completed_path"
 			[ "$move_completed_path" = "$_move_completed_path" ] || \
 			sed -i "/move_completed_path/ {s|: \".*\"|: \"$move_completed_path\"|}" $profile_dir_core
 		}
 		[ x$copy_torrent_file_enabled != x1 ] && sed -i "/copy_torrent_file/ {s|:.*,|: false,|}" $profile_dir_core || {
 			sed -i "/copy_torrent_file/ {s|:.*,|: true,|}" $profile_dir_core
+			[ -d "$torrentfiles_location"  ] || mkdir -m 755 -p "$torrentfiles_location"
 			[ "$torrentfiles_location" = "$_torrentfiles_location" ] || \
 			sed -i "/torrentfiles_location/ {s|: \".*\"|: \"$torrentfiles_location\"|}" $profile_dir_core
 		}
