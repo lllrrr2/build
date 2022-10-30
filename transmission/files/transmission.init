@@ -40,11 +40,7 @@ transmission() {
 
 	local enabled
 	config_get_bool enabled "$cfg" enabled 0
-	[ "$enabled" -gt 0 ] || {
-		echo "Transmission not enabled. Please enable in /etc/config/transmission"
-		logger -t "transmission" -p "daemon.info" "Transmission not enabled. Please enable in /etc/config/transmission"
-		return 1
-	}
+	[ "$enabled" -gt 0 ] || return 1
 
 	local config_dir user group download_dir incomplete_dir incomplete_dir_enabled \
 	mem_percentage config_overwrite nice web_home seccomp_path USE MEM
@@ -87,7 +83,6 @@ transmission() {
 	}
 
 	[ "$config_overwrite" = 0 ] || {
-
 		echo "{"
 
 		append_params "$cfg" \
@@ -115,7 +110,6 @@ transmission() {
 
 			echo "\"invalid-key\": false"
 			echo "}"
-
 	} > "$config_file"
 
 	procd_open_instance

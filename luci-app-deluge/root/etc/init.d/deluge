@@ -101,7 +101,7 @@ _boot() {
 		EOF
 	fi
 	if [ ! -f "$profile_dir/.configured" ]; then
-		logger -t deluge "Setting default deluge ui to console ... "
+		logger -t "deluge" -p "Setting default deluge ui to console ... "
 		/usr/bin/deluge -s console
 		touch "$profile_dir/.configured"
 	fi
@@ -111,8 +111,8 @@ _boot() {
 	/usr/bin/python3 /usr/bin/deluged    $profile_dir $log_dir $log_level $user
 	/usr/bin/python3 /usr/bin/deluge-web $profile_dir $log_dir $log_level $user $port
 	sleep 3
-	ps | grep deluge | awk '/usr/{print $1}' >/dev/null 2>&1 && logger -t deluge 'Start deluge service'
-	ps | grep deluge | awk '/web/{print $1}' >/dev/null 2>&1 && logger -t deluge 'Start deluge-web service'
+	ps | grep deluge | awk '/usr/{print $1}' >/dev/null 2>&1 && logger -t "deluge" -p 'Start deluge service'
+	ps | grep deluge | awk '/web/{print $1}' >/dev/null 2>&1 && logger -t "deluge" -p 'Start deluge-web service'
 }
 
 start() {
@@ -134,5 +134,5 @@ start() {
 stop() {
 	kill "$(ps | grep deluge | awk '/usr/{print $1}')" >/dev/null 2>&1
 	kill "$(ps | grep deluge | awk '/web/{print $1}')" >/dev/null 2>&1
-	logger -t deluge 'Stop deluge service'
+	logger -t "deluge" -p 'Stop deluge service'
 }
