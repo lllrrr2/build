@@ -8,6 +8,9 @@ s.anonymous=true
 
 if (sys.call("[ -d /etc/tinynote ]") == 1) then
 	sys.call("mkdir /etc/tinynote")
+	if (sys.call("[ -f /etc/tinynote/tinynote1.txt ]") == 1) then
+		sys.call("touch /etc/tinynote/tinynote1.txt")
+	end
 end
 
 if fs.access("/etc/tinynote/tinynote1.txt") then
