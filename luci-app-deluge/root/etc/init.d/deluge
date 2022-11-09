@@ -105,9 +105,7 @@ _boot() {
 		/usr/bin/deluge -s console
 		touch "$profile_dir/.configured"
 	fi
-	port="-p $port"
-	user="-U $user"
-	profile_dir="-c $profile_dir"
+	port="-p $port"; user="-U $user"; profile_dir="-c $profile_dir"
 	/usr/bin/python3 /usr/bin/deluged    $profile_dir $log_dir $log_level $user
 	/usr/bin/python3 /usr/bin/deluge-web $profile_dir $log_dir $log_level $user $port
 	sleep 3
