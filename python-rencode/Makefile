@@ -19,13 +19,12 @@ include $(INCLUDE_DIR)/package.mk
 include $(TOPDIR)/feeds/packages/lang/python/python3-package.mk
 
 define Package/python3-rencode
-  SECTION:=lang
-  CATEGORY:=Languages
-  SUBMENU:=Python
-  DEPENDS:=+python3
-  TITLE:=Web safe object pickling/unpickling
-  URL:=https://github.com/aresch/rencode
-  MAINTAINER:=Entware team, https://entware.net
+	SECTION:=lang
+	CATEGORY:=Languages
+	SUBMENU:=Python
+	DEPENDS:=+python3
+	TITLE:=Web safe object pickling/unpickling
+	URL:=https://github.com/aresch/rencode
 endef
 
 define Package/python3-rencode/description

@@ -22,9 +22,9 @@ define Package/python3-pyxdg
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
+  DEPENDS:=+python3
   TITLE:=a library supporting various freedesktop standards
   URL:=https://freedesktop.org/wiki/Software/pyxdg/
-  DEPENDS:=+python3
 endef
 
 define Package/python-pyxdg/description

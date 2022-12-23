@@ -30,7 +30,6 @@ define Package/deluge
 	    +python3-pillow \
 	    +python3-pyopenssl \
 	    +python3-pyxdg \
-	    +python3-rencode \
 	    +python3-service-identity \
 	    +python3-setproctitle \
 	    +python3-setuptools \
