@@ -4,6 +4,8 @@
 
 START=99
 USE_PROCD=1
+enable=$(uci get cowbping.cowbping.enabled 2>/dev/null)
+delaytime=$(uci get cowbping.cowbping.delaytime 2>/dev/null)
 
 start_instance() {
 	procd_open_instance
@@ -15,15 +17,13 @@ start_instance() {
 
 start_service() {
 	stop_service
-	[ -f /var/lock/cowbping ] && exit
-	enabled=$(uci get cowbping.cowbping.enabled 2>/dev/null)
-	if [ "$enabled" == 1 ]; then
-		touch /var/lock/cowbping
-		cat /dev/null >/tmp/log/cowbping.log
-		kill -9 $(busybox ps -w | grep 'cowbpingd' | grep -v 'grep' | awk '{print $1}')
-		start_instance
-		rm -f /var/lock/cowbping
-	fi
+	[[ $enable != 1 ]] && return 1
+	[[ -f /var/lock/cowbping ]] && return 1
+	touch /var/lock/cowbping
+	:>/tmp/log/cowbping.log
+	kill -9 $(pgrep cowbpingd) >/dev/null 2>&1
+	start_instance
+	rm -f /var/lock/cowbping
 }
 
 service_triggers() {
@@ -31,10 +31,21 @@ service_triggers() {
 }
 
 stop_service() {
-	kill -9 $(busybox ps -w | grep 'cbp_cmd' | grep -v 'grep' | awk '{print $1}') >/dev/null 2>&1
+	kill -9 $(ps | grep 'cbp_cmd' | grep -v 'grep' | awk '{print $1}') >/dev/null 2>&1
+	:>/tmp/log/cowbping.log
 }
 
 restart() {
 	stop_service
-	start_service
+	start
+}
+
+boot() {
+	if [[ x$enable = x1 && x$delaytime != x ]]; then
+		logger -t cowbping "延时 $delaytime秒启动 cowbping"
+		sleep $delaytime
+		restart
+	else
+		return 1
+	fi
 }

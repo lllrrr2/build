@@ -3,91 +3,88 @@
 #20190805-202105025
 
 log() {
-	echo -e "[$(date "+%m月%d日 %H:%M:%S" )]: $@" >> /tmp/log/cowbping.log
+	echo -e "[ $(date "+%m月%d日 %H:%M:%S" ) ]: $@" >> $text_log
 }
 
-L_L() {
-	[ "$(sed -n '$=' /tmp/log/cowbping.log 2>/dev/null)" -gt 500 ] && {
-	mv -f /tmp/log/cowbping.log /tmp/log/cowbping.log_
-	log "转移日志到/tmp/log/cowbping.log_。"
-	}
+text_log_size() {
+	if [ -f $text_log ]; then
+		filesize=`ls -l $text_log | awk '{print $5}'`
+		maxsize=$((1024*512))
+		if [ "$filesize" -gt "$maxsize" ]; then
+			:> $text_log
+		fi
+	fi
 }
 
 P_G() {
-	fail=0
-	ping1=$(ping -c "$CYL" "$ADDR1") || err1=1
-	ping2=$(ping -c "$CYL" "$ADDR2") || err2=1
-	[ "$err1" == 1 -a "$err2" == 1 ] && { fail=1; st="网络不通 ！！！"; }
-	if [ "$fail" == 0 -a "$pkglost" != 0 ]; then
+	fail=
+	ping1=$(ping -c "$sum" "$address1") || { weberror1=1; log "ping $address1 出错"; }
+	ping2=$(ping -c "$sum" "$address2") || { weberror2=1; log "ping $address2 出错"; }
+	if [[ "$weberror1" == 1 && "$weberror2" == 1 ]]; then
+		fail=1
+		st="网络不通 ！！！"
+	else
 		loss1=`echo $ping1 | sed -rne 's|^[^/]+received, ([^ ]+)% .+$$|\1|p'`
 		[ -z "$loss1" ] && loss1=100
 		loss2=`echo $ping2 | sed -rne 's|^[^/]+received, ([^ ]+)% .+$$|\1|p'`
 		[ -z "$loss2" ] && loss2=100
-		[ "$loss1" -ge "$pkglost" -a "$loss2" -ge "$pkglost" ] && fail=1 && st="丢包率过高：$(((loss1+loss2)/2))%"
-	fi
-	if [ "$fail" == 0 -a "$pkgdelay" != 0 ]; then
+		[[ "$loss1" -ge "$pkglost" && "$loss2" -ge "$pkglost" ]] && { fail=1; st="丢包率过高：$(((loss1+loss2)/2))%"; }
 		delay1=`echo $ping1 | awk -F/ '/round-trip/{print $4}' | cut -d'.' -f1`
 		[ -z "$delay1" ] && delay1=10000
 		delay2=`echo $ping2 | awk -F/ '/round-trip/{print $4}' | cut -d'.' -f1`
 		[ -z "$delay2" ] && delay2=10000
-		[ "$delay1" -ge "$pkgdelay" -a "$delay2" -ge "$pkgdelay" ] && fail=1 && st="延迟过高：$(((delay1+delay2)/2))ms"
+		[[ "$delay1" -ge "$pkgdelay" && "$delay2" -ge "$pkgdelay" ]] && { fail=1; st="延迟过高：$(((delay1+delay2)/2))ms"; }
 	fi
-	unset ping1 ping2 err1 err2 delay1 delay2 loss1 loss2
-	[ "$fail" == 0 ] && return
-	L_L
-	case "$work_mode" in
-	1)
-		reboot
-		f="重启系统"
-		;;
-	2)
-		killall -q pppd
-		sleep 5
-		pppd file /tmp/ppp/options.wan
-		f="重新拨号"
-		;;
-	3)
-		wifi down
-		wifi up
-		f="重启WIFI"
-		;;
-	4)
-		/etc/init.d/network restart
-		f="重启网络"
-		;;
-	5)
-		kill -9 $(pgrep 'cbp_cmd') 2>/dev/null
-		[ -s /etc/config/cbp_cmd ] && bash /etc/config/cbp_cmd 2>/dev/null &
-		f="自定义命令< `cat /etc/config/cbp_cmd` >"
-		;;
-	6)
-		wifi down
-		wifi up
-		f="自动中继"
-		;;
-	7)
-		poweroff
-		f="关机睡觉"
-		;;
-	esac
-	log "检查到$st 执行 [ ${f} ]"
+	unset ping1 ping2 weberror1 weberror2 delay1 delay2 loss1 loss2
+	[[ "$fail" == 1 ]] && {
+		text_log_size
+		case "$work_mode" in
+		1)
+			ifup wan
+			f="重新拨号"
+			;;
+		2)
+			wifi down
+			wifi up
+			f="重启WIFI"
+			;;
+		3)
+			/etc/init.d/network restart
+			f="重启网络"
+			;;
+		4)
+			kill -9 $(ps | grep 'cbp_cmd' | grep -v 'grep' | awk '{print $1}') >/dev/null 2>&1
+			[ -s /etc/config/cbp_cmd ] && sh /etc/config/cbp_cmd 2>/dev/null &
+			f="自定义命令< `cat /etc/config/cbp_cmd` >"
+			;;
+		5)
+			wifi down
+			wifi up
+			f="自动中继"
+			;;
+		6)
+			reboot
+			f="重启系统"
+			;;
+		7)
+			poweroff
+			f="关机"
+			;;
+		esac
+		log "检查到$st 执行 [ ${f} ]"
+	}
 }
 
-G_E() {
-	delaytime=$(uci get cowbping.cowbping.delaytime 2>/dev/null) || delaytime=60
-	work_mode=$(uci get cowbping.cowbping.work_mode 2>/dev/null) || work_mode=4
-	time=$(uci get cowbping.cowbping.time 2>/dev/null) || time=5
-	CYL=$(uci get cowbping.cowbping.sum 2>/dev/null) || CYL=5
-	ADDR1=$(uci get cowbping.cowbping.address1 2>/dev/null) || ADDR1="8.8.4.4"
-	ADDR2=$(uci get cowbping.cowbping.address2 2>/dev/null) || ADDR2="baidu.com"
-	pkglost=$(uci get cowbping.cowbping.pkglost 2>/dev/null) || pkglost=80
-	pkgdelay=$(uci get cowbping.cowbping.pkgdelay 2>/dev/null) || pkgdelay=300
-	log "开始运行！系统以每 $time分循环检查网络状况......"
-	sleep "$delaytime"
-}
+text_log="/tmp/log/cowbping.log"
+sum=$(uci get cowbping.cowbping.sum 2>/dev/null) || sum=5
+time=$(uci get cowbping.cowbping.time 2>/dev/null) || time=5
+pkglost=$(uci get cowbping.cowbping.pkglost 2>/dev/null) || pkglost=80
+pkgdelay=$(uci get cowbping.cowbping.pkgdelay 2>/dev/null) || pkgdelay=300
+work_mode=$(uci get cowbping.cowbping.work_mode 2>/dev/null) || work_mode=4
+address1=$(uci get cowbping.cowbping.address1 2>/dev/null) || address1="8.8.4.4"
+address2=$(uci get cowbping.cowbping.address2 2>/dev/null) || address2="baidu.com"
+log "开始运行！系统以每 $time分循环检查网络状况......"
 
-[ "$(uci get cowbping.cowbping.enabled 2>/dev/null)" == 1 ] || exit
-G_E
 while :; do
 	P_G
 	sleep ${time}m

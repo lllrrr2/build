@@ -40,23 +40,25 @@ pkgdelay = s:option(Value, "pkgdelay", translate("延迟（毫秒）"))
 pkgdelay.default=300
 
 work_mode = s:option(ListValue, "work_mode", translate("执行动作"))
-work_mode:value("1", translate("1.重启系统"))
-work_mode:value("2", translate("2.重新拨号"))
-work_mode:value("3", translate("3.重启WIFI"))
-work_mode:value("4", translate("4.重启网络"))
-work_mode:value("7", translate("5.关机睡觉"))
-work_mode:value("5", translate("6.shell命令"))
--- work_mode:value("6", translate("7.自动中继"))
-work_mode.default = 2
+work_mode:value("1", translate("重新拨号"))
+work_mode:value("2", translate("重启WIFI"))
+work_mode:value("3", translate("重启网络"))
+work_mode:value("4", translate("shell命令"))
+-- work_mode:value("5", translate("7.自动中继"))
+work_mode:value("6", translate("重启系统"))
+work_mode:value("7", translate("关机"))
+work_mode.default = 3
 
 command = s:option(TextValue, "/etc/config/cbp_cmd", translate("shell脚本"), 
-translate("* 应用前需仔细检查脚本语法，如存在语法错误会导致所有命令无法执行，可终端执行bash -n /etc/config/cbp_cmd检查。"))
-command:depends("work_mode", 5)
+translate("* 应用前需仔细检查脚本语法，如存在语法错误会导致所有命令无法执行，可终端执行sh /etc/config/cbp_cmd检查。"))
+command:depends("work_mode", 4)
 command.rows = 10
 command.wrap = "off"
+
 function command.cfgvalue(self, section)
     return nixio.fs.readfile("/etc/config/cbp_cmd") or ""
 end
+
 function command.write(self, section, value)
     if value then
         value = value:gsub("\r\n?", "\n")
