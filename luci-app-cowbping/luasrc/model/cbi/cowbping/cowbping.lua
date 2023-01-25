@@ -1,4 +1,4 @@
-local a,m,s,n
+local m,s
 local running = (luci.sys.call("ps | grep 'cowbpingd' | grep -v grep > /dev/null") == 0)
 
 if running then
@@ -28,7 +28,7 @@ address1 = s:option(Value, "address1", translate("网站一(IP或域名)"))
 address1.default="163.com"
 
 address2 = s:option(Value, "address2", translate("网站二(IP或域名)"))
-address2.default="8.8.8.8"
+address2.default="223.5.5.5"
 
 sum = s:option(Value, "sum", translate("发送包数（个）"))
 sum.default=5

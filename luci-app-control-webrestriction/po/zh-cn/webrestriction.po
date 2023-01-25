@@ -1,2 +1,5 @@
 msgid "Control"
 msgstr "管控"
+
+msgid "network"
+msgstr "网络设置"

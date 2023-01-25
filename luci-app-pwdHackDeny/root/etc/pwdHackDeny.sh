@@ -83,7 +83,7 @@ chk_log() {
 	[ -s $tmp_dir/syslog.tmp ] || return 0
 	egrep 'dropbear.*[Pp]assword' $tmp_dir/syslog.tmp >>$deny_dir/badip.log.ssh
 	egrep 'uhttpd.*login' $tmp_dir/syslog.tmp >>$deny_dir/badip.log.web
-	sum=$(uci get pwdHackDeny.pwdHackDeny.sum 2>/dev/null) || sum=5
+	sum=$(uci -q get pwdHackDeny.pwdHackDeny.sum) || sum=5
 	#-----------------------------addbadweblog------------------
 	badhostsbnew=$(grep "failed login on" $tmp_dir/syslog.tmp) && \
 	add_badhostsbnew "WEBbadip.log" "pwdHackDenyWEB" "badhosts.web"
@@ -102,7 +102,7 @@ chk_ipts() {
 	[ $(iptables -w -L INPUT | grep -c 'pwdHackDeny') -ge 2 ] && [ $(ip6tables -w -L INPUT | grep -c 'pwdHackDeny') -ge 2 ] || chk_ipts_2
 }
 
-time=$(uci get pwdHackDeny.pwdHackDeny.time 2>/dev/null) || time=5
+time=$(uci -q get pwdHackDeny.pwdHackDeny.time) || time=5
 while :; do
 	chk_ipts
 	chk_log

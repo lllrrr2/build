@@ -57,10 +57,15 @@ o.datatype = 'ip4addr'
 o.rmempty = false
 
 o = s:taboption('lansetup', Flag, 'dhcp', translate('DHCP Server'), translate('开启此DHCP则需要关闭主路由的DHCP<br><b><font color=\"red\">关闭主路由DHCP则需要手动将所有上网设备的网关和DNS改为此旁路由的IP</font></b>'))
+o.datatype = 'ip4addr'
 o:depends('siderouter', '1')
 -- o.default = o.enabled
 
-o = s:taboption('lansetup', Flag, 'ipv6', translate('Enable IPv6'), translate('Enable/Disable IPv6'))
+o = s:taboption('lansetup', Value, 'ipv6', translate('Enable IPv6'), translate('Enable/Disable IPv6'))
+o:value("0", translate("关闭"))
+o:value("1", translate("启用"))
+o:value("2", translate("自动"))
+o.default = "0"
 
 local wireless = luci.sys.exec(string.format("[ -f '/etc/config/wireless' ] && echo -n $(cat /etc/config/wireless)"))
 if wireless and wireless ~= "" and wireless ~= "nil" then
