@@ -11,10 +11,7 @@ boot() {
 add_wizard() {
 	[ "x$XBOOT" = "x1" ] && return 0
 	get_config="dhcp ipv6 lan_dns lan_gateway lan_ipaddr lan_netmask old_ipv6 old_siderouter old_wifi_key old_wifi_ssid siderouter wan_pppoe_pass wan_pppoe_user wan_proto wifi_key wifi_ssid"
-	for x in "$get_config"; do
-		local $x
-		config_get "$x" "$1" "$x"
-	done
+	for x in $get_config; do config_get $x $1 $x; done
 
 	case "$wan_proto" in
 		dhcp)
@@ -29,7 +26,7 @@ add_wizard() {
 		;;
 	esac
 
-	if [ "$siderouter != $old_siderouter" ]; then
+	if [ "$siderouter" != "$old_siderouter" ]; then
 		if [[ "$lan_gateway" != "$(uci -q get network.lan.gateway)" ||  "$dhcp" != "$(uci -q get dhcp.lan.ignore)" ]]; then
 			if [ "$siderouter" == 1 ]; then
 				uci -q set network.lan.gateway="$lan_gateway"
