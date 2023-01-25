@@ -13,13 +13,17 @@ add_wizard() {
 	get_config="dhcp ipv6 lan_dns lan_gateway lan_ipaddr lan_netmask old_ipv6 old_siderouter old_wifi_key old_wifi_ssid siderouter wan_pppoe_pass wan_pppoe_user wan_proto wifi_key wifi_ssid"
 	for x in $get_config; do config_get $x $1 $x; done
 
-	case "$wan_proto" in
+	case $wan_proto in
 		dhcp)
-			uci -q set network.wan.proto="$wan_proto"
+			[ "dhcp" != "$(uci -q get network.wan.proto)" ] && {
+				uci -q set network.wan.proto='dhcp'
+				uci -q del network.wan.username
+				uci -q del network.wan.password
+			}
 		;;
 		pppoe)
-			[[ "$wan_pppoe_user" != "$(uci -q get network.wan.username)" || "$wan_pppoe_pass" != "$(uci -q get network.wan.password)" ]] && {
-				uci -q set network.wan.proto="$wan_proto"
+			[ "$wan_pppoe_user" != "$(uci -q get network.wan.username)" -o "$wan_pppoe_pass" != "$(uci -q get network.wan.password)" ] && {
+				uci -q set network.wan.proto='pppoe'
 				uci -q set network.wan.username="$wan_pppoe_user"
 				uci -q set network.wan.password="$wan_pppoe_pass"
 			}
@@ -27,7 +31,7 @@ add_wizard() {
 	esac
 
 	if [ "$siderouter" != "$old_siderouter" ]; then
-		if [[ "$lan_gateway" != "$(uci -q get network.lan.gateway)" ||  "$dhcp" != "$(uci -q get dhcp.lan.ignore)" ]]; then
+		if [ "$lan_gateway" != "$(uci -q get network.lan.gateway)" -o  "$dhcp" != "$(uci -q get dhcp.lan.ignore)" ]; then
 			if [ "$siderouter" == 1 ]; then
 				uci -q set network.lan.gateway="$lan_gateway"
 				[ "$dhcp" == 1 ] && uci -q set dhcp.lan.ignore="1" || uci -q del dhcp.lan.ignore
@@ -70,7 +74,7 @@ add_wizard() {
 		uci -q set wizard.default.old_ipv6="$ipv6"
 	fi
 
-	[ -s /etc/config/wireless ] && {
+	test -s /etc/config/wireless && {
 		wifi_setup_radio() {
 			local radio=$1
 			uci -q get wireless.${radio} && {
@@ -89,7 +93,7 @@ add_wizard() {
 			}
 		}
 
-		if [[ "$wifi_ssid" != "$old_wifi_ssid" || "$wifi_key" != "$old_wifi_key" ]]; then
+		if [ "$wifi_ssid" != "$old_wifi_ssid" -o "$wifi_key" != "$old_wifi_key" ]; then
 			test -n "$wifi_ssid" && {
 				for radio in radio0 radio1 radio2 radio3; do
 					wifi_setup_radio "$radio"
@@ -101,9 +105,9 @@ add_wizard() {
 		fi
 	}
 
-	uci commit dhcp
-	uci commit wizard
-	uci commit network
+	[ $(uci changes dhcp) ] && uci commit dhcp
+	[ $(uci changes wizard) ] && uci commit wizard
+	[ $(uci changes network) ] && uci commit network
 	uci commit firewall
 	/etc/init.d/network reload &
 	/etc/init.d/dnsmasq reload &
