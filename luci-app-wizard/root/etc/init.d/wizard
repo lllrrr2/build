@@ -10,41 +10,27 @@ boot() {
 
 add_wizard() {
 	[ "x$XBOOT" = "x1" ] && return 0
-	local cfg="$1"
-	config_get wan_proto $cfg wan_proto
+	get_config="dhcp ipv6 lan_dns lan_gateway lan_ipaddr lan_netmask old_ipv6 old_siderouter old_wifi_key old_wifi_ssid siderouter wan_pppoe_pass wan_pppoe_user wan_proto wifi_key wifi_ssid"
+	for x in "$get_config"; do
+		local $x
+		config_get "$x" "$1" "$x"
+	done
 
 	case "$wan_proto" in
 		dhcp)
-			uci set network.wan.proto="$wan_proto"
+			uci -q set network.wan.proto="$wan_proto"
 		;;
 		pppoe)
-			config_get wan_pppoe_user $cfg wan_pppoe_user
-			config_get wan_pppoe_pass $cfg wan_pppoe_pass
-			[[ "$wan_pppoe_user != $(uci -q get network.wan.username 2>/dev/null)" || "$wan_pppoe_pass != $(uci -q get network.wan.password 2>/dev/null)" ]] && {
-				uci set network.wan.proto="$wan_proto"
-				uci set network.wan.username="$wan_pppoe_user"
-				uci set network.wan.password="$wan_pppoe_pass"
+			[[ "$wan_pppoe_user" != "$(uci -q get network.wan.username)" || "$wan_pppoe_pass" != "$(uci -q get network.wan.password)" ]] && {
+				uci -q set network.wan.proto="$wan_proto"
+				uci -q set network.wan.username="$wan_pppoe_user"
+				uci -q set network.wan.password="$wan_pppoe_pass"
 			}
 		;;
 	esac
 
-	config_get lan_ipaddr $cfg lan_ipaddr
-	config_get lan_netmask $cfg lan_netmask
-	test -n "$lan_ipaddr" && test -n "$lan_netmask" && {
-		uci set network.lan.ipaddr="$lan_ipaddr"
-		uci set network.lan.netmask="$lan_netmask"
-	}
-
-	config_get ipv6 $cfg ipv6
-	config_get dhcp $cfg dhcp
-	config_get lan_dns $cfg lan_dns
-	config_get old_ipv6 $cfg old_ipv6
-	config_get siderouter $cfg siderouter
-	config_get lan_gateway $cfg lan_gateway
-	config_get old_siderouter $cfg old_siderouter
-
-	if [ "$siderouter" != "$old_siderouter" ]; then
-		if [[ "$lan_gateway" != "$(uci get network.lan.gateway 2>/dev/null)" ||  "$dhcp" != "$(uci -q get dhcp.lan.ignore 2>/dev/null)" ]]; then
+	if [ "$siderouter != $old_siderouter" ]; then
+		if [[ "$lan_gateway" != "$(uci -q get network.lan.gateway)" ||  "$dhcp" != "$(uci -q get dhcp.lan.ignore)" ]]; then
 			if [ "$siderouter" == 1 ]; then
 				uci -q set network.lan.gateway="$lan_gateway"
 				[ "$dhcp" == 1 ] && uci -q set dhcp.lan.ignore="1" || uci -q del dhcp.lan.ignore
@@ -58,7 +44,9 @@ add_wizard() {
 		fi
 		uci -q set wizard.default.old_siderouter="$siderouter"
 	fi
-	[[ $lan_dns != $(uci -q get network.lan.dns 2>/dev/null) ]] && uci -q set network.lan.dns="$lan_dns"
+	[ "$lan_dns" != "$(uci -q get network.lan.dns)" ] && uci -q set network.lan.dns="$lan_dns"
+	[ "$lan_ipaddr" != "$(uci -q get network.lan.ipaddr)" ] && uci -q set network.lan.ipaddr="$lan_ipaddr"
+	[ "$lan_netmask" != "$(uci -q get network.lan.netmask)" ] && uci -q set network.lan.netmask="$lan_netmask"
 
 	if [ "$ipv6" != "$old_ipv6" ]; then
 		case "$ipv6" in
@@ -86,15 +74,10 @@ add_wizard() {
 	fi
 
 	[ -s /etc/config/wireless ] && {
-		config_get wifi_key $cfg wifi_key
-		config_get wifi_ssid $cfg wifi_ssid
-		config_get old_wifi_key $cfg old_wifi_key
-		config_get old_wifi_ssid $cfg old_wifi_ssid
-
 		wifi_setup_radio() {
 			local radio=$1
-			uci -q get wireless.${radio} 2>/dev/null && {
-				if [ "$(uci -q get wireless.${radio}.band 2>/dev/null)" = "5g" ]; then
+			uci -q get wireless.${radio} && {
+				if [ "$(uci -q get wireless.${radio}.band)" = "5g" ]; then
 					uci -q set wireless.default_${radio}.ssid="${wifi_ssid}_5G"
 				else
 					uci -q set wireless.default_${radio}.ssid="${wifi_ssid}_2.4G"
@@ -130,14 +113,14 @@ add_wizard() {
 }
 
 reconfig() {
-	uci -q set wizard.default.lan_dns="$(uci -q get network.lan.dns 2>/dev/null)"
-	uci -q set wizard.default.wan_proto="$(uci -q get network.wan.proto 2>/dev/null)"
-	uci -q set wizard.default.lan_ipaddr="$(uci -q get network.lan.ipaddr 2>/dev/null)"
-	uci -q set wizard.default.lan_netmask="$(uci -q get network.lan.netmask 2>/dev/null)"
-	uci -q set wizard.default.lan_gateway="$(uci -q get network.lan.gateway 2>/dev/null)"
-	uci -q set wizard.default.wan_pppoe_user="$(uci -q get network.wan.username 2>/dev/null)"
-	uci -q set wizard.default.wan_pppoe_pass="$(uci -q get network.wan.password 2>/dev/null)"
-	[ "$(uci -q get dhcp.lan.ignore 2>/dev/null)" ] && uci -q set wizard.default.dhcp="0" || uci -q del wizard.default.dhcp 2>/dev/null
+	uci -q set wizard.default.lan_dns="$(uci -q get network.lan.dns)"
+	uci -q set wizard.default.wan_proto="$(uci -q get network.wan.proto)"
+	uci -q set wizard.default.lan_ipaddr="$(uci -q get network.lan.ipaddr)"
+	uci -q set wizard.default.lan_netmask="$(uci -q get network.lan.netmask)"
+	uci -q set wizard.default.lan_gateway="$(uci -q get network.lan.gateway)"
+	uci -q set wizard.default.wan_pppoe_user="$(uci -q get network.wan.username)"
+	uci -q set wizard.default.wan_pppoe_pass="$(uci -q get network.wan.password)"
+	[ "$(uci -q get dhcp.lan.ignore)" ] && uci -q set wizard.default.dhcp="0" || uci -q del wizard.default.dhcp
 	uci commit wizard
 }
 
