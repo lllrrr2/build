@@ -20,7 +20,7 @@ P_G() {
 	fail=
 	ping1=$(ping -c "$sum" "$address1") || { weberror1=1; log "ping $address1 出错"; }
 	ping2=$(ping -c "$sum" "$address2") || { weberror2=1; log "ping $address2 出错"; }
-	if [[ "$weberror1" == 1 && "$weberror2" == 1 ]]; then
+	if [ "$weberror1" = 1 -a "$weberror2" = 1 ]; then
 		fail=1
 		st="网络不通 ！！！"
 	else
@@ -28,16 +28,20 @@ P_G() {
 		[ -z "$loss1" ] && loss1=100
 		loss2=`echo $ping2 | sed -rne 's|^[^/]+received, ([^ ]+)% .+$$|\1|p'`
 		[ -z "$loss2" ] && loss2=100
-		[[ "$loss1" -ge "$pkglost" && "$loss2" -ge "$pkglost" ]] && { fail=1; st="丢包率过高：$(((loss1+loss2)/2))%"; }
+		[ "$loss1" -ge "$pkglost" -a "$loss2" -ge "$pkglost" ] && { fail=1; st="丢包率过高：$(((loss1+loss2)/2))%"; }
 		delay1=`echo $ping1 | awk -F/ '/round-trip/{print $4}' | cut -d'.' -f1`
 		[ -z "$delay1" ] && delay1=10000
 		delay2=`echo $ping2 | awk -F/ '/round-trip/{print $4}' | cut -d'.' -f1`
 		[ -z "$delay2" ] && delay2=10000
-		[[ "$delay1" -ge "$pkgdelay" && "$delay2" -ge "$pkgdelay" ]] && { fail=1; st="延迟过高：$(((delay1+delay2)/2))ms"; }
+		[ "$delay1" -ge "$pkgdelay" -a "$delay2" -ge "$pkgdelay" ] && { fail=1; st="延迟过高：$(((delay1+delay2)/2))ms"; }
 	fi
-	unset ping1 ping2 weberror1 weberror2 delay1 delay2 loss1 loss2
-	[[ "$fail" == 1 ]] && {
+	unset -v ping1 ping2 weberror1 weberror2 delay1 delay2 loss1 loss2
+	[ "$fail" = 1 ] && {
 		text_log_size
+		[ "$work_mode" = 6 ] && {
+			log "检查到 $st 执行 [ 重启系统 ]"
+			cat $text_log >>/etc/reboot.log
+		}
 		case "$work_mode" in
 		1)
 			ifup wan
@@ -53,7 +57,7 @@ P_G() {
 			f="重启网络"
 			;;
 		4)
-			kill -9 $(ps | grep 'cbp_cmd' | grep -v 'grep' | awk '{print $1}') >/dev/null 2>&1
+			kill -9 $(ps | awk '/etc\/config\/cbp_cmd/{print $1}') >/dev/null 2>&1
 			[ -s /etc/config/cbp_cmd ] && sh /etc/config/cbp_cmd 2>/dev/null &
 			f="自定义命令< `cat /etc/config/cbp_cmd` >"
 			;;
@@ -64,7 +68,6 @@ P_G() {
 			;;
 		6)
 			reboot
-			f="重启系统"
 			;;
 		7)
 			poweroff

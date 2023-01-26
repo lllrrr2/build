@@ -15,23 +15,23 @@ start_instance() {
 	procd_close_instance
 }
 
-start_service() {
-	stop_service
-	[[ $enable != 1 ]] && return 1
-	[[ -f /var/lock/cowbping ]] && return 1
-	touch /var/lock/cowbping
-	:>/tmp/log/cowbping.log
-	kill -9 $(pgrep cowbpingd) >/dev/null 2>&1
-	start_instance
-	rm -f /var/lock/cowbping
-}
-
 service_triggers() {
 	procd_add_reload_trigger 'cowbping'
 }
 
+start_service() {
+	stop_service
+	[ "$enable" != 1 -o -f /var/lock/cowbping ] && return 1
+	touch /var/lock/cowbping
+	:>/tmp/log/cowbping.log
+	kill -9 $(ps | awk '/usr\/bin\/cowbpingd/{print $1}') >/dev/null 2>&1
+	start_instance
+	rm -f /var/lock/cowbping
+}
+
 stop_service() {
-	kill -9 $(ps | grep 'cbp_cmd' | grep -v 'grep' | awk '{print $1}') >/dev/null 2>&1
+	kill -9 $(ps | awk '/usr\/bin\/cowbpingd/{print $1}') >/dev/null 2>&1
+	kill -9 $(ps | awk '/etc\/config\/cbp_cmd/{print $1}') >/dev/null 2>&1
 	:>/tmp/log/cowbping.log
 }
 
@@ -41,11 +41,9 @@ restart() {
 }
 
 boot() {
-	if [[ x$enable = x1 && x$delaytime != x ]]; then
+	if [ "$enable" = 1 -a -n "$delaytime" ]; then
 		logger -t cowbping "延时 $delaytime秒启动 cowbping"
 		sleep $delaytime
-		restart
-	else
-		return 1
+		start
 	fi
 }
