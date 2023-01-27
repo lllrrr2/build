@@ -131,6 +131,6 @@ stop_service() {
 }
 
 restart() {
-	stop
-	start
+	stop_service
+	start_service
 }

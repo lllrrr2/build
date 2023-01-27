@@ -61,7 +61,7 @@ o:depends('siderouter', '1')
 
 o = s:taboption('lansetup', Value, 'ipv6', translate('Enable IPv6'), translate('Enable/Disable IPv6'))
 o:value("0", translate("关闭"))
-o:value("1", translate("启用"))
+o:value("1", translate("手动"))
 o:value("2", translate("自动"))
 o.default = "0"
 

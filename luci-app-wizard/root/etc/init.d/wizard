@@ -8,58 +8,40 @@ boot() {
 }
 
 uci_get_network() {
-	[ -n "$1" ] && local section=".$1"
-	[ -n "$2" ] && local option=".$2"
-	local ret=$(uci -q get network"$section""$option")
+	local ret=$(uci -q get network."$1"."$2")
 	echo ${ret:=$3}
 }
 
 uci_set_network() {
-	[ -n "$1" ] && local section=".$1"
-	[ -n "$2" ] && local option=".$2"
-	uci -q set network"$section""$option"="$3"
+	uci -q set network."$1"."$2"="$3"
 }
-
+# uci changes network.lan
 add_wizard() {
 	[ "x$XBOOT" = "x1" ] && return 0
 	get_config="dhcp ipv6 lan_dns lan_gateway lan_ipaddr lan_netmask old_ipv6 old_siderouter old_wifi_key old_wifi_ssid siderouter wan_pppoe_pass wan_pppoe_user wan_proto wifi_key wifi_ssid"
-	for x in $get_config; do config_get $x $1 $x; done
-	device=$(uci_get_network wan device)
+	for x in $get_config; do config_get "$x" "$1" "$x"; done
+
+	[ -f /etc/config/bk_dhcp ] || cp /etc/config/dhcp /etc/config/bk_dhcp
+	[ -f /etc/config/bk_network ] || cp /etc/config/network /etc/config/bk_network
+	[ -f /etc/config/bk_firewall ] || cp /etc/config/firewall /etc/config/bk_firewall
+
 	case $wan_proto in
 		dhcp)
-			uci -q delete network.wan
-			uci_set_network wan metric 40
 			uci_set_network wan proto dhcp
-			uci_set_network wan ' ' interface
-			uci_set_network wan device "$device"
 			uci -q delete network.wan.username
 			uci -q delete network.wan.password
 		;;
 		pppoe)
 			[ "$wan_pppoe_user" != "$(uci_get_network wan username)" -o "$wan_pppoe_pass" != "$(uci_get_network wan password)" ] && {
-				uci delete network.wan
-				uci_set_network wan ' ' interface
 				uci_set_network wan proto pppoe
 				uci_set_network wan username "$wan_pppoe_user"
 				uci_set_network wan password "$wan_pppoe_pass"
-				uci_set_network wan device "$device"
-				uci_set_network wan metric 40
-				uci_set_network wan keepalive '5 5'
-				uci_set_network wan mtu '1492'
-				uci_get_network wan6 && {
-					uci_set_network wan6 device '@wan'
-					uci_set_network wan6 reqaddress try
-					uci_set_network wan6 reqprefix auto
-				}
 			}
 		;;
 	esac
-# uci changes network.lan
+
 	if [ "$siderouter" != "$old_siderouter" ]; then
-		[ -f /etc/config/dhcp_bk ] || cp /etc/config/dhcp /etc/config/dhcp_bk
-		[ -f /etc/config/network_bk ] || cp /etc/config/network /etc/config/network_bk
-		[ -f /etc/config/firewall_bk ] || cp /etc/config/firewall /etc/config/firewall_bk
-		if [ "$lan_gateway" != "$(uci_get_network lan gateway)" -o  "$dhcp" != "$(uci -q get dhcp.lan.ignore)" ]; then
+		if [ "$lan_gateway" != "$(uci_get_network lan gateway)" -o "$dhcp" != "$(uci -q get dhcp.lan.ignore)" ]; then
 			if [ "$siderouter" = 1 ]; then
 				uci_set_network lan gateway "$lan_gateway"
 				[ "$dhcp" = 1 ] && uci -q set dhcp.lan.ignore="1" || uci -q delete dhcp.lan.ignore
@@ -81,25 +63,9 @@ add_wizard() {
 
 	if [ "$ipv6" != "$old_ipv6" ]; then
 		case "$ipv6" in
-		0)
-			uci_set_network wan.ipv6='0'
-			uci_set_network wan.delegate='0'
-			;;
-		1)
-			uci_set_network wan ipv6 0
-			uci_set_network lan delegate 0
-			uci_set_network wan delegate 0
-			uci -q delete dhcp.lan.ra
-			uci -q delete dhcp.lan.dhcpv6
-			uci -q delete network.globals.ula_prefix
-			;;
-		2)
-			uci_set_network wan ipv6 auto
-			uci -q delete network.lan.delegate
-			uci -q delete network.wan.delegate
-			uci -q set dhcp.lan.ra='hybrid'
-			uci -q set dhcp.lan.dhcpv6='hybrid'
-			;;
+			0) uci_set_network wan ipv6 0;;
+			1) uci_set_network wan ipv6 1;;
+			2) uci_set_network wan ipv6 auto;;
 		esac
 		uci -q set wizard.default.old_ipv6="$ipv6"
 	fi
@@ -139,12 +105,10 @@ add_wizard() {
 	uci commit wizard
 	uci commit network
 	uci commit firewall
-	(
-	sleep 5
+	( sleep 5
 	/etc/init.d/dnsmasq reload
 	/etc/init.d/network reload
-	/etc/init.d/firewall reload
-	) &
+	/etc/init.d/firewall reload ) &
 }
 
 reconfig() {

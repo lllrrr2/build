@@ -9,17 +9,17 @@ add_ipts() {
 	type=$(echo "$line" | awk '{print $2}')
 	case "$type" in
 		MAC)
-			echo "$target" >>/etc/$1
-			iptables -w -A $2 -m mac --mac-source $target -j DROP 2>/dev/null
-			ip6tables -w -A $2 -m mac --mac-source $target -j DROP 2>/dev/null
+			echo "$target" >>/etc/"$1"
+			iptables -w -A "$2" -m mac --mac-source "$target" -j DROP 2>/dev/null
+			ip6tables -w -A "$2" -m mac --mac-source "$target" -j DROP 2>/dev/null
 		;;
 		IP4)
-			echo "$target" >>/etc/$1
-			iptables -w -A $2 -s $target -j DROP 2>/dev/null
+			echo "$target" >>/etc/"$1"
+			iptables -w -A "$2" -s "$target" -j DROP 2>/dev/null
 		;;
 		IP6)
-			echo "$target" >>/etc/$1
-			ip6tables -w -A $2 -s $target -j DROP 2>/dev/null
+			echo "$target" >>/etc/"$1"
+			ip6tables -w -A "$2" -s "$target" -j DROP 2>/dev/null
 		;;
 	esac
 }
@@ -28,15 +28,15 @@ add_badhostsbnew() {
 	#-------------------------grep target---------------------
 	echo "$badhostsbnew" | while read line; do
 		MAC=$(echo "$line" | egrep -o "([A-Fa-f0-9]{2}[:-]){5}[A-Fa-f0-9]{2}" | head -1) && target=$(echo "MAC "$MAC"")
-		[ -z "$MAC" ] && { IP4=$(echo "$line" | egrep -o "(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])" | head -1) && target=$(echo "IP4 "$IP4""); }
+		[ -z "$MAC" ] && { IP4=$(echo "$line" | grep -E -o "(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])" | head -1) && target=$(echo "IP4 "$IP4""); }
 		[ -z "$MAC" -a -z "$IP4" ] && { IP6=$(echo "$line" | egrep -o "(s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?\s*)" | head -1) target=$(echo "IP6 "$IP6""); }
-		havetarget=$(grep -w "$target" $deny_dir/$3)
+		havetarget=$(grep -w "$target" $deny_dir/"$3")
 		if [ -n "$havetarget" ]; then
 			sumtarget=$(echo ${havetarget} | awk '{print $1}')
-			sed -i '/'"$target"'/d' $deny_dir/$3
-			echo "$((sumtarget + 1)) $target " >>$deny_dir/$3
+			sed -i '/'"$target"'/d' $deny_dir/"$3"
+			echo "$((sumtarget + 1)) $target " >>$deny_dir/"$3"
 		else
-			echo "1 $target " >> $deny_dir/$3
+			echo "1 $target " >> $deny_dir/"$3"
 		fi
 		unset -v MAC IP4 IP6 target
 	done
@@ -61,9 +61,9 @@ chk_log() {
 	done
 
 	#---------------------------addlogfile----------------------
-	logread | egrep 'dropbear.*[Pp]assword|uhttpd.*login' >$tmp_dir/syslog
+	logread | egrep 'dropbear.*[Pp]assword|uhttpd.*login|luci.*login' >$tmp_dir/syslog
 	[ -s $tmp_dir/syslog ] || return 0
-	newlog=$(diff $tmp_dir/_syslog $tmp_dir/syslog | grep '^>' | sed 's/^> //g' | uniq -i | sed '/^\s*$/d')
+	newlog=$(diff $tmp_dir/_syslog $tmp_dir/syslog | grep '^>' | sed 's/^> //g' | uniq -i | sed '/^\s*$/d' 2>/dev/null)
 	cp -f $tmp_dir/syslog $tmp_dir/_syslog
 	[ -n "$newlog" ] || return 0
 	awk '/0x2/{print $1" "$4}' /proc/net/arp | tr '[a-z]' '[A-Z]' >$tmp_dir/MAC-IP.leases
@@ -81,8 +81,8 @@ chk_log() {
 	done
 	unset newlog
 	[ -s $tmp_dir/syslog.tmp ] || return 0
-	egrep 'dropbear.*[Pp]assword' $tmp_dir/syslog.tmp >>$deny_dir/badip.log.ssh
-	egrep 'uhttpd.*login' $tmp_dir/syslog.tmp >>$deny_dir/badip.log.web
+	grep -E 'dropbear.*[Pp]assword' $tmp_dir/syslog.tmp >>$deny_dir/badip.log.ssh
+	grep -E 'uhttpd.*login|luci.*login' $tmp_dir/syslog.tmp >>$deny_dir/badip.log.web
 	sum=$(uci -q get pwdHackDeny.pwdHackDeny.sum) || sum=5
 	#-----------------------------addbadweblog------------------
 	badhostsbnew=$(grep "failed login on" $tmp_dir/syslog.tmp) && \
