@@ -1,15 +1,13 @@
 local m,s
-local running = (luci.sys.call("ps | grep 'cowbpingd' | grep -v grep > /dev/null") == 0)
 
-if running then
-	state_msg = "<b><font color=\"green\">" .. translate("运行中") .. "</font></b>"
+if (luci.sys.call("ps | grep 'cowbpingd' | grep -v grep > /dev/null") == 0) then
+    state_msg = translate([[运行状态： <b><font color="green">运行中</font></b><br>]])
 else
-	state_msg = "<b><font color=\"red\">" .. translate("没有运行") .. "</font></b>"
+    state_msg = translate([[运行状态： <b><font color="red">没有运行</font></b><br>]])
 end
 
 m = Map("cowbping", translate("网络检测"))
-m.description = translate("<font style='color:black'>定期ping一个网站以检测网络是否通畅，否则执行相关动作以排除故障。网站一与网站二是“与”关系，丢包率与延迟是“或”关系。</font><br><br>" .. 
-translate("运行状态：" ) .. state_msg .. "<br>")
+m.description = translate("<font style='color:black'>定期ping一个网站以检测网络是否通畅，否则执行相关动作以排除故障。网站一与网站二是“与”关系，丢包率与延迟是“或”关系。</font><br><br>" .. state_msg)
 
 s = m:section(NamedSection, "cowbping")
 s.anonymous=true
@@ -49,8 +47,10 @@ work_mode:value("6", translate("重启系统"))
 work_mode:value("7", translate("关机"))
 work_mode.default = 3
 
-command = s:option(TextValue, "/etc/config/cbp_cmd", translate("shell脚本"), 
-translate("* 应用前需仔细检查脚本语法，如存在语法错误会导致所有命令无法执行，可终端执行sh /etc/config/cbp_cmd检查。"))
+run = s:option(Value, "run_sum", translate("执行次数"), translate("设定执行次数后停止执行"))
+run.default = 5
+
+command = s:option(TextValue, "/etc/config/cbp_cmd", translate("shell脚本"), translate("* 应用前需仔细检查脚本语法，如存在语法错误会导致所有命令无法执行，可终端执行sh /etc/config/cbp_cmd检查。"))
 command:depends("work_mode", 4)
 command.rows = 10
 command.wrap = "off"

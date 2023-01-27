@@ -32,7 +32,7 @@ if nixio.fs.access("/etc/config/network") then
 	end
 end
 
-if nixio.fs.access("/etc/config/wireless") then
+if (luci.sys.call("[ `sed -n '$=' /etc/config/wireless 2>/dev/null` -gt 0 ]") == 0) then
 	s:tab("wirelessconf", translate("无线"), translate("本页是/etc/config/wireless的配置文件内容，编辑后点击<code>保存&应用</code>按钮后生效<br>"))
 	o = s:taboption("wirelessconf", Button, "_wifi")
 	o.inputtitle = translate("重启wifi")
@@ -91,8 +91,8 @@ if nixio.fs.access("/etc/config/dhcp") then
 	end
 end
 
-if nixio.fs.access("/etc/config/firewall") then
-	s:tab("firewallconf", translate("防火墙"), translate("本页是/etc/config/firewall的配置文件内容，编辑后点击<code>保存&应用</code>按钮后生效<br>"))
+if nixio.fs.access("/etc/firewall.user") then
+	s:tab("firewallconf", translate("防火墙"), translate("本页是/etc/firewall.user的自定义规则，编辑后点击<code>保存&应用</code>按钮后生效<br>"))
 	o = s:taboption("firewallconf", Button, "_firewall")
 	o.inputtitle = translate("重启防火墙")
 	o.inputstyle = "apply"
@@ -105,14 +105,14 @@ if nixio.fs.access("/etc/config/firewall") then
 	conf.rows = 22
 	conf.wrap = "off"
 	function conf.cfgvalue(self, section)
-		return nixio.fs.readfile("/etc/config/firewall") or ""
+		return nixio.fs.readfile("/etc/firewall.user") or ""
 	end
 	function conf.write(self, section, value)
 		if value then
 		value = value:gsub("\r\n?", "\n")
 		nixio.fs.writefile("/tmp/firewall", value)
-			if (luci.sys.call("cmp -s /tmp/firewall /etc/config/firewall") == 1) then
-				nixio.fs.writefile("/etc/config/firewall", value)
+			if (luci.sys.call("cmp -s /tmp/firewall /etc/firewall.user") == 1) then
+				nixio.fs.writefile("/etc/firewall.user", value)
 				luci.sys.call("/etc/init.d/firewall reload >/dev/null &")
 			end
 		nixio.fs.remove("/tmp/firewall")
@@ -206,29 +206,6 @@ if nixio.fs.access("/etc/hosts") then
 	end
 end
 
-if nixio.fs.access("/etc/pcap-dnsproxy/Config.conf") then
-	s:tab("pcapconf", translate("pcap-dnsproxy"), translate("本页是/etc/pcap-dnsproxy/Config.conf的配置文件内容，编辑后点击<code>保存&应用</code>按钮后生效<br>"))
-	conf = s:taboption("pcapconf", Value, "pcapconf", nil)
-	conf.template = "cbi/tvalue"
-	conf.rows = 22
-	conf.wrap = "off"
-	function conf.cfgvalue(self, section)
-		return nixio.fs.readfile("/etc/pcap-dnsproxy/Config.conf") or ""
-	end
-
-	function conf.write(self, section, value)
-		if value then
-		value = value:gsub("\r\n?", "\n")
-		nixio.fs.writefile("/tmp/Config.conf", value)
-			if (luci.sys.call("cmp -s /tmp/Config.conf /etc/pcap-dnsproxy/Config.conf") == 1) then
-				nixio.fs.writefile("/etc/pcap-dnsproxy/Config.conf", value)
-				luci.sys.call("/etc/init.d/pcap-dnsproxy restart >/dev/null &")
-			end
-		nixio.fs.remove("/tmp/Config.conf")
-		end
-	end
-end
-
 if nixio.fs.access("/etc/dnsmasq.conf") then
 	s:tab("dnsmasqconf", translate("dnsmasq"), translate("本页是/etc/dnsmasq.conf的配置文件内容，编辑后点击<code>保存&应用</code>按钮后生效<br>"))
 	o = s:taboption("dnsmasqconf", Button, "_dnsmasq")
@@ -258,28 +235,6 @@ if nixio.fs.access("/etc/dnsmasq.conf") then
 	end
 end
 
---profile
-if nixio.fs.access("/etc/profile") then
-	s:tab("profileconf", translate("环境变量"),translate("本页是/etc/profile的配置文件内容，编辑后点击<code>保存&应用</code>按钮后生效。<br>"))
-	conf = s:taboption("profileconf", Value, "profileconf", nil)
-	conf.template = "cbi/tvalue"
-	conf.rows = 22
-	conf.wrap = "off"
-	function conf.cfgvalue(self, section)
-		return nixio.fs.readfile("/etc/profile") or ""
-	end
-	function conf.write(self, section, value)
-		if value then
-			value = value:gsub("\r\n?", "\n")
-			nixio.fs.writefile("/tmp/profile", value)
-			if (luci.sys.call("cmp -s /tmp/profile /etc/profile") == 1) then
-				nixio.fs.writefile("/etc/profile", value)
-			end
-			nixio.fs.remove("/tmp/profile")
-		end
-	end
-end
-
 --rc.local
 if nixio.fs.access("/etc/rc.local") then
 	s:tab("rc_localconf", translate("本地启动脚本"),translate("本页是/etc/rc.local的配置文件内容，编辑后点击<code>保存&应用</code>按钮后生效。<br>启动脚本插入到 'exit 0' 之前即可随系统启动运行。<br>"))
@@ -298,29 +253,6 @@ if nixio.fs.access("/etc/rc.local") then
 				nixio.fs.writefile("/etc/rc.local", value)
 			end
 			nixio.fs.remove("/tmp/rc.local")
-		end
-	end
-end
-
---sysctl.conf
-if nixio.fs.access("/etc/sysctl.conf") then
-	s:tab("sysctlconf", translate("sysctl内核"),translate("本页是/etc/sysctl.conf的配置文件内容，编辑后点击<code>保存&应用</code>按钮后生效<br>"))
-	conf = s:taboption("sysctlconf", Value, "sysctlconf", nil)
-	conf.template = "cbi/tvalue"
-	conf.rows = 22
-	conf.wrap = "off"
-	function conf.cfgvalue(self, section)
-		return nixio.fs.readfile("/etc/sysctl.conf") or ""
-	end
-	function conf.write(self, section, value)
-		if value then
-			value = value:gsub("\r\n?", "\n")
-			nixio.fs.writefile("/tmp/sysctl.conf", value)
-			if (luci.sys.call("cmp -s /tmp/sysctl.conf /etc/sysctl.conf") == 1) then
-				nixio.fs.writefile("/etc/sysctl.conf", value)
-				luci.sys.call("/sbin/sysctl -p >/dev/null &")
-			end
-			nixio.fs.remove("/tmp/sysctl.conf")
 		end
 	end
 end
