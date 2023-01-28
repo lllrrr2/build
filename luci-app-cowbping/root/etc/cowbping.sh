@@ -1,8 +1,8 @@
 #!/bin/sh
 #Copyright (C) 20190805 wulishui <wulishui@gmail.com>
 
-LOG_FILE=/tmp/log/cowbping.log
-RUN_SUM_FILE=/etc/cowbping_run_sum
+log_file=/tmp/log/cowbping.log
+run_sum_file=/etc/cowbping_run_sum
 uci_get_name() {
 	local ret=$(uci -q get cowbping."$1"."$2")
 	echo ${ret:=$3}
@@ -10,12 +10,12 @@ uci_get_name() {
 
 echo_log() {
 	local d="[ $(date "+%m月%d日 %H:%M:%S") ]"
-	echo -e "$d: $*" >>$LOG_FILE
+	echo -e "$d: $*" >>$log_file
 }
 
 clean_log() {
-	log_snum=$(cat $LOG_FILE 2>/dev/null | wc -l)
-	[ "$log_snum" -gt 500 ] && echo "[ $(date "+%m月%d日 %H:%M:%S") ]: 日志文件过长，清空处理！" >$LOG_FILE
+	log_snum=$(cat $log_file 2>/dev/null | wc -l)
+	[ "$log_snum" -gt 500 ] && echo "[ $(date "+%m月%d日 %H:%M:%S") ]: 日志文件过长，清空处理！" >$log_file
 }
 
 P_G() {
@@ -35,7 +35,7 @@ P_G() {
 	fi
 	clean_log
 	unset -v ping1 ping2 weberror1 weberror2 delay1 delay2 loss1 loss2
-	xx=$(grep -c 'error' $RUN_SUM_FILE)
+	xx=$(grep -c 'error' $run_sum_file)
 	[ -n "$fail" -a "$xx" -lt "$run_sum" ] && {
 		case "$work_mode" in
 		1)
@@ -68,16 +68,18 @@ P_G() {
 			;;
 		esac
 		echo_log "检查到 $st 执行 $xf"
-		echo "error" >>$RUN_SUM_FILE
+		echo "error" >>$run_sum_file
 	}
-	[ "$xx" -ge "$run_sum" -a $(grep -c 'exit' $RUN_SUM_FILE) -lt 1 ] && {
+	exit_sum=$(grep -c 'exit' $run_sum_file 2>/dev/null)
+	[ "$xx" -ge "$run_sum" -a "$exit_sum" -lt 1 ] && {
 		echo_log "$xf 已经执行设定的 $run_sum 次，停止执行 $xf"
-		echo "exit" >>$RUN_SUM_FILE
-		cat $LOG_FILE >>$RUN_SUM_FILE
+		echo "exit" >>$run_sum_file
+		cat $log_file >>$run_sum_file
 	}
-	[ "$xf" = "关机" ] && poweroff
-	[ "$xf" = "重启系统" ] && reboot
-	[ "$xf" = "自定义命令" -a -s /etc/config/cbp_cmd ] && sh /etc/config/cbp_cmd 2>/dev/null &
+	[ "$xf" = "关机" -a "$exit_sum" -lt 1 ] && poweroff
+	[ "$xf" = "重启系统" -a "$exit_sum" -lt 1 ] && reboot
+	[ "$xf" = "自定义命令" -a "$exit_sum" -lt 1 -a -s /etc/config/cbp_cmd ] && \
+	sh /etc/config/cbp_cmd 2>/dev/null &
 }
 
 sum=$(uci_get_name cowbping sum 3)
@@ -88,7 +90,7 @@ work_mode=$(uci_get_name cowbping work_mode 3)
 pkgdelay=$(uci_get_name cowbping pkgdelay 300)
 address1=$(uci_get_name cowbping address1 'baidu.com')
 address2=$(uci_get_name cowbping address2 '223.6.6.6')
-[ -s "$RUN_SUM_FILE" ] || :>$RUN_SUM_FILE
+[ -s "$run_sum_file" ] || :>$run_sum_file
 echo_log "开始运行！系统以每 $time 分循环检查网络状况......"
 
 while :; do
