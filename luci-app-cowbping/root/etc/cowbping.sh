@@ -39,45 +39,44 @@ P_G() {
 	[ -n "$fail" -a "$xx" -lt "$run_sum" ] && {
 		case "$work_mode" in
 		1)
-			ifup wan
 			xf="重新拨号"
+			ifup wan
 			;;
 		2)
+			xf="重启WIFI"
 			wifi down
 			wifi up
-			xf="重启WIFI"
 			;;
 		3)
-			/etc/init.d/network restart
 			xf="重启网络"
+			/etc/init.d/network restart
 			;;
 		4)
+			xf="自定义命令< `cat /etc/config/cbp_cmd` >"
 			kill -9 $(ps | awk '/etc\/config\/cbp_cmd/{print $1}') >/dev/null 2>&1
 			[ -s /etc/config/cbp_cmd ] && sh /etc/config/cbp_cmd 2>/dev/null &
-			xf="自定义命令< `cat /etc/config/cbp_cmd` >"
 			;;
 		5)
+			xf="自动中继"
 			wifi down
 			wifi up
-			xf="自动中继"
 			;;
 		6)
 			xf="重启系统"
 			;;
 		7)
-			poweroff
 			xf="关机"
 			;;
 		esac
 		echo_log "检查到 $st 执行 $xf"
 		echo "error" >>$RUN_SUM_FILE
+		[ "$work_mode" = 7 ] && poweroff
 		[ "$fail" = 1 -a "$work_mode" = 6 ] && reboot
 	}
 	[ "$xx" -ge "$run_sum" -a $(grep -c 'exit' $RUN_SUM_FILE) -lt 1 ] && {
 		echo_log "$xf 已经执行设定的 $run_sum 次，停止执行 $xf"
 		echo "exit" >>$RUN_SUM_FILE
 	}
-	[ "$xx" -gt "$run_sum" ] && rm $RUN_SUM_FILE
 }
 
 sum=$(uci_get_name cowbping sum 3)
