@@ -1,5 +1,4 @@
 local m,s
-
 if (luci.sys.call("ps | grep 'cowbping' | grep -v grep > /dev/null") == 0) then
     state_msg = translate([[运行状态： <b><font color="green">运行中</font></b><br>]])
 else
@@ -65,11 +64,11 @@ function command.write(self, section, value)
     end
 end
 
+local cowbping_run_sum = luci.util.trim(luci.sys.exec("grep -c 'error' /etc/cowbping_run_sum 2>/dev/null"))
 run = s:option(Value, "run_sum", translate("执行次数"), translate("设定执行次数后停止执行"))
 run.default = 5
-
-if (luci.sys.call("[ -s /etc/cowbping_run_sum ]") == 0) then
-    clear_sum = s:option(Button, "aad", translate("清除执行记录"), translate("清除执行记录的文件，确保正常运行"))
+if (luci.sys.call("grep -q 'error' /etc/cowbping_run_sum") == 0) then
+    clear_sum = s:option(Button, "aad", translate("清除执行记录"))
     clear_sum.inputtitle = translate("清除")
     clear_sum.inputstyle = "remove"
     clear_sum.forcewrite = true
@@ -77,6 +76,7 @@ if (luci.sys.call("[ -s /etc/cowbping_run_sum ]") == 0) then
         luci.sys.exec(":>/etc/cowbping_run_sum")
         luci.http.redirect(luci.dispatcher.build_url("admin/network/cowbping/cowbping"))
     end
+    clear_sum.description = translate([[排除故障后清除执行的记录，确保正常运行<br>当前有 <b><font color="red">]] .. cowbping_run_sum .. [[</font></b> 次执行的记录]])
 end
 
 return m

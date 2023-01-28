@@ -70,12 +70,13 @@ P_G() {
 		esac
 		echo_log "检查到 $st 执行 $xf"
 		echo "error" >>$RUN_SUM_FILE
+		[ "$xx" -ge "$run_sum" -a $(grep -c 'exit' $RUN_SUM_FILE) -lt 1 ] && {
+			echo_log "$xf 已经执行设定的 $run_sum 次，停止执行 $xf"
+			echo "exit" >>$RUN_SUM_FILE
+			cat $LOG_FILE >>$RUN_SUM_FILE
+		}
 		[ "$work_mode" = 7 ] && poweroff
 		[ "$fail" = 1 -a "$work_mode" = 6 ] && reboot
-	}
-	[ "$xx" -ge "$run_sum" -a $(grep -c 'exit' $RUN_SUM_FILE) -lt 1 ] && {
-		echo_log "$xf 已经执行设定的 $run_sum 次，停止执行 $xf"
-		echo "exit" >>$RUN_SUM_FILE
 	}
 }
 
