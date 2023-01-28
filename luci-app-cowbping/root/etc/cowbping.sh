@@ -19,7 +19,7 @@ clean_log() {
 }
 
 P_G() {
-	fail=
+	fail=; xf=
 	ping1=$(ping -c "$sum" "$address1" 2>/dev/null) || { weberror1=1; echo_log "ping $address1 出错"; }
 	ping2=$(ping -c "$sum" "$address2" 2>/dev/null) || { weberror2=1; echo_log "ping $address2 出错"; }
 	if [ "$weberror1" = 1 -a "$weberror2" = 1 ]; then
@@ -52,9 +52,8 @@ P_G() {
 			/etc/init.d/network restart
 			;;
 		4)
-			xf="自定义命令< `cat /etc/config/cbp_cmd` >"
+			xf="自定义命令"
 			kill -9 $(ps | awk '/etc\/config\/cbp_cmd/{print $1}') >/dev/null 2>&1
-			[ -s /etc/config/cbp_cmd ] && sh /etc/config/cbp_cmd 2>/dev/null &
 			;;
 		5)
 			xf="自动中继"
@@ -70,14 +69,15 @@ P_G() {
 		esac
 		echo_log "检查到 $st 执行 $xf"
 		echo "error" >>$RUN_SUM_FILE
-		[ "$xx" -ge "$run_sum" -a $(grep -c 'exit' $RUN_SUM_FILE) -lt 1 ] && {
-			echo_log "$xf 已经执行设定的 $run_sum 次，停止执行 $xf"
-			echo "exit" >>$RUN_SUM_FILE
-			cat $LOG_FILE >>$RUN_SUM_FILE
-		}
-		[ "$work_mode" = 7 ] && poweroff
-		[ "$fail" = 1 -a "$work_mode" = 6 ] && reboot
 	}
+	[ "$xx" -ge "$run_sum" -a $(grep -c 'exit' $RUN_SUM_FILE) -lt 1 ] && {
+		echo_log "$xf 已经执行设定的 $run_sum 次，停止执行 $xf"
+		echo "exit" >>$RUN_SUM_FILE
+		cat $LOG_FILE >>$RUN_SUM_FILE
+	}
+	[ "$xf" = "关机" ] && poweroff
+	[ "$xf" = "重启系统" ] && reboot
+	[ "$xf" = "自定义命令" -a -s /etc/config/cbp_cmd ] && sh /etc/config/cbp_cmd 2>/dev/null &
 }
 
 sum=$(uci_get_name cowbping sum 3)
