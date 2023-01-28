@@ -1,9 +1,9 @@
 #!/bin/sh
 
 uci -q batch <<-EOF >/dev/null
-	delete ucitrack.@cowbping[-1]
-	add ucitrack cowbping
-	set ucitrack.@cowbping[-1].init=cowbping
+	delete ucitrack.@cowbpingd[-1]
+	add ucitrack cowbpingd
+	set ucitrack.@cowbpingd[-1].init=cowbpingd
 	commit ucitrack
 EOF
 
