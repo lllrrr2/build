@@ -21,9 +21,10 @@ add_wizard() {
 	get_config="dhcp ipv6 lan_dns lan_gateway lan_ipaddr lan_netmask old_ipv6 old_siderouter old_wifi_key old_wifi_ssid siderouter wan_pppoe_pass wan_pppoe_user wan_proto wifi_key wifi_ssid"
 	for x in $get_config; do config_get "$x" "$1" "$x"; done
 
-	[ -f /etc/config/bk_dhcp ] || cp /etc/config/dhcp /etc/config/bk_dhcp
-	[ -f /etc/config/bk_network ] || cp /etc/config/network /etc/config/bk_network
-	[ -f /etc/config/bk_firewall ] || cp /etc/config/firewall /etc/config/bk_firewall
+	[ ! -f /etc/config/bk_dhcp     -a -s /etc/config/dhcp     ] && cp /etc/config/dhcp /etc/config/bk_dhcp
+	[ ! -f /etc/config/bk_network  -a -s /etc/config/network  ] && cp /etc/config/network /etc/config/bk_network
+	[ ! -f /etc/config/bk_firewall -a -s /etc/config/firewall ] && cp /etc/config/firewall /etc/config/bk_firewall
+	[ ! -f /etc/config/bk_wireless -a -s /etc/config/wireless ] && cp /etc/config/wireless /etc/config/bk_wireless
 
 	case $wan_proto in
 		dhcp)
