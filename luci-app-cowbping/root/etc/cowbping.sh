@@ -2,6 +2,7 @@
 #Copyright (C) 20190805 wulishui <wulishui@gmail.com>
 
 LOG_FILE=/tmp/log/cowbping.log
+RUN_SUM_FILE=/etc/cowbping_run_sum
 uci_get_name() {
 	local ret=$(uci -q get cowbping."$1"."$2")
 	echo ${ret:=$3}
@@ -19,8 +20,8 @@ clean_log() {
 
 P_G() {
 	fail=
-	ping1=$(ping -c "$sum" "$address1") || { weberror1=1; echo_log "ping $address1 出错"; }
-	ping2=$(ping -c "$sum" "$address2") || { weberror2=1; echo_log "ping $address2 出错"; }
+	ping1=$(ping -c "$sum" "$address1" 2>/dev/null) || { weberror1=1; echo_log "ping $address1 出错"; }
+	ping2=$(ping -c "$sum" "$address2" 2>/dev/null) || { weberror2=1; echo_log "ping $address2 出错"; }
 	if [ "$weberror1" = 1 -a "$weberror2" = 1 ]; then
 		fail=1
 		st="网络不通 ！！！"
@@ -34,7 +35,8 @@ P_G() {
 	fi
 	clean_log
 	unset -v ping1 ping2 weberror1 weberror2 delay1 delay2 loss1 loss2
-	[ -n "$fail" -a "${xx:=0}" -lt "$run_sum" ] && {
+	xx=$(grep -c 'error' $RUN_SUM_FILE)
+	[ -n "$fail" -a "$xx" -lt "$run_sum" ] && {
 		case "$work_mode" in
 		1)
 			ifup wan
@@ -68,10 +70,14 @@ P_G() {
 			;;
 		esac
 		echo_log "检查到 $st 执行 $xf"
-		cat $LOG_FILE >>/etc/cowbping_run_sum.log
+		echo "error" >>$RUN_SUM_FILE
 		[ "$fail" = 1 -a "$work_mode" = 6 ] && reboot
 	}
-	[ "${xx:=0}" -ge "$run_sum" ] && echo_log "$xf 已经执行设定的 $run_sum 次，停止执行$xf"
+	[ "$xx" -ge "$run_sum" -a $(grep -c 'exit' $RUN_SUM_FILE) -lt 1 ] && {
+		echo_log "$xf 已经执行设定的 $run_sum 次，停止执行 $xf"
+		echo "exit" >>$RUN_SUM_FILE
+	}
+	[ "$xx" -gt "$run_sum" ] && rm $RUN_SUM_FILE
 }
 
 sum=$(uci_get_name cowbping sum 3)
@@ -82,8 +88,7 @@ work_mode=$(uci_get_name cowbping work_mode 3)
 pkgdelay=$(uci_get_name cowbping pkgdelay 300)
 address1=$(uci_get_name cowbping address1 'baidu.com')
 address2=$(uci_get_name cowbping address2 '223.6.6.6')
-xx=$(grep -E -c '重|自' /etc/cowbping_run_sum.log 2>/dev/null)
-[ "${xx:=0}" -gt "$run_sum" ] && rm /etc/cowbping_run_sum.log 2>/dev/null
+[ -s "$RUN_SUM_FILE" ] || :>$RUN_SUM_FILE
 echo_log "开始运行！系统以每 $time 分循环检查网络状况......"
 
 while :; do

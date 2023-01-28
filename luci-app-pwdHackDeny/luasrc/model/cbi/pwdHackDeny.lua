@@ -50,7 +50,7 @@ setport.rmempty=false
 if (luci.sys.call("[ `sed -n '$=' /etc/pwdHackDeny/badip.log.ssh 2>/dev/null` -gt 0 ]") == 0) then
 	clearsshlog = s:option(Button, "clearsshlog", translate("清除SSH登录日志"))
 	clearsshlog.inputtitle = translate("清除")
-	clearsshlog.inputstyle = "apply"
+	clearsshlog.inputstyle = "remove"
 	function clearsshlog.write(self, section)
 	   luci.sys.exec(":> /etc/pwdHackDeny/badip.log.ssh &")
 	   luci.http.redirect(luci.dispatcher.build_url("admin/control/pwdHackDeny"))
@@ -60,7 +60,7 @@ end
 if (luci.sys.call("[ -s /etc/pwdHackDeny/badip.log.web ]") == 0) then
 	clearlwebog = s:option(Button, "clearlwebog", translate("清除WEB登录日志"))
 	clearlwebog.inputtitle = translate("清除")
-	clearlwebog.inputstyle = "apply"
+	clearlwebog.inputstyle = "remove"
 	function clearlwebog.write(self, section)
 	   luci.sys.exec(":> /etc/pwdHackDeny/badip.log.web &")
 	   luci.http.redirect(luci.dispatcher.build_url("admin/control/pwdHackDeny"))

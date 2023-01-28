@@ -1,6 +1,6 @@
 local m,s
 
-if (luci.sys.call("ps | grep 'cowbpingd' | grep -v grep > /dev/null") == 0) then
+if (luci.sys.call("ps | grep 'cowbping' | grep -v grep > /dev/null") == 0) then
     state_msg = translate([[运行状态： <b><font color="green">运行中</font></b><br>]])
 else
     state_msg = translate([[运行状态： <b><font color="red">没有运行</font></b><br>]])
@@ -47,18 +47,13 @@ work_mode:value("6", translate("重启系统"))
 work_mode:value("7", translate("关机"))
 work_mode.default = 3
 
-run = s:option(Value, "run_sum", translate("执行次数"), translate("设定执行次数后停止执行"))
-run.default = 5
-
 command = s:option(TextValue, "/etc/config/cbp_cmd", translate("shell脚本"), translate("* 应用前需仔细检查脚本语法，如存在语法错误会导致所有命令无法执行，可终端执行sh /etc/config/cbp_cmd检查。"))
 command:depends("work_mode", 4)
 command.rows = 10
 command.wrap = "off"
-
 function command.cfgvalue(self, section)
     return nixio.fs.readfile("/etc/config/cbp_cmd") or ""
 end
-
 function command.write(self, section, value)
     if value then
         value = value:gsub("\r\n?", "\n")
@@ -67,6 +62,20 @@ function command.write(self, section, value)
             nixio.fs.writefile("/etc/config/cbp_cmd", value)
         end
         nixio.fs.remove("/tmp/cbp_cmd")
+    end
+end
+
+run = s:option(Value, "run_sum", translate("执行次数"), translate("设定执行次数后停止执行"))
+run.default = 5
+
+if (luci.sys.call("[ -s /etc/cowbping_run_sum ]") == 0) then
+    clear_sum = s:option(Button, "aad", translate("清除执行记录"), translate("清除执行记录的文件，确保正常运行"))
+    clear_sum.inputtitle = translate("清除")
+    clear_sum.inputstyle = "remove"
+    clear_sum.forcewrite = true
+    function clear_sum.write(self, section)
+        luci.sys.exec(":>/etc/cowbping_run_sum")
+        luci.http.redirect(luci.dispatcher.build_url("admin/network/cowbping/cowbping"))
     end
 end
 
