@@ -4,15 +4,15 @@ uci -q batch <<-EOF>/dev/null
 	delete ucitrack.@pwdHackDeny[-1]
 	add ucitrack pwdHackDeny
 	set ucitrack.@pwdHackDeny[-1].init=pwdHackDeny
+	commit ucitrack
 	delete firewall.pwdHackDeny
 	set firewall.pwdHackDeny=include
 	set firewall.pwdHackDeny.type=script
 	set firewall.pwdHackDeny.path=/etc/pwdHackDenysh.include
 	commit firewall
-	commit ucitrack
 EOF
 
-cat <<-EOF>/etc/sysupgrade.conf
+cat <<-EOF>>/etc/sysupgrade.conf
 	/etc/WEBbadip.log
 	/etc/SSHbadip.log
 	/etc/pwdHackDeny/

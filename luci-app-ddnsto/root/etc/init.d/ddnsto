@@ -1,13 +1,12 @@
 #!/bin/sh /etc/rc.common
 
 START=99
-enable=$(uci get ddnsto.@global[0].enable 2>/dev/null)
 
 start() {
-	[ x$enable = x1 ] || return 1
-	token=$(uci get ddnsto.@global[0].token 2>/dev/null) || {
+	[ x$(uci -q get ddnsto.ddnsto.enable) = x1 ] || return 1
+	test -z $(uci -q get ddnsto.ddnsto.token) && {
 		logger -t ddnsto "token值为空"
-		return 1
+		return 0
 	}
 	/usr/bin/ddnsto -u $token -d >/dev/null 2>&1 && \
 	logger -t ddnsto "启动 ddnsto 服务"
@@ -21,9 +20,9 @@ stop() {
 }
 
 boot() {
-	delay_start=$(uci get ddnsto.@global[0].start_delay 2>/dev/null)
+	delay_start=$(uci -q get ddnsto.ddnsto.start_delay)
 	[[ x$enable = x1 && x$delay_start != x ]] && {
 		logger -t ddnsto "延时$delay_start秒启动 ddnsto"
 		sleep "$delay_start" && start
-	} || return 1
+	} || return 0
 }

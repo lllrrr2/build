@@ -63,7 +63,8 @@ chk_log() {
 	#---------------------------addlogfile----------------------
 	logread | egrep 'dropbear.*[Pp]assword|uhttpd.*login|luci.*login' >$tmp_dir/syslog
 	[ -s $tmp_dir/syslog ] || return 0
-	newlog=$(diff $tmp_dir/_syslog $tmp_dir/syslog | grep '^>' | sed 's/^> //g' | uniq -i | sed '/^\s*$/d' 2>/dev/null)
+	[ -s $tmp_dir/_syslog ] && \
+	newlog=$(diff $tmp_dir/_syslog $tmp_dir/syslog | grep '^>' | sed 's/^> //g' | uniq -i | sed '/^\s*$/d')
 	cp -f $tmp_dir/syslog $tmp_dir/_syslog
 	[ -n "$newlog" ] || return 0
 	awk '/0x2/{print $1" "$4}' /proc/net/arp | tr '[a-z]' '[A-Z]' >$tmp_dir/MAC-IP.leases

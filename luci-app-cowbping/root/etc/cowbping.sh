@@ -18,7 +18,7 @@ clean_log() {
 	[ "$log_snum" -gt 500 ] && echo "[ $(date "+%m月%d日 %H:%M:%S") ]: 日志文件过长，清空处理！" >$log_file
 }
 
-P_G() {
+cycle_ping() {
 	fail=; xf=
 	ping1=$(ping -c "$sum" "$address1" 2>/dev/null) || { weberror1=1; echo_log "ping $address1 出错"; }
 	ping2=$(ping -c "$sum" "$address2" 2>/dev/null) || { weberror2=1; echo_log "ping $address2 出错"; }
@@ -35,7 +35,7 @@ P_G() {
 	fi
 	clean_log
 	unset -v ping1 ping2 weberror1 weberror2 delay1 delay2 loss1 loss2
-	xx=$(grep -c 'error' $run_sum_file)
+	xx=$(grep -c 'error' $run_sum_file 2>/dev/null)
 	[ -n "$fail" -a "$xx" -lt "$run_sum" ] && {
 		case "$work_mode" in
 		1)
@@ -70,16 +70,18 @@ P_G() {
 		echo_log "检查到 $st 执行 $xf"
 		echo "error" >>$run_sum_file
 	}
-	exit_sum=$(grep -c 'exit' $run_sum_file 2>/dev/null)
-	[ "$xx" -ge "$run_sum" -a "$exit_sum" -lt 1 ] && {
-		echo_log "$xf 已经执行设定的 $run_sum 次，停止执行 $xf"
-		echo "exit" >>$run_sum_file
+	exit_sum=$(grep -c '_exit_' $run_sum_file 2>/dev/null)
+	[ "$((xx+1))" -ge "$run_sum" -a "$exit_sum" -lt 1 ] && {
+		echo_log "$xf已经执行 $((run_sum-1)) 次，本次后停止执行。"
+		echo "_exit_" >>$run_sum_file
 		cat $log_file >>$run_sum_file
 	}
-	[ "$xf" = "关机" -a "$exit_sum" -lt 1 ] && poweroff
-	[ "$xf" = "重启系统" -a "$exit_sum" -lt 1 ] && reboot
-	[ "$xf" = "自定义命令" -a "$exit_sum" -lt 1 -a -s /etc/config/cbp_cmd ] && \
-	sh /etc/config/cbp_cmd 2>/dev/null &
+	test "$exit_sum" -le 1 && {
+		[ "$xf" = "关机" ] && poweroff
+		[ "$xf" = "重启系统" ] && reboot
+		[ "$xf" = "自定义命令" -a -s /etc/config/cbp_cmd ] && \
+		sh /etc/config/cbp_cmd 2>/dev/null &
+	}
 }
 
 sum=$(uci_get_name cowbping sum 3)
@@ -88,12 +90,12 @@ run_sum=$(uci_get_name cowbping run_sum 3)
 pkglost=$(uci_get_name cowbping pkglost 80)
 work_mode=$(uci_get_name cowbping work_mode 3)
 pkgdelay=$(uci_get_name cowbping pkgdelay 300)
-address1=$(uci_get_name cowbping address1 'baidu.com')
-address2=$(uci_get_name cowbping address2 '223.6.6.6')
+address1=$(uci_get_name cowbping address1 '163.com')
+address2=$(uci_get_name cowbping address2 '223.5.5.5')
 [ -s "$run_sum_file" ] || :>$run_sum_file
 echo_log "开始运行！系统以每 $time 分循环检查网络状况......"
 
 while :; do
-	P_G
+	cycle_ping
 	sleep ${time}m
 done

@@ -9,5 +9,5 @@ EOF
 
 touch /etc/config/cbp_cmd
 
-rm -f /tmp/luci-indexcache
+rm -f /tmp/luci-*
 exit 0

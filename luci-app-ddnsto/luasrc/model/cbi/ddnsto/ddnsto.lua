@@ -3,7 +3,7 @@ m.description = translate("简单、快速的内网穿透工具，不受网络�
 translate("&nbsp;&nbsp;&nbsp;&nbsp;<input class='cbi-button cbi-button-apply' type='button' value='注册与教程' onclick='window.open(\"https://www.ddnsto.com\")'/>")
 m:section(SimpleSection).template = "ddnsto/ddnsto_status"
 
-t = m:section(TypedSection, "global")
+t = m:section(TypedSection, "ddnsto")
 t.anonymous = true
 t.addremove = false
 
@@ -12,7 +12,7 @@ e.default = 0
 
 e = t:option(Value, "token", translate('ddnsto令牌'))
 e.rmempty = false
--- e.password = true
+e.password = true
 e.datatype = "rangelength(36,36)"
 
 e = t:option(Value, "start_delay", translate("延迟启动"))

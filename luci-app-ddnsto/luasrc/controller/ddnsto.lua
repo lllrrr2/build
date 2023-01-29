@@ -2,7 +2,7 @@ module("luci.controller.ddnsto",package.seeall)
 
 function index()
 	if not nixio.fs.access("/etc/config/ddnsto") then return end
-	entry({"admin", "services", "ddnsto"}, cbi("ddnsto/global"), _("DDNSTO 内网穿透"), 2).dependent = true
+	entry({"admin", "services", "ddnsto"}, cbi("ddnsto/ddnsto"), _("DDNSTO 内网穿透"), 2).dependent = true
 	entry({"admin", "services", "ddnsto", "status"}, call("act_status")).leaf = true
 end
 
