@@ -73,7 +73,7 @@ cycle_ping() {
 				;;
 			5)	:
 				;;
-			6)	echo_log reboot
+			6)	reboot
 				;;
 			7)	poweroff
 				;;
