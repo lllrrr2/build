@@ -3,6 +3,7 @@
 
 log_file=/tmp/log/cowbping.log
 run_sum_file=/etc/cowbping_run_sum
+
 uci_get_name() {
 	local ret=$(uci -q get cowbping."$1"."$2")
 	echo ${ret:=$3}
@@ -39,23 +40,23 @@ cycle_ping() {
 			st="延迟过高：$(((delay1+delay2)/2))ms"
 		}
 	}
-	clean_log
 	unset -v ping1 ping2 weberror1 weberror2 delay1 delay2 loss1 loss2
-	test "$fail" && old_run_sum=$((old_run_sum+1))
-	test "$fail" -a "$old_run_sum" -le "$run_sum" && {
-		case "$work_mode" in
-			1) run_name="重新拨号";;
-			2) run_name="重启WIFI";;
-			3) run_name="重启网络";;
-			4) run_name="自定义命令";;
-			5) run_name="自动中继";;
-			6) run_name="重启系统";;
-			7) run_name="关机";;
-		esac
-		echo_log "检查到 $st 执行第 $old_run_sum 次 $run_name"
-		echo "$(date "+%m月%d日 %H:%M:%S")& $st 执行第 $old_run_sum 次 $run_name" >>$run_sum_file
-	}
-	test "$fail" && {
+	test -n "$fail" && {
+		clean_log
+		old_run_sum=$((old_run_sum+1))
+		test "$old_run_sum" -le "$run_sum" && {
+			case "$work_mode" in
+				1) run_name="重新拨号";;
+				2) run_name="重启WIFI";;
+				3) run_name="重启网络";;
+				4) run_name="自定义命令";;
+				5) run_name="自动中继";;
+				6) run_name="重启系统";;
+				7) run_name="关机";;
+			esac
+			echo_log "检查到 $st 执行第 $old_run_sum 次 $run_name"
+			echo "$(date "+%m月%d日 %H:%M:%S")& $st 执行第 $old_run_sum 次 $run_name" >>$run_sum_file
+		}
 		test "$old_run_sum" -eq "$run_sum" -a "$stop_run" -eq 1 && {
 			export old_stop_run=1
 			echo_log "$run_name 已经执行 $old_run_sum 次，本次执行后停止执行设定的命令。"
