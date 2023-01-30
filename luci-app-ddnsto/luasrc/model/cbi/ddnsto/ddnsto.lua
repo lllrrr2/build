@@ -12,7 +12,7 @@ e.default = 0
 
 e = t:option(Value, "token", translate('ddnsto令牌'))
 e.rmempty = false
-e.password = true
+--e.password = true
 e.datatype = "rangelength(36,36)"
 
 e = t:option(Value, "start_delay", translate("延迟启动"))
