@@ -3,10 +3,6 @@
 START=19
 extra_command "reconfig" ""
 
-boot() {
-	XBOOT=1 start
-}
-
 uci_get_network() {
 	local ret=$(uci -q get network."$1"."$2")
 	echo ${ret:=$3}
@@ -15,6 +11,7 @@ uci_get_network() {
 uci_set_network() {
 	uci -q set network."$1"."$2"="$3"
 }
+
 # uci changes network.lan
 add_wizard() {
 	[ "x$XBOOT" = "x1" ] && return 0
@@ -131,4 +128,8 @@ start() {
 
 restart() {
 	XRELOAD=1 start
+}
+
+boot() {
+	XBOOT=1 start
 }

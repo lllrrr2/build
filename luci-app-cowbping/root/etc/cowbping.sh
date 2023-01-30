@@ -15,11 +15,11 @@ echo_log() {
 
 clean_log() {
 	log_snum=$(cat $log_file 2>/dev/null | wc -l)
-	[ "$log_snum" -gt 500 ] && echo "[ $(date "+%m月%d日 %H:%M:%S") ]: 日志文件过长，清空处理！" >$log_file
+	test "$log_snum" -gt 500 && echo "[ $(date "+%m月%d日 %H:%M:%S") ]: 日志文件过长，清空处理！" >$log_file
 }
 
 cycle_ping() {
-	fail=; xf=
+	run_name=; fail=
 	ping1=$(ping -c "$sum" "$address1" 2>/dev/null) || { weberror1=1; echo_log "ping $address1 出错"; }
 	ping2=$(ping -c "$sum" "$address2" 2>/dev/null) || { weberror2=1; echo_log "ping $address2 出错"; }
 	test "$weberror1" = 1 -a "$weberror2" = 1 && {
@@ -41,26 +41,26 @@ cycle_ping() {
 	}
 	clean_log
 	unset -v ping1 ping2 weberror1 weberror2 delay1 delay2 loss1 loss2
-	test "$fail" && x1=$((x1+1))
-	test "$fail" -a "$x1" -le "$run_sum" && {
+	test "$fail" && old_run_sum=$((old_run_sum+1))
+	test "$fail" -a "$old_run_sum" -le "$run_sum" && {
 		case "$work_mode" in
-			1) xf="重新拨号";;
-			2) xf="重启WIFI";;
-			3) xf="重启网络";;
-			4) xf="自定义命令";;
-			5) xf="自动中继";;
-			6) xf="重启系统";;
-			7) xf="关机";;
+			1) run_name="重新拨号";;
+			2) run_name="重启WIFI";;
+			3) run_name="重启网络";;
+			4) run_name="自定义命令";;
+			5) run_name="自动中继";;
+			6) run_name="重启系统";;
+			7) run_name="关机";;
 		esac
-		echo_log "检查到 $st 执行第 $x1 次 $xf"
-		echo "$(date "+%m月%d日 %H:%M:%S")& $st 执行第 $x1 次 $xf" >>$run_sum_file
+		echo_log "检查到 $st 执行第 $old_run_sum 次 $run_name"
+		echo "$(date "+%m月%d日 %H:%M:%S")& $st 执行第 $old_run_sum 次 $run_name" >>$run_sum_file
 	}
 	test "$fail" && {
-		test "$x1" -eq "$run_sum" && {
-			echo_log "$xf 已经执行 $x1 次，本次执行后停止执行设定的命令。"
-			test "$stop_run" -eq 1 && export x2=0
+		test "$old_run_sum" -eq "$run_sum" -a "$stop_run" -eq 1 && {
+			export old_stop_run=1
+			echo_log "$run_name 已经执行 $old_run_sum 次，本次执行后停止执行设定的命令。"
 		}
-		test "$x1" -le "$run_sum" && {
+		test "$old_run_sum" -le "$run_sum" && {
 			case "$work_mode" in
 			1)	ifup wan;;
 			2)	wifi down
@@ -69,7 +69,7 @@ cycle_ping() {
 			3)	/etc/init.d/network restart
 				;;
 			4)	kill -9 $(ps | awk '/etc\/config\/cbp_cmd/{print $1}') >/dev/null 2>&1
-				[ -s /etc/config/cbp_cmd ] && sh /etc/config/cbp_cmd 2>/dev/null &
+				test -s /etc/config/cbp_cmd && sh /etc/config/cbp_cmd 2>/dev/null &
 				;;
 			5)	:
 				;;
@@ -82,7 +82,7 @@ cycle_ping() {
 	}
 }
 
-x1=0; x2=
+old_run_sum=0; old_stop_run=0
 sum=$(uci_get_name cowbping sum 3)
 time=$(uci_get_name cowbping time 10)
 run_sum=$(uci_get_name cowbping run_sum 3)
@@ -96,7 +96,7 @@ test -s "$run_sum_file" || :>$run_sum_file
 echo_log "开始运行！系统以每 $time 分钟循环检查网络状况......"
 
 while :; do
-	[ ."$x2" = . ] && {
+	test ."$old_stop_run" = .0 && {
 		cycle_ping
 		sleep ${time}m
 	} || :

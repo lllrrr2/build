@@ -89,7 +89,7 @@ run = s:option(Value, "run_sum", translate("执行次数"), translate("设定执
 run.default = 5
 run.datatype = "ufloat"
 
-stop_run = s:option(Flag, "stop_run", translate("停止运行"), translate("设定到执行次数后停止检测网络"))
+stop_run = s:option(Flag, "stop_run", translate("停止运行"), translate("执行到设定次数后停止网络检测"))
 
 if (luci.sys.call("grep -q '\&' /etc/cowbping_run_sum") == 0) then
     clear_sum = s:option(Button, "aad", translate("清除执行记录"))
@@ -102,12 +102,8 @@ if (luci.sys.call("grep -q '\&' /etc/cowbping_run_sum") == 0) then
     end
     clear_sum.description = translate([[当前有 <b><font color="red">]] ..
         luci.util.trim(luci.sys.exec("grep -c '\&' /etc/cowbping_run_sum 2>/dev/null")) ..
-        [[</font></b> 次执行的记录，最后一次执行的时间：<br><b><font color="red">]] ..
-        luci.util.trim(luci.sys.exec([[awk -F'&' '/&/{print $1}' /etc/cowbping_run_sum | sed -n '$p']])) .. [[</font></b>]])
+        [[</font></b> 次执行的记录。<br>最近一次执行的时间：<b><font color="red">]] ..
+        luci.util.trim(luci.sys.exec("awk -F'&' '/&/{print $1}' /etc/cowbping_run_sum | sed -n '$p'")) .. [[</font></b>]])
 end
-
--- if (luci.http.formvalue("cbi.apply")) then
---     io.popen("/etc/init.d/cowbping start")
--- end
 
 return m
