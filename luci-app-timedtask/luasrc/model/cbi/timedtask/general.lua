@@ -61,12 +61,12 @@ command:value('poweroff', translate("关闭电源"))
 command:value('logread | egrep -v "miniupnpd|uhttpd" | tail -20 > /etc/syslog.log', translate("保存日志"))
 command.rmempty = false
 
--- m.template = "rebootschedule/run"
+-- m.template = "timedtask/run"
 -- btn = s:option(Button, "_baa", translate("立即执行"))
 -- btn.inputtitle = translate("执行")
 -- btn.inputstyle = "apply"
 -- btn.disabled = false
--- btn.template = "rebootschedule/button"
+-- btn.template = "timedtask/button"
 
 function gen_uuid(format)
     local uuid = sys.exec("echo -n $(cat /proc/sys/kernel/random/uuid)")
@@ -83,7 +83,7 @@ function s.create(e, t)
 end
 
 if luci.http.formvalue("cbi.apply") then
-  io.popen("sleep 3 && service timedtask restart &")
+  io.popen("sleep 3 && /etc/init.d/timedtask restart &")
 end
 
 return m

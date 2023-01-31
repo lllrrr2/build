@@ -1,3 +1,4 @@
+local x = luci.model.uci.cursor()
 module("luci.controller.timedtask", package.seeall)
 function index()
 	if not nixio.fs.access("/etc/config/timedtask") then return end

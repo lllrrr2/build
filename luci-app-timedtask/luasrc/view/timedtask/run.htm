@@ -113,9 +113,9 @@
 	function onclick_awake(id) {
 		// var section = _id2section(id);
 		// var btnXHR = new XHR();
-		// btnXHR.post('<%=url("admin/services/rebootschedule/awake")%>/' + section, { token: '<%=token%>' },
+		// btnXHR.post('<%=url("admin/services/timedtask/button")%>/' + section, { token: '<%=token%>' },
 		// 	function(x, data) {
-		(new XHR()).post('<%=url("admin/services/rebootschedule/awake")%>/' + _id2section(id), { token: '<%=token%>' }, (x, data) => {
+		(new XHR()).post('<%=url("admin/services/timedtask/button")%>/' + _id2section(id), { token: '<%=token%>' }, (x, data) => {
 				alert( JSON.parse( x.response).data );
 			}
 		);
