@@ -26,17 +26,17 @@ start() {
 				echo "$minute $hour $day $month $week $command #timedtask" >> $CRON_FILE
 			}
 		done
-		[ "$mcronrst" -eq 1 ] && service cron restart
+		[ "$mcronrst" -eq 1 ] && /etc/init.d/cron restart
 		grep -q 'loglevel:-5' $CRON_INI && {
 			sed -i '/loglevel:-5/s/-5/-9/' $CRON_INI 2>/dev/null
 			uci set system.@system[0].cronloglevel=9
 			uci commit system
-			service cron restart
+			/etc/init.d/cron restart
 		}
 	}
 }
 
 stop() {
 	sed -i '/timedtask/d' $CRON_FILE
-	service cron restart
+	/etc/init.d/cron restart
 }
