@@ -1,0 +1,42 @@
+#!/bin/sh /etc/rc.common
+# Author=wulishui , 20200908-0915 ; <wulishui@gmail.com>
+
+START=95
+CRON_INI=/etc/init.d/cron
+CRON_FILE=/etc/crontabs/root
+
+uci_get_by_type() {
+	uci get timedtask.@crontab[$1].$2 2>/dev/null
+}
+
+start() {
+	grep -q 'option enable .1.' /etc/config/timedtask && {
+		[ ! -s "$CRON_FILE" ] && mcronrst=1
+		sed -i '/timedtask$/d' $CRON_FILE
+		sum=$(grep -c 'config crontab' /etc/config/timedtask)
+		for x in $(seq 0 $((sum-1))); do
+			[ "$(uci_get_by_type $x enable)" -eq 1 ] && {
+				day=`uci_get_by_type $x day || echo *`
+				week=`uci_get_by_type $x week || echo *`
+				hour=`uci_get_by_type $x hour || echo *`
+				month=`uci_get_by_type $x month || echo *`
+				minute=`uci_get_by_type $x minute || echo 0`
+				command=`uci_get_by_type $x command || echo "echo 'Reboot schedule tested.'"`
+				[[ -n "`echo $minute | grep '*$'`" ]] && minute="0"
+				echo "$minute $hour $day $month $week $command #timedtask" >> $CRON_FILE
+			}
+		done
+		[ "$mcronrst" -eq 1 ] && service cron restart
+		grep -q 'loglevel:-5' $CRON_INI && {
+			sed -i '/loglevel:-5/s/-5/-9/' $CRON_INI 2>/dev/null
+			uci set system.@system[0].cronloglevel=9
+			uci commit system
+			service cron restart
+		}
+	}
+}
+
+stop() {
+	sed -i '/timedtask/d' $CRON_FILE
+	service cron restart
+}

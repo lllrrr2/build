@@ -1,0 +1,11 @@
+#!/bin/sh
+
+uci -q batch <<-EOF >/dev/null
+	delete ucitrack.@timedtask[-1]
+	add ucitrack timedtask
+	set ucitrack.@timedtask[-1].init=timedtask
+	commit ucitrack
+EOF
+
+rm -f /tmp/luci-*
+exit 0

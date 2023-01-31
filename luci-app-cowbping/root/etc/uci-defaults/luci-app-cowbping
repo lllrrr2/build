@@ -8,7 +8,7 @@ uci -q batch <<-EOF >/dev/null
 EOF
 
 touch /etc/config/cbp_cmd
-/etc/init.d/cowbping trace
+service cowbping trace
 
 rm -f /tmp/luci-*
 exit 0

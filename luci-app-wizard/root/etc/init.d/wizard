@@ -104,9 +104,9 @@ add_wizard() {
 	uci commit network
 	uci commit firewall
 	( sleep 5
-	/etc/init.d/dnsmasq reload
-	/etc/init.d/network reload
-	/etc/init.d/firewall reload ) &
+	service dnsmasq reload
+	service network reload
+	service firewall reload ) &
 }
 
 reconfig() {
