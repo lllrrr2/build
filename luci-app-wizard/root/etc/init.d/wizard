@@ -15,7 +15,7 @@ uci_set_network() {
 # uci changes network.lan
 add_wizard() {
 	[ "x$XBOOT" = "x1" ] && return 0
-	get_config="dhcp ipv6 lan_dns lan_gateway lan_ipaddr lan_netmask old_ipv6 old_siderouter old_wifi_key old_wifi_ssid siderouter wan_pppoe_pass wan_pppoe_user wan_proto wifi_key wifi_ssid"
+	get_config="dhcp ipv6 lan_dns lan_gateway lan_ipaddr lan_netmask old_ipv6 old_siderouter old_wifi_key old_wifi_ssid siderouter pppoe_pass pppoe_user wan_proto wifi_key wifi_ssid"
 	for x in $get_config; do config_get "$x" "$1" "$x"; done
 
 	[ ! -f /etc/config/bk_dhcp     -a -s /etc/config/dhcp     ] && cp /etc/config/dhcp /etc/config/bk_dhcp
@@ -30,10 +30,10 @@ add_wizard() {
 			uci -q delete network.wan.password
 		;;
 		pppoe)
-			[ "$wan_pppoe_user" != "$(uci_get_network wan username)" -o "$wan_pppoe_pass" != "$(uci_get_network wan password)" ] && {
+			[ "$pppoe_user" != "$(uci_get_network wan username)" -o "$pppoe_pass" != "$(uci_get_network wan password)" ] && {
 				uci_set_network wan proto pppoe
-				uci_set_network wan username "$wan_pppoe_user"
-				uci_set_network wan password "$wan_pppoe_pass"
+				uci_set_network wan username "$pppoe_user"
+				uci_set_network wan password "$pppoe_pass"
 			}
 		;;
 	esac
@@ -115,8 +115,8 @@ reconfig() {
 	uci -q set wizard.default.lan_ipaddr="$(uci_get_network lan ipaddr)"
 	uci -q set wizard.default.lan_netmask="$(uci_get_network lan netmask)"
 	uci -q set wizard.default.lan_gateway="$(uci_get_network lan gateway)"
-	uci -q set wizard.default.wan_pppoe_user="$(uci_get_network wan username)"
-	uci -q set wizard.default.wan_pppoe_pass="$(uci_get_network wan password)"
+	uci -q set wizard.default.pppoe_user="$(uci_get_network wan username)"
+	uci -q set wizard.default.pppoe_pass="$(uci_get_network wan password)"
 	[ -n "$(uci -q get dhcp.lan.ignore)" ] && uci -q set wizard.default.dhcp="0" || uci -q delete wizard.default.dhcp
 	uci commit wizard
 }

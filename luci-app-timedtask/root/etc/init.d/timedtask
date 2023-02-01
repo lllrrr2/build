@@ -32,6 +32,7 @@ start() {
 			uci set system.@system[0].cronloglevel=9
 			uci commit system
 			/etc/init.d/cron restart
+			/etc/init.d/system restart
 		}
 	}
 }
