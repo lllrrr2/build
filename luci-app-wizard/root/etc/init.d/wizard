@@ -12,9 +12,18 @@ uci_set_network() {
 	uci -q set network."$1"."$2"="$3"
 }
 
+ETH() {
+	eth=0
+	while [ "$eth" -le $(expr "$1" - 1) ]; do
+		eth=$(expr $eth + 1)
+		a=$(expr $eth - 1)
+		echo "eth$a"
+	done
+}
+
 # uci changes network.lan
 add_wizard() {
-	[ "x$XBOOT" = "x1" ] && return 0
+	[ ."$XBOOT" = .1 ] && return 0
 	get_config="dhcp ipv6 lan_dns lan_gateway lan_ipaddr lan_netmask old_ipv6 old_siderouter old_wifi_key old_wifi_ssid siderouter pppoe_pass pppoe_user wan_proto wifi_key wifi_ssid"
 	for x in $get_config; do config_get "$x" "$1" "$x"; done
 
@@ -22,19 +31,48 @@ add_wizard() {
 	[ ! -f /etc/config/bk_network  -a -s /etc/config/network  ] && cp /etc/config/network /etc/config/bk_network
 	[ ! -f /etc/config/bk_firewall -a -s /etc/config/firewall ] && cp /etc/config/firewall /etc/config/bk_firewall
 	[ ! -f /etc/config/bk_wireless -a -s /etc/config/wireless ] && cp /etc/config/wireless /etc/config/bk_wireless
-
+	device=$(uci -q get bk_network.wan.device)
 	case $wan_proto in
 		dhcp)
-			uci_set_network wan proto dhcp
-			uci -q delete network.wan.username
-			uci -q delete network.wan.password
+			uci delete network.wan
+			# uci_set_network wan interface
+			# uci_set_network wan.metric '40'
+			uci_set_network wan.device "$device"
+			uci_set_network wan proto "$wan_proto"
 		;;
 		pppoe)
 			[ "$pppoe_user" != "$(uci_get_network wan username)" -o "$pppoe_pass" != "$(uci_get_network wan password)" ] && {
-				uci_set_network wan proto pppoe
+				uci delete network.wan
+				# uci_set_network wan=interface
+				# uci_set_network wan.metric='40'
+				# uci_set_network wan.keepalive='5 5'
+				# uci_set_network wan.mtu='1492'
+				uci_set_network wan device "$device"
+				uci_set_network wan proto "$wan_proto"
 				uci_set_network wan username "$pppoe_user"
 				uci_set_network wan password "$pppoe_pass"
 			}
+		;;
+		# static)
+		# 	config_get wan_ipaddr "$cfg" wan_ipaddr
+		# 	config_get wan_netmask "$cfg" wan_netmask
+		# 	config_get wan_gateway "$cfg" wan_gateway
+		# 	test -n "${wan_ipaddr}" && test -n "${wan_netmask}" && {
+		# 		uci delete network.wan
+		# 		uci set network.wan=interface
+		# 		uci set network.wan.proto='static'
+		# 		uci set network.wan.device="$device"
+		# 		uci set network.wan.metric='40'
+		# 		uci set network.wan.ipaddr="${wan_ipaddr}"
+		# 		uci set network.wan.netmask="${wan_netmask}"
+		# 		uci set network.wan.gateway="${wan_gateway}"
+
+		# 		config_get wan_dns "$cfg" wan_dns
+		# 		test -n "${wan_dns}" && {
+		# 			uci set network.wan.peerdns='0'
+		# 			uci set network.wan.dns="${wan_dns}"
+		# 		}
+		# 	}
 		;;
 	esac
 
@@ -98,6 +136,20 @@ add_wizard() {
 			uci -q set wizard.default.old_wifi_ssid="$wifi_ssid"
 		fi
 	}
+
+	#模拟输入
+	if [ "$network" -eq 0 -o -z "$network" ]; then
+		eth=$(ls /sys/class/net | grep -E 'eth[0-9]+' | xargs | sed 's/[ ]*$//g')
+	else
+		eth=$(ETH $network | xargs | sed 's/[ ]*$//g')
+	fi
+
+	#写入network网络接口
+	if [ "$wan_lan" -eq 1 ]; then
+		uci -q delete network.wan
+		uci -q delete network.wan6
+		test uci -q get network.lan.gateway || uci_set_network lan.ifname "$eth"
+	fi
 
 	uci commit dhcp
 	uci commit wizard

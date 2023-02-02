@@ -24,6 +24,10 @@ enable = s:option(Flag, "enable", translate("启用"))
 enable.rmempty = false
 enable.default = 0
 
+enable = s:option(Flag, "enable_lock", translate("锁定"))
+enable.rmempty = false
+enable.default = 0
+
 minute = s:option(Value, "minute", translate("分"))
 minute.default = '0'
 

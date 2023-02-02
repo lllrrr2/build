@@ -38,6 +38,13 @@ translate("把WAN口变成LAN口"))
 wan.rmempty = true
 wan:depends('wan_proto', 'siderouter')
 
+ipv6 = s:taboption('wansetup', Value, 'ipv6', translate('Enable IPv6'), translate('Enable/Disable IPv6'))
+ipv6:value("0", translate("关闭"))
+ipv6:value("1", translate("手动"))
+ipv6:value("2", translate("自动"))
+ipv6.default = "0"
+ipv6:depends('wan_proto', 'pppoe')
+
 dns = s:taboption('wansetup', DynamicList, 'lan_dns', translate('Use custom DNS servers'), translate("可以设置主路由的IP，或可到<a href='https://dnsdaquan.com' target='_blank'> DNS大全 </a>获取更多"))
 dns:value("223.5.5.5", translate("阿里DNS：223.5.5.5"))
 dns:value("223.6.6.6", translate("阿里DNS：223.6.6.6"))
@@ -68,12 +75,6 @@ netmask:value("255.0.0.0", translate("255.0.0.0"))
 netmask.default = "255.255.255.0"
 netmask.datatype='ip4addr'
 netmask.anonymous = false
-
-ipv6 = s:taboption('lansetup', Value, 'ipv6', translate('Enable IPv6'), translate('Enable/Disable IPv6'))
-ipv6:value("0", translate("关闭"))
-ipv6:value("1", translate("手动"))
-ipv6:value("2", translate("自动"))
-ipv6.default = "0"
 
 if (luci.sys.call("[ -s '/etc/config/wireless' ]") ==0) then
 	s:tab('wifisetup', translate('Wireless Settings'), translate('Set the router\'s wireless name and password. For more advanced settings, please go to the Network-Wireless page.'))
