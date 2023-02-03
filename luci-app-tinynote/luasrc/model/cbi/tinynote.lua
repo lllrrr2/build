@@ -2,15 +2,12 @@ local fs = require "nixio.fs"
 local sys = require "luci.sys"
 --wulishui 20200108-20210804
 
-m = Map("tinynote", translate(""), translate("<font color=\"green\"><b>小小的便签软件，只能记录少量文本内容。文本内容勿大于90Kb（约1000行），否则无法保存。</b></font>"))
+m = Map("tinynote", translate(""), translate([[<font color="green"><b>只能记录少量文本内容。文本内容勿大于90Kb（约1000行），否则无法保存。</b></font>]]))
 s = m:section(TypedSection, "tinynote")
 s.anonymous=true
 
 if (sys.call("[ -d /etc/tinynote ]") == 1) then
-	sys.call("mkdir /etc/tinynote")
-	if (sys.call("[ -f /etc/tinynote/tinynote1.txt ]") == 1) then
-		sys.call("touch /etc/tinynote/tinynote1.txt")
-	end
+	fs.mkdirr("/etc/tinynote")
 end
 
 if fs.access("/etc/tinynote/tinynote1.txt") then

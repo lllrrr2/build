@@ -10,6 +10,7 @@ wan_proto = s:taboption('wansetup', ListValue, 'wan_proto', translate('Protocol'
 wan_proto:value('pppoe', translate('PPPoE'))
 wan_proto:value('dhcp', translate('DHCP client'))
 wan_proto:value('siderouter', translate('Siderouter'))
+wan_proto:value('static', translate('Static address'))
 
 pppoe_user = s:taboption('wansetup', Value, 'pppoe_user', translate('PAP/CHAP username'))
 pppoe_user:depends('wan_proto', 'pppoe')
@@ -18,6 +19,26 @@ pppoe_pass = s:taboption('wansetup', Value, 'pppoe_pass', translate('PAP/CHAP pa
 pppoe_pass:depends('wan_proto', 'pppoe')
 pppoe_pass.password = true
 
+wan_ipaddr = s:taboption('wansetup', Value, 'wan_ipaddr', translate('IPv4 address'))
+wan_ipaddr:depends('wan_proto', 'static')
+wan_ipaddr.datatype = 'ip4addr'
+wan_ipaddr.rmempty = false
+wan_ipaddr.ucioption = 'ipaddr'
+
+wan_gateway = s:taboption('wansetup', Value, 'wan_gateway', translate('IPv4 gateway'))
+wan_gateway:depends('wan_proto', 'static')
+wan_gateway.datatype = "ip4addr"
+wan_gateway.ucioption = 'gateway'
+
+wan_netmask = s:taboption('wansetup', ListValue, 'wan_netmask', translate('IPv4 netmask'))
+wan_netmask:value('255.255.255.0')
+wan_netmask:value('255.255.0.0')
+wan_netmask:value('255.0.0.0')
+wan_netmask:depends('wan_proto', 'static')
+wan_netmask.datatype = "ip4addr"
+wan_netmask.rmempty = false
+wan_netmask.ucioption = 'netmask'
+
 lan_gateway = s:taboption('wansetup', Value, 'lan_gateway', translate('IPv4 gateway'), translate('这里输入主路由IP地址'))
 lan_gateway:depends('wan_proto', 'siderouter')
 lan_gateway.datatype = 'ip4addr'
@@ -25,7 +46,6 @@ lan_gateway.rmempty = false
 
 lan_sum = s:taboption("wansetup", Value, "lan_sum", translate("网口数量"),
 translate("该路由物理网口数量，留空则自动获取"))
-lan_sum.anonymous = false
 lan_sum:depends('wan_proto', 'siderouter')
 
 dhcp = s:taboption('wansetup', Flag, 'dhcp', translate('DHCP Server'), translate('开启此DHCP则需要关闭主路由的DHCP<br><b><font color="red">关闭主路由DHCP则需要手动将所有上网设备的网关和DNS改为此旁路由的IP</font></b>'))

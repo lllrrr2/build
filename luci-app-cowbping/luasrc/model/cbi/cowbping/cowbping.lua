@@ -101,9 +101,9 @@ if (luci.sys.call("grep -q '\&' /etc/cowbping_run_sum") == 0) then
         luci.http.redirect(luci.dispatcher.build_url("admin/network/cowbping/cowbping"))
     end
     clear_sum.description = translate([[当前有 <b><font color="red">]] ..
-        luci.util.trim(luci.sys.exec("grep -c '\&' /etc/cowbping_run_sum 2>/dev/null")) ..
+        luci.sys.exec("grep -c '\&' /etc/cowbping_run_sum 2>/dev/null") ..
         [[</font></b> 次执行的记录。<br>最近一次执行的时间：<b><font color="red">]] ..
-        luci.util.trim(luci.sys.exec("awk -F'&' '/&/{print $1}' /etc/cowbping_run_sum | sed -n '$p'")) .. [[</font></b>]])
+        luci.sys.exec("awk -F'&' '/&/{print $1}' /etc/cowbping_run_sum | sed -n '$p'") .. [[</font></b>]])
 end
 
 return m
