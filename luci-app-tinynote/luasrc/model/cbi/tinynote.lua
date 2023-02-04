@@ -11,7 +11,7 @@ if (sys.call("[ -d /etc/tinynote ]") == 1) then
 end
 
 if fs.access("/etc/tinynote/tinynote1.txt") then
-	s:tab("Note1", translate("便签1"))
+	s:tab("Note1", translate("笔记1"))
 	o = s:taboption("Note1", Value, "editNote1", nil)
 	o.template = "cbi/tvalue"
 	o.rows = 35
@@ -34,7 +34,7 @@ else
 end
 
 if fs.access("/etc/tinynote/tinynote2.txt") then
-	s:tab("Note2", translate("便签2"))
+	s:tab("Note2", translate("笔记2"))
 	o = s:taboption("Note2", Value, "editNote2", nil)
 	o.template = "cbi/tvalue"
 	o.rows = 35
@@ -57,7 +57,7 @@ else
 end
 
 if fs.access("/etc/tinynote/tinynote3.txt") then
-	s:tab("Note3", translate("便签3"))
+	s:tab("Note3", translate("笔记3"))
 	o = s:taboption("Note3", Value, "editNote3", nil)
 	o.template = "cbi/tvalue"
 	o.rows = 35
@@ -80,7 +80,7 @@ else
 end
 
 if fs.access("/etc/tinynote/tinynote4.txt") then
-	s:tab("Note4", translate("便签4"))
+	s:tab("Note4", translate("笔记4"))
 	o = s:taboption("Note4", Value, "editNote4", nil)
 	o.template = "cbi/tvalue"
 	o.rows = 35
@@ -103,7 +103,7 @@ else
 end
 
 if fs.access("/etc/tinynote/tinynote5.txt") then
-	s:tab("Note5", translate("便签5"))
+	s:tab("Note5", translate("笔记5"))
 	o = s:taboption("Note5", Value, "editNote5", nil)
 	o.template = "cbi/tvalue"
 	o.rows = 35
@@ -126,7 +126,7 @@ else
 end
 
 if fs.access("/etc/tinynote/tinynote6.txt") then
-	s:tab("Note6", translate("便签6"))
+	s:tab("Note6", translate("笔记6"))
 	o = s:taboption("Note6", Value, "editNote6", nil)
 	o.template = "cbi/tvalue"
 	o.rows = 35
@@ -149,7 +149,7 @@ else
 end
 
 if fs.access("/etc/tinynote/tinynote7.txt") then
-	s:tab("Note7", translate("便签7"))
+	s:tab("Note7", translate("笔记7"))
 	o = s:taboption("Note7", Value, "editNote7", nil)
 	o.template = "cbi/tvalue"
 	o.rows = 35
@@ -172,7 +172,7 @@ else
 end
 
 if fs.access("/etc/tinynote/tinynote8.txt") then
-	s:tab("Note8", translate("便签8"))
+	s:tab("Note8", translate("笔记8"))
 	o = s:taboption("Note8", Value, "editNote8", nil)
 	o.template = "cbi/tvalue"
 	o.rows = 35

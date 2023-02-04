@@ -5,23 +5,23 @@
 # (0) tz（雅黑PHP探针）
 url_tz="https://codeload.github.com/WuSiYu/PHP-Probe/zip/master"
 # (1) phpMyAdmin（数据库管理工具）
-url_phpMyAdmin="https://files.phpmyadmin.net/phpMyAdmin/5.1.1/phpMyAdmin-5.1.1-all-languages.zip"
+url_phpMyAdmin="https://files.phpmyadmin.net/phpMyAdmin/5.2.0/phpMyAdmin-5.2.0-all-languages.zip"
 # (2) WordPress（使用最广泛的CMS）
 url_WordPress="https://cn.wordpress.org/latest-zh_CN.zip"
 # (3) Owncloud（经典的私有云）
-url_Owncloud="https://download.owncloud.org/community/owncloud-complete-20210721.zip"
+url_Owncloud="https://download.owncloud.com/server/owncloud-10.11.0.zip"
 # (4) Nextcloud（Owncloud团队的新作，美观强大的个人云盘）
-url_Nextcloud="https://download.nextcloud.com/server/releases/nextcloud-22.2.3.zip"
+url_Nextcloud="https://download.nextcloud.com/server/releases/nextcloud-25.0.3.zip"
 # (5) h5ai（优秀的文件目录）
 url_h5ai="https://release.larsjung.de/h5ai/h5ai-0.30.0.zip"
 # (6) Lychee（一个很好看，易于使用的Web相册）
 url_Lychee="https://github.com/electerious/Lychee/archive/master.zip"
 # (7) Kodexplorer（可道云aka芒果云在线文档管理器）
-url_Kodexplorer="https://static.kodcloud.com/update/download/kodbox.1.26.zip"
+url_Kodexplorer="https://static.kodcloud.com/update/download/kodbox.1.36.zip"
 # (8) Typecho (流畅的轻量级开源博客程序)
-url_Typecho="http://typecho.org/downloads/1.1-17.10.30-release.tar.gz"
+url_Typecho="https://github.com/typecho/typecho/releases/download/v1.2.0/typecho.zip"
 # (9) Z-Blog (体积小，速度快的PHP博客程序)
-url_Zblog="https://update.zblogcn.com/zip/Z-BlogPHP_1_7_0_2950_Tenet.zip"
+url_Zblog="https://update.zblogcn.com/zip/Z-BlogPHP_1_7_2_3060_Tenet.zip"
 # (10) DzzOffice (开源办公平台)
 url_DzzOffice="https://codeload.github.com/zyx0814/dzzoffice/zip/master"
 

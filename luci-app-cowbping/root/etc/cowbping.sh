@@ -55,7 +55,7 @@ cycle_ping() {
 				7) run_name="关机";;
 			esac
 			echo_log "检查到 $st 执行第 $old_run_sum 次 $run_name"
-			echo "$(date "+%m月%d日 %H:%M:%S")& $st 执行第 $old_run_sum 次 $run_name" >>$run_sum_file
+			echo "$(date "+%m月%d日 %H:%M:%S")" >>$run_sum_file
 		}
 		test "$old_run_sum" -eq "$run_sum" -a "$stop_run" -eq 1 && {
 			export old_stop_run=1
