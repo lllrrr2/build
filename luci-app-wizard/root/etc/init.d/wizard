@@ -8,15 +8,14 @@ extra_command "reconfig" ""
 [ ! -f /etc/config/bk_firewall -a -s /etc/config/firewall ] && cp /etc/config/firewall /etc/config/bk_firewall
 [ ! -f /etc/config/bk_wireless -a -s /etc/config/wireless ] && cp /etc/config/wireless /etc/config/bk_wireless
 
+device=$(uci_get_type bk_network wan device)
 uci_get_type() {
-	test -n $4 && local index=$4 || local index=network
-	local ret=$(uci -q get "$index"."$1"."$2")
-	echo ${ret:=$3}
+	local ret=$(uci -q get "$1"."$2"."$3")
+	echo ${ret:=$4}
 }
 
-uci_set_type() {
-	test -n $4 && local index=$4 || local index=network
-	uci -q set "$index"."$1"."$2"="$3"
+uci_set_network() {
+	uci -q set network."$1"."$2"="$3"
 }
 
 ETH() {
@@ -36,22 +35,22 @@ add_wizard() {
 	case $wan_proto in
 		dhcp)
 			uci delete network.wan
-			# uci_set_network wan interface
-			# uci_set_network wan.metric '40'
-			uci_set_network wan.device "$device"
-			uci_set_network wan proto "$wan_proto"
+			uci -q set network.wan=interface
+			uci_set_network wan proto dhcp
+			uci_set_network wan device "$device"
+			# uci_set_network wan metric '40'
 		;;
 		pppoe)
-			[ "$pppoe_user" != "$(uci_get_type wan username)" -o "$pppoe_pass" != "$(uci_get_type wan password)" ] && {
+			[ "$pppoe_user" != "$(uci_get_type network wan username)" -o "$pppoe_pass" != "$(uci_get_type network wan password)" ] && {
 				uci delete network.wan
-				# uci_set_network wan=interface
-				# uci_set_network wan.metric='40'
-				# uci_set_network wan.keepalive='5 5'
-				# uci_set_network wan.mtu='1492'
+				uci -q set network.wan=interface
+				uci_set_network wan proto pppoe
 				uci_set_network wan device "$device"
-				uci_set_network wan proto "$wan_proto"
 				uci_set_network wan username "$pppoe_user"
 				uci_set_network wan password "$pppoe_pass"
+				# uci_set_network wan mtu '1492'
+				# uci_set_network wan metric '40'
+				# uci_set_network wan keepalive '5 5'
 			}
 		;;
 		# static)
@@ -78,9 +77,9 @@ add_wizard() {
 	esac
 
 	if [ "$siderouter" != "$old_siderouter" ]; then
-		if [ "$lan_gateway" != "$(uci_get_type lan gateway)" -o "$dhcp" != "$(uci -q get dhcp.lan.ignore)" ]; then
+		if [ "$lan_gateway" != "$(uci_get_type network lan gateway)" -o "$dhcp" != "$(uci_get_type dhcp lan ignore)" ]; then
 			if [ "$siderouter" = 1 ]; then
-				uci_set_type lan gateway "$lan_gateway"
+				uci_set_network lan gateway "$lan_gateway"
 				[ "$dhcp" = 1 ] && uci -q set dhcp.lan.ignore="1" || uci -q delete dhcp.lan.ignore
 				uci -q set firewall.@zone[0].masq='1'
 				echo "iptables -t nat -I POSTROUTING -o eth0 -j MASQUERADE" >>/etc/firewall.user
@@ -92,26 +91,29 @@ add_wizard() {
 				sed -i "/iptables -t nat -I POSTROUTING -o eth0 -j MASQUERADE/d" /etc/firewall.user
 			fi
 		fi
-		uci_set_type default old_siderouter "$siderouter" wizard
+		uci -q set wizard.default.old_siderouter="$siderouter"
+		uci commit dhcp
+		uci commit firewall
+		/etc/init.d/firewall reload &
 	fi
-	[ "$lan_dns" != "$(uci_get_type lan dns)" ] && uci_set_type lan dns "$lan_dns"
-	[ "$lan_ipaddr" != "$(uci_get_type lan ipaddr)" ] && uci_set_type lan ipaddr "$lan_ipaddr"
-	[ "$lan_netmask" != "$(uci_get_type lan netmask)" ] && uci_set_type lan netmask "$lan_netmask"
+	[ "$lan_dns" != "$(uci_get_type network lan dns)" ] && uci_set_network lan dns "$lan_dns"
+	[ "$lan_ipaddr" != "$(uci_get_type network lan ipaddr)" ] && uci_set_network lan ipaddr "$lan_ipaddr"
+	[ "$lan_netmask" != "$(uci_get_type network lan netmask)" ] && uci_set_network lan netmask "$lan_netmask"
 
 	if [ "$ipv6" != "$old_ipv6" ]; then
 		case "$ipv6" in
-			0) uci_set_type wan ipv6 0;;
-			1) uci_set_type wan ipv6 1;;
-			2) uci_set_type wan ipv6 auto;;
+			0) uci_set_network wan ipv6 0;;
+			1) uci_set_network wan ipv6 1;;
+			2) uci_set_network wan ipv6 auto;;
 		esac
-		uci_set_type default old_ipv6 "$ipv6" wizard
+		uci -q set wizard.default.old_ipv6="$ipv6"
 	fi
 
 	test -s /etc/config/wireless && {
 		wifi_setup_radio() {
 			local radio=$1
 			uci -q get wireless.${radio} && {
-				if [ "$(uci -q get wireless.${radio}.band)" = "5g" ]; then
+				if [ "$(uci_get_type wireless ${radio} band)" = "5g" ]; then
 					uci -q set wireless.default_${radio}.ssid="${wifi_ssid}_5G"
 				else
 					uci -q set wireless.default_${radio}.ssid="${wifi_ssid}_2.4G"
@@ -133,8 +135,8 @@ add_wizard() {
 				done
 				uci commit wireless
 			}
-			uci_set_type default old_wifi_key "$wifi_key" wizard
-			uci_set_type default old_wifi_ssid "$wifi_ssid" wizard
+			uci -q set wizard.default.old_wifi_key="$wifi_key"
+			uci -q set wizard.default.old_wifi_ssid="$wifi_ssid"
 		fi
 	}
 
@@ -149,28 +151,25 @@ add_wizard() {
 	if [ "$wan_lan" -eq 1 ]; then
 		uci -q delete network.wan
 		uci -q delete network.wan6
-		test uci -q get network.lan.gateway || uci_set_network lan.ifname "$eth"
+		test uci_get_type network lan gateway || uci_set_network lan ifname "$eth"
 	fi
 
-	uci commit dhcp
 	uci commit wizard
 	uci commit network
-	uci commit firewall
-	( sleep 5
-	/etc/init.d/dnsmasq reload
-	/etc/init.d/network reload
-	/etc/init.d/firewall reload ) &
+	sleep 5
+	/etc/init.d/dnsmasq reload &
+	/etc/init.d/network reload &
 }
 
 reconfig() {
-	uci_set_type default lan_dns "$(uci_get_type lan dns)" wizard
-	uci_set_type default wan_proto "$(uci_get_type wan proto)" wizard
-	uci_set_type default lan_ipaddr "$(uci_get_type lan ipaddr)" wizard
-	uci_set_type default lan_netmask "$(uci_get_type lan netmask)" wizard
-	uci_set_type default lan_gateway "$(uci_get_type lan gateway)" wizard
-	uci_set_type default pppoe_user "$(uci_get_type wan username)" wizard
-	uci_set_type default pppoe_pass "$(uci_get_type wan password)" wizard
-	[ -n "$(uci -q get dhcp.lan.ignore)" ] && uci -q set wizard.default.dhcp="0" || uci -q delete wizard.default.dhcp
+	uci -q set wizard.default.lan_dns="$(uci_get_type network lan dns)"
+	uci -q set wizard.default.wan_proto="$(uci_get_type network wan proto)"
+	uci -q set wizard.default.lan_ipaddr="$(uci_get_type network lan ipaddr)"
+	uci -q set wizard.default.lan_netmask="$(uci_get_type network lan netmask)"
+	uci -q set wizard.default.lan_gateway="$(uci_get_type network lan gateway)"
+	uci -q set wizard.default.pppoe_user="$(uci_get_type network wan username)"
+	uci -q set wizard.default.pppoe_pass="$(uci_get_type network wan password)"
+	[ -n "$(uci_get_type dhcp lan ignore)" ] && uci -q set wizard.default.dhcp="0" || uci -q delete wizard.default.dhcp
 	uci commit wizard
 }
 

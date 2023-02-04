@@ -14,6 +14,16 @@ s.anonymous = true
 
 s:tab("entware", translate("ONMP部署"))
 p = s:taboption("entware", Flag, "entware_enable", translate("启用"), translate("部署ONMP环境"))
+
+delaytime = s:taboption("entware", Value, "a_delaytime", translate("开机延迟"), translate("单位分钟"))
+for _, v in ipairs({1, 2, 5, 8}) do
+	delaytime:value(v, translate("%u 分") %{v})
+end
+delaytime.default = "2"
+delaytime.rmempty = true
+delaytime.datatype = "ufloat"
+delaytime:depends("entware_enable", 1)
+
 local model = luci.sys.exec("echo -n $(uname -m)")
 local cpu_model = s:taboption("entware", Value, "cpu_model", translate("CPU架构"),
 translate("检测到CPU架构是：<font color=\"green\"><b>") .. model .. ("</b></font> "))

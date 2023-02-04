@@ -106,4 +106,8 @@ if (luci.sys.call("grep -q '\&' /etc/cowbping_run_sum") == 0) then
         luci.sys.exec("awk -F'&' '/&/{print $1}' /etc/cowbping_run_sum | sed -n '$p'") .. [[</font></b>]])
 end
 
+if (luci.http.formvalue("cbi.apply")) then
+  io.popen("/etc/init.d/cowbping trace")
+end
+
 return m
