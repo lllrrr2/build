@@ -6,4 +6,3 @@ function index()
 	end
 	entry({"admin", "system", "wizard"}, cbi("wizard"), _("Wizard"), 1).dependent = true
 end
-
