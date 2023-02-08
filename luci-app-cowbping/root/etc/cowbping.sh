@@ -20,7 +20,7 @@ clean_log() {
 }
 
 cycle_ping() {
-	run_name=; fail=
+	fail=
 	ping1=$(ping -c "$sum" "$address1" 2>/dev/null) || { weberror1=1; echo_log "ping $address1 出错"; }
 	ping2=$(ping -c "$sum" "$address2" 2>/dev/null) || { weberror2=1; echo_log "ping $address2 出错"; }
 	test "$weberror1" = 1 -a "$weberror2" = 1 && {
@@ -43,47 +43,62 @@ cycle_ping() {
 	unset -v ping1 ping2 weberror1 weberror2 delay1 delay2 loss1 loss2
 	test -n "$fail" && {
 		clean_log
-		old_run_sum=$((old_run_sum+1))
-		test "$old_run_sum" -le "$run_sum" && {
-			case "$work_mode" in
-				1) run_name="重新拨号";;
-				2) run_name="重启WIFI";;
-				3) run_name="重启网络";;
-				4) run_name="自定义命令";;
-				5) run_name="自动中继";;
-				6) run_name="重启系统";;
-				7) run_name="关机";;
-			esac
-			echo_log "检查到 $st 执行第 $old_run_sum 次 $run_name"
-			echo "$(date "+%m月%d日 %H:%M:%S")" >>$run_sum_file
-		}
-		test "$old_run_sum" -eq "$run_sum" -a "$stop_run" -eq 1 && {
-			export old_stop_run=1
-			echo_log "$run_name 已经执行 $old_run_sum 次，本次执行后停止执行设定的命令。"
-		}
-		test "$old_run_sum" -le "$run_sum" && {
-			case "$work_mode" in
-			1)	ifup wan;;
-			2)	wifi down
-				wifi up
+		case "$work_mode" in
+			1)	run_name="重新拨号"
+				test -z "$xc" && ifup wan
 				;;
-			3)	/etc/init.d/network restart
+			2)	run_name="重启WIFI"
+				test -z "$xc" && {
+					wifi down
+					wifi up
+				}
 				;;
-			4)	kill -9 $(ps | awk '/etc\/config\/cbp_cmd/{print $1}') >/dev/null 2>&1
-				test -s /etc/config/cbp_cmd && sh /etc/config/cbp_cmd 2>/dev/null &
+			3)	run_name="重启网络"
+				test -z "$xc" && /etc/init.d/network restart
 				;;
-			5)	:
+			4)	run_name="自定义命令"
+				test -z "$xc" && {
+					kill -9 $(ps | awk '/etc\/config\/cbp_cmd/{print $1}') >/dev/null 2>&1
+					test -s /etc/config/cbp_cmd && sh /etc/config/cbp_cmd 2>/dev/null &
+				}
 				;;
-			6)	reboot
+			5)	run_name="自动中继"
+				:
 				;;
-			7)	poweroff
+			6)	old_run_sum=$(($(cat $run_sum_file | wc -l)+1))
+				test "$old_run_sum" -eq "$run_sum" -a "$stop_run" -eq 1 && export old_stop_run=1
+				test "$old_run_sum" -le "$run_sum" && {
+					echo_log "检查到 $st 执行第 $old_run_sum 次 重启系统"
+					echo "$(date "+%m月%d日 %H:%M:%S")" >>$run_sum_file
+					reboot
+				}
 				;;
-			esac
+			7)	echo "$(date "+%m月%d日 %H:%M:%S") 检查到 $st 执行关机" >>$run_sum_file
+				poweroff
+				;;
+		esac
+		test "$work_mode" != 6 -o "$work_mode" != 7 && {
+			test "$run_sum" = 0 && echo_log "检查到 $st 执行 $run_name" || {
+				test -z "$old_run_sum" && old_run_sum=0
+				old_run_sum=$((old_run_sum+1))
+				test "$old_run_sum" -le "$run_sum" && \
+				echo_log "检查到 $st 执行第 $old_run_sum 次 $run_name"
+				test "$old_run_sum" -eq "$run_sum" && {
+					test "$stop_run" -eq 1 && {
+						export old_stop_run=0
+						echo_log "已经执行 $old_run_sum 次，本次执行后停止执行网络检测"
+					} || {
+						xc=1
+						echo_log "已经执行 $old_run_sum 次，本次执行后停止执行$run_name"
+					}
+				}
+			}
 		}
 	}
 }
 
-old_run_sum=0; old_stop_run=0
+old_stop_run=
+test -s "$run_sum_file" || :>$run_sum_file
 sum=$(uci_get_name cowbping sum 3)
 time=$(uci_get_name cowbping time 10)
 run_sum=$(uci_get_name cowbping run_sum 3)
@@ -93,12 +108,9 @@ work_mode=$(uci_get_name cowbping work_mode 3)
 pkgdelay=$(uci_get_name cowbping pkgdelay 300)
 address1=$(uci_get_name cowbping address1 '163.com')
 address2=$(uci_get_name cowbping address2 '223.5.5.5')
-test -s "$run_sum_file" || :>$run_sum_file
 echo_log "开始运行！系统以每 $time 分钟循环检查网络状况......"
 
 while :; do
-	test ."$old_stop_run" = .0 && {
-		cycle_ping
-		sleep ${time}m
-	} || :
+	test -z "$old_stop_run" && cycle_ping
+	sleep ${time}m
 done

@@ -5,7 +5,7 @@ else
     state_msg = translate([[运行状态： <b><font color="red">没有运行</font></b><br>]])
 end
 
-m = Map("cowbping", translate("网络检测"), translate("<font style='color:black'>定期ping一个网站以检测网络是否通畅，否则执行相关动作以排除故障<br>网站一与网站二是“与”关系，丢包率与延迟是“或”关系</font><br><br>" .. state_msg))
+m = Map("cowbping", translate("网络检测"), translate("<font style='color:black'>定期ping一个网站以网络检测是否通畅，否则执行相关动作以排除故障<br>网站一与网站二是“与”关系，丢包率与延迟是“或”关系</font><br><br>" .. state_msg))
 
 s = m:section(NamedSection, "cowbping", "cowbping")
 s.anonymous=true
@@ -85,11 +85,13 @@ function command.write(self, section, value)
     end
 end
 
-run = s:option(Value, "run_sum", translate("执行次数"), translate("设定执行次数后停止执行"))
+run = s:option(Value, "run_sum", translate("执行次数"), translate("设定次数后停止执行动作，0为无限执行"))
 run.default = 5
 run.datatype = "ufloat"
 
 stop_run = s:option(Flag, "stop_run", translate("停止运行"), translate("执行到设定次数后停止网络检测"))
+stop_run.default = false
+-- stop_run:depends('work_mode', '6')
 
 if (luci.sys.call("[ -s /etc/cowbping_run_sum ]") == 0) then
     clear_sum = s:option(Button, "aad", translate("清除执行记录"))
