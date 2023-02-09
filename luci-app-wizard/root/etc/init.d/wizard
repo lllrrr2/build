@@ -34,7 +34,7 @@ add_wizard() {
 	lan_device=$(uci_get_type bk_network lan device)
 	# lan_netmask=$(uci_get_type bk_network lan netmask)
 	lan_ip6assign=$(uci_get_type bk_network lan ip6assign)
-	get_config="dhcp enable_siderouter firewall fullcone ip_tables ipv6 lan_dns lan_gateway lan_ipaddr lan_netmask lan_sum masq old_firewall old_ipv6 old_lan_gateway old_siderouter old_wan old_wifi_key old_wifi_ssid omasq pppoe_pass pppoe_user syn_flood wan wan_dns_1 wan_gateway wan_gateway_1 wan_ipaddr wan_ipaddr_1 wan_lan wan_netmask wan_netmask_1 wan_proto wifi_key wifi_ssid"
+	get_config="dhcp enable_siderouter firewall fullcone ip_tables ipv6 lan_dns lan_gateway lan_ipaddr lan_netmask lan_sum masq old_firewall old_lan_gateway old_siderouter old_wan old_wifi_key old_wifi_ssid omasq pppoe_pass pppoe_user syn_flood wan wan_dns_1 wan_gateway wan_gateway_1 wan_ipaddr wan_ipaddr_1 wan_lan wan_netmask wan_netmask_1 wan_proto wifi_key wifi_ssid"
 	for x in $get_config; do config_get "$x" "$1" "$x"; done
 
 	# [ "$wan" != "$old_wan" ] && {
@@ -56,13 +56,15 @@ add_wizard() {
 	# 	uci_res_type network wan
 	# }
 
-	[ "$wan_proto" != "$(uci_get_type network wan proto)" ] && {
+	# [ "$wan_proto" != "$(uci_get_type network wan proto)" ] && {
 		case $wan_proto in
 			dhcp)
 				uci -q delete network.wan
 				uci -q set network.wan=interface
 				uci_set_network wan proto dhcp
 				uci_set_network wan device "$wan_device"
+				uci del dhcp.wan.ra_flags
+				uci add_list dhcp.wan.ra_flags='none'
 				# uci_set_network wan metric '40'
 			;;
 			pppoe)
@@ -73,6 +75,8 @@ add_wizard() {
 					uci_set_network wan device "$wan_device"
 					uci_set_network wan username "$pppoe_user"
 					uci_set_network wan password "$pppoe_pass"
+					uci del dhcp.wan.ra_flags
+					uci add_list dhcp.wan.ra_flags='none'
 					# uci_set_network wan mtu '1492'
 					# uci_set_network wan metric '40'
 					# uci_set_network wan keepalive '5 5'
@@ -124,18 +128,17 @@ add_wizard() {
 				}
 			;;
 		esac
-	}
+	# }
 	[ "$lan_dns" != "$(uci_get_type network lan dns)" ] && uci_set_network lan dns "$lan_dns"
 	[ "$lan_ipaddr" != "$(uci_get_type network lan ipaddr)" ] && uci_set_network lan ipaddr "$lan_ipaddr"
 	[ "$lan_netmask" != "$(uci_get_type network lan netmask)" ] && uci_set_network lan netmask "$lan_netmask"
 
-	if [ "$ipv6" != "$old_ipv6" ]; then
+	if [ "$ipv6" != "$(uci_get_type network wan ipv6)" ]; then
 		case "$ipv6" in
 			0) uci_set_network wan ipv6 0;;
 			1) uci_set_network wan ipv6 1;;
 			2) uci_set_network wan ipv6 auto;;
 		esac
-		uci_set_wizard old_ipv6 "$ipv6"
 	fi
 	test -s /etc/config/wireless && {
 		wifi_setup_radio() {
@@ -190,12 +193,12 @@ add_wizard() {
 	# 	uci -q delete network.wan6
 	# 	test uci_get_type network lan gateway || uci_set_network lan ifname "$eth"
 	# fi
-
+	[ $(uci -q changes network | wc -l) -gt 0 ] && xn=1 || xn=0
 	uci -q commit wizard
 	uci -q commit network
 	sleep 5
 	/etc/init.d/dnsmasq reload &
-	/etc/init.d/network reload &
+	[ "$xn" -gt 0 ] && /etc/init.d/network reload &
 }
 
 reconfig() {
