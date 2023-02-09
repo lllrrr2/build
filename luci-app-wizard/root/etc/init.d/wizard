@@ -3,38 +3,58 @@
 START=19
 extra_command "reconfig" ""
 # uci changes network.lan
-# uci show bk_network.wan | cut -d. -f2-
+# uci show bk_network.wan | cut -d_ -f2-
 
 uci_get_type() {
+	[ -z "$1" -o -z "$2" -o -z "$3" ] && return 1
 	local ret=$(uci -q get "$1"."$2"."$3")
 	echo ${ret:=$4}
 }
 
 uci_set_network() {
+	[ -z "$1" -o -z "$2" -o -z "$3" ] && return 1
 	uci -q set network."$1"."$2"="$3"
 }
 
 uci_set_wizard() {
+	[ -z "$1" -o -z "$2" ] && return 1
 	uci -q set wizard.default."$1"="$2"
 }
 
-ETH() {
-	eth=0
-	while [ "$eth" -le $(expr "$1" - 1) ]; do
-		eth=$(expr $eth + 1)
-		a=$(expr $eth - 1)
-		echo "eth$a"
+uci_res_type() {
+	[ -z "$1" -o -z "$2" ] && return 1
+	for xxx in $(uci show bk_"$1"."$2" | sed "s/bk_//g; s/'//g"); do
+		uci -q set $xxx
 	done
 }
 
 add_wizard() {
-	[ ."$XBOOT" = .1 ] && return 0
+	[ "$XBOOT" = 1 ] && return 0
 	wan_device=$(uci_get_type bk_network wan device)
 	lan_device=$(uci_get_type bk_network lan device)
-	lan_netmask=$(uci_get_type bk_network lan netmask)
+	# lan_netmask=$(uci_get_type bk_network lan netmask)
 	lan_ip6assign=$(uci_get_type bk_network lan ip6assign)
-	get_config="dhcp enable firewall fullcone ip_tables ipv6 lan_dns lan_gateway lan_ipaddr lan_netmask masq old_ipv6 old_lan_gateway old_wan old_wifi_key old_wifi_ssid omasq pppoe_pass pppoe_user siderouter syn_flood wan wan_dns wan_gateway wan_ipaddr wan_netmask wan_proto wifi_key wifi_ssid"
+	get_config="dhcp enable_siderouter firewall fullcone ip_tables ipv6 lan_dns lan_gateway lan_ipaddr lan_netmask lan_sum masq old_firewall old_ipv6 old_lan_gateway old_siderouter old_wan old_wifi_key old_wifi_ssid omasq pppoe_pass pppoe_user syn_flood wan wan_dns_1 wan_gateway wan_gateway_1 wan_ipaddr wan_ipaddr_1 wan_lan wan_netmask wan_netmask_1 wan_proto wifi_key wifi_ssid"
 	for x in $get_config; do config_get "$x" "$1" "$x"; done
+
+	# [ "$wan" != "$old_wan" ] && {
+	# 	[ -n "$wan" ] && {
+	# 		uci -q delete network.wan
+	# 		uci -q delete network.wan6
+	# 		test -n "${wan_dns}" && {
+	# 			uci_set_network wan peerdns '0'
+	# 			uci_set_network wan dns "${wan_dns}"
+	# 		}
+	# 	} || {
+	# 		uci_res_type network wan
+	# 		uci_res_type network wan6
+	# 	}
+	# 	uci_set_wizard old_wan "$wan"
+	# }
+	# [ "$wan_proto" = pppoe ] || {
+	# 	uci_res_type network lan
+	# 	uci_res_type network wan
+	# }
 
 	[ "$wan_proto" != "$(uci_get_type network wan proto)" ] && {
 		case $wan_proto in
@@ -59,7 +79,7 @@ add_wizard() {
 				}
 			;;
 			siderouter)
-				[ "$enable" -eq 1 ] && return 0
+				[ "$enable_siderouter" -eq 1 ] || return 0
 				if [ "$lan_gateway" != "$(uci_get_type network lan gateway)" -o "$dhcp" != "$(uci_get_type dhcp lan ignore)" ]; then
 					uci -q delete network.lan
 					uci -q set network.lan=interface
@@ -80,18 +100,6 @@ add_wizard() {
 					[ -n "$syn_flood" ] && uci -q set firewall.@defaults[0].syn_flood='1' || uci -q set firewall.@defaults[0].syn_flood='0'
 					uci_set_wizard old_firewall "$firewall"
 				fi
-
-				[ "$wan" != "$old_wan" ] && {
-					[ "$wan" ] && {
-						uci -q delete network.wan
-						uci -q delete network.wan6
-					} || {
-						for x in $(uci show bk_network.wan | cut -d. -f2-); do
-							uci -q set network."$x"
-						done
-					}
-					uci_set_wizard old_wan "$wan"
-				}
 
 				uci_set_wizard old_lan_gateway "$lan_gateway"
 				uci -q commit dhcp
@@ -117,17 +125,6 @@ add_wizard() {
 			;;
 		esac
 	}
-	[ $wan_proto != siderouter ] && {
-		uci -q delete network.lan
-		uci -q set network.lan=interface
-		uci_set_network lan proto 'static'
-		uci_set_network lan device "$lan_device"
-		uci_set_network lan netmask "$lan_netmask"
-		uci_set_network lan ip6assign "$lan_ip6assign"
-		uci -q delete dhcp.lan.ignore
-		uci -q delete network.lan.gateway
-	}
-
 	[ "$lan_dns" != "$(uci_get_type network lan dns)" ] && uci_set_network lan dns "$lan_dns"
 	[ "$lan_ipaddr" != "$(uci_get_type network lan ipaddr)" ] && uci_set_network lan ipaddr "$lan_ipaddr"
 	[ "$lan_netmask" != "$(uci_get_type network lan netmask)" ] && uci_set_network lan netmask "$lan_netmask"
@@ -170,6 +167,15 @@ add_wizard() {
 			uci_set_wizard old_wifi_ssid "$wifi_ssid"
 		fi
 	}
+
+	# ETH() {
+	# 	eth=0
+	# 	while [ "$eth" -le $(expr "$1" - 1) ]; do
+	# 		eth=$(expr $eth + 1)
+	# 		a=$(expr $eth - 1)
+	# 		echo "eth$a"
+	# 	done
+	# }
 
 	#模拟输入
 	# if [ "$network" -eq 0 -o -z "$network" ]; then
