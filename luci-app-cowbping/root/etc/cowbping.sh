@@ -5,8 +5,8 @@ log_file=/tmp/log/cowbping.log
 run_sum_file=/etc/cowbping_run_sum
 
 uci_get_name() {
-	local ret=$(uci -q get cowbping."$1"."$2")
-	echo ${ret:=$3}
+	local ret=$(uci -q get cowbping.cowbping."$1")
+	echo ${ret:=$2}
 }
 
 echo_log() {
@@ -99,15 +99,15 @@ cycle_ping() {
 
 old_stop_run=
 test -s "$run_sum_file" || :>$run_sum_file
-sum=$(uci_get_name cowbping sum 3)
-time=$(uci_get_name cowbping time 10)
-run_sum=$(uci_get_name cowbping run_sum 3)
-pkglost=$(uci_get_name cowbping pkglost 80)
-stop_run=$(uci_get_name cowbping stop_run 0)
-work_mode=$(uci_get_name cowbping work_mode 3)
-pkgdelay=$(uci_get_name cowbping pkgdelay 300)
-address1=$(uci_get_name cowbping address1 '163.com')
-address2=$(uci_get_name cowbping address2 '223.5.5.5')
+sum=$(uci_get_name sum 3)
+time=$(uci_get_name time 10)
+run_sum=$(uci_get_name run_sum 3)
+pkglost=$(uci_get_name pkglost 80)
+stop_run=$(uci_get_name stop_run 0)
+work_mode=$(uci_get_name work_mode 3)
+pkgdelay=$(uci_get_name pkgdelay 300)
+address1=$(uci_get_name address1 '163.com')
+address2=$(uci_get_name address2 '223.5.5.5')
 echo_log "开始运行！系统以每 $time 分钟循环检查网络状况......"
 
 while :; do

@@ -130,17 +130,17 @@ firewall.rmempty = true
 firewall:depends('enable_siderouter', true)
 
 fullcone = s:taboption("wansetup", Flag, "fullcone", translate("SYN-flood"),
-translate("关闭防火墙ISYN-flood防御服务<code>建议开启</code>"))
+translate("关闭防火墙ISYN-flood防御服务，默认开启。<code>建议开启</code>"))
 fullcone:depends("firewall", true)
 fullcone.rmempty = true
 
 masq = s:taboption("wansetup", Flag, "masq", translate("IP动态伪装"),
-translate("开启防火墙IP动态伪装IP服务<code>建议开启</code>"))
+translate("开启LAN防火墙IP动态伪装IP服务，默认关闭。<code>建议开启</code>"))
 masq:depends("firewall", true)
 masq.rmempty = true
 
 syn_flood = s:taboption("wansetup", Flag, "syn_flood", translate("FullCone-NAT"),
-translate("关闭防火墙IFullCone-NAT服务<code>可忽略</code>"))
+translate("开启防火墙IFullCone-NAT服务，默认关闭。<code>可忽略</code>"))
 syn_flood:depends("firewall", true)
 syn_flood.rmempty = true
 

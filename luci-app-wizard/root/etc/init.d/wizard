@@ -6,23 +6,23 @@ extra_command "reconfig" ""
 # uci show bk_network.wan | cut -d_ -f2-
 
 uci_get_type() {
-	[ -z "$1" -o -z "$2" -o -z "$3" ] && return 1
+	[ "$#" -eq 3 -o "$#" -eq 4 ] || return 1
 	local ret=$(uci -q get "$1"."$2"."$3")
 	echo ${ret:=$4}
 }
 
 uci_set_network() {
-	[ -z "$1" -o -z "$2" -o -z "$3" ] && return 1
+	[ "$#" -eq 3 ] || return 1
 	uci -q set network."$1"."$2"="$3"
 }
 
 uci_set_wizard() {
-	[ -z "$1" -o -z "$2" ] && return 1
+	[ "$#" -eq 2 ] || return 1
 	uci -q set wizard.default."$1"="$2"
 }
 
 uci_res_type() {
-	[ -z "$1" -o -z "$2" ] && return 1
+	[ "$#" -eq 2 ] || return 1
 	for xxx in $(uci show bk_"$1"."$2" | sed "s/bk_//g; s/'//g"); do
 		uci -q set $xxx
 	done
@@ -98,10 +98,18 @@ add_wizard() {
 				fi
 				if [ "$firewall" -eq 1 -a "$firewall" != "$old_firewall" ]; then
 					# [ -n"$wan" -eq "1" ] && uci -q delete firewall.@zone[1]
-					[ -n "$masq" ] && uci -q set firewall.@zone[0].masq='0' || uci -q set firewall.@zone[0].masq='1'
-					[ -n "$omasq" ] && echo "$lan_ipaddr" >>/etc/firewall.user || sed -i "/$ip_tables/d" /etc/firewall.user
-					[ -n "$fullcone" ] && uci -q set firewall.@defaults[0].fullcone='1' || uci -q set firewall.@defaults[0].fullcone='0'
-					[ -n "$syn_flood" ] && uci -q set firewall.@defaults[0].syn_flood='1' || uci -q set firewall.@defaults[0].syn_flood='0'
+					[ "$masq" -eq 1 ] && \
+						uci -q set firewall.@zone[0].masq='1' || \
+						uci -q delete firewall.@zone[0].masq
+					[ "$fullcone" -eq 1 ] && \
+						uci -q delete firewall.@defaults[0].fullcone || \
+						uci -q set firewall.@defaults[0].fullcone='1'
+					[ "$syn_flood" -eq 1 ] && \
+						uci -q set firewall.@defaults[0].syn_flood='1' || \
+						uci -q delete firewall.@defaults[0].syn_flood
+					[ "$omasq" -eq 1 -a -n "$lan_ipaddr" ] && \
+						echo "$lan_ipaddr" >>/etc/firewall.user || \
+						sed -i "/$ip_tables/d" /etc/firewall.user
 					uci_set_wizard old_firewall "$firewall"
 				fi
 

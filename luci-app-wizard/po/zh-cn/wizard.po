@@ -11,10 +11,10 @@ msgid "Wireless Settings"
 msgstr "无线设置"
 
 msgid "Lan Settings"
-msgstr "内网设置 LAN口设置"
+msgstr "内网设置"
 
 msgid "Wan Settings"
-msgstr "外网设置 WAN口设置"
+msgstr "上网模式"
 
 msgid "If you are using this router for the first time, please configure it here."
 msgstr "如果你首次使用这个路由器，请在这里简单设置。"
