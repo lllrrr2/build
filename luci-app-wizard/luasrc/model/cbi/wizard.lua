@@ -40,13 +40,42 @@ wan_netmask.datatype = "ip4addr"
 wan_netmask.rmempty = true
 wan_netmask.ucioption = 'netmask'
 
+ipv6 = s:taboption('wansetup', ListValue, 'ipv6', translate('Enable IPv6 negotiation'))
+ipv6:value("0", translate("disable"))
+ipv6:value("1", translate("Manual"))
+ipv6:value("2", translate("Automatic"))
+ipv6.default = "0"
+ipv6:depends('wan_proto', 'pppoe')
+
+lan_ips = s:taboption("wansetup", Value, "lan_ips", translate("内网主机列表"), translate("只做查阅现已用内网 IP"))
+lan_ips.datatype="ipaddr"
+luci.ip.neighbors({family=4},function(entry)
+	if entry.reachable then
+		lan_ips:value(entry.dest:string())
+	end
+end)
+lan_ips:depends('enable_siderouter', true)
+
 local lan_ipaddr = (uci:get("network", "lan", "ipaddr") or "")
-ipaddr = s:taboption("wansetup", Value, "lan_ipaddr", translate("IPv4 address"),
-	translate([[主路由同网段未冲突的IP地址<br><font color="red">即是该路由web访问的IP</font>]]))
-ipaddr:value(lan_ipaddr, translate(lan_ipaddr .. " --当前路由的IP--"))
+ipaddr = s:taboption("wansetup", Value, "lan_ipaddr", translate("IPv4 address"))
+ipaddr:value(lan_ipaddr, translate(lan_ipaddr .. " --当前LAN的IP--"))
 ipaddr.default = lan_ipaddr
 ipaddr.datatype="ip4addr"
 ipaddr.anonymous = false
+ipaddr:depends('enable_siderouter', false)
+
+ipaddr = s:taboption("wansetup", Value, "siderouter_lan_ipaddr", translate("IPv4 address"),
+	translate([[主路由同网段未冲突的IP地址<br><font color="red">即是该路由web访问的IP</font>]]))
+ipaddr:value(lan_ipaddr, translate(lan_ipaddr .. " --当前LAN的IP--"))
+ipaddr.default = lan_ipaddr
+ipaddr.datatype="ip4addr"
+ipaddr.anonymous = false
+ipaddr:depends('enable_siderouter', true)
+
+local host_name = (uci:get("system", "@system[0]", "hostname") or "")
+hostname = s:taboption("wansetup", Value, "hostname", translate("Hostname"))
+hostname.default = host_name
+hostname:depends('enable_siderouter', true)
 
 netmask = s:taboption('wansetup', ListValue, 'lan_netmask', translate('IPv4 netmask'))
 netmask:value("255.255.255.0", translate("255.255.255.0"))
@@ -129,19 +158,22 @@ firewall = s:taboption("wansetup", Flag, "firewall", translate("防火墙设置"
 firewall.rmempty = true
 firewall:depends('enable_siderouter', true)
 
-fullcone = s:taboption("wansetup", Flag, "fullcone", translate("SYN-flood"),
-translate("关闭防火墙ISYN-flood防御服务，默认开启。<code>建议开启</code>"))
+fullcone = s:taboption("wansetup", Flag, "fullcone", translate("启用 SYN-flood 防御"),
+translate("建议开启"))
 fullcone:depends("firewall", true)
+fullcone.default = true
 fullcone.rmempty = true
 
-masq = s:taboption("wansetup", Flag, "masq", translate("IP动态伪装"),
-translate("开启LAN防火墙IP动态伪装IP服务，默认关闭。<code>建议开启</code>"))
+masq = s:taboption("wansetup", Flag, "masq", translate("启用 IP 动态伪装"),
+translate("LAN防火墙服务<code>建议开启</code>"))
 masq:depends("firewall", true)
+masq.default = false
 masq.rmempty = true
 
 syn_flood = s:taboption("wansetup", Flag, "syn_flood", translate("FullCone-NAT"),
 translate("开启防火墙IFullCone-NAT服务，默认关闭。<code>可忽略</code>"))
 syn_flood:depends("firewall", true)
+syn_flood.default = false
 syn_flood.rmempty = true
 
 omasq = s:taboption("wansetup", Flag, "omasq", translate("防火墙规定"),
@@ -153,13 +185,6 @@ ip_tables.default = "iptables -t nat -I POSTROUTING -o eth0 -j MASQUERADE"
 ip_tables.anonymous = false
 ip_tables:depends("omasq", true)
 
-ipv6 = s:taboption('wansetup', Value, 'ipv6', translate('Enable IPv6'), translate('Enable/Disable IPv6'))
-ipv6:value("0", translate("关闭"))
-ipv6:value("1", translate("手动"))
-ipv6:value("2", translate("自动"))
-ipv6.default = "0"
-ipv6:depends('wan_proto', 'pppoe')
-
 -- s:tab("lansetup", translate("Lan Settings"))
 
 if (luci.sys.call("[ -s '/etc/config/wireless' ]") ==0) then
@@ -170,7 +195,6 @@ if (luci.sys.call("[ -s '/etc/config/wireless' ]") ==0) then
 	o.datatype = 'wpakey'
 	o.password = true
 end
-
 
 if nixio.fs.access("/etc/config/network") then
 	s:tab("netwrokconf", translate("修改network"),
