@@ -185,6 +185,38 @@ ip_tables.default = "iptables -t nat -I POSTROUTING -o eth0 -j MASQUERADE"
 ip_tables.anonymous = false
 ip_tables:depends("omasq", true)
 
+-- function show_hostname_config()
+--     dns			= uci:get("network", "lan", "dns")
+--     ipaddr		= uci:get("network", "lan", "ipaddr")
+--     netmask		= uci:get("network", "lan", "netmask")
+--     lan_dns		= uci:get("wizard", "default", "lan_dns")
+--     host	= uci:get("wizard", "default", "hostname")
+--     lan_ipaddr	= uci:get("wizard", "default", "lan_ipaddr")
+--     lan_netmask = uci:get("wizard", "default", "lan_netmask")
+    -- host		= uci:get("system", "@system[0]", "hostname")
+-- end
+
+-- show_hostname_config()
+-- if lan_dns ~= dns then
+-- 	uci:set("network", "lan", "dns",     lan_dns)
+-- 	uci:commit("network")
+-- end
+
+-- if lan_ipaddr ~= ipaddr then
+-- 	uci:set("network", "lan", "ipaddr",  lan_ipaddr)
+-- 	uci:commit("network")
+-- end
+
+-- if lan_netmask ~= netmask then
+-- 	uci:set("network", "lan", "netmask", lan_netmask)
+-- 	uci:commit("network")
+-- end
+
+-- if hostname ~= host then
+-- 	uci:set("system", "@system[0]", "hostname", hostname)
+-- 	luci.sys.hostname(host)
+-- 	uci:commit("system")
+-- end
 -- s:tab("lansetup", translate("Lan Settings"))
 
 if (luci.sys.call("[ -s '/etc/config/wireless' ]") ==0) then

@@ -1,197 +1,43 @@
-local fs = require "nixio.fs"
-local sys = require "luci.sys"
+local fs = require "nixio.fs" --加载函数
+local sys = require "luci.sys" --加载函数
 --wulishui 20200108-20210804
 
 m = Map("tinynote", translate(""), translate([[<font color="green"><b>只能记录少量文本内容。文本内容勿大于90Kb（约1000行），否则无法保存。</b></font>]]))
 s = m:section(TypedSection, "tinynote")
 s.anonymous=true
 
-if (sys.call("[ -d /etc/tinynote ]") == 1) then
-	fs.mkdirr("/etc/tinynote")
+if (sys.call("test ! -d /etc/tinynote")) then --判断目录是否存在
+	fs.mkdir("/etc/tinynote") --新建文件夹
 end
 
-if fs.access("/etc/tinynote/tinynote1.txt") then
-	s:tab("Note1", translate("笔记1"))
-	o = s:taboption("Note1", Value, "editNote1", nil)
-	o.template = "cbi/tvalue"
-	o.rows = 35
-	o.wrap = "off"
-	function o.cfgvalue(self, section)
-		return fs.readfile("/etc/tinynote/tinynote1.txt") or ""
+array = {1,2,3,4,5,6,7,8} --数组
+for i,v in ipairs(array) do
+	local file= (v .. ".txt")
+	if not fs.access("/etc/tinynote/tinynote" .. file) then --判断文件是否存在
+		sys.exec(":>/etc/tinynote/tinynote" .. file) --新建文件
 	end
-	function o.write(self, section, value)
-		if value then
-			value = value:gsub("\r\n?", "\n")
-			fs.writefile("/tmp/tinynote1.txt", value)
-			if (sys.call("cmp -s /tmp/tinynote1.txt /etc/tinynote/tinynote1.txt") == 1) then
-				fs.writefile("/etc/tinynote/tinynote1.txt", value)
-			end
-			fs.remove("/tmp/tinynote1.txt")
-		end
-	end
-else
-	sys.call("touch /etc/tinynote/tinynote1.txt")
-end
 
-if fs.access("/etc/tinynote/tinynote2.txt") then
-	s:tab("Note2", translate("笔记2"))
-	o = s:taboption("Note2", Value, "editNote2", nil)
-	o.template = "cbi/tvalue"
-	o.rows = 35
-	o.wrap = "off"
-	function o.cfgvalue(self, section)
-		return fs.readfile("/etc/tinynote/tinynote2.txt") or ""
-	end
-	function o.write(self, section, value)
-		if value then
-			value = value:gsub("\r\n?", "\n")
-			fs.writefile("/tmp/tinynote2.txt", value)
-			if (sys.call("cmp -s /tmp/tinynote2.txt /etc/tinynote/tinynote2.txt") == 1) then
-				fs.writefile("/etc/tinynote/tinynote2.txt", value)
+	if fs.access("/etc/tinynote/tinynote" .. file) then
+		local Note= ("Note" .. v)
+		s:tab(Note, translate("笔记" .. v))
+		Note = s:taboption(Note, Value, "editNote" .. v, nil)
+		Note.template = "cbi/tvalue"
+		Note.rows = 35
+		Note.wrap = "off"
+		function Note.cfgvalue(self, section)
+			return fs.readfile("/etc/tinynote/tinynote" .. file) or ""
+		end
+		function Note.write(self, section, value)
+			if value then
+				value = value:gsub("\r\n?", "\n")
+				fs.writefile("/tmp/tinynote" .. file, value)
+				if (sys.call("cmp -s /tmp/tinynote" .. file .. " /etc/tinynote/tinynote" .. file) == 1) then
+					fs.writefile("/etc/tinynote/tinynote" .. file, value)
+				end
+				fs.remove("/tmp/tinynote" .. file)
 			end
-			fs.remove("/tmp/tinynote2.txt")
 		end
 	end
-else
-	sys.call("touch /etc/tinynote/tinynote2.txt")
-end
-
-if fs.access("/etc/tinynote/tinynote3.txt") then
-	s:tab("Note3", translate("笔记3"))
-	o = s:taboption("Note3", Value, "editNote3", nil)
-	o.template = "cbi/tvalue"
-	o.rows = 35
-	o.wrap = "off"
-	function o.cfgvalue(self, section)
-		return fs.readfile("/etc/tinynote/tinynote3.txt") or ""
-	end
-	function o.write(self, section, value)
-		if value then
-			value = value:gsub("\r\n?", "\n")
-			fs.writefile("/tmp/tinynote3.txt", value)
-			if (sys.call("cmp -s /tmp/tinynote3.txt /etc/tinynote/tinynote3.txt") == 1) then
-				fs.writefile("/etc/tinynote/tinynote3.txt", value)
-			end
-			fs.remove("/tmp/tinynote3.txt")
-		end
-	end
-else
-	sys.call("touch /etc/tinynote/tinynote3.txt")
-end
-
-if fs.access("/etc/tinynote/tinynote4.txt") then
-	s:tab("Note4", translate("笔记4"))
-	o = s:taboption("Note4", Value, "editNote4", nil)
-	o.template = "cbi/tvalue"
-	o.rows = 35
-	o.wrap = "off"
-	function o.cfgvalue(self, section)
-		return fs.readfile("/etc/tinynote/tinynote4.txt") or ""
-	end
-	function o.write(self, section, value)
-		if value then
-			value = value:gsub("\r\n?", "\n")
-			fs.writefile("/tmp/tinynote4.txt", value)
-			if (sys.call("cmp -s /tmp/tinynote4.txt /etc/tinynote/tinynote4.txt") == 1) then
-				fs.writefile("/etc/tinynote/tinynote4.txt", value)
-			end
-			fs.remove("/tmp/tinynote4.txt")
-		end
-	end
-else
-	sys.call("touch /etc/tinynote/tinynote4.txt")
-end
-
-if fs.access("/etc/tinynote/tinynote5.txt") then
-	s:tab("Note5", translate("笔记5"))
-	o = s:taboption("Note5", Value, "editNote5", nil)
-	o.template = "cbi/tvalue"
-	o.rows = 35
-	o.wrap = "off"
-	function o.cfgvalue(self, section)
-		return fs.readfile("/etc/tinynote/tinynote5.txt") or ""
-	end
-	function o.write(self, section, value)
-		if value then
-			value = value:gsub("\r\n?", "\n")
-			fs.writefile("/tmp/tinynote5.txt", value)
-			if (sys.call("cmp -s /tmp/tinynote5.txt /etc/tinynote/tinynote5.txt") == 1) then
-				fs.writefile("/etc/tinynote/tinynote5.txt", value)
-			end
-			fs.remove("/tmp/tinynote5.txt")
-		end
-	end
-else
-	sys.call("> /etc/tinynote/tinynote5.txt")
-end
-
-if fs.access("/etc/tinynote/tinynote6.txt") then
-	s:tab("Note6", translate("笔记6"))
-	o = s:taboption("Note6", Value, "editNote6", nil)
-	o.template = "cbi/tvalue"
-	o.rows = 35
-	o.wrap = "off"
-	function o.cfgvalue(self, section)
-		return fs.readfile("/etc/tinynote/tinynote6.txt") or ""
-	end
-	function o.write(self, section, value)
-		if value then
-			value = value:gsub("\r\n?", "\n")
-			fs.writefile("/tmp/tinynote6.txt", value)
-			if (sys.call("cmp -s /tmp/tinynote6.txt /etc/tinynote/tinynote6.txt") == 1) then
-				fs.writefile("/etc/tinynote/tinynote6.txt", value)
-			end
-			fs.remove("/tmp/tinynote6.txt")
-		end
-	end
-else
-	sys.call("&> /etc/tinynote/tinynote6.txt")
-end
-
-if fs.access("/etc/tinynote/tinynote7.txt") then
-	s:tab("Note7", translate("笔记7"))
-	o = s:taboption("Note7", Value, "editNote7", nil)
-	o.template = "cbi/tvalue"
-	o.rows = 35
-	o.wrap = "off"
-	function o.cfgvalue(self, section)
-		return fs.readfile("/etc/tinynote/tinynote7.txt") or ""
-	end
-	function o.write(self, section, value)
-		if value then
-			value = value:gsub("\r\n?", "\n")
-			fs.writefile("/tmp/tinynote7.txt", value)
-			if (sys.call("cmp -s /tmp/tinynote7.txt /etc/tinynote/tinynote7.txt") == 1) then
-				fs.writefile("/etc/tinynote/tinynote7.txt", value)
-			end
-			fs.remove("/tmp/tinynote7.txt")
-		end
-	end
-else
-	sys.call("cat /dev/null > /etc/tinynote/tinynote7.txt")
-end
-
-if fs.access("/etc/tinynote/tinynote8.txt") then
-	s:tab("Note8", translate("笔记8"))
-	o = s:taboption("Note8", Value, "editNote8", nil)
-	o.template = "cbi/tvalue"
-	o.rows = 35
-	o.wrap = "off"
-	function o.cfgvalue(self, section)
-		return fs.readfile("/etc/tinynote/tinynote8.txt") or ""
-	end
-	function o.write(self, section, value)
-		if value then
-			value = value:gsub("\r\n?", "\n")
-			fs.writefile("/tmp/tinynote8.txt", value)
-			if (sys.call("cmp -s /tmp/tinynote8.txt /etc/tinynote/tinynote8.txt") == 1) then
-				fs.writefile("/etc/tinynote/tinynote8.txt", value)
-			end
-			fs.remove("/tmp/tinynote8.txt")
-		end
-	end
-else
-	sys.call(":> /etc/tinynote/tinynote8.txt")
 end
 
 return m
