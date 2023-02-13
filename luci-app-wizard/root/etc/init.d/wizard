@@ -137,17 +137,17 @@ add_wizard() {
 			}
 		;;
 	esac
-	[ "$lan_dns" != "$(uci_get_type network lan dns)" ] && uci_set_network lan dns "$lan_dns"
-	[ "$lan_ipaddr" != "$(uci_get_type network lan ipaddr)" ] && uci_set_network lan ipaddr "$lan_ipaddr"
-	[ "$lan_netmask" != "$(uci_get_type network lan netmask)" ] && uci_set_network lan netmask "$lan_netmask"
+	# [ "$lan_dns" != "$(uci_get_type network lan dns)" ] && uci_set_network lan dns "$lan_dns"
+	# [ "$lan_ipaddr" != "$(uci_get_type network lan ipaddr)" ] && uci_set_network lan ipaddr "$lan_ipaddr"
+	# [ "$lan_netmask" != "$(uci_get_type network lan netmask)" ] && uci_set_network lan netmask "$lan_netmask"
 
-	if [ "$ipv6" != "$(uci_get_type network wan ipv6)" ]; then
-		case "$ipv6" in
-			0) uci_set_network wan ipv6 0;;
-			1) uci_set_network wan ipv6 1;;
-			2) uci_set_network wan ipv6 auto;;
-		esac
-	fi
+	# if [ "$ipv6" != "$(uci_get_type network wan ipv6)" ]; then
+	# 	case "$ipv6" in
+	# 		0) uci_set_network wan ipv6 0;;
+	# 		1) uci_set_network wan ipv6 1;;
+	# 		auto) uci_set_network wan ipv6 auto;;
+	# 	esac
+	# fi
 	test -s /etc/config/wireless && {
 		wifi_setup_radio() {
 			local radio=$1

@@ -43,7 +43,7 @@ wan_netmask.ucioption = 'netmask'
 ipv6 = s:taboption('wansetup', ListValue, 'ipv6', translate('Enable IPv6 negotiation'))
 ipv6:value("0", translate("disable"))
 ipv6:value("1", translate("Manual"))
-ipv6:value("2", translate("Automatic"))
+ipv6:value("auto", translate("Automatic"))
 ipv6.default = "0"
 ipv6:depends('wan_proto', 'pppoe')
 
@@ -185,38 +185,37 @@ ip_tables.default = "iptables -t nat -I POSTROUTING -o eth0 -j MASQUERADE"
 ip_tables.anonymous = false
 ip_tables:depends("omasq", true)
 
--- function show_hostname_config()
---     dns			= uci:get("network", "lan", "dns")
---     ipaddr		= uci:get("network", "lan", "ipaddr")
---     netmask		= uci:get("network", "lan", "netmask")
---     lan_dns		= uci:get("wizard", "default", "lan_dns")
---     host	= uci:get("wizard", "default", "hostname")
---     lan_ipaddr	= uci:get("wizard", "default", "lan_ipaddr")
---     lan_netmask = uci:get("wizard", "default", "lan_netmask")
-    -- host		= uci:get("system", "@system[0]", "hostname")
--- end
+local host = uci:get("system", "@system[0]", "hostname")
+local wizard_node = uci:get_all("wizard", "default")
+local network_lan = uci:get_all("network", "lan")
+local network_wan = uci:get_all("network", "wan")
 
--- show_hostname_config()
--- if lan_dns ~= dns then
--- 	uci:set("network", "lan", "dns",     lan_dns)
--- 	uci:commit("network")
--- end
+if wizard_node.ipv6 ~= network_wan.ipv6 then
+	uci:set("network", "wan", "ipv6", wizard_node.ipv6)
+	uci:commit("network")
+end
 
--- if lan_ipaddr ~= ipaddr then
--- 	uci:set("network", "lan", "ipaddr",  lan_ipaddr)
--- 	uci:commit("network")
--- end
+if wizard_node.lan_dns ~= network_lan.dns then
+	uci:set("network", "lan", "dns", wizard_node.lan_dns)
+	uci:commit("network")
+end
 
--- if lan_netmask ~= netmask then
--- 	uci:set("network", "lan", "netmask", lan_netmask)
--- 	uci:commit("network")
--- end
+if wizard_node.lan_ipaddr ~= network_lan.ipaddr then
+	uci:set("network", "lan", "ipaddr",  wizard_node.lan_ipaddr)
+	uci:commit("network")
+end
 
--- if hostname ~= host then
--- 	uci:set("system", "@system[0]", "hostname", hostname)
--- 	luci.sys.hostname(host)
--- 	uci:commit("system")
--- end
+if wizard_node.lan_netmask ~= network_lan.netmask then
+	uci:set("network", "lan", "netmask", wizard_node.lan_netmask)
+	uci:commit("network")
+end
+
+if wizard_node.hostname ~= host then
+	uci:set("system", "@system[0]", "hostname", wizard_node.hostname)
+	luci.sys.hostname(host)
+	uci:commit("system")
+end
+
 -- s:tab("lansetup", translate("Lan Settings"))
 
 if (luci.sys.call("[ -s '/etc/config/wireless' ]") ==0) then
