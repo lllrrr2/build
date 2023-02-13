@@ -3,7 +3,7 @@ local sys = require "luci.sys" --加载函数
 local uci = require "luci.model.uci".cursor()
 --wulishui 20200108-20210804
 
-if (uci:get_bool("luci", "tinynote", "tinynote") == 1) then
+if (uci:get("luci", "tinynote") ~= "tinynote") then
 	uci:set("luci", "tinynote", "tinynote")
 	uci:commit("luci")
 end
