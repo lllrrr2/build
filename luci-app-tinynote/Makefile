@@ -6,8 +6,8 @@ LUCI_TITLE:=LuCI support for tinynote
 LUCI_DEPENDS:=
 LUCI_PKGARCH:=all
 PKG_NAME:=luci-app-tinynote
-PKG_VERSION:=1.0
-PKG_RELEASE:=20221001
+PKG_VERSION:=1.1
+PKG_RELEASE:=20230213
 
 include $(TOPDIR)/feeds/luci/luci.mk
 
