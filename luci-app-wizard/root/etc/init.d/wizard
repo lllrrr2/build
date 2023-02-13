@@ -25,9 +25,12 @@ uci_set_wizard() {
 uci_res_type() {
 	[ "$#" -eq 2 ] || return 1
 	for xxx in $(uci show bk_"$1"."$2" | sed "s/bk_//g;s/'/\"/g"); do
-		uci set "$xxx"
+		#uci set "$xxx"
+		uci -q batch set <<-EOF >/dev/null
+		$xxx
+		EOF
 	done
-	sed -i 's/"//g' /tmp/.uci/$1
+	#sed -i 's/"//g' /tmp/.uci/$1
 }
 
 add_wizard() {
