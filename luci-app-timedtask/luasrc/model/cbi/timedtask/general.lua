@@ -21,9 +21,9 @@ f:value(8, translate("Normal"))
 f:value(9, translate("Warning"))
 f.default = "9"
 
-local cr_level = uci:get("system", "@system[0]", "cronloglevel")
+local sy_level = uci:get("system", "@system[0]", "cronloglevel")
 local ti_level = uci:get("timedtask", "@cronloglevel[0]", "cronloglevel")
-if (ti_level ~= cr_level ) then
+if (ti_level ~= sy_level) then
     uci:set("system", "@system[0]", "cronloglevel", ti_level)
     uci:commit("system")
 end
