@@ -1,4 +1,3 @@
-x = [[<br><font color="Red">配置文件是直接编辑的！除非你知道自己在干什么，否则请不要轻易修改这些配置文件。配置不正确可能会导致不能联网等错误。</font>]]
 local uci = require "luci.model.uci".cursor()
 m = Map('wizard', translate('Inital Router Setup'), translate('If you are using this router for the first time, please configure it here.'))
 
@@ -190,6 +189,14 @@ local wizard_node = uci:get_all("wizard", "default")
 local network_lan = uci:get_all("network", "lan")
 local network_wan = uci:get_all("network", "wan")
 
+-- if wizard_node.wan_proto ~= pppoe then
+-- 	if wizard_node.pppoe_user ~= network_wan.username or wizard_node.pppoe_pass ~= network_wan.password then
+-- 		uci:set("network", "wan", "username", wizard_node.pppoe_user)
+-- 		uci:set("network", "wan", "password", wizard_node.pppoe_pass)
+-- 		uci:commit("network")
+-- 	end
+-- end
+
 if wizard_node.ipv6 ~= network_wan.ipv6 then
 	uci:set("network", "wan", "ipv6", wizard_node.ipv6)
 	uci:commit("network")
@@ -227,6 +234,7 @@ if (luci.sys.call("[ -s '/etc/config/wireless' ]") ==0) then
 	o.password = true
 end
 
+local x = [[<br><font color="Red">配置文件是直接编辑的！除非你知道自己在干什么，否则请不要轻易修改这些配置文件。配置不正确可能会导致不能联网等错误。</font>]]
 if nixio.fs.access("/etc/config/network") then
 	s:tab("netwrokconf", translate("修改network"),
 	translate("本页是/etc/config/network的配置文件内容，编辑后点击<code>保存&应用</code>按钮后重启生效") .. x)
