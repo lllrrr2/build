@@ -29,13 +29,6 @@ start() {
 			}
 		done
 		[ "$mcronrst" -eq 1 ] && /etc/init.d/cron restart
-		grep -q 'loglevel:-5' $CRON_INI && {
-			sed -i '/loglevel:-5/s/-5/-9/' $CRON_INI 2>/dev/null
-			uci set system.@system[0].cronloglevel=9
-			uci commit system
-			/etc/init.d/system restart
-			/etc/init.d/cron restart
-		}
 	}
 }
 

@@ -13,6 +13,11 @@ translate([[设置方法也可点击下面查看示例或在  crontab文件  中
 translate([[<input class='cbi-button cbi-button-apply' type='button' value='查看示例'  onclick="window.open('http://'+window.location.hostname+'/reboothelp.jpg')">&nbsp;&nbsp;&nbsp;&nbsp;]]) ..
 translate([[<input class='cbi-button cbi-button-apply' type='button' value='查看/验证' onclick="window.open('https://tool.lu/crontab')"><br><br>]]))
 
+if (uci:get("system", "@system[0]", "cronloglevel") ~= 9) then
+    uci:set("system", "@system[0]", "cronloglevel", "9")
+    uci:commit("system")
+end
+
 s = m:section(TypedSection, "crontab", "")
 s.template = "cbi/tblsection"
 s.anonymous = true -- 删除
