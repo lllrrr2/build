@@ -1,10 +1,12 @@
 
+config cronloglevel
+
 config crontab
 	option week '*'
 	option hour '5'
 	option minute '0'
 	option command 'sleep 5 && touch /etc/banner && reboot'
-	option day '*/4'
+	option day '*/5'
 	option month '*'
 	option enable '0'
 

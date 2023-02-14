@@ -1,35 +1,60 @@
-msgid "Reboot schedule"
+
+msgid "timedtask Plus+"
 msgstr "定时任务 Plus+"
 
 msgid "crontabs"
 msgstr "crontab文件"
 
-msgid "<font color=\"green\"><b>A plug-in that makes timed tasks easier to use. It is modified with the original version of wulishui@gmail.com, which supports wulishui. Click below</font><font color=\"red\"> View usage example </font><font color=\"green\"> and then scan two Dimension Code Reward</font></b></br>"
-msgstr "<font color=\"green\"><b>让定时任务更加易用的插件。是用 wulishui@gmail.com 的原版修改，支持 wulishui 点击下面的 </font><font color=\"red\"> 查看使用示例 </font><font color=\"green\"> 后扫描二维码打赏</font></b></br>"
+msgid "Timing settings"
+msgstr "定时设置"
 
-msgid "The string of the CRON expression is composed of five fields separated by spaces and executed commands. </br>* * * * * [command]</br>Five asterisks indicate (minutes) (hours) (days) (months) (weeks) according to their positions. commond indicates the command to be executed</br> The allowed range of values is minute (1-59), hour (0-23), day (1-31), month (1-12), week (0-6). </br>Each field can be composed of a value within the range or a combination of the following half-width special characters:</br>"
-msgstr "CRON表达式的字符串是五个有空格分隔加执行命令字段组成。 </br>* * * * * [command]</br>五个星号按照位置分别表示 (分) (时) (日) (月) (周) commond 表示所需执行的命令</br>允许的数值范围是，分(1-59), 时(0-23), 日(1-31)，月(1-12), 周(0-6)。</br>每一个字段都可以使用范围之内的数值或者以下半角的特殊字符组合组成：</br>"
+msgid "<font color='green'><b>The plug-in that makes scheduled tasks easier to use is modified with the original version by wulishhui@gmail.com. </font></b><br>"
+msgstr "<font color='green'><b>让定时任务更加易用的插件，是用 wulishui@gmail.com 的原版修改。</font></b><br>"
 
-msgid "1) An asterisk (*) indicates any value. If you use * in the \"minute\" field, it means that it will be triggered every minute. </br>2) A hyphen (-) indicates a range. If 5-20 is used in the \"minute\" field, it means that it will be triggered every minute from 5 to 20 minutes. </br>3) The comma (,) represents the split value. If you use 5,20 in the \"minute\" field, it means that it will be triggered every 5 minutes and 20 minutes. </br>4) Forward slash (/) means every time period. If you use 5-45/20 in the \"minute\" field, it means that it will be triggered every 20 minutes at 5 minutes, 25 minutes, and 45 minutes. </br>"
-msgstr "1) 星号 (*) 表示任意值。如在“分钟”字段使用*, 表示每分钟都会触发一次。</br>2) 连字符 (-) 表示范围。如在“分钟”字段使用5-20，表示在从5分到20分时段每分钟触发一次。</br>3) 逗号 (,) 表示分割数值。如在“分钟”字段使用5,20，表示在每5分和20分时触发一次。</br>4) 正斜杠 (/) 表示每隔时段。如在“分钟”字段使用5-45/20，表示在5分和25分和45分每隔20分钟触发一次。</br>"
+msgid "The string of the CRON expression is composed of five fields separated by spaces and the execution command: <font color=red> * * * * * [command]</font><br>"
+msgstr "CRON表达式的字符串是五个有空格分隔加执行命令字段组成：<font color=red> * * * * * [command]</font><br>"
 
-msgid "View usage example"
-msgstr "查看使用示例"
+msgid "According to the definition of the position and the range of values: minute (0-59), hour (0-23), day (1-31), month (1-12), week (1-7), (commond) The command to execute. <br>"
+msgstr "按照位置的定义以及取值范围分别表示：分(0-59)，时(0-23)，日(1-31)，月(1-12)，周(1-7)，(commond)表示所需执行的命令。<br>"
 
-msgid "View crontab usage"
-msgstr "查看crontab用法"
+msgid "[ , ] comma means <strong>list enumeration values</strong>. In the minute field, 5,20 means triggering once at the 5th minute and 20th minute respectively. <br>"
+msgstr "[ , ]逗号表示<strong>列出枚举值</strong>。在分钟域中，5,20表示分别在第5分钟和20分钟触发一次。<br>"
+
+msgid "[ / ] A forward slash indicates an <strong>increment of the specified value</strong>. In the minute field, 3/20 means triggering from the 3rd minute of every 20 minutes. <br>"
+msgstr "[ / ]正斜杠表示<strong>指定数值的增量</strong>。在分钟域中，3/20表示从每20分钟的第3分钟触发一次。<br>"
+
+msgid "[ - ] hyphen indicates a <strong>range</strong>. In the minute field, 5-20 means trigger every minute from 5 minutes to 20 minutes. <br>"
+msgstr "[ - ]连字符表示<strong>范围</strong>。在分钟域中，5-20表示从5分钟到20分钟之间每隔一分钟触发一次。<br>"
+
+msgid "[ * ] An asterisk indicates <strong>all possible values</strong>. In the month field, * means every month; in the week field, * means every day of the week. <br>"
+msgstr "[ * ]星号表示<strong>所有可能的值</strong>。在月域中，*表示每个月；在星期域中，*表示星期的每一天。<br>"
+
+msgid "[[The setting method can also be clicked below to view the example or the first 5 fields of the command whose line ends in the crontab file is #timedtask to verify whether it is correct<br><br>]]"
+msgstr "[[设置方法也可点击下面查看示例或在  crontab文件  中行尾是　#timedtask　的命令前5个字段去验证是否正确<br><br>]]"
+
+msgid "View example"
+msgstr "查看示例"
+
+msgid "view/verify"
+msgstr "查看/验证"
+
+msgid "Every day"
+msgstr "每天"
+
+msgid "save log"
+msgstr "保存日志"
 
 msgid "Task"
 msgstr "任务"
 
-msgid "month"
+msgid "Month"
 msgstr "月"
 
 msgid "Hour"
 msgstr "时"
 
 msgid "weeks"
-msgstr "星期"
+msgstr "周"
 
 msgid "Reboots"
 msgstr "重启系统"
@@ -63,3 +88,12 @@ msgstr "关闭电源"
 
 msgid "Execute"
 msgstr "执行"
+
+msgid "Free memory"
+msgstr "释放内存"
+
+msgid "Executed immediately"
+msgstr "立即执行"
+
+msgid "locking"
+msgstr "锁定"
