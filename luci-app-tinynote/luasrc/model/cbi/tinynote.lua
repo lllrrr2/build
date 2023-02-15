@@ -39,7 +39,7 @@ for i,v in ipairs({1,2,3,4,5,6,7,8}) do
 				if (sys.call("cmp -s /tmp/tinynote" .. v .. ".txt" .. " " .. file) == 1) then
 					fs.writefile(file, value)
 				end
-				fs.remove("/tmp/tinynote" .. v .. ".txt")
+				os.remove("/tmp/tinynote" .. v .. ".txt")
 			end
 		end
 	end

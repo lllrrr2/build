@@ -42,6 +42,8 @@ if nixio.fs.access("/usr/bin/dockerd") and not m.uci:get_bool("dockerd", "docker
 		translate("Registry Mirrors"),
 		translate("It replaces the daemon registry mirrors with a new set of registry mirrors"))
 	o:value("https://hub-mirror.c.163.com", "https://hub-mirror.c.163.com")
+	o:value("https://registry.docker-cn.com", "https://registry.docker-cn.com")
+	o:value("https://docker.mirrors.ustc.edu.cn", "https://docker.mirrors.ustc.edu.cn")
 	o:depends("remote_endpoint", 0)
 	o.forcewrite = true
 
