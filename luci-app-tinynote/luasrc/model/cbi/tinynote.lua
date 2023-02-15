@@ -16,8 +16,9 @@ m = Map("luci", translate(""), translate([[<font color="green"><b>只能记录�
 
 f = m:section(TypedSection, "tinynote")
 f.anonymous = true
-note_sum = f:option(Value, "note_sum", translate("笔个数记"))
+note_sum = f:option(Value, "note_sum", translate("笔记个数"))
 note_sum.default = "8"
+note_sum.datatype = "ufloat"
 
 s = m:section(TypedSection, "tinynote")
 s.anonymous = true
