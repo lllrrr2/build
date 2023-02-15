@@ -37,13 +37,13 @@ note_sum.datatype = "ufloat"
 s = m:section(TypedSection, "tinynote")
 s.anonymous = true
 
-local note_type = {
+local note_type_array = {
 "#!/usr/bin/env sh",
 "#!/usr/bin/env lua",
 "#!/usr/bin/env python"
 }
 
-local note_sum = uci:get("luci", "tinynote", "note_sum")
+local note_n = uci:get_all("luci", "tinynote")
 for v = 1,note_sum do
 	local file = ("/etc/tinynote/tinynote" .. v .. ".txt")
 	if not fs.access(file) then
