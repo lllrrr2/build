@@ -8,15 +8,22 @@ if (uci:get("luci", "tinynote") ~= "tinynote") then
 	uci:commit("luci")
 end
 
-m = Map("luci", translate(""), translate([[<font color="green"><b>只能记录少量文本内容。文本内容勿大于90Kb（约1000行），否则无法保存。</b></font>]]))
-s = m:section(TypedSection, "tinynote")
-s.anonymous = true
-
 if (sys.call("test ! -d /etc/tinynote")) then --判断目录是否存在
 	fs.mkdir("/etc/tinynote") --新建文件夹
 end
 
-for i,v in ipairs({1,2,3,4,5,6,7,8}) do
+m = Map("luci", translate(""), translate([[<font color="green"><b>只能记录少量文本内容。文本内容勿大于90Kb（约1000行），否则无法保存。</b></font>]]))
+
+f = m:section(TypedSection, "tinynote")
+f.anonymous = true
+note_sum = f:option(Value, "note_sum", translate("笔个数记"))
+note_sum.default = "8"
+
+s = m:section(TypedSection, "tinynote")
+s.anonymous = true
+
+local note_sum = uci:get("luci", "tinynote", "note_sum")
+for v = 1,note_sum do
 	local file = ("/etc/tinynote/tinynote" .. v .. ".txt")
 	if not fs.access(file) then --判断文件是否存在
 		sys.exec(":> " .. file) --新建文件
