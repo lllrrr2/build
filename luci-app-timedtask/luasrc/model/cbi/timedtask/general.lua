@@ -9,9 +9,9 @@ translate("[ , ] comma means <strong>list enumeration values</strong>. In the mi
 translate("[ / ] A forward slash indicates an <strong>increment of the specified value</strong>. In the minute field, 3/20 means triggering from the 3rd minute of every 20 minutes. <br>") ..
 translate("[ - ] hyphen indicates a <strong>range</strong>. In the minute field, 5-20 means trigger every minute from 5 minutes to 20 minutes. <br>") ..
 translate("[ * ] An asterisk indicates <strong>all possible values</strong>. In the month field, * means every month; in the week field, * means every day of the week. <br>") ..
-translate([[The setting method can also be clicked below to view the example or the first 5 fields of the command whose line ends in the crontab file is #timedtask to verify whether it is correct<br><br>]]) ..
-translate([[<input class='cbi-button cbi-button-apply' type='button' value='View example'  onclick="window.open('http://'+window.location.hostname+'/reboothelp.jpg')">&nbsp;&nbsp;&nbsp;&nbsp;]]) ..
-translate([[<input class='cbi-button cbi-button-apply' type='button' value='view/verify' onclick="window.open('https://tool.lu/crontab')"><br><br>]]))
+translate("The setting method can also be clicked below to view the example or the first 5 fields of the command whose line ends in the crontab file is #timedtask to verify whether it is correct<br><br>") ..
+translate("<input class='cbi-button cbi-button-apply' type='button' value='View example'  onclick=\"window.open('http://'+window.location.hostname+'/reboothelp.jpg')\">&nbsp;&nbsp;&nbsp;&nbsp;") ..
+translate("<input class='cbi-button cbi-button-apply' type='button' value='view/verify' onclick=\"window.open('https://tool.lu/crontab')\"><br><br>"))
 
 f = m:section(TypedSection, "cronloglevel")
 f.anonymous = true

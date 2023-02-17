@@ -8,7 +8,7 @@ if (uci:get("luci", "tinynote") ~= "tinynote") then
 	uci:commit("luci")
 end
 
-if (sys.call("test ! -d /etc/tinynote")) then
+if (sys.call("test ! -d /etc/tinynote") == 0) then
 	fs.mkdir("/etc/tinynote")
 end
 
@@ -21,7 +21,7 @@ f.addremove = true -- 添加
 f.extedit   = true -- 修改
 f.sortable  = true -- 移动
 
-note_type = f:option(Value, "note_type", translate("类形"))
+note_type = f:option(Value, "note_type", translate("文本类形"))
 note_type.default = "txt"
 note_type.datatype = ""
 note_type:value('txt', translate('txt'))
@@ -30,30 +30,44 @@ note_type:value('js', translate('js'))
 note_type:value('py', translate('py'))
 note_type:value('lua', translate('lua'))
 
-note_sum = f:option(Value, "note_sum", translate("数量"))
+note_sum = f:option(Value, "note_sum", translate("文本数量"))
 note_sum.default = "8"
 note_sum.datatype = "ufloat"
 
 s = m:section(TypedSection, "tinynote")
 s.anonymous = true
+s.addremove = false
 
 local note_type_array = {
-"#!/usr/bin/env sh",
-"#!/usr/bin/env lua",
-"#!/usr/bin/env python"
+	"#!/usr/bin/env sh",
+	"#!/usr/bin/env lua",
+	"#!/usr/bin/env python"
 }
 
-local note_n = uci:get_all("luci", "tinynote")
-for v = 1,note_sum do
-	local file = ("/etc/tinynote/tinynote" .. v .. ".txt")
+local note_sum = uci:get("luci", "tinynote", "note_sum")
+if not note_sum then note_sum = 1 end
+local xx = sys.exec("seq 1 " .. note_sum)
+for sum in string.gmatch(xx, "%w") do
+	local file = ("/etc/tinynote/tinynote" .. sum .. ".txt")
 	if not fs.access(file) then
 		sys.exec(":> " .. file)
 	end
 
 	if fs.access(file) then
-		local Note = ("Note" .. v)
-		s:tab(Note, translate("笔记" .. v))
-		Note = s:taboption(Note, Value, "editNote" .. v, nil)
+		local Note = ("Note" .. sum)
+		s:tab(Note, translate("笔记" .. sum))
+		if (sys.call("test -s " .. file) == 0) then
+			o = s:taboption(Note, Button, "editNote" .. sum)
+			o.inputtitle = translate("清空笔记 " .. sum)
+			o.inputstyle = "reset"
+			function o.write()
+				if sys.call(":>" .. file) == 0 then
+					luci.http.redirect(luci.dispatcher.build_url("admin/nas/tinynote"))
+				end
+			end
+		end
+
+		Note = s:taboption(Note, Value, "editNote" .. sum, nil)
 		Note.template = "cbi/tvalue"
 		Note.rows = 35
 		Note.wrap = "off"
@@ -63,11 +77,10 @@ for v = 1,note_sum do
 		function Note.write(self, section, value)
 			if value then
 				value = value:gsub("\r\n?", "\n")
-				fs.writefile("/tmp/tinynote" .. v .. ".txt", value)
-				if (sys.call("cmp -s /tmp/tinynote" .. v .. ".txt" .. " " .. file) == 1) then
+				local old_value = fs.readfile(value)
+				if value ~= old_value then
 					fs.writefile(file, value)
 				end
-				os.remove("/tmp/tinynote" .. v .. ".txt")
 			end
 		end
 	end
