@@ -1,7 +1,7 @@
 #!/bin/sh /etc/rc.common
 
 START=19
-extra_command "reconfig" ""
+# extra_command "reconfig" ""
 # uci revert network
 # uci changes network.lan
 # uci show bk_network.wan | cut -d_ -f2-
@@ -114,23 +114,23 @@ add_wizard() {
 			uci -q commit firewall
 			/etc/init.d/firewall reload &
 		;;
-		static)
-			test -n "${wan_ipaddr}" && test -n "${wan_netmask}" && {
-				uci -q delete network.wan
-				uci -q set network.wan=interface
-				# uci_set_network wan metric '40'
-				uci_set_network wan proto 'static'
-				uci_set_network wan device "$device"
-				uci_set_network wan ipaddr "${wan_ipaddr}"
-				uci_set_network wan netmask "${wan_netmask}"
-				uci_set_network wan gateway "${wan_gateway}"
+		# static)
+		# 	test -n "${wan_ipaddr}" && test -n "${wan_netmask}" && {
+		# 		uci -q delete network.wan
+		# 		uci -q set network.wan=interface
+		# 		# uci_set_network wan metric '40'
+		# 		uci_set_network wan proto 'static'
+		# 		uci_set_network wan device "$device"
+		# 		uci_set_network wan ipaddr "${wan_ipaddr}"
+		# 		uci_set_network wan netmask "${wan_netmask}"
+		# 		uci_set_network wan gateway "${wan_gateway}"
 
-				test -n "${wan_dns}" && {
-					uci_set_network wan peerdns '0'
-					uci_set_network wan dns "${wan_dns}"
-				}
-			}
-		;;
+		# 		test -n "${wan_dns}" && {
+		# 			uci_set_network wan peerdns '0'
+		# 			uci_set_network wan dns "${wan_dns}"
+		# 		}
+		# 	}
+		# ;;
 	esac
 	test -s /etc/config/wireless && {
 		wifi_setup_radio() {
@@ -187,22 +187,26 @@ add_wizard() {
 	# fi
 	uci -q commit wizard
 	/etc/init.d/dnsmasq reload &
-	[ -s /tmp/.uci/network ] && {
+	[ `uci -q changes network | wc -l` -gt 0 ] && {
 		uci -q commit network
 		/etc/init.d/network reload &
 	}
 }
 
 reconfig() {
-	uci_set_wizard lan_dns "$(uci_get_type network lan dns)"
-	uci_set_wizard wan_proto "$(uci_get_type network wan proto)"
-	uci_set_wizard lan_ipaddr "$(uci_get_type network lan ipaddr)"
-	uci_set_wizard lan_netmask "$(uci_get_type network lan netmask)"
-	uci_set_wizard lan_gateway "$(uci_get_type network lan gateway)"
-	uci_set_wizard pppoe_user "$(uci_get_type network wan username)"
-	uci_set_wizard pppoe_pass "$(uci_get_type network wan password)"
-	[ -n "$(uci_get_type dhcp lan ignore)" ] && uci_set_wizard dhcp "0" || uci -q delete wizard.default.dhcp
-	uci -q commit wizard
+	[ -z `uci_get_type wizard default wan_proto` ] && {
+		uci_set_wizard ipv6			"$(uci_get_type network wan ipv6)"
+		uci_set_wizard lan_dns		"$(uci_get_type network lan dns)"
+		uci_set_wizard wan_proto	"$(uci_get_type network wan proto)"
+		uci_set_wizard lan_ipaddr	"$(uci_get_type network lan ipaddr)"
+		uci_set_wizard lan_netmask	"$(uci_get_type network lan netmask)"
+		uci_set_wizard lan_gateway	"$(uci_get_type network lan gateway)"
+		uci_set_wizard pppoe_user	"$(uci_get_type network wan username)"
+		uci_set_wizard pppoe_pass	"$(uci_get_type network wan password)"
+		[ -n "$(uci_get_type dhcp lan ignore)" ] && uci_set_wizard dhcp "0" || uci -q delete wizard.default.dhcp
+		uci -q commit wizard
+	}
+
 }
 
 start() {
@@ -215,5 +219,6 @@ restart() {
 }
 
 boot() {
+	reconfig
 	XBOOT=1 start
 }
