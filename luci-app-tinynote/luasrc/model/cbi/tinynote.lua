@@ -66,6 +66,21 @@ note_type:value('js', translate('js'))
 note_type:value('py', translate('py'))
 note_type:value('lua', translate('lua'))
 
+width = f:option(Value, "width", translate("显示宽度"))
+width.default = "auto"
+width:value('auto', translate('auto'))
+width:value('1000px', translate('1000px'))
+width:value('1300px', translate('1300px'))
+width:value('1500px', translate('1500px'))
+
+height = f:option(Value, "height", translate("显示高度"))
+height.default = "600px"
+height:value('500px', translate('500px'))
+height:value('600px', translate('600px'))
+height:value('800px', translate('800px'))
+
+readOnly = f:option(Flag, "readOnly", translate("只读模式"))
+
 s = m:section(TypedSection, "tinynote")
 s.anonymous = true
 s.addremove = false
