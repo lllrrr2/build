@@ -1,0 +1,191 @@
+<%local con = luci.model.uci:get_all("luci", "tinynote")%>
+<style>
+	.CodeMirror {
+		font-size: <%=con.font_size%>px;
+		line-height: <%=con.line_spacing%>%;
+		resize: both !important;
+		text-align: left !important;
+		font-family: Consolas, monospace !important;
+	}
+</style>
+
+<link rel="stylesheet" href="https://cdn.staticfile.org/codemirror/6.65.7/codemirror.min.css"/>
+<link rel="stylesheet" href="https://cdn.staticfile.org/codemirror/6.65.7/addon/lint/lint.min.css"/>
+<link rel="stylesheet" href="https://cdn.staticfile.org/codemirror/6.65.7/addon/dialog/dialog.min.css"/>
+<link rel="stylesheet" href="https://cdn.staticfile.org/codemirror/6.65.7/addon/hint/show-hint.min.css"/>
+<link rel="stylesheet" href="https://cdn.staticfile.org/codemirror/6.65.7/addon/fold/foldgutter.min.css"/>
+<link rel="stylesheet" href="https://cdn.staticfile.org/codemirror/6.65.7/addon/display/fullscreen.min.css"/>
+<link rel="stylesheet" href="https://cdn.staticfile.org/codemirror/6.65.7/addon/search/matchesonscrollbar.min.css"/>
+
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/codemirror.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/keymap/vim.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/keymap/emacs.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/keymap/sublime.min.js"></script>
+
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/dialog/dialog.min.js"></script>
+
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/fold/xml-fold.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/fold/foldcode.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/fold/foldgutter.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/fold/brace-fold.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/fold/markdown-fold.min.js"></script>
+
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/search/search.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/search/jump-to-line.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/search/searchcursor.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/search/jump-to-line.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/search/match-highlighter.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/search/matchesonscrollbar.min.js"></script>
+
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/selection/active-line.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/selection/mark-selection.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/scroll/annotatescrollbar.min.js"></script>
+
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/display/fullscreen.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/display/autorefresh.min.js"></script>
+
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/lint/lint.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/lint/yaml-lint.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/lint/javascript-lint.min.js"></script>
+
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/hint/xml-hint.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/hint/css-hint.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/hint/html-hint.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/hint/show-hint.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/hint/anyword-hint.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/hint/javascript-hint.min.js"></script>
+
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/edit/closetag.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/edit/matchtags.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/edit/matchbrackets.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/edit/closebrackets.min.js"></script>
+
+<!-- mode -->
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/xml/xml.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/css/css.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/lua/lua.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/yaml/yaml.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/shell/shell.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/python/python.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/markdown/markdown.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/htmlmixed/htmlmixed.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/javascript/javascript.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/yaml-frontmatter/yaml-frontmatter.min.js"></script>
+
+<!-- theme -->
+<link rel="stylesheet" href="https://cdn.staticfile.org/codemirror/6.65.7/theme/monokai.min.css"/>
+<link rel="stylesheet" href="https://cdn.staticfile.org/codemirror/6.65.7/theme/material.min.css"/>
+<link rel="stylesheet" href="https://cdn.staticfile.org/codemirror/6.65.7/theme/3024-day.min.css"/>
+<link rel="stylesheet" href="https://cdn.staticfile.org/codemirror/6.65.7/theme/3024-night.min.css"/>
+<link rel="stylesheet" href="https://cdn.staticfile.org/codemirror/6.65.7/theme/lesser-dark.min.css"/>
+
+<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.css"> -->
+
+<script>//<![CDATA[
+function editor(id, editor_mode) {
+	var editor = CodeMirror.fromTextArea(id, {
+		mode: editor_mode,
+		autoRefresh: true,
+		lint: true,						// 检查格式
+		tabSize: 4,						// tab的空格个数
+		keyMap: 'sublime',				// sublime编辑器效果
+		theme: "<%=con.theme%>",		// 主题
+		foldGutter: true,				// 可将对象折叠，与下面的gutters一起使用
+		indentUnit: 4,					// 每个缩进块由几个空格组成。默认为2。
+		autocorrect: true,				// 自动更正
+		spellcheck: true,				// 拼写检查
+		autoCloseBrackets: true,		// 在键入时将自动关闭括号和引号
+		matchTags: { bothTags: true },  // 将突出显示光标周围的标签
+		smartIndent: true,				// 自动缩进
+		styleActiveLine: true,			// 选中行高亮
+		matchBrackets: true,			// 光标匹配括号
+		lineNumbers: true,				// 是否显示行号
+		lineWrapping: true,				// 是否应滚动或换行以显示长行
+		lineWiseCopyCut: true,			// 在没有选择的情况下进行复制或剪切将复制或剪切有光标的整行。
+		showCursorWhenSelecting: true,	// 选择处于活动状态时是否应绘制光标
+		maxHighlightLength: Infinity,	// 显示长行的时候 这个值是不限制，如果要做限制的话，值是number类型
+		extraKeys: {
+			"F11": function(cm) {
+				cm.setOption("fullScreen", !cm.getOption("fullScreen"));
+			},
+			"Esc": function(cm) {
+				if (cm.getOption("fullScreen")) cm.setOption("fullScreen", false);
+			},
+			"Tab": function(cm) {
+				if (cm.somethingSelected()) {
+					cm.indentSelection('add')
+				} else {
+					var spaces = Array(cm.getOption("indentUnit") + 1).join(" ")
+					cm.replaceSelection(spaces)
+				}
+			},
+		},
+	});
+	editor.setSize("<%=con.width%>px", "<%=con.height%>px");
+
+	if ("<%=con.only%>" == "1") {
+		editor.setOption("readOnly", "true");
+	};
+};
+
+// function myFunction(ids) {
+//     var idList = ids.split(" ");
+//     var elements = new Array();
+//     for (var i = 0; i < idList.length; i++){
+//         var element = idList[i];
+//         if (typeof element == 'string')
+//             element = document.getElementById(element);
+//         if (idList.length == 1)
+//             return element;
+//         elements.push(element);
+//     }
+//     return(elements);
+// }
+
+// myFunction("note1 note2 note3 note4 note5 note6 note7 note8 note9");
+
+var note1 = document.getElementById("cbid.luci.tinynote.note1.lua");
+var note2 = document.getElementById("cbid.luci.tinynote.note2.lua");
+var note3 = document.getElementById("cbid.luci.tinynote.note3.lua");
+var note4 = document.getElementById("cbid.luci.tinynote.note4.lua");
+var note5 = document.getElementById("cbid.luci.tinynote.note5.lua");
+var note6 = document.getElementById("cbid.luci.tinynote.note6.lua");
+var note7 = document.getElementById("cbid.luci.tinynote.note7.lua");
+var note8 = document.getElementById("cbid.luci.tinynote.note8.lua");
+
+if (note1) {
+	editor(note1, 'lua');
+};
+
+if (note2) {
+	editor(note2, 'lua');
+};
+
+if (note3) {
+	editor(note3, 'lua');
+};
+
+if (note4) {
+	editor(note4, 'lua');
+};
+
+if (note5) {
+	editor(note5, 'python');
+};
+
+if (note6) {
+	editor(note6, 'lua');
+};
+
+if (note7) {
+	editor(note7, 'shell');
+};
+
+if (note8) {
+	editor(note8, 'lua');
+};
+
+//]]>
+</script>
+
