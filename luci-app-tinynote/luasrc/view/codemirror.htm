@@ -1,14 +1,13 @@
 <%
 	local con = luci.model.uci:get_all("luci", "tinynote")
-	local xxx = function(value)
-		if string.match(value, "%a+") then
-			return value
+	local xxx = function(val)
+		if string.match(val, "%d+") ~= nil then
+			return (val .. "px")
 		else
-			return (value .. "px")
+			return val
 		end
 	end
 %>
-
 <style>
 	.CodeMirror {
 		font-size: <%=con.font_size%>px;
