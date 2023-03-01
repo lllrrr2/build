@@ -59,7 +59,7 @@ note_sum = f:taboption("note", Value, "note_sum", translate("文本数量"))
 note_sum.default = "8"
 note_sum.datatype = "ufloat"
 
-note_type = f:taboption("note", Value, "note_type", translate("文本类形"))
+note_type = f:taboption("note", ListValue, "note_type", translate("文本类形"))
 note_type.default = "txt"
 note_type:value('txt', translate('txt'))
 note_type:value('sh', translate('sh'))
@@ -72,7 +72,7 @@ f:tab("codemirror", translate("高级设置"))
 enable = f:taboption("codemirror", Flag, "enable", translate("enable"), translate("启用codemirror后支持语法高亮，行号显示，语法错误检查等等"))
 enable.default = '0'
 
-theme = f:taboption("codemirror", Value, "theme", translate("主题"))
+theme = f:taboption("codemirror", ListValue, "theme", translate("主题"))
 theme.default = "monokai"
 theme:value('monokai', translate('monokai'))
 theme:value('material', translate('material'))
@@ -86,6 +86,7 @@ font_size.default = "14"
 font_size:value('12', translate('12'))
 font_size:value('14', translate('14'))
 font_size:value('16', translate('16'))
+font_size.datatype = "ufloat"
 font_size:depends("enable", 1)
 
 line_spacing = f:taboption("codemirror", Value, "line_spacing", translate("行距"))
@@ -93,6 +94,7 @@ line_spacing.default = "140"
 line_spacing:value('100', translate('100'))
 line_spacing:value('140', translate('140'))
 line_spacing:value('150', translate('150'))
+line_spacing.datatype = "ufloat"
 line_spacing:depends("enable", 1)
 
 height = f:taboption("codemirror", Value, "height", translate("显示高度"))
@@ -100,6 +102,7 @@ height.default = "600"
 height:value('500', translate('500'))
 height:value('600', translate('600'))
 height:value('800', translate('800'))
+height.datatype = "ufloat"
 height:depends("enable", 1)
 
 width = f:taboption("codemirror", Value, "width", translate("显示宽度"))
@@ -108,6 +111,7 @@ width:value('auto', translate('auto'))
 width:value('1000', translate('1000'))
 width:value('1300', translate('1300'))
 width:value('1500', translate('1500'))
+width.datatype = "ufloat"
 width:depends("enable", 1)
 
 only = f:taboption("codemirror", Flag, "only", translate("只读模式"))
@@ -117,11 +121,11 @@ s = m:section(TypedSection, "tinynote")
 s.anonymous = true
 s.addremove = false
 
-local config	= uci:get_all("luci", "tinynote")
-local enable	= config.enable    or "0"
-local note_sum	= config.note_sum  or "1"
-local note_type = config.note_type or "txt"
-local note_path = config.note_path or "/etc/tinynote"
+local con	= uci:get_all("luci", "tinynote")
+local enable	= con.enable    or "0"
+local note_sum	= con.note_sum  or "1"
+local note_type = con.note_type or "txt"
+local note_path = con.note_path or "/etc/tinynote"
 if sys.call("test ! -d " .. note_path) == 0 then fs.mkdirr(note_path) end
 local arg1,arg2 = {},{}
 
