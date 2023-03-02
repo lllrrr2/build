@@ -69,12 +69,13 @@ note_type:value('lua', translate('lua'))
 
 
 f:tab("codemirror", translate("CodeMirror 支持"),
-	translate("CodeMirror 支持语法高亮，行号显示，自动缩进等等。<a href='https://www.tun6.com/projects/code_mirror/' target='_blank'> 中文用户手册 </a>"))
+	translate("CodeMirror 支持语法高亮，行号显示，自动缩进等等。<a href='https://www.tun6.com/projects/code_mirror/' target='_blank'> 中文用户手册 </a><a href='http://www.staticfile.org/?ln=zh' target='_blank'> staticfile资源 </a>"))
 enable = f:taboption("codemirror", Flag, "enable", translate("enable"))
+enable.rmempty = false -- 值为空时不删除
 enable.default = '0'
 
-theme = f:taboption("codemirror", Value, "theme", translate("主题"),
-	translate("更多主题效果<a href='https://www.tun6.com/projects/code_mirror/demo/demos/theme.html' target='_blank'> 预览 </a>获取，填写主题名称即可使用"))
+theme = f:taboption("codemirror", Value, "theme", translate("Design"),
+	translate([[更多主题效果<a href='https://www.tun6.com/projects/code_mirror/demo/demos/theme.html' target='_blank'> 预览 </a>获取，填写主题名称即可使用]]))
 theme.default = "monokai"
 theme:value('monokai', translate('monokai'))
 theme:value('dracula', translate('dracula'))
