@@ -68,16 +68,16 @@ note_type:value('py', translate('py'))
 note_type:value('lua', translate('lua'))
 
 
-f:tab("codemirror", translate("CodeMirror 支持"), translate("CodeMirror 支持语法高亮，行号显示，自动缩进等等"))
+f:tab("codemirror", translate("CodeMirror 支持"),
+	translate("CodeMirror 支持语法高亮，行号显示，自动缩进等等。<a href='https://www.tun6.com/projects/code_mirror/' target='_blank'> 中文用户手册 </a>"))
 enable = f:taboption("codemirror", Flag, "enable", translate("enable"))
 enable.default = '0'
 
-theme = f:taboption("codemirror", ListValue, "theme", translate("主题"))
+theme = f:taboption("codemirror", Value, "theme", translate("主题"),
+	translate("更多主题效果<a href='https://www.tun6.com/projects/code_mirror/demo/demos/theme.html' target='_blank'> 预览 </a>获取，填写主题名称即可使用"))
 theme.default = "monokai"
 theme:value('monokai', translate('monokai'))
-theme:value('material', translate('material'))
-theme:value('3024-day', translate('3024-day'))
-theme:value('3024-night', translate('3024-night'))
+theme:value('dracula', translate('dracula'))
 theme:value('lesser-dark', translate('lesser-dark'))
 theme:depends("enable", 1)
 
