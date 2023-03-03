@@ -35,8 +35,8 @@ msgstr "[ * ]星号表示<strong>所有可能的值</strong>。在月域中，*�
 msgid "The setting method can also be clicked below to view the example or the first 5 fields of the command whose line ends in the crontab file is #timedtask to verify whether it is correct<br><br>"
 msgstr "设置方法也可点击下面查看示例或在  crontab文件  中行尾是　#timedtask　的命令前5个字段去验证是否正确<br><br>"
 
-msgid "<input class='cbi-button cbi-button-apply' type='button' value='View example'  onclick=\"window.open('http://'+window.location.hostname+'/reboothelp.jpg')\">&nbsp;&nbsp;&nbsp;&nbsp;"
-msgstr "<input class='cbi-button cbi-button-apply' type='button' value='查看示例'  onclick=\"window.open('http://'+window.location.hostname+'/reboothelp.jpg')\">&nbsp;&nbsp;&nbsp;&nbsp;"
+msgid "value='View example' "
+msgstr "value='查看示例' "
 
 msgid "<input class='cbi-button cbi-button-apply' type='button' value='view/verify' onclick=\"window.open('https://tool.lu/crontab')\"><br><br>"
 msgstr "<input class='cbi-button cbi-button-apply' type='button' value='查看/验证' onclick=\"window.open('https://tool.lu/crontab')\"><br><br>"

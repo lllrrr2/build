@@ -30,13 +30,13 @@
 <!-- theme -->
 <link rel="stylesheet" href="https://cdn.staticfile.org/codemirror/6.65.7/theme/<%=con.theme%>.min.css">
 
-<script src="http://libs.baidu.com/jquery/2.1.1/jquery.min.js"></script>
+<!-- <script src="http://lib.sinaapp.com/js/jquery/2.2.4/jquery-2.2.4.min.js"></script> -->
+<script src="https://cdn.staticfile.org/jquery/2.2.4/jquery.min.js"></script>
 <script src="https://cdn.staticfile.org/codemirror/6.65.7/codemirror.min.js"></script>
 <script src="https://cdn.staticfile.org/codemirror/6.65.7/keymap/emacs.min.js"></script>
 <script src="https://cdn.staticfile.org/codemirror/6.65.7/keymap/sublime.min.js"></script>
 
 <script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/dialog/dialog.min.js"></script>
-
 <script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/fold/xml-fold.min.js"></script>
 <script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/fold/foldcode.min.js"></script>
 <script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/fold/foldgutter.min.js"></script>
@@ -153,7 +153,7 @@ $(document).ready(function() {
 		if(idValue) {
 			var model = idValue.substring(25);
 			var note  = idValue.substring(19,24);
-			if (model == "sh") var model = "shell"
+			if (model == "sh") var model = "shell";
 			editor(note = document.getElementById(idValue), model);
 		};
 	});

@@ -42,6 +42,19 @@ local new_note = function(file, note_type)
 	end
 end
 
+local note_theme_array = {
+	"3024-day", "3024-night", "abbott", "abcdef", "ambiance", "ambiance-mobile",
+	"ayu-dark", "ayu-mirage", "base16-dark", "base16-light", "bespin", "blackboard",
+	"cobalt", "colorforth", "darcula", "dracula", "duotone-dark", "duotone-light",
+	"eclipse", "elegant", "erlang-dark", "gruvbox-dark", "hopscotch", "icecoder", "idea",
+	"isotope", "juejin", "lesser-dark", "liquibyte", "lucario", "material", "material-darker",
+	"material-ocean", "material-palenight", "mbo", "mdn-like", "midnight", "monokai", "moxer",
+	"neat", "neo", "night", "nord", "oceanic-next", "panda-syntax", "paraiso-dark",
+	"paraiso-light", "pastel-on-dark", "railscasts", "rubyblue", "seti", "shadowfox",
+	"solarized", "ssms", "the-matrix", "tomorrow-night-bright", "tomorrow-night-eighties",
+	"ttcn", "twilight", "vibrant-ink", "xq-dark", "xq-light", "yeti", "yonce", "zenburn",
+}
+
 m = Map("luci", translate(""), translate([[<font color="green"><b>只能记录少量文本内容。文本内容勿大于90Kb（约1000行），否则无法保存。</b></font>]]))
 
 f = m:section(TypedSection, "tinynote")
@@ -69,17 +82,19 @@ note_type:value('lua', translate('lua'))
 
 
 f:tab("codemirror", translate("CodeMirror 支持"),
-	translate("CodeMirror 支持语法高亮，行号显示，自动缩进等等。<a href='https://www.tun6.com/projects/code_mirror/' target='_blank'> 中文用户手册 </a><a href='http://www.staticfile.org/?ln=zh' target='_blank'> staticfile资源 </a>"))
+	translate("CodeMirror 支持语法高亮，行号显示，自动缩进等等<br><b>") ..
+	translate("<a href='https://www.staticfile.org/?ln=zh' target='_blank'> staticfile资源 </a>&nbsp;&nbsp;&nbsp;") ..
+	translate("<a href='https://www.tun6.com/projects/code_mirror/' target='_blank'> 中文用户手册 </a>&nbsp;&nbsp;&nbsp;") ..
+	translate("<a href='https://www.tun6.com/projects/code_mirror/demo/demos/theme.html' target='_blank'> 主题预览 </a></b>"))
 enable = f:taboption("codemirror", Flag, "enable", translate("enable"))
-enable.rmempty = false -- 值为空时不删除
+-- enable.rmempty = false -- 值为空时不删除
 enable.default = '0'
 
-theme = f:taboption("codemirror", Value, "theme", translate("Design"),
-	translate([[更多主题效果<a href='https://www.tun6.com/projects/code_mirror/demo/demos/theme.html' target='_blank'> 预览 </a>获取，填写主题名称即可使用]]))
+theme = f:taboption("codemirror", ListValue, "theme", translate("Design"))
 theme.default = "monokai"
-theme:value('monokai', translate('monokai'))
-theme:value('dracula', translate('dracula'))
-theme:value('lesser-dark', translate('lesser-dark'))
+for _, v in pairs(note_theme_array) do
+	theme:value(v)
+end
 theme:depends("enable", 1)
 
 font_size = f:taboption("codemirror", Value, "font_size", translate("字体大小"))
@@ -127,11 +142,11 @@ local note_sum	= con.note_sum  or "1"
 local note_type = con.note_type or "txt"
 local note_path = con.note_path or "/etc/tinynote"
 if sys.call("test ! -d " .. note_path) == 0 then fs.mkdirr(note_path) end
-local arg1,arg2 = {},{}
+local path_arg,note_arg = {},{}
 
 for sum = 1, note_sum do
 	local file = note_path .. "/tinynote" .. sum .. "." .. note_type
-	arg2[sum] = file
+	note_arg[sum] = file
 	if sys.call("[ -s " .. file .. " ]") == 1 then new_note(file, note_type) end
 
 	if sys.call("[ -s " .. file .. " ]") then
@@ -168,9 +183,9 @@ for sum = 1, note_sum do
 	end
 end
 
-for i in fs.dir(note_path) do arg1[i] = note_path .. "/" .. i end
-if not rawequal(arg1,arg2) then delenote(arg1,arg2) end
-arg1,arg2 = nil,nil
+for i in fs.dir(note_path) do path_arg[i] = note_path .. "/" .. i end
+if not rawequal(path_arg,note_arg) then delenote(path_arg,note_arg) end
+path_arg,note_arg = nil,nil
 
 if enable == "1" then
 	m:append(Template("codemirror"))
