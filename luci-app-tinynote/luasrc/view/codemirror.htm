@@ -1,4 +1,4 @@
-<!-- https://www.jsdelivr.com/package/npm/codemirror -->
+<!-- https://www.min.jsdelivr.com/package/npm/codemirror -->
 <%local con = luci.model.uci:get_all("luci", "tinynote")%>
 <style>
 	.CodeMirror {
@@ -15,76 +15,73 @@
 		background-position: bottom;
 		background-repeat: repeat-x;
 	}
-	dt {font-family: monospace; color: #666;}
-	.cm-matchhighlight {background-color: lightgreen}
-	.CodeMirror-selection-highlight-scrollbar {background-color: green}
+	dt {font-family: monospace; color: hsl(0, 9%, 46%);}
+	.cm-matchhighlight {background-color: rgb(201, 198, 38)}
+	.CodeMirror-selection-highlight-scrollbar {background-color: rgb(192, 23, 23)}
 </style>
 
-<link rel="stylesheet" href="https://cdn.staticfile.org/codemirror/6.65.7/codemirror.css">
-<link rel="stylesheet" href="https://cdn.staticfile.org/codemirror/6.65.7/addon/lint/lint.css">
-<link rel="stylesheet" href="https://cdn.staticfile.org/codemirror/6.65.7/addon/dialog/dialog.css">
-<link rel="stylesheet" href="https://cdn.staticfile.org/codemirror/6.65.7/addon/hint/show-hint.css">
-<link rel="stylesheet" href="https://cdn.staticfile.org/codemirror/6.65.7/addon/fold/foldgutter.css">
-<link rel="stylesheet" href="https://cdn.staticfile.org/codemirror/6.65.7/addon/display/fullscreen.css">
-<link rel="stylesheet" href="https://cdn.staticfile.org/codemirror/6.65.7/addon/search/matchesonscrollbar.css">
+<link rel="stylesheet" href="https://cdn.staticfile.org/codemirror/6.65.7/codemirror.min.css">
+<link rel="stylesheet" href="https://cdn.staticfile.org/codemirror/6.65.7/addon/lint/lint.min.css">
+<link rel="stylesheet" href="https://cdn.staticfile.org/codemirror/6.65.7/addon/dialog/dialog.min.css">
+<link rel="stylesheet" href="https://cdn.staticfile.org/codemirror/6.65.7/addon/hint/show-hint.min.css">
+<link rel="stylesheet" href="https://cdn.staticfile.org/codemirror/6.65.7/addon/fold/foldgutter.min.css">
+<link rel="stylesheet" href="https://cdn.staticfile.org/codemirror/6.65.7/addon/display/fullscreen.min.css">
+<link rel="stylesheet" href="https://cdn.staticfile.org/codemirror/6.65.7/addon/search/matchesonscrollbar.min.css">
 <!-- theme -->
-<link rel="stylesheet" href="https://cdn.staticfile.org/codemirror/6.65.7/theme/<%=con.theme%>.css">
+<link rel="stylesheet" href="https://cdn.staticfile.org/codemirror/6.65.7/theme/<%=con.theme%>.min.css">
 
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/codemirror.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/keymap/emacs.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/keymap/sublime.js"></script>
+<script src="http://libs.baidu.com/jquery/2.1.1/jquery.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/codemirror.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/keymap/emacs.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/keymap/sublime.min.js"></script>
 
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/dialog/dialog.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/dialog/dialog.min.js"></script>
 
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/fold/xml-fold.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/fold/foldcode.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/fold/foldgutter.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/fold/brace-fold.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/fold/markdown-fold.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/fold/xml-fold.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/fold/foldcode.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/fold/foldgutter.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/fold/brace-fold.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/fold/markdown-fold.min.js"></script>
 
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/search/search.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/search/jump-to-line.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/search/searchcursor.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/search/match-highlighter.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/search/matchesonscrollbar.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/search/search.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/search/jump-to-line.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/search/searchcursor.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/search/match-highlighter.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/search/matchesonscrollbar.min.js"></script>
 
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/selection/active-line.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/selection/mark-selection.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/scroll/annotatescrollbar.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/selection/active-line.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/selection/mark-selection.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/scroll/annotatescrollbar.min.js"></script>
 
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/display/fullscreen.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/display/autorefresh.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/display/fullscreen.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/display/autorefresh.min.js"></script>
 
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/lint/lint.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/lint/yaml-lint.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/lint/javascript-lint.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/hint/xml-hint.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/hint/css-hint.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/hint/html-hint.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/hint/show-hint.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/hint/anyword-hint.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/hint/javascript-hint.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/lint/lint.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/lint/yaml-lint.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/lint/javascript-lint.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/hint/xml-hint.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/hint/css-hint.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/hint/html-hint.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/hint/show-hint.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/hint/anyword-hint.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/hint/javascript-hint.min.js"></script>
 
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/edit/closetag.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/edit/matchtags.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/edit/matchbrackets.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/edit/closebrackets.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/edit/closetag.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/edit/matchtags.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/edit/matchbrackets.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/edit/closebrackets.min.js"></script>
 
 <!-- mode -->
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/xml/xml.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/css/css.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/lua/lua.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/yaml/yaml.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/shell/shell.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/python/python.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/markdown/markdown.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/htmlmixed/htmlmixed.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/javascript/javascript.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/yaml-frontmatter/yaml-frontmatter.js"></script>
-
-
-<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.js"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.css"> -->
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/xml/xml.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/css/css.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/lua/lua.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/yaml/yaml.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/shell/shell.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/python/python.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/markdown/markdown.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/htmlmixed/htmlmixed.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/javascript/javascript.min.js"></script>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/yaml-frontmatter/yaml-frontmatter.min.js"></script>
 
 <script>//<![CDATA[
 function editor(id, editor_mode) {
@@ -101,9 +98,6 @@ function editor(id, editor_mode) {
 		autocorrect: true,				// 自动更正
 		spellcheck: true,				// 拼写检查
 		autoCloseBrackets: true,		// 在键入时将自动关闭括号和引号
-		matchTags: {
-			bothTags: true
-		},  // 将突出显示光标周围的标签
 		smartIndent: true,				// 自动缩进
 		lineNumbers: true,				// 是否显示行号
 		matchBrackets: true,			// 光标匹配括号
@@ -112,10 +106,9 @@ function editor(id, editor_mode) {
 		lineWiseCopyCut: true,			// 在没有选择的情况下进行复制或剪切将复制或剪切有光标的整行。
 		showCursorWhenSelecting: true,	// 选择处于活动状态时是否应绘制光标
 		maxHighlightLength: Infinity,		// 默认为 10000（行），最多渲染行数.为 Infinity 时，渲染所有行。
-		viewportMargin: 10,		// 渲染可视范围前后的多少行。建议使用默认值 10。
-		gutters: ["CodeMirror-lint-markers", "CodeMirror-linenumbers", "breakpoints"],
+		viewportMargin: 15,		// 渲染可视范围前后的多少行。建议使用默认值 10。
+		gutters: ["CodeMirror-lint-markers", "CodeMirror-foldgutter", "CodeMirror-linenumbers", "breakpoints"],
 		highlightSelectionMatches: {showToken: /\w/, annotateScrollbar: true},
-		value: "<html>\n  " + document.documentElement.innerHTML + "\n</html>",
 		extraKeys: {
 			"F11": function(cm) {
 				cm.setOption("fullScreen", !cm.getOption("fullScreen"));
@@ -149,62 +142,22 @@ function editor(id, editor_mode) {
 	}
 };
 
-// function myFunction(ids) {
-//     var idList = ids.split(" ");
-//     var elements = new Array();
-//     for (var i = 0; i < idList.length; i++){
-//         var element = idList[i];
-//         if (typeof element == 'string')
-//             element = document.getElementById(element);
-//         if (idList.length == 1)
-//             return element;
-//         elements.push(element);
-//     }
-//     return(elements);
-// }
-
-// myFunction("note1 note2 note3 note4 note5 note6 note7 note8 note9");
-
-var note1 = document.getElementById("cbid.luci.tinynote.note1.lua");
-var note2 = document.getElementById("cbid.luci.tinynote.note2.lua");
-var note3 = document.getElementById("cbid.luci.tinynote.note3.lua");
-var note4 = document.getElementById("cbid.luci.tinynote.note4.lua");
-var note5 = document.getElementById("cbid.luci.tinynote.note5.lua");
-var note6 = document.getElementById("cbid.luci.tinynote.note6.lua");
-var note7 = document.getElementById("cbid.luci.tinynote.note7.lua");
-var note8 = document.getElementById("cbid.luci.tinynote.note8.lua");
-
-if (note1) {
-	editor(note1, 'lua');
-};
-
-if (note2) {
-	editor(note2, 'lua');
-};
-
-if (note3) {
-	editor(note3, 'lua');
-};
-
-if (note4) {
-	editor(note4, 'lua');
-};
-
-if (note5) {
-	editor(note5, 'python');
-};
-
-if (note6) {
-	editor(note6, 'lua');
-};
-
-if (note7) {
-	editor(note7, 'shell');
-};
-
-if (note8) {
-	editor(note8, 'lua');
-};
+$(document).ready(function() {
+	var len = $("textarea[name^='cbid.luci']").size();	//获取textarea标签的个数
+	var arr = [];
+	for(var index = 0; index < len; index++) { //创建一个数字数组
+		arr[index] = index;
+	}
+	$.each(arr, function(i) { //循环得到不同的id的值
+		var idValue = $("textarea[name^='cbid.luci']").eq(i).attr("id");
+		if(idValue) {
+			var model = idValue.substring(25);
+			var note  = idValue.substring(19,24);
+			if (model == "sh") var model = "shell"
+			editor(note = document.getElementById(idValue), model);
+		};
+	});
+});
 
 //]]>
 </script>
