@@ -4,8 +4,12 @@ local uci = require "luci.model.uci".cursor()
 -- wulishui 20200108-20230301
 
 local note_type_array = {
-	["sh"]  = "#!/usr/bin/env sh",
-	["lua"] = "#!/usr/bin/env lua",
+	["sh"]  = "#!/bin/sh /etc/rc.common",
+	["lua"] = [[#!/usr/bin/env lua
+local fs   = require "nixio.fs"
+local sys  = require "luci.sys"
+local util = require "luci.util"
+local uci  = require "luci.model.uci".cursor()]],
 	["py"]  = "#!/usr/bin/env python",
 }
 
@@ -55,7 +59,7 @@ local note_theme_array = {
 	"ttcn", "twilight", "vibrant-ink", "xq-dark", "xq-light", "yeti", "yonce", "zenburn",
 }
 
-m = Map("luci", translate(""), translate([[<font color="green"><b>只能记录少量文本内容。文本内容勿大于90Kb（约1000行），否则无法保存。</b></font>]]))
+m = Map("luci", translate(""), translate([[<strong>只能记录少量文本内容。文本内容勿大于90Kb（约1000行），否则无法保存。</strong>]]))
 
 f = m:section(TypedSection, "tinynote")
 -- f.template = "cbi/tblsection"
@@ -153,16 +157,18 @@ for sum = 1, note_sum do
 		local note = ("note" .. sum)
 		s:tab(note, translate("笔记 " .. sum))
 
-		-- if sys.call("[ $(sed -n '$=' " .. file .. ") -gt 1 ]") == 0 then
-		-- 	o = s:taboption(note, Button, "note" .. sum)
-		-- 	o.inputtitle = translate("清空笔记 " .. sum)
-		-- 	o.inputstyle = "reset"
-		-- 	function o.write()
-		-- 		new_note(file, note_type)
-		-- 		if uci:changes("luci") then uci:commit("luci") end
-		-- 		luci.http.redirect(luci.dispatcher.build_url("admin/nas/tinynote"))
-		-- 	end
-		-- end
+		if sys.call("[ $(sed -n '$=' " .. file .. ") -gt 1 ]") == 0 then
+			button = s:taboption(note, Button, "note" .. sum .. "." .. note_type, nil)
+			button.inputtitle = translate("清空笔记 " .. sum)
+			button.inputstyle = "remove"
+			function button.write(self, section, value)
+				if value then
+					new_note(file, note_type)
+					if uci:changes("luci") then uci:commit("luci") end
+					luci.http.redirect(luci.dispatcher.build_url("admin/nas/tinynote"))
+				end
+			end
+		end
 
 		note = s:taboption(note, Value, "note" .. sum .. "." .. note_type)
 		note.template = "cbi/tvalue"

@@ -1,5 +1,7 @@
 <!-- https://www.min.jsdelivr.com/package/npm/codemirror -->
-<%local con = luci.model.uci:get_all("luci", "tinynote")%>
+<%
+	local con = luci.model.uci:get_all("luci", "tinynote")
+%>
 <style>
 	.CodeMirror {
 		font-size: <%=con.font_size%>px;
@@ -142,22 +144,30 @@ function editor(id, editor_mode) {
 	}
 };
 
-$(document).ready(function() {
-	var len = $("textarea[name^='cbid.luci']").size();	//获取textarea标签的个数
+$(function() {
+	var len = $("textarea").size();	//获取textarea标签的个数
 	var arr = [];
 	for(var index = 0; index < len; index++) { //创建一个数字数组
 		arr[index] = index;
-	}
+	};
 	$.each(arr, function(i) { //循环得到不同的id的值
 		var idValue = $("textarea[name^='cbid.luci']").eq(i).attr("id");
 		if(idValue) {
 			var model = idValue.substring(25);
 			var note  = idValue.substring(19,24);
+			if (model.includes(".")) var model = model.substring(1);
 			if (model == "sh") var model = "shell";
 			editor(note = document.getElementById(idValue), model);
 		};
 	});
 });
 
+function clear_editor(btn,urlname) {
+	$("#paste_input").val(""); // target_count是统计行数的，当然我这里需要统计序列，和行数还不一样。
+	document.getElementById("target_count").innerHTML = 0;
+}
+
 //]]>
 </script>
+
+<!-- <input class="btn cbi-button cbi-button-remove" type="button" onclick="clear_editor()" value="清空笔记"/> -->

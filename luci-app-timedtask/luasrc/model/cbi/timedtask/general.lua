@@ -2,17 +2,18 @@ sys = require "luci.sys"
 util = require "luci.util"
 uci = require "luci.model.uci".cursor()
 m = Map("timedtask", translate("timedtask Plus+"),
-    translate("<font color='green'><b>The plug-in that makes scheduled tasks easier to use is modified with the original version by wulishhui@gmail.com. </font></b><br>") ..
-    translate("The string of the CRON expression is composed of five fields separated by spaces and the execution command: <font color=red> * * * * * [command]</font><br>") ..
-    translate("According to the definition of the position and the range of values: minute (0-59), hour (0-23), day (1-31), month (1-12), week (1-7), (commond) The command to execute. <br>") ..
-    translate("[ , ] comma means <strong>list enumeration values</strong>. In the minute field, 5,20 means triggering once at the 5th minute and 20th minute respectively. <br>") ..
-    translate("[ / ] A forward slash indicates an <strong>increment of the specified value</strong>. In the minute field, 3/20 means triggering from the 3rd minute of every 20 minutes. <br>") ..
-    translate("[ - ] hyphen indicates a <strong>range</strong>. In the minute field, 5-20 means trigger every minute from 5 minutes to 20 minutes. <br>") ..
-    translate("[ * ] An asterisk indicates <strong>all possible values</strong>. In the month field, * means every month; in the week field, * means every day of the week. <br>") ..
-    translate("The setting method can also be clicked below to view the example or the first 5 fields of the command whose line ends in the crontab file is #timedtask to verify whether it is correct<br><br>") ..
-    translate("<input class='cbi-button cbi-button-apply' type='button' ") ..
-    translate("value='View example' ") ..
-    translate("<input class='cbi-button cbi-button-apply' type='button' value='view/verify' onclick=\"window.open('https://tool.lu/crontab')\"><br><br>"))
+translate("<font color='green'><b>The plug-in that makes scheduled tasks easier to use is modified with the original version by wulishhui@gmail.com. </font></b><br>") ..
+translate("The string of the CRON expression is composed of five fields separated by spaces and the execution command: <font color=red> * * * * * [command]</font><br>") ..
+translate("According to the definition of the position and the range of values: minute (0-59), hour (0-23), day (1-31), month (1-12), week (1-7), (commond) The command to execute. <br>") ..
+translate("[ , ] comma means <strong>list enumeration values</strong>. In the minute field, 5,20 means triggering once at the 5th minute and 20th minute respectively. <br>") ..
+translate("[ / ] A forward slash indicates an <strong>increment of the specified value</strong>. In the minute field, 3/20 means triggering from the 3rd minute of every 20 minutes. <br>") ..
+translate("[ - ] hyphen indicates a <strong>range</strong>. In the minute field, 5-20 means trigger every minute from 5 minutes to 20 minutes. <br>") ..
+translate("[ * ] An asterisk indicates <strong>all possible values</strong>. In the month field, * means every month; in the week field, * means every day of the week. <br>") ..
+translate("The setting method can also be clicked below to view the example or the first 5 fields of the command whose line ends in the crontab file is #timedtask to verify whether it is correct<br><br>") ..
+translate("<input class='cbi-button cbi-button-apply' type='button' value='") ..
+translate("View example") ..
+translate("' onclick=\"window.open('http://'+window.location.hostname+'/reboothelp.jpg')\">&nbsp;&nbsp;&nbsp;&nbsp;") ..
+translate("<input class='cbi-button cbi-button-apply' type='button' value='view/verify' onclick=\"window.open('https://tool.lu/crontab')\"><br><br>"))
 
 f = m:section(TypedSection, "cronloglevel")
 f.anonymous = true
