@@ -160,15 +160,13 @@ for sum = 1, note_sum do
 		if sys.call("[ $(sed -n '$=' " .. file .. ") -gt 1 ]") == 0 then
 			button = s:taboption(note, Button, "note" .. sum .. ".remove")
 			button.inputtitle = translate("清空笔记 " .. sum)
-			button.template = "dockerman/cbi/inlinebutton"
-			button.forcewrite = false
+			button.template = "tinynote/button"
 			button.inputstyle = "remove"
 		end
-
+		
 		button = s:taboption(note, Button, "note" .. sum .. ".start")
 		button.inputtitle = translate("运行笔记 " .. sum)
-		button.template = "dockerman/cbi/inlinebutton"
-		button.forcewrite = false
+		button.template = "tinynote/button"
 		button.inputstyle = "apply"
 
 		a = s:taboption(note, Value, "note" .. sum .. "." .. note_type)
@@ -195,7 +193,7 @@ if not rawequal(path_arg,note_arg) then delenote(path_arg,note_arg) end
 path_arg,note_arg = nil,nil
 
 if enable == "1" then
-	m:append(Template("codemirror"))
+	m:append(Template("tinynote/codemirror"))
 end
 
 return m

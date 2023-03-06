@@ -1,25 +1,25 @@
 <!-- https://www.min.jsdelivr.com/package/npm/codemirror -->
 <%
-	local con = luci.model.uci:get_all("luci", "tinynote")
+  local con = luci.model.uci:get_all("luci", "tinynote")
 %>
 <style>
-	.CodeMirror {
-		font-size: <%=con.font_size%>px;
-		line-height: <%=con.line_spacing%>%;
-		resize: both !important;
-		text-align: left !important;
-		font-family: Consolas, monospace !important;
-		border-top: 1px solid black;
-		border-bottom: 1px solid black;
-	}
-	.CodeMirror-focused .cm-matchhighlight {
-		background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFklEQVQI12NgYGBgkKzc8x9CMDAwAAAmhwSbidEoSQAAAABJRU5ErkJggg==);
-		background-position: bottom;
-		background-repeat: repeat-x;
-	}
-	dt {font-family: monospace; color: hsl(0, 9%, 46%);}
-	.cm-matchhighlight {background-color: rgb(201, 198, 38)}
-	.CodeMirror-selection-highlight-scrollbar {background-color: rgb(192, 23, 23)}
+  .CodeMirror {
+    font-size: <%=con.font_size%>px;
+    line-height: <%=con.line_spacing%>%;
+    resize: both !important;
+    text-align: left !important;
+    font-family: Consolas, monospace !important;
+    border-top: 1px solid black;
+    border-bottom: 1px solid black;
+  }
+  .CodeMirror-focused .cm-matchhighlight {
+    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFklEQVQI12NgYGBgkKzc8x9CMDAwAAAmhwSbidEoSQAAAABJRU5ErkJggg==);
+    background-position: bottom;
+    background-repeat: repeat-x;
+  }
+  dt {font-family: monospace; color: hsl(0, 9%, 46%);}
+  .cm-matchhighlight {background-color: rgb(201, 198, 38)}
+  .CodeMirror-selection-highlight-scrollbar {background-color: rgb(192, 23, 23)}
 </style>
 
 <link rel="stylesheet" href="https://cdn.staticfile.org/codemirror/6.65.7/codemirror.min.css">
@@ -87,61 +87,61 @@
 
 <script>//<![CDATA[
 function editor(id, editor_mode) {
-	var editor = CodeMirror.fromTextArea(id, {
-		mode: editor_mode,
-		autoRefresh: true,				// 自动更新
-		lint: true,						// 检查格式
-		tabSize: 4,						// tab的空格个数
-		keyMap: 'sublime',				// sublime编辑器效果
-		theme: "<%=con.theme%>",		// 主题
-		readOnly: "<%=con.only%>",		// 只读模式
-		foldGutter: true,				// 可将对象折叠，与下面的gutters一起使用
-		indentUnit: 4,					// 每个缩进块由几个空格组成。默认为2。
-		autocorrect: true,				// 自动更正
-		spellcheck: true,				// 拼写检查
-		autoCloseBrackets: true,		// 在键入时将自动关闭括号和引号
-		smartIndent: true,				// 自动缩进
-		lineNumbers: true,				// 是否显示行号
-		matchBrackets: true,			// 光标匹配括号
-		styleActiveLine: true,			// 选中行高亮
-		lineWrapping: true,				// 是否应滚动或换行以显示长行
-		lineWiseCopyCut: true,			// 在没有选择的情况下进行复制或剪切将复制或剪切有光标的整行。
-		showCursorWhenSelecting: true,	// 选择处于活动状态时是否应绘制光标
-		maxHighlightLength: Infinity,		// 默认为 10000（行），最多渲染行数.为 Infinity 时，渲染所有行。
-		viewportMargin: 15,		// 渲染可视范围前后的多少行。建议使用默认值 10。
-		gutters: ["CodeMirror-lint-markers", "CodeMirror-foldgutter", "CodeMirror-linenumbers", "breakpoints"],
-		highlightSelectionMatches: {showToken: /\w/, annotateScrollbar: true},
-		extraKeys: {
-			"F11": function(cm) {
-				cm.setOption("fullScreen", !cm.getOption("fullScreen"));
-			},
-			"Esc": function(cm) {
-				if (cm.getOption("fullScreen")) cm.setOption("fullScreen", false);
-			},
-			"Tab": function(cm) {
-				if (cm.somethingSelected()) {
-					cm.indentSelection('add')
-				} else {
-					var spaces = Array(cm.getOption("indentUnit") + 1).join(" ")
-					cm.replaceSelection(spaces)
-				}
-			},
-			"Alt-F": "findPersistent",
-			"Ctrl-J": "toMatchingTag",
-		},
-	});
-	editor.setSize("<%=con.width%>", "<%=con.height%>");
-	editor.on("gutterClick", function(cm, n) {
-		var info = cm.lineInfo(n);
-		cm.setGutterMarker(n, "breakpoints", info.gutterMarkers ? null : makeMarker());
-	});
+  var editor = CodeMirror.fromTextArea(id, {
+    mode: editor_mode,
+    autoRefresh: true,        // 自动更新
+    lint: true,           // 检查格式
+    tabSize: 4,           // tab的空格个数
+    keyMap: 'sublime',        // sublime编辑器效果
+    theme: "<%=con.theme%>",    // 主题
+    readOnly: "<%=con.only%>",    // 只读模式
+    foldGutter: true,       // 可将对象折叠，与下面的gutters一起使用
+    indentUnit: 4,          // 每个缩进块由几个空格组成。默认为2。
+    autocorrect: true,        // 自动更正
+    spellcheck: true,       // 拼写检查
+    autoCloseBrackets: true,    // 在键入时将自动关闭括号和引号
+    smartIndent: true,        // 自动缩进
+    lineNumbers: true,        // 是否显示行号
+    matchBrackets: true,      // 光标匹配括号
+    styleActiveLine: true,      // 选中行高亮
+    lineWrapping: true,       // 是否应滚动或换行以显示长行
+    lineWiseCopyCut: true,      // 在没有选择的情况下进行复制或剪切将复制或剪切有光标的整行。
+    showCursorWhenSelecting: true,  // 选择处于活动状态时是否应绘制光标
+    maxHighlightLength: Infinity,   // 默认为 10000（行），最多渲染行数.为 Infinity 时，渲染所有行。
+    viewportMargin: 15,   // 渲染可视范围前后的多少行。建议使用默认值 10。
+    gutters: ["CodeMirror-lint-markers", "CodeMirror-foldgutter", "CodeMirror-linenumbers", "breakpoints"],
+    highlightSelectionMatches: {showToken: /\w/, annotateScrollbar: true},
+    extraKeys: {
+      "F11": function(cm) {
+        cm.setOption("fullScreen", !cm.getOption("fullScreen"));
+      },
+      "Esc": function(cm) {
+        if (cm.getOption("fullScreen")) cm.setOption("fullScreen", false);
+      },
+      "Tab": function(cm) {
+        if (cm.somethingSelected()) {
+          cm.indentSelection('add')
+        } else {
+          var spaces = Array(cm.getOption("indentUnit") + 1).join(" ")
+          cm.replaceSelection(spaces)
+        }
+      },
+      "Alt-F": "findPersistent",
+      "Ctrl-J": "toMatchingTag",
+    },
+  });
+  editor.setSize("<%=con.width%>", "<%=con.height%>");
+  editor.on("gutterClick", function(cm, n) {
+    var info = cm.lineInfo(n);
+    cm.setGutterMarker(n, "breakpoints", info.gutterMarkers ? null : makeMarker());
+  });
 
-	function makeMarker() {
-		var marker = document.createElement("div");
-		marker.style.color = "#822";
-		marker.innerHTML = "●";
-		return marker;
-	}
+  function makeMarker() {
+    var marker = document.createElement("div");
+    marker.style.color = "#822";
+    marker.innerHTML = "●";
+    return marker;
+  }
 };
 
 function escapeJquery(id) {
@@ -150,46 +150,46 @@ function escapeJquery(id) {
 };
 
 $(function() {
-	var len = $("textarea").size();	//获取textarea标签的个数
-	var arr = [];
-	var andrm = new Object();
-	var andst = new Object();
-	for(var index = 0; index < len; index++) { //创建一个数字数组
-		arr[index] = index;
-	};
-	$.each(arr, function(i) { //循环得到不同的id的值
-		var idname = $("textarea[name^='cbid.luci']").eq(i).attr("id");
-		if(idname != '') {
-			var model = idname.substring(25);
-			var note  = idname.substring(19,24);
-			if (model.includes(".")) var model = model.substring(1);
-			if (model == "sh") var model = "shell";
-			editor(note = document.getElementById(idname), model);
-		};
+  var len = $("textarea").size(); //获取textarea标签的个数
+  var arr = [];
+  var andrm = new Object();
+  var andst = new Object();
+  for(var index = 0; index < len; index++) { //创建一个数字数组
+    arr[index] = index;
+  };
+  $.each(arr, function(i) { //循环得到不同的id的值
+    var idname = $("textarea[name^='cbid.luci']").eq(i).attr("id");
+    if(idname != '') {
+      var model = idname.substring(25);
+      var note  = idname.substring(19,24);
+      if (model.includes(".")) var model = model.substring(1);
+      if (model == "sh") var model = "shell";
+      editor(note = document.getElementById(idname), model);
+    };
     var st = $("input[name$='start']").eq(i).attr("id");
     var rm = $("input[name$='emove']").eq(i).attr("id");
-    andst[idname] = st;
-    andrm[idname] = rm;
-	});
-	// console.log(andst);
-	// console.log(andrm);
+    andst[st] = idname;
+    andrm[rm] = idname;
+  });
+  // console.log(andst);
+  // console.log(andrm);
   // $("#txt").attr("value",'');//文本框，文本区域：清空内容
   // $("#txt").attr("value",'11');//文本框，文本区域：填充内容
   // $("#chk1").attr("checked",'');//多选框checkbox：不打勾
   // $("#chk2").attr("checked",true);//多选框checkbox：打勾
   // if($("#chk1").attr('checked')==undefined) //多选框checkbox：判断是否已经打勾
-
-  for (let [value, key] of Object.entries(andrm)) {
+  $.each(andst, function(key, value) {
     $(escapeJquery("#" + key)).click(function(){
       alert('已点击 id=' + value + ' 的元素上!');
     });
-  };
+  });
 
-  for (let [value, key] of Object.entries(andst)) {
-    $(escapeJquery("#" + key)).click(function(){
-      alert('已点击 id=' + value + ' 的元素上!');
+  $.each(andrm, function(key, value) {
+    $("#" + escapeJquery(key)).click(function(){
+      alert('已点击 id=' + key + ' 的元素上!');
     });
-  };
+  });
+
 });
 
 //]]>
