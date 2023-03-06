@@ -144,30 +144,53 @@ function editor(id, editor_mode) {
 	}
 };
 
+function escapeJquery(id) {
+  n = id.replaceAll(".", "\\.");
+  return n;
+};
+
 $(function() {
 	var len = $("textarea").size();	//获取textarea标签的个数
 	var arr = [];
+	var andrm = new Object();
+	var andst = new Object();
 	for(var index = 0; index < len; index++) { //创建一个数字数组
 		arr[index] = index;
 	};
 	$.each(arr, function(i) { //循环得到不同的id的值
-		var idValue = $("textarea[name^='cbid.luci']").eq(i).attr("id");
-		if(idValue) {
-			var model = idValue.substring(25);
-			var note  = idValue.substring(19,24);
+		var idname = $("textarea[name^='cbid.luci']").eq(i).attr("id");
+		if(idname != '') {
+			var model = idname.substring(25);
+			var note  = idname.substring(19,24);
 			if (model.includes(".")) var model = model.substring(1);
 			if (model == "sh") var model = "shell";
-			editor(note = document.getElementById(idValue), model);
+			editor(note = document.getElementById(idname), model);
 		};
+    var st = $("input[name$='start']").eq(i).attr("id");
+    var rm = $("input[name$='emove']").eq(i).attr("id");
+    andst[idname] = st;
+    andrm[idname] = rm;
 	});
-});
+	// console.log(andst);
+	// console.log(andrm);
+  // $("#txt").attr("value",'');//文本框，文本区域：清空内容
+  // $("#txt").attr("value",'11');//文本框，文本区域：填充内容
+  // $("#chk1").attr("checked",'');//多选框checkbox：不打勾
+  // $("#chk2").attr("checked",true);//多选框checkbox：打勾
+  // if($("#chk1").attr('checked')==undefined) //多选框checkbox：判断是否已经打勾
 
-function clear_editor(btn,urlname) {
-	$("#paste_input").val(""); // target_count是统计行数的，当然我这里需要统计序列，和行数还不一样。
-	document.getElementById("target_count").innerHTML = 0;
-}
+  for (let [value, key] of Object.entries(andrm)) {
+    $(escapeJquery("#" + key)).click(function(){
+      alert('已点击 id=' + value + ' 的元素上!');
+    });
+  };
+
+  for (let [value, key] of Object.entries(andst)) {
+    $(escapeJquery("#" + key)).click(function(){
+      alert('已点击 id=' + value + ' 的元素上!');
+    });
+  };
+});
 
 //]]>
 </script>
-
-<!-- <input class="btn cbi-button cbi-button-remove" type="button" onclick="clear_editor()" value="清空笔记"/> -->

@@ -158,27 +158,28 @@ for sum = 1, note_sum do
 		s:tab(note, translate("笔记 " .. sum))
 
 		if sys.call("[ $(sed -n '$=' " .. file .. ") -gt 1 ]") == 0 then
-			button = s:taboption(note, Button, "note" .. sum .. "." .. note_type, nil)
+			button = s:taboption(note, Button, "note" .. sum .. ".remove")
 			button.inputtitle = translate("清空笔记 " .. sum)
+			button.template = "dockerman/cbi/inlinebutton"
+			button.forcewrite = false
 			button.inputstyle = "remove"
-			function button.write(self, section, value)
-				if value then
-					new_note(file, note_type)
-					if uci:changes("luci") then uci:commit("luci") end
-					luci.http.redirect(luci.dispatcher.build_url("admin/nas/tinynote"))
-				end
-			end
 		end
 
-		note = s:taboption(note, Value, "note" .. sum .. "." .. note_type)
-		note.template = "cbi/tvalue"
-		note.rows = 35
-		note.wrap = "off"
-		function note.cfgvalue(self, section)
+		button = s:taboption(note, Button, "note" .. sum .. ".start")
+		button.inputtitle = translate("运行笔记 " .. sum)
+		button.template = "dockerman/cbi/inlinebutton"
+		button.forcewrite = false
+		button.inputstyle = "apply"
+
+		a = s:taboption(note, Value, "note" .. sum .. "." .. note_type)
+		a.template = "cbi/tvalue"
+		a.rows = 35
+		a.wrap = "off"
+		function a.cfgvalue(self, section)
 			return fs.readfile(file) or ""
 		end
-		function note.write(self, section, value)
-			if value then
+		function a.write(self, section, value)
+			if value and value ~= nil and value ~= "" then
 				value = value:gsub("\r\n?", "\n")
 				local old_value = fs.readfile(value)
 				if value ~= old_value then
