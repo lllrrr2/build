@@ -1,7 +1,9 @@
 <!-- https://www.min.jsdelivr.com/package/npm/codemirror -->
 <%
   local fs  = require "nixio.fs"
-  local con = luci.model.uci:get_all("luci", "tinynote")
+  local sys = require "luci.sys"
+  local uci = require "luci.model.uci".cursor()
+  local con = uci:get_all("luci", "tinynote")
 %>
 <style>
   .CodeMirror {
@@ -149,12 +151,23 @@ function jqid(id) {
   return (!id) ? null : '#' + id.replace(/([#;?%&,.+*~\':"!^$[\]()=>|\/@_])/g, '\\$1');
 };
 
+function jqru(and) {
+  $.each(and, function(value, key) {
+      $(jqid(value)).click(function() {
+        if (value.includes("st")) {
+          alert('运行 ' + key + ' 的文件!');
+        } else {
+          alert('删除 ' + key + ' 的文件!');
+        };
+      });
+  });
+};
+
 $(function() {
   var len = $("textarea").size(); //获取textarea标签的个数
   var arr = [];
-  var file = new Object();
-  var andrm = new Object();
-  var andst = new Object();
+  var rm = new Object();
+  var st = new Object();
   for(var index = 0; index < len; index++) { //创建一个数字数组
     arr[index] = index;
   };
@@ -167,31 +180,17 @@ $(function() {
       if (model == "sh") var model = "shell";
       editor(note = document.getElementById(idname), model);
     };
-    andst[$("input[name$='st']").eq(i).attr("id")] = idname;
-    andrm[$("input[name$='rm']").eq(i).attr("id")] = idname;
-    file["<%=con.note_path .. '/note" + [i+1] + ".' .. con.note_type%>"] = idname;
-    // console.log("<%=con.note_path .. '/tinynote" + [i+1] + ".' .. con.note_type%>");
+    st[$("input[name$='st']").eq(i).attr("id")] = "<%=con.note_path .. '/note" + [i+1] + ".' .. con.note_type%>";
+    rm[$("input[name$='rm']").eq(i).attr("id")] = "<%=con.note_path .. '/note" + [i+1] + ".' .. con.note_type%>";
   });
-  // console.log(file);
-  // console.log(andst);
-  // console.log(andrm);
+  // console.log(st);
   // $("#txt").attr("value",'');//文本框，文本区域：清空内容
   // $("#txt").attr("value",'11');//文本框，文本区域：填充内容
   // $("#chk1").attr("checked",'');//多选框checkbox：不打勾
   // $("#chk2").attr("checked",true);//多选框checkbox：打勾
   // if($("#chk1").attr('checked')==undefined) //多选框checkbox：判断是否已经打勾
-  $.each(andst, function(value, key) {
-    $(jqid(value)).click(function(){
-      alert('已点击 id=' + value + ' 的元素上!');
-    });
-  });
-
-  $.each(andrm, function(value, key) {
-    $(jqid(value)).click(function(){
-      alert('已点击 id=' + value + ' 的元素上!');
-    });
-  });
-
+  jqru(st)
+  jqru(rm)
 });
 
 //]]>
