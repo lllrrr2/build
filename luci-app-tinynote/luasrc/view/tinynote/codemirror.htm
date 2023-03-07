@@ -1,5 +1,6 @@
 <!-- https://www.min.jsdelivr.com/package/npm/codemirror -->
 <%
+  local fs  = require "nixio.fs"
   local con = luci.model.uci:get_all("luci", "tinynote")
 %>
 <style>
@@ -18,7 +19,7 @@
     background-repeat: repeat-x;
   }
   dt {font-family: monospace; color: hsl(0, 9%, 46%);}
-  .cm-matchhighlight {background-color: rgb(201, 198, 38)}
+  .cm-matchhighlight {background-color: hsl(256, 58%, 45%)}
   .CodeMirror-selection-highlight-scrollbar {background-color: rgb(192, 23, 23)}
 </style>
 
@@ -89,28 +90,28 @@
 function editor(id, editor_mode) {
   var editor = CodeMirror.fromTextArea(id, {
     mode: editor_mode,
-    autoRefresh: true,        // 自动更新
-    lint: true,           // 检查格式
-    tabSize: 4,           // tab的空格个数
-    keyMap: 'sublime',        // sublime编辑器效果
+    autoRefresh: true,          // 自动更新
+    lint: true,                 // 检查格式
+    tabSize: 4,                 // tab的空格个数
+    keyMap: 'sublime',          // sublime编辑器效果
     theme: "<%=con.theme%>",    // 主题
-    readOnly: "<%=con.only%>",    // 只读模式
-    foldGutter: true,       // 可将对象折叠，与下面的gutters一起使用
-    indentUnit: 4,          // 每个缩进块由几个空格组成。默认为2。
-    autocorrect: true,        // 自动更正
-    spellcheck: true,       // 拼写检查
+    readOnly: "<%=con.only%>",  // 只读模式
+    foldGutter: true,           // 可将对象折叠，与下面的gutters一起使用
+    indentUnit: 4,              // 每个缩进块由几个空格组成。默认为2。
+    autocorrect: true,          // 自动更正
+    spellcheck: true,           // 拼写检查
     autoCloseBrackets: true,    // 在键入时将自动关闭括号和引号
-    smartIndent: true,        // 自动缩进
-    lineNumbers: true,        // 是否显示行号
-    matchBrackets: true,      // 光标匹配括号
+    smartIndent: true,          // 自动缩进
+    lineNumbers: true,          // 是否显示行号
+    matchBrackets: true,        // 光标匹配括号
     styleActiveLine: true,      // 选中行高亮
-    lineWrapping: true,       // 是否应滚动或换行以显示长行
+    lineWrapping: true,         // 是否应滚动或换行以显示长行
     lineWiseCopyCut: true,      // 在没有选择的情况下进行复制或剪切将复制或剪切有光标的整行。
     showCursorWhenSelecting: true,  // 选择处于活动状态时是否应绘制光标
     maxHighlightLength: Infinity,   // 默认为 10000（行），最多渲染行数.为 Infinity 时，渲染所有行。
-    viewportMargin: 15,   // 渲染可视范围前后的多少行。建议使用默认值 10。
+    viewportMargin: 15,         // 渲染可视范围前后的多少行。建议使用默认值 10。
     gutters: ["CodeMirror-lint-markers", "CodeMirror-foldgutter", "CodeMirror-linenumbers", "breakpoints"],
-    highlightSelectionMatches: {showToken: /\w/, annotateScrollbar: true},
+    // highlightSelectionMatches: {showToken: /\w/, annotateScrollbar: true}, //高亮匹配
     extraKeys: {
       "F11": function(cm) {
         cm.setOption("fullScreen", !cm.getOption("fullScreen"));
@@ -144,14 +145,14 @@ function editor(id, editor_mode) {
   }
 };
 
-function escapeJquery(id) {
-  n = id.replaceAll(".", "\\.");
-  return n;
+function jqid(id) {
+  return (!id) ? null : '#' + id.replace(/([#;?%&,.+*~\':"!^$[\]()=>|\/@_])/g, '\\$1');
 };
 
 $(function() {
   var len = $("textarea").size(); //获取textarea标签的个数
   var arr = [];
+  var file = new Object();
   var andrm = new Object();
   var andst = new Object();
   for(var index = 0; index < len; index++) { //创建一个数字数组
@@ -166,11 +167,12 @@ $(function() {
       if (model == "sh") var model = "shell";
       editor(note = document.getElementById(idname), model);
     };
-    var st = $("input[name$='start']").eq(i).attr("id");
-    var rm = $("input[name$='emove']").eq(i).attr("id");
-    andst[st] = idname;
-    andrm[rm] = idname;
+    andst[$("input[name$='st']").eq(i).attr("id")] = idname;
+    andrm[$("input[name$='rm']").eq(i).attr("id")] = idname;
+    file["<%=con.note_path .. '/note" + [i+1] + ".' .. con.note_type%>"] = idname;
+    // console.log("<%=con.note_path .. '/tinynote" + [i+1] + ".' .. con.note_type%>");
   });
+  // console.log(file);
   // console.log(andst);
   // console.log(andrm);
   // $("#txt").attr("value",'');//文本框，文本区域：清空内容
@@ -178,15 +180,15 @@ $(function() {
   // $("#chk1").attr("checked",'');//多选框checkbox：不打勾
   // $("#chk2").attr("checked",true);//多选框checkbox：打勾
   // if($("#chk1").attr('checked')==undefined) //多选框checkbox：判断是否已经打勾
-  $.each(andst, function(key, value) {
-    $(escapeJquery("#" + key)).click(function(){
+  $.each(andst, function(value, key) {
+    $(jqid(value)).click(function(){
       alert('已点击 id=' + value + ' 的元素上!');
     });
   });
 
-  $.each(andrm, function(key, value) {
-    $("#" + escapeJquery(key)).click(function(){
-      alert('已点击 id=' + key + ' 的元素上!');
+  $.each(andrm, function(value, key) {
+    $(jqid(value)).click(function(){
+      alert('已点击 id=' + value + ' 的元素上!');
     });
   });
 

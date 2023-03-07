@@ -149,7 +149,7 @@ if sys.call("test ! -d " .. note_path) == 0 then fs.mkdirr(note_path) end
 local path_arg,note_arg = {},{}
 
 for sum = 1, note_sum do
-	local file = note_path .. "/tinynote" .. sum .. "." .. note_type
+	local file = note_path .. "/note" .. sum .. "." .. note_type
 	note_arg[sum] = file
 	if sys.call("[ -s " .. file .. " ]") == 1 then new_note(file, note_type) end
 
@@ -158,16 +158,18 @@ for sum = 1, note_sum do
 		s:tab(note, translate("笔记 " .. sum))
 
 		if sys.call("[ $(sed -n '$=' " .. file .. ") -gt 1 ]") == 0 then
-			button = s:taboption(note, Button, "note" .. sum .. ".remove")
+			button = s:taboption(note, Button, sum .. ".rm")
 			button.inputtitle = translate("清空笔记 " .. sum)
 			button.template = "tinynote/button"
 			button.inputstyle = "remove"
+			button.forcewrite = true
 		end
 		
-		button = s:taboption(note, Button, "note" .. sum .. ".start")
+		button = s:taboption(note, Button, sum .. ".st")
 		button.inputtitle = translate("运行笔记 " .. sum)
 		button.template = "tinynote/button"
 		button.inputstyle = "apply"
+		button.forcewrite = true
 
 		a = s:taboption(note, Value, "note" .. sum .. "." .. note_type)
 		a.template = "cbi/tvalue"
