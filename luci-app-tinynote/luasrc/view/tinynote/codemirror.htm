@@ -155,9 +155,9 @@ function jqru(and) {
   $.each(and, function(value, key) {
       $(jqid(value)).click(function() {
         if (value.includes("st")) {
-          alert('运行 ' + key + ' 的文件!');
-        } else {
-          alert('删除 ' + key + ' 的文件!');
+          alert('id 为 ' + value + '， 执行运行 ' + key + ' 的文件!');
+        } else if (value.includes("rm"))  {
+          alert('id 为 ' + value + '， 执行清空 ' + key + ' 的文件!');
         };
       });
   });
