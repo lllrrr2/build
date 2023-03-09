@@ -89,7 +89,7 @@
 <script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/yaml-frontmatter/yaml-frontmatter.min.js"></script>
 
 <script>//<![CDATA[
-function editor(id, editor_mode) {
+var editor = function(id, editor_mode) {
   var editor = CodeMirror.fromTextArea(id, {
     mode: editor_mode,
     autoRefresh: true,          // 自动更新
@@ -151,46 +151,34 @@ function jqid(id) {
   return (!id) ? null : '#' + id.replace(/([#;?%&,.+*~\':"!^$[\]()=>|\/@_])/g, '\\$1');
 };
 
-function jqru(and) {
-  $.each(and, function(value, key) {
-      $(jqid(value)).click(function() {
-        if (value.includes("st")) {
-          alert('id 为 ' + value + '， 执行运行 ' + key + ' 的文件!');
-        } else if (value.includes("rm"))  {
-          alert('id 为 ' + value + '， 执行清空 ' + key + ' 的文件!');
-        };
-      });
-  });
-};
-
 $(function() {
   var len = $("textarea").size(); //获取textarea标签的个数
   var arr = [];
-  var rm = new Object();
-  var st = new Object();
+  var idst = new Object();
   for(var index = 0; index < len; index++) { //创建一个数字数组
     arr[index] = index;
   };
   $.each(arr, function(i) { //循环得到不同的id的值
     var idname = $("textarea[name^='cbid.luci']").eq(i).attr("id");
-    if(idname != '') {
+    if (idname != null) {
       var model = idname.substring(25);
-      var note  = idname.substring(19,24);
       if (model.includes(".")) var model = model.substring(1);
       if (model == "sh") var model = "shell";
-      editor(note = document.getElementById(idname), model);
+      editor(document.getElementById(idname), model);
     };
-    st[$("input[name$='st']").eq(i).attr("id")] = "<%=con.note_path .. '/note" + [i+1] + ".' .. con.note_type%>";
-    rm[$("input[name$='rm']").eq(i).attr("id")] = "<%=con.note_path .. '/note" + [i+1] + ".' .. con.note_type%>";
+    // idst[$("input[name$='st']").eq(i).attr("id")] = "<%=con.note_path .. '/note" + [i+1] + ".' .. con.note_type%>";
+    // idst[$("input[name$='rm']").eq(i).attr("id")] = "<%=con.note_path .. '/note" + [i+1] + ".' .. con.note_type%>";
   });
-  // console.log(st);
-  // $("#txt").attr("value",'');//文本框，文本区域：清空内容
-  // $("#txt").attr("value",'11');//文本框，文本区域：填充内容
-  // $("#chk1").attr("checked",'');//多选框checkbox：不打勾
-  // $("#chk2").attr("checked",true);//多选框checkbox：打勾
-  // if($("#chk1").attr('checked')==undefined) //多选框checkbox：判断是否已经打勾
-  jqru(st)
-  jqru(rm)
+  // console.log(idst);
+  // $.each(idst, function(value, key) {
+  //     $(jqid(value)).click(function() {
+  //       if (value.includes("st")) {
+  //         alert('id 为 ' + value + '， 执行运行 ' + key + ' 的文件!');
+  //       } else if (value.includes("rm")) {
+  //         alert('id 为 ' + value + '， 执行清空 ' + key + ' 的文件!');
+  //       };
+  //     });
+  // });
 });
 
 //]]>

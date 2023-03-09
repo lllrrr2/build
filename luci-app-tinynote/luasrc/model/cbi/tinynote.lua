@@ -1,15 +1,16 @@
 local fs  = require "nixio.fs"
 local sys = require "luci.sys"
+local util = require "luci.util"
 local uci = require "luci.model.uci".cursor()
 -- wulishui 20200108-20230301
 
 local note_type_array = {
 	["sh"]  = "#!/bin/sh /etc/rc.common",
 	["lua"] = [[#!/usr/bin/env lua
-local fs   = require "nixio.fs"
-local sys  = require "luci.sys"
-local util = require "luci.util"
-local uci  = require "luci.model.uci".cursor()]],
+local fs   = require \"nixio.fs\"
+local sys  = require \"luci.sys\"
+local util = require \"luci.util\"
+local uci  = require \"luci.model.uci\".cursor()]],
 	["py"]  = "#!/usr/bin/env python",
 }
 
@@ -40,9 +41,9 @@ end
 
 local new_note = function(file, note_type)
 	if contains(note_type_array, note_type) then
-		sys.exec('echo "' .. contains(note_type_array, note_type) ..'"  > ' .. file)
+		return sys.exec('echo "' .. contains(note_type_array, note_type) ..'"  > ' .. file)
 	else
-		sys.exec(":> " .. file)
+		return sys.exec(":> " .. file)
 	end
 end
 
@@ -151,25 +152,24 @@ local path_arg,note_arg = {},{}
 for sum = 1, note_sum do
 	local file = note_path .. "/note" .. sum .. "." .. note_type
 	note_arg[sum] = file
-	if sys.call("[ -s " .. file .. " ]") == 1 then new_note(file, note_type) end
+	if sys.call("[ -e " .. file .. " ]") == 1 then new_note(file, note_type) end
 
-	if sys.call("[ -s " .. file .. " ]") then
+	if sys.call("[ -f " .. file .. " ]") == 0 then
 		local note = ("note" .. sum)
 		s:tab(note, translate("笔记 " .. sum))
 
-		if sys.call("[ $(sed -n '$=' " .. file .. ") -gt 1 ]") == 0 then
-			button = s:taboption(note, Button, sum .. ".rm")
-			button.inputtitle = translate("清空笔记 " .. sum)
-			button.template = "tinynote/button"
-			button.inputstyle = "remove"
-			button.forcewrite = true
-		end
+		-- if sys.call("[ $(sed -n '$=' " .. file .. ") -gt 1 ]") == 0 then
+		-- 	button = s:taboption(note, Button, sum .. ".rm")
+		-- 	button.inputtitle = translate("清空笔记 " .. sum)
+		-- 	button.template = "tinynote/button"
+		-- 	button.inputstyle = "remove"
+		-- end
 		
-		button = s:taboption(note, Button, sum .. ".st")
-		button.inputtitle = translate("运行笔记 " .. sum)
-		button.template = "tinynote/button"
-		button.inputstyle = "apply"
-		button.forcewrite = true
+		-- button = s:taboption(note, Button, sum .. ".st")
+		-- button.inputtitle = translate("运行笔记 " .. sum)
+		-- button.template = "tinynote/button"
+		-- button.inputstyle = "apply"
+		-- button.forcewrite = true
 
 		a = s:taboption(note, Value, "note" .. sum .. "." .. note_type)
 		a.template = "cbi/tvalue"
