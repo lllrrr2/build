@@ -76,7 +76,7 @@ local note_mode_array = {
 	"vhdl", "vue", "wast", "webidl", "xml", "xquery", "yacas", "yaml", "yaml-frontmatter", "z80",
 }
 
-m = Map("luci", translate(""), translate([[<strong>只能记录少量文本内容。文本内容勿大于90Kb（约1000行），否则无法保存。</strong>]]))
+m = Map("luci", translate(""), translate([[<font color="red"><strong>文本内容不能大于90Kb（约1000行），否则失去响应。</strong></font>]]))
 
 f = m:section(TypedSection, "tinynote")
 -- f.template = "cbi/tblsection"
@@ -194,6 +194,10 @@ for sum in string.gmatch(sys.exec("seq -w 01 " .. note_sum), "%d+") do
 		path:value('js', translate('js'))
 		path:value('py', translate('py'))
 		path:value('lua', translate('lua'))
+		path:value('htmlmixed', translate('html'))
+		for _, v in pairs(note_mode_array) do
+			path:value(v)
+		end
 		
 		note_only = s:taboption(note, Flag, "only_note" .. sum, translate("只读"))
 

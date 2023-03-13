@@ -5,7 +5,7 @@
   local uci = require "luci.model.uci".cursor()
   local con = uci:get_all("luci", "tinynote")
   local id_model = {}
-  for sum in string.gmatch(sys.exec("seq -w 01 " .. con.note_sum), "%d+") do
+  for sum in sys.exec("seq -w 01 " .. con.note_sum):gmatch("%d+") do
       local id = 'cbid.luci.tinynote.note' .. sum .. '.' .. con.note_type
       id_model[id] = {}
       id_model[id]['path_note' .. sum] = con.note_type
@@ -165,19 +165,21 @@ function jqid(id) {
 };
 
 <%
-for id, value in pairs(id_model) do
+for key, value in pairs(id_model) do
   for k, v in pairs(value) do
     if k:find('path_note') then
       model = v
-    end
-    if k:find('only_note') then
+    elseif k:find('only_note') then
       if v == '1' then only = true else only = false end
     end
     if model == "sh" then model = "shell" end
     if model == "py" then model = "python" end
     if model == "js" then model = "javascript" end
-    id = id
+    key = key
   end
+  local id = key
+  local only = only
+  local model = model
 %>
   editor(document.getElementById('<%=id%>'), '<%=model%>', '<%=only%>');
 <%end%>
