@@ -60,6 +60,22 @@ local note_theme_array = {
 	"ttcn", "twilight", "vibrant-ink", "xq-dark", "xq-light", "yeti", "yonce", "zenburn",
 }
 
+local note_mode_array = {
+	"apl", "asciiarmor", "asn.1", "asterisk", "brainfuck", "clike", "clojure", "cmake", "cobol",
+	"coffeescript", "commonlisp", "crystal", "css", "cypher", "d", "dart", "diff", "django",
+	"dockerfile", "dtd", "dylan", "ebnf", "ecl", "eiffel", "elm", "erlang", "factor", "fcl",
+	"forth", "fortran", "gas", "gfm", "gherkin", "go", "groovy", "haml", "handlebars", "haskell",
+	"haskell-literate", "haxe", "htmlembedded", "htmlmixed", "http", "idl", "javascript", "jinja2",
+	"jsx", "julia", "livescript", "lua", "markdown", "mathematica", "mbox", "mirc", "mllike",
+	"modelica", "mscgen", "mumps", "nginx", "nsis", "ntriples", "octave", "oz", "pascal",
+	"pegjs", "perl", "php", "pig", "powershell", "properties", "protobuf", "pug", "puppet",
+	"python", "q", "r", "rpm", "rst", "ruby", "rust", "sas", "sass", "scheme", "shell",
+	"sieve", "slim", "smalltalk", "smarty", "solr", "soy", "sparql", "spreadsheet", "sql",
+	"stex", "stylus", "swift", "tcl", "textile", "tiddlywiki", "tiki", "toml", "tornado",
+	"troff", "ttcn", "ttcn-cfg", "turtle", "twig", "vb", "vbscript", "velocity", "verilog",
+	"vhdl", "vue", "wast", "webidl", "xml", "xquery", "yacas", "yaml", "yaml-frontmatter", "z80",
+}
+
 m = Map("luci", translate(""), translate([[<strong>只能记录少量文本内容。文本内容勿大于90Kb（约1000行），否则无法保存。</strong>]]))
 
 f = m:section(TypedSection, "tinynote")
@@ -149,14 +165,14 @@ local note_path = con.note_path or "/etc/tinynote"
 if sys.call("test ! -d " .. note_path) == 0 then fs.mkdirr(note_path) end
 local path_arg,note_arg = {},{}
 
-for sum = 1, note_sum do
+for sum in string.gmatch(sys.exec("seq -w 01 " .. note_sum), "%d+") do
 	local file = note_path .. "/note" .. sum .. "." .. note_type
 	note_arg[sum] = file
 	if sys.call("[ -e " .. file .. " ]") == 1 then new_note(file, note_type) end
 
 	if sys.call("[ -f " .. file .. " ]") == 0 then
 		local note = ("note" .. sum)
-		s:tab(note, translate("笔记 " .. sum))
+		s:tab(note, translate("笔记 " .. sum), translate("笔记" .. sum .. "设置"))
 
 		-- if sys.call("[ $(sed -n '$=' " .. file .. ") -gt 1 ]") == 0 then
 		-- 	button = s:taboption(note, Button, sum .. ".rm")
@@ -170,6 +186,16 @@ for sum = 1, note_sum do
 		-- button.template = "tinynote/button"
 		-- button.inputstyle = "apply"
 		-- button.forcewrite = true
+		
+		path = s:taboption(note, Value, "path_note" .. sum, translate("类形"))
+		path.default = ""
+		path:value('txt', translate('txt'))
+		path:value('sh', translate('sh'))
+		path:value('js', translate('js'))
+		path:value('py', translate('py'))
+		path:value('lua', translate('lua'))
+		
+		note_only = s:taboption(note, Flag, "only_note" .. sum, translate("只读"))
 
 		a = s:taboption(note, Value, "note" .. sum .. "." .. note_type)
 		a.template = "cbi/tvalue"

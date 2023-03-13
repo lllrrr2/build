@@ -4,6 +4,20 @@
   local sys = require "luci.sys"
   local uci = require "luci.model.uci".cursor()
   local con = uci:get_all("luci", "tinynote")
+  local id_model = {}
+  for sum in string.gmatch(sys.exec("seq -w 01 " .. con.note_sum), "%d+") do
+      local id = 'cbid.luci.tinynote.note' .. sum .. '.' .. con.note_type
+      id_model[id] = {}
+      id_model[id]['path_note' .. sum] = con.note_type
+      id_model[id]['only_note' .. sum] = con.only or '0'
+      for note, model in pairs(con) do
+          if note:find('path_note' .. sum) then
+              id_model[id][note] = model
+          elseif note:find('only_note' .. sum) then
+              id_model[id][note] = model
+          end
+      end
+  end
 %>
 <style>
   .CodeMirror {
@@ -63,7 +77,6 @@
 
 <script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/lint/lint.min.js"></script>
 <script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/lint/yaml-lint.min.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/lint/javascript-lint.min.js"></script>
 <script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/hint/xml-hint.min.js"></script>
 <script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/hint/css-hint.min.js"></script>
 <script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/hint/html-hint.min.js"></script>
@@ -89,7 +102,7 @@
 <script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/yaml-frontmatter/yaml-frontmatter.min.js"></script>
 
 <script>//<![CDATA[
-var editor = function(id, editor_mode) {
+var editor = function(id, editor_mode, editor_only) {
   var editor = CodeMirror.fromTextArea(id, {
     mode: editor_mode,
     autoRefresh: true,          // 自动更新
@@ -97,7 +110,7 @@ var editor = function(id, editor_mode) {
     tabSize: 4,                 // tab的空格个数
     keyMap: 'sublime',          // sublime编辑器效果
     theme: "<%=con.theme%>",    // 主题
-    readOnly: "<%=con.only%>",  // 只读模式
+    readOnly: editor_only,      // 只读模式
     foldGutter: true,           // 可将对象折叠，与下面的gutters一起使用
     indentUnit: 4,              // 每个缩进块由几个空格组成。默认为2。
     autocorrect: true,          // 自动更正
@@ -151,35 +164,23 @@ function jqid(id) {
   return (!id) ? null : '#' + id.replace(/([#;?%&,.+*~\':"!^$[\]()=>|\/@_])/g, '\\$1');
 };
 
-$(function() {
-  var len = $("textarea").size(); //获取textarea标签的个数
-  var arr = [];
-  var idst = new Object();
-  for(var index = 0; index < len; index++) { //创建一个数字数组
-    arr[index] = index;
-  };
-  $.each(arr, function(i) { //循环得到不同的id的值
-    var idname = $("textarea[name^='cbid.luci']").eq(i).attr("id");
-    if (idname != null) {
-      var model = idname.substring(25);
-      if (model.includes(".")) var model = model.substring(1);
-      if (model == "sh") var model = "shell";
-      editor(document.getElementById(idname), model);
-    };
-    // idst[$("input[name$='st']").eq(i).attr("id")] = "<%=con.note_path .. '/note" + [i+1] + ".' .. con.note_type%>";
-    // idst[$("input[name$='rm']").eq(i).attr("id")] = "<%=con.note_path .. '/note" + [i+1] + ".' .. con.note_type%>";
-  });
-  // console.log(idst);
-  // $.each(idst, function(value, key) {
-  //     $(jqid(value)).click(function() {
-  //       if (value.includes("st")) {
-  //         alert('id 为 ' + value + '， 执行运行 ' + key + ' 的文件!');
-  //       } else if (value.includes("rm")) {
-  //         alert('id 为 ' + value + '， 执行清空 ' + key + ' 的文件!');
-  //       };
-  //     });
-  // });
-});
+<%
+for id, value in pairs(id_model) do
+  for k, v in pairs(value) do
+    if k:find('path_note') then
+      model = v
+    end
+    if k:find('only_note') then
+      if v == '1' then only = true else only = false end
+    end
+    if model == "sh" then model = "shell" end
+    if model == "py" then model = "python" end
+    if model == "js" then model = "javascript" end
+    id = id
+  end
+%>
+  editor(document.getElementById('<%=id%>'), '<%=model%>', '<%=only%>');
+<%end%>
 
 //]]>
 </script>
