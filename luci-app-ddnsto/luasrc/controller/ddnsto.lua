@@ -7,9 +7,9 @@ function index()
 end
 
 function act_status()
-	local e = { }
-	e.v = luci.util.trim(luci.sys.exec("/usr/bin/ddnsto -w | awk '{print $1}'"))
-	e.id = luci.util.trim(luci.sys.exec("/usr/bin/ddnsto -w | awk '{print $2}'"))
+	local e = {}
+	e.v = luci.sys.exec("/usr/bin/ddnsto -v")
+	e.id = luci.sys.exec("/usr/bin/ddnsto -w | awk '{print $2}'")
 	e.running = luci.sys.call("pgrep /usr/bin/ddnsto > /dev/null") == 0
 	luci.http.prepare_content("application/json")
 	luci.http.write_json(e)

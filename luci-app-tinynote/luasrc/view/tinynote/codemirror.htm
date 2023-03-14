@@ -1,4 +1,5 @@
 <!-- https://www.min.jsdelivr.com/package/npm/codemirror -->
+<!-- <%local con = luci.model.uci:get_all("luci", "tinynote")%> -->
 <%
   local fs  = require "nixio.fs"
   local sys = require "luci.sys"
@@ -163,6 +164,24 @@ var editor = function(id, editor_mode, editor_only) {
 function jqid(id) {
   return (!id) ? null : '#' + id.replace(/([#;?%&,.+*~\':"!^$[\]()=>|\/@_])/g, '\\$1');
 };
+
+/*$(document).ready(function() {
+  XHR.post('<%=url("admin/nas/tinynote/status")%>', null,
+    function(x, data) {
+      $.each(data, function(key, value) {
+        $.each(value, function(k, v) {
+          if (k.match(/path_note/g)) { model = v };
+          if (k.match(/only_note/g)) {
+            if (v == '1') { only = true } else { only = false };
+          };
+        });
+        if (model == "sh") model = "shell";
+        if (model == "py") model = "python";
+        if (model == "js") model = "javascript";
+        editor(document.getElementById(key), model, only);
+      });
+    });
+});*/
 
 <%
 for key, value in pairs(id_model) do
