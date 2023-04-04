@@ -5,20 +5,6 @@
   local sys = require "luci.sys"
   local uci = require "luci.model.uci".cursor()
   local con = uci:get_all("luci", "tinynote")
-  local id_model = {}
-  for sum in sys.exec("seq -w 01 " .. con.note_sum):gmatch("%d+") do
-      local id = 'cbid.luci.tinynote.note' .. sum .. '.' .. con.note_type
-      id_model[id] = {}
-      id_model[id]['path_note' .. sum] = con.note_type
-      id_model[id]['only_note' .. sum] = con.only or '0'
-      for note, model in pairs(con) do
-          if note:find('path_note' .. sum) then
-              id_model[id][note] = model
-          elseif note:find('only_note' .. sum) then
-              id_model[id][note] = model
-          end
-      end
-  end
 %>
 <style>
   .CodeMirror {
@@ -103,15 +89,15 @@
 <script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/yaml-frontmatter/yaml-frontmatter.min.js"></script>
 
 <script>//<![CDATA[
-var editor = function(id, editor_mode, editor_only) {
-  var editor = CodeMirror.fromTextArea(id, {
-    mode: editor_mode,
+var editor = function(id, mode, only) {
+  var editor = CodeMirror.fromTextArea(document.getElementById(id), {
+    mode: mode,
     autoRefresh: true,          // 自动更新
     lint: true,                 // 检查格式
     tabSize: 4,                 // tab的空格个数
     keyMap: 'sublime',          // sublime编辑器效果
     theme: "<%=con.theme%>",    // 主题
-    readOnly: editor_only,      // 只读模式
+    readOnly: only,      // 只读模式
     foldGutter: true,           // 可将对象折叠，与下面的gutters一起使用
     indentUnit: 4,              // 每个缩进块由几个空格组成。默认为2。
     autocorrect: true,          // 自动更正
@@ -152,6 +138,9 @@ var editor = function(id, editor_mode, editor_only) {
     var info = cm.lineInfo(n);
     cm.setGutterMarker(n, "breakpoints", info.gutterMarkers ? null : makeMarker());
   });
+  editor.on("change", function(cm) {
+    cm.save();
+        });
 
   function makeMarker() {
     var marker = document.createElement("div");
@@ -161,46 +150,60 @@ var editor = function(id, editor_mode, editor_only) {
   }
 };
 
+/*$(document).ready(function() {
+  $.post('/cgi-bin/luci/admin/nas/tinynote/id', function(data, x) {
+  // XHR.get('/cgi-bin/luci/admin/nas/tinynote/id', null, function(x, data) {
+    $.each(data, function(key, value) {
+      $.each(value, function(k, v) {
+        if (k.match('path_note')) {
+          model = v;
+          if (v == "sh") model = "shell";
+          else if (v == "py") model = "python";
+          else if (v == "js") model = "javascript";
+        };
+        if (k.match('only_note')) {
+          if (v == '1') {only = true} else {only = false};
+        };
+      });
+      var key = key, only = only, model = model;
+      editor(key, model, only);
+    });
+  });
+});*/
+
 function jqid(id) {
   return (!id) ? null : '#' + id.replace(/([#;?%&,.+*~\':"!^$[\]()=>|\/@_])/g, '\\$1');
 };
 
-/*$(document).ready(function() {
-  XHR.post('<%=url("admin/nas/tinynote/status")%>', null,
-    function(x, data) {
-      $.each(data, function(key, value) {
-        $.each(value, function(k, v) {
-          if (k.match(/path_note/g)) { model = v };
-          if (k.match(/only_note/g)) {
-            if (v == '1') { only = true } else { only = false };
-          };
-        });
-        if (model == "sh") model = "shell";
-        if (model == "py") model = "python";
-        if (model == "js") model = "javascript";
-        editor(document.getElementById(key), model, only);
-      });
-    });
-});*/
-
 <%
-for key, value in pairs(id_model) do
-  for k, v in pairs(value) do
-    if k:find('path_note') then
-      model = v
-    elseif k:find('only_note') then
-      if v == '1' then only = true else only = false end
-    end
-    if model == "sh" then model = "shell" end
-    if model == "py" then model = "python" end
-    if model == "js" then model = "javascript" end
-    key = key
+  local id_model = {}
+  for sum in sys.exec("seq -w 01 " .. con.note_sum):gmatch("%d+") do
+      local id = 'cbid.luci.tinynote.note' .. sum .. '.' .. con.note_type
+      id_model[id] = {}
+      id_model[id]["model_note" .. sum] = con.note_type
+      id_model[id]['only_note' .. sum] = con.only or '0'
+      for note, model in pairs(con) do
+          if note:find("model_note" .. sum) then
+              id_model[id][note] = model
+          elseif note:find('only_note' .. sum) then
+              id_model[id][note] = model
+          end
+      end
   end
-  local id = key
-  local only = only
-  local model = model
+
+  for id, value in pairs(id_model) do
+    for k, v in pairs(value) do
+      if k:find('model') then
+        model = v
+      elseif k:find('only') then
+        if v == '1' then only = true else only = false end
+      end
+      if model == "sh" then model = "shell" end
+      if model == "py" then model = "python" end
+      if model == "js" then model = "javascript" end
+    end
 %>
-  editor(document.getElementById('<%=id%>'), '<%=model%>', '<%=only%>');
+  editor('<%=id%>', '<%=model%>', '<%=only%>');
 <%end%>
 
 //]]>

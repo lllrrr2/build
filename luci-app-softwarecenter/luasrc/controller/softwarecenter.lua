@@ -81,13 +81,14 @@ end
 
 function connection_status()
 	luci.http.prepare_content("application/json")
-	luci.http.write_json({nginx_state=nginx_status_report(),
-	mysql_state=mysql_status_report(),
+	luci.http.write_json({
 	php_state=php_status_report(),
+	website_list=get_website_list(),
+	nginx_state=nginx_status_report(),
+	mysql_state=mysql_status_report(),
+	php_installed=php_install_report(),
 	nginx_installed=nginx_installed_report(),
 	mysql_installed=mysql_installed_report(),
-	php_installed=php_install_report(),
-	website_list_size=get_website_list_size(),
-	website_list=get_website_list()
+	website_list_size=get_website_list_size()
 	})
 end

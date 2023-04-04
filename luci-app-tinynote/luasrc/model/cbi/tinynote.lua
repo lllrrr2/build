@@ -48,16 +48,62 @@ local new_note = function(file, note_type)
 end
 
 local note_theme_array = {
-	"3024-day", "3024-night", "abbott", "abcdef", "ambiance", "ambiance-mobile",
-	"ayu-dark", "ayu-mirage", "base16-dark", "base16-light", "bespin", "blackboard",
-	"cobalt", "colorforth", "darcula", "dracula", "duotone-dark", "duotone-light",
-	"eclipse", "elegant", "erlang-dark", "gruvbox-dark", "hopscotch", "icecoder", "idea",
-	"isotope", "juejin", "lesser-dark", "liquibyte", "lucario", "material", "material-darker",
-	"material-ocean", "material-palenight", "mbo", "mdn-like", "midnight", "monokai", "moxer",
-	"neat", "neo", "night", "nord", "oceanic-next", "panda-syntax", "paraiso-dark",
-	"paraiso-light", "pastel-on-dark", "railscasts", "rubyblue", "seti", "shadowfox",
-	"solarized", "ssms", "the-matrix", "tomorrow-night-bright", "tomorrow-night-eighties",
-	"ttcn", "twilight", "vibrant-ink", "xq-dark", "xq-light", "yeti", "yonce", "zenburn",
+    { "3024-day",         "3024 Day"         },
+    { "3024-night",       "3024 Night"       },
+    { "abcdef",           "Abcdef"           },
+    { "ambiance-mobile",  "Ambiance Mobile"  },
+    { "ambiance",         "Ambiance"         },
+    { "base16-dark",      "Base16 (dark)"    },
+    { "bespin",           "Bespin"           },
+    { "blackboard",       "Blackboard"       },
+    { "cobalt",           "Cobalt"           },
+    { "colorforth",       "Colorforth"       },
+    { "darcula",          "Darcula"          },
+    { "dracula",          "Dracula"          },
+    { "duotone-dark",     "Duotone (dark)"   },
+    { "duotone-light",    "Duotone (light)"  },
+    { "eclipse",          "Eclipse"          },
+    { "elegant",          "Elegant"          },
+    { "erlang-dark",      "Erlang (dark)"    },
+    { "gruvbox-dark",     "Gruvbox (dark)"   },
+    { "hopscotch",        "Hopscotch"        },
+    { "icecoder",         "Icecoder"         },
+    { "idea",             "Idea"             },
+    { "isotope",          "Isotope"          },
+    { "lesser-dark",      "Lesser Dark"      },
+    { "liquibyte",        "Liquibyte"        },
+    { "lucario",          "Lucario"          },
+    { "material",         "Material"         },
+    { "mbo",              "MBO"              },
+    { "mdn-like",         "MDN-like"         },
+    { "midnight",         "Midnight"         },
+    { "monokai",          "Monokai"          },
+    { "neat",             "Neat"             },
+    { "neo",              "Neo"              },
+    { "night",            "Night"            },
+    { "nord",             "Nord"             },
+    { "oceanic-next",     "Oceanic Next"     },
+    { "panda-syntax",     "Panda"            },
+    { "paraiso-dark",     "Paraiso (dark)"   },
+    { "paraiso-light",    "Paraiso (light)"  },
+    { "pastel-on-dark",   "Pastel on dark"   },
+    { "railscasts",       "Railscasts"       },
+    { "rubyblue",         "Rubyblue"         },
+    { "seti",             "Seti"             },
+    { "shadowfox",        "Shadowfox"        },
+    { "solarized",        "Solarized"        },
+    { "ssms",             "SSMS"             },
+    { "the-matrix",       "Matrix"           },
+    { "tomorrow-night-bright", "Tomorrow Night Bright"},
+    { "tomorrow-night-eighties", "Tomorrow Night Eighties"},
+    { "ttcn",             "TTCN"             },
+    { "twilight",         "Twilight"         },
+    { "vibrant-ink",      "Vibrant Ink"      },
+    { "xq-dark",          "XQ (dark)"        },
+    { "xq-light",         "XQ (light)"       },
+    { "yeti",             "Yeti"             },
+    { "yonce",            "Yonce"            },
+    { "zenburn",          "Zenburn"          }
 }
 
 local note_mode_array = {
@@ -86,14 +132,22 @@ f.anonymous = true -- 删除
 -- f.sortable  = true -- 移动
 
 f:tab("note", translate("Note设置"))
-note_path = f:taboption("note", Value, "note_path", translate("保存路径"))
+local note_path = f:taboption("note", Value, "note_path", translate("保存路径"))
 note_path.default = "/etc/tinynote"
 
-note_sum = f:taboption("note", Value, "note_sum", translate("文本数量"))
-note_sum.default = "8"
+local note_sum = f:taboption("note", Value, "note_sum", translate("文本数量"))
+note_sum.default = tostring(note_sum)
+note_sum.rmempty = false
 note_sum.datatype = "uinteger"
+note_sum.validate = function(self, value)
+	local count = tonumber(value) or 0
+	if count < 1 or count > 20 then
+		return nil, translate("请输入1到20之间的数字。")
+	end
+	return Value.validate(self, value)
+end
 
-note_type = f:taboption("note", ListValue, "note_type", translate("文本类形"))
+local note_type = f:taboption("note", ListValue, "note_type", translate("文本类形"))
 note_type.default = "txt"
 note_type:value('txt', translate('txt'))
 note_type:value('sh', translate('sh'))
@@ -113,8 +167,8 @@ enable.default = '0'
 
 theme = f:taboption("codemirror", ListValue, "theme", translate("Design"))
 theme.default = "monokai"
-for _, v in pairs(note_theme_array) do
-	theme:value(v)
+for _, k in ipairs(note_theme_array) do
+    theme:value(k[1], k[2])
 end
 theme:depends("enable", 1)
 
@@ -173,21 +227,8 @@ for sum in string.gmatch(sys.exec("seq -w 01 " .. note_sum), "%d+") do
 	if sys.call("[ -f " .. file .. " ]") == 0 then
 		local note = ("note" .. sum)
 		s:tab(note, translate("笔记 " .. sum), translate("笔记" .. sum .. "设置"))
-
-		-- if sys.call("[ $(sed -n '$=' " .. file .. ") -gt 1 ]") == 0 then
-		-- 	button = s:taboption(note, Button, sum .. ".rm")
-		-- 	button.inputtitle = translate("清空笔记 " .. sum)
-		-- 	button.template = "tinynote/button"
-		-- 	button.inputstyle = "remove"
-		-- end
 		
-		-- button = s:taboption(note, Button, sum .. ".st")
-		-- button.inputtitle = translate("运行笔记 " .. sum)
-		-- button.template = "tinynote/button"
-		-- button.inputstyle = "apply"
-		-- button.forcewrite = true
-		
-		path = s:taboption(note, Value, "path_note" .. sum, translate("类形"))
+		path = s:taboption(note, Value, "model_note" .. sum, translate("类形"))
 		path.default = ""
 		path:value('txt', translate('txt'))
 		path:value('sh', translate('sh'))
@@ -201,7 +242,20 @@ for sum in string.gmatch(sys.exec("seq -w 01 " .. note_sum), "%d+") do
 		
 		note_only = s:taboption(note, Flag, "only_note" .. sum, translate("只读"))
 
-		a = s:taboption(note, Value, "note" .. sum .. "." .. note_type)
+--[[		if sys.call("[ $(sed -n '$=' " .. file .. ") -gt 1 ]") == 0 then
+			button = s:taboption(note, Button, sum .. ".rm")
+			button.inputtitle = translate("清空笔记 " .. sum)
+			button.template = "tinynote/button"
+			button.inputstyle = "remove"
+		end
+		
+		button = s:taboption(note, Button, sum .. ".st")
+		button.inputtitle = translate("运行笔记 " .. sum)
+		button.template = "tinynote/button"
+		button.inputstyle = "apply"
+		button.forcewrite = true--]]
+
+		local a = s:taboption(note, TextValue, "note" .. sum .. "." .. note_type)
 		a.template = "cbi/tvalue"
 		a.rows = 35
 		a.wrap = "off"
@@ -217,6 +271,19 @@ for sum in string.gmatch(sys.exec("seq -w 01 " .. note_sum), "%d+") do
 				end
 			end
 		end
+
+--[[		if sys.call("[ $(sed -n '$=' " .. file .. ") -gt 1 ]") == 0 then
+			button = s:taboption(note, Button, sum .. ".rm")
+			button.inputtitle = translate("清空笔记 " .. sum)
+			button.template = "tinynote/button"
+			button.inputstyle = "remove"
+		end
+		
+		button = s:taboption(note, Button, sum .. ".st")
+		button.inputtitle = translate("运行笔记 " .. sum)
+		button.template = "tinynote/button"
+		button.inputstyle = "apply"
+		button.forcewrite = true--]]
 	end
 end
 

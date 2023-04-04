@@ -1,7 +1,95 @@
+<%
+  local uci = require "luci.model.uci".cursor()
+  local con = uci:get_all("luci", "tinynote")
+%>
+<script src="https://cdn.staticfile.org/jquery/2.2.4/jquery.min.js"></script>
+<script>//<![CDATA[
+
+var a_url = '/cgi-bin/luci/admin/nas/tinynote/nat_config';
+var s_url = '/cgi-bin/luci/admin/nas/tinynote/set_infos';
+function stxhr_get(s_url, id) {
+  var stxhr = new XHR();
+  var args;
+  var field = document.getElementById(id);
+  if (field) {
+    args = encodeURIComponent(field.value);
+    console.log(field)
+  }
+  var legend = document.getElementById('command-rc-legend');
+  var output = document.getElementById('command-rc-output');
+  if (legend && output) {
+    output.innerHTML =
+      '<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> ' +
+      '<font size="3" color="red">等待命令完成...</font>';
+    legend.parentNode.style.display = 'block';
+    legend.style.display = 'inline';
+    stxhr.get('<%=url('admin/nas/tinynote/nat_config')%>/' + id + (args ? '/' + args : ''), null, function(x, st) {
+      if (st) {
+        if (st.binary)
+          st.stdout = '[<%:Binary data not displayed, download instead.%>]';
+        legend.style.display = 'none';
+        output.innerHTML = String.format(
+          '<pre><strong># %h\n</strong>%h<span style="color:red">%h</span></pre>' +
+          '<div class="alert-message warning">%s (<%:Code:%> %d)</div>',
+          st.command, st.stdout, st.stderr,
+          (st.exitcode == 0) ? '<%:Command successful%>' : '<%:Command failed%>',
+          st.exitcode);
+      } else {
+        legend.style.display = 'none';
+        output.innerHTML = '<span class="error"><%:Failed to execute command!%></span>';
+      }
+      location.hash = '#output';
+    });
+  }
+  // ev.preventDefault();
+}
+
+function ajax_set(id) {
+  var arr = new Object();
+  for(var index = 1; index < '<%=con.note_sum%>'; index++) { //创建一个数字数组
+      arr['value' + index] = 'data' + index;
+  };
+
+/*  $(document).ready(function() {
+   $.each(arr, function(key, value) {
+      console.log(arr)
+   })
+  });
+  */
+  $.ajax({
+    url:a_url,
+    method:'post',
+    dataType:'json',
+    data:{arr, value99:0},//向服务器发送数据
+    success:function(st) {
+      stxhr_get(s_url, id);
+      if(st.result == 'success'){
+        alert("配置成功...");
+        // setInterval("window.location.reload()",1000);
+      } else {
+        stxhr_get(s_url + st.result, id);
+        alert("配置失败...");
+      }
+    }
+  });
+};
+
+//]]>
+</script>
+
 <div style="display: inline-block; width:120px;">
-	<% if self:cfgvalue(section) ~= false then %>
-		<input class="btn cbi-button cbi-button-<%=self.inputstyle or "button" %>" type="button"" <% if self.disable then %>disabled <% end %><%= attr("name", cbid) .. attr("id", cbid) .. attr("value", self.inputtitle or self.title)%> />
-	<% else %>
-		-
-	<% end %>
+   <% if self:cfgvalue(section) ~= false then %>
+    <input class="btn cbi-button cbi-button-<%=self.inputstyle or 'button'%>" type='button'
+    <% if self.disable then %>
+      disabled
+    <% end %>
+    <%=attr('name', cbid) .. attr("id", cbid) .. attr("value", self.inputtitle or self.title)%>
+    onclick='ajax_set(id)'/>
+  <% else %>
+    -
+  <% end %>
 </div>
+<fieldset class="cbi-section" style="display:none">
+  <legend id="command-rc-legend"><%:Collecting data...%></legend>
+  <span id="command-rc-output"></span>
+</fieldset>
