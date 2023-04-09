@@ -136,7 +136,7 @@ local note_path = f:taboption("note", Value, "note_path", translate("保存路�
 note_path.default = "/etc/tinynote"
 
 local note_sum = f:taboption("note", Value, "note_sum", translate("文本数量"))
-note_sum.default = tostring(note_sum)
+note_sum.default = 1
 note_sum.rmempty = false
 note_sum.datatype = "uinteger"
 note_sum.validate = function(self, value)
