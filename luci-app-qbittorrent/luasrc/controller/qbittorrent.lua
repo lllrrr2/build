@@ -1,38 +1,36 @@
-local fs   = require "nixio.fs"
 local sys  = require "luci.sys"
-local http = require "luci.http"
-local util = require "luci.util"
 local uci  = require "luci.model.uci".cursor()
-
 module("luci.controller.qbittorrent",package.seeall)
 
 function index()
 	if not nixio.fs.access("/etc/config/qbittorrent") then return end
 	entry({"admin", "nas", "qbittorrent"}, firstchild(), _("qBittorrent")).dependent = false
-	entry({"admin", "nas", "qbittorrent", "config"}, cbi("qbittorrent/config"), _("Global settings"), 1)
-	entry({"admin", "nas", "qbittorrent", "file"}, form("qbittorrent/files"), _("configuration file"), 2)
-	entry({"admin", "nas", "qbittorrent", "log"}, firstchild(), _("Operation log"), 3)
-	entry({"admin", "nas", "qbittorrent", "log", "view"}, template("qbittorrent/log"))
-	entry({"admin", "nas", "qbittorrent", "log", "read"}, call("action_log_read"))
-	entry({"admin", "nas", "qbittorrent", "status"}, call("act_status"))
+	entry({"admin", "nas", "qbittorrent", "config"}, cbi("qbittorrent/config"), _("Global settings"), 1).leaf=true
+	entry({"admin", "nas", "qbittorrent", "file"}, form("qbittorrent/files"), _("Configuration"), 2).leaf=true
+	entry({"admin", "nas", "qbittorrent", "log"}, form("qbittorrent/log"), _("Log"), 3).leaf=true
+	entry({"admin", "nas", "qbittorrent", "status"}, call("act_status")).leaf=true
+	entry({"admin", "nas", "qbittorrent", "action_log"}, call("action_log_read")).leaf=true
 end
 
 function act_status()
-	local e = { running = luci.sys.call("ps | grep /usr/bin/qbittorrent-nox | grep -v grep >/dev/null") == 0 }
+	local BinaryLocation = uci:get("qbittorrent", "main", "BinaryLocation") or "/usr/bin/qbittorrent-nox"
+	local e = {running = "", pat = ""}
+	if BinaryLocation ~= "/usr/bin/qbittorrent-nox" then
+		e.pat = BinaryLocation
+	end
+	e.running = sys.call("ps | grep " .. BinaryLocation .. " | grep -v grep >/dev/null") == 0
 	luci.http.prepare_content("application/json")
 	luci.http.write_json(e)
 end
 
 function action_log_read()
-	local data = { log = "", syslog = "" }
-	if uci:get("qbittorrent", "main", "Path") then
-		path = uci:get("qbittorrent", "main", "Path") .. "/qbittorrent.log"
-	else
-		path = uci:get("qbittorrent", "main", "profile") .. "/qBittorrent/data/logs/qbittorrent.log"
+	local t = {log = "", syslog = ""}
+	local config_dir = uci:get("qbittorrent", "main", "RootProfilePath") or "/tmp"
+	local config_file = config_dir .. "/qBittorrent/data/logs/qbittorrent.log"
+	if nixio.fs.access(config_file) then
+		t.log = sys.exec("tail -n 50 %s | sed 'x;1!H;$!d;x'" %config_file)
 	end
-	path = string.gsub(path, '/+', '/')
-	data.log = util.trim(sys.exec("tail -n 30 " .. path .. " | cut -d'-' -f2- | sed 's/T/-/'"))
-	data.syslog = util.trim(sys.exec("logread | grep qbittorrent | tail -n 30 | cut -d' ' -f3-"))
-	http.prepare_content("application/json")
-	http.write_json(data)
+	t.syslog = sys.exec("/sbin/logread -e qbittorrent | tail -n 50")
+	luci.http.prepare_content("application/json")
+	luci.http.write_json(t)
 end

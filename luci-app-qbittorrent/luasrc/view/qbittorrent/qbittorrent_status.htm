@@ -1,10 +1,11 @@
 <script type="text/javascript">//<![CDATA[
-XHR.poll(3, '<%=url([[admin]], [[nas]], [[qbittorrent]], [[status]])%>', null,
+XHR.poll(3, '<%=url([[admin/nas/qbittorrent/status]])%>', null,
 	function(x, data) {
 		var tb = document.getElementById('qbittorrent_status');
 		if (data && tb) {
 			if (data.running) {
-				var links = '<em><b><font color=green>qBittorrent <%:RUNNING%></font></b></em><input class="cbi-button  cbi-button-apply mar-10" type="button" value="<%:Open Web Interface%>" onclick="openwebui();" />';
+				var links = '<em><b><font color=green>qBittorrent <%:RUNNING%></font></b></em><input type="button" class="cbi-button  cbi-button-apply mar-10" value="<%:Open Web Interface%>" onclick="openwebui();"/>';
+				if (data.pat) var links = links + '<em>当前的qBittorrent在<font color=red>' + data.pat + '</em>';
 				tb.innerHTML = links;
 			} else {
 				tb.innerHTML = '<em><b><font color=red>qBittorrent <%:NOT RUNNING%></font></b></em>';
@@ -14,12 +15,12 @@ XHR.poll(3, '<%=url([[admin]], [[nas]], [[qbittorrent]], [[status]])%>', null,
 );
 
 function openwebui(){
-	var url = window.location.host+":<%=luci.sys.exec("uci -q get qbittorrent.main.Port"):gsub("^%s*(.-)%s*$", "%1")%>";
-	window.open('http://'+url,'qbittorrent','');
+	var url = window.location.host + ":<%=luci.sys.exec("uci -q get qbittorrent.main.Port"):gsub("^%s*(.-)%s*$", "%1")%>";
+	window.open('http://' + url, 'qbittorrent', '');
 };
 //]]>
 </script>
-<style>.mar-10 {margin-left: 50px; margin-right: 10px;}</style>
+<style>.mar-10 {margin-left: 20px; margin-right: 10px;}</style>
 <fieldset class="cbi-section">
 	<p id="qbittorrent_status">
 		<em><%:Collecting data...%></em>
