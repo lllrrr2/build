@@ -5,8 +5,8 @@ msgstr "一个基于QT的跨平台的开源BitTorrent客户端<br>"
 msgid "WebUI default username: admin password: adminadmin<br><b>"
 msgstr "WebUI默认用户名：admin 密码：adminadmin<br><b>"
 
-msgid "Current version of qBitTorrent: "
-msgstr "当前 qBittorrent 版本: "
+msgid "Current version: "
+msgstr "当前版本: "
 
 msgid "Open Web Interface"
 msgstr "打开 Web 管理界面"
@@ -619,11 +619,26 @@ msgstr "本页是qBittorrent的运行日志内容。"
 msgid "This is the content of the operation log under <code>%s</code>:"
 msgstr "这是<code>%s</code>下的运行日志内容："
 
+msgid "The current qBittorrent is at"
+msgstr "当前的qBittorrent在"
+
 msgid "qBittorrent Downloader"
 msgstr "qBittorrent 下载器"
 
 msgid "Failed to load log data."
 msgstr "无法加载日志数据。"
+
+msgid ""
+"[Size:"
+"],[Available:"
+"],[used:"
+msgstr ""
+"[大小："
+"],[可用："
+"],[已用："
+
+msgid ""
+msgstr ""
 
 msgid ""
 msgstr ""

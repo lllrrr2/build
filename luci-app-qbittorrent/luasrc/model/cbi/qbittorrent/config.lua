@@ -3,8 +3,7 @@ local sys  = require "luci.sys"
 local util = require "luci.util"
 local uci  = require "luci.model.uci".cursor()
 local BinaryLocation = uci:get("qbittorrent", "main", "BinaryLocation") or "/usr/bin/qbittorrent-nox"
-local v = util.exec("export HOME=/var/run/qbittorrent && ".. BinaryLocation .. " -v 2>/dev/null | awk '{print $2}'")
-if v then sys.call("rm -rf /var/run/qbittorrent") end
+local v = sys.exec("export HOME=/tmp/qbittorrent;".. BinaryLocation .. " -v 2>/dev/null | awk '{print $2}'")
 
 function titlesplit(e)
 	return "<p style = 'font-size:15px;font-weight:bold;color: DodgerBlue'>" .. translate(e) .. "</p>"
@@ -13,7 +12,7 @@ end
 a = Map("qbittorrent", translate("qBittorrent Downloader"),
 	translate("A cross-platform open source BitTorrent client based on QT<br>") ..
 	translate("WebUI default username: admin password: adminadmin<br><b>") ..
-	translate("Current version: ") ..
+	translate("当前版本: ") ..
 	translate("</b><b style='color:red'>".. v .. "</b>"))
 a:section(SimpleSection).template = "qbittorrent/qbittorrent_status"
 
@@ -42,11 +41,11 @@ e.default = '/tmp'
 e = t:taboption("basic", Value, "SavePath", translate("Save Path"),
 	translate("The files are stored in the download directory automatically created under the selected mounted disk"))
 local array = {}
-for t in util.execi("mount | awk '/mnt/{print $3}' | cut -d/ -f-3 | uniq") do
+for disk in util.execi("mount | awk '/mnt/{print $3}' | cut -d/ -f-3 | uniq") do
     for x = 1,6 do
-        array[x] = sys.exec("df -h | grep " .. t .. " | awk '{print $" .. x .. "}'")
+        array[x] = sys.exec("df -h | grep " ..disk.." | awk '{print $"..x.."}'")
     end
-    e:value(t, translate(t .. ' 大小: ' .. array[2] .. '/' .. '可用:' .. array[4] .. '/' .. '已用:' .. array[3] .. '(' .. array[5] .. ')'))
+    e:value(disk, translate(disk.."[大小："..array[2].."],[可用："..array[4].."],[已用："..array[3]..'('..array[5]..')]'))
 end
 
 e = t:taboption("basic", Value, "Locale", translate("Locale Language"),
@@ -55,10 +54,15 @@ e:value("zh_CN", translate("Simplified Chinese"))
 e:value("en", translate("English"))
 e.default = "zh_CN"
 
---e = t:taboption("basic", Value, "Username", translate("Username"), translate("The login name for WebUI."))
---e.placeholder = "admin"
---e = t:taboption("basic", Value, "Password", translate("Password"), translate("The login password for WebUI."))
---e.password = true
+if sys.exec("echo " .. v .. "| sed 's/v//' | awk -F. '{printf $1$2}'") <= '41' then
+	e = t:taboption("basic", Value, "Username", translate("Username"),
+		translate("The login name for WebUI."))
+	e.placeholder = "admin"
+
+	e = t:taboption("basic", Value, "Password", translate("Password"),
+		translate("The login password for WebUI."))
+	e.password = true
+end
 
 e = t:taboption("basic", Value, "Port", translate("Listening Port"),
 	translate("The listening port for WebUI."))
