@@ -3,7 +3,8 @@ local sys  = require "luci.sys"
 local util = require "luci.util"
 local uci  = require "luci.model.uci".cursor()
 local BinaryLocation = uci:get("qbittorrent", "main", "BinaryLocation") or "/usr/bin/qbittorrent-nox"
-local v = sys.exec(BinaryLocation .. " -v 2>/dev/null | awk '{print $2}'")
+local v = util.exec("export HOME=/var/run/qbittorrent && ".. BinaryLocation .. " -v 2>/dev/null | awk '{print $2}'")
+if v then sys.call("rm -rf /var/run/qbittorrent") end
 
 function titlesplit(e)
 	return "<p style = 'font-size:15px;font-weight:bold;color: DodgerBlue'>" .. translate(e) .. "</p>"
@@ -89,12 +90,12 @@ e.enabled = "true"
 e.disabled = "false"
 e.default = e.disabled
 
-e = t:taboption("connection", Value, "PortRangeMin", translate("Connection Port"))
-e:depends("UseRandomPort", false)
-e.datatype = "range(1024, 65535)"
-math.randomseed(tostring(os.time()):reverse():sub(1, 7))
-e.default = math.random(1024, 65535)
-e.rmempty = false
+o = t:taboption("connection", Value, "PortRangeMin",
+	translate("Connection Port"), translate("Generate Randomly"))
+o:depends("UseRandomPort", false)
+o.datatype = "range(1024,65535)"
+o.template = "qbittorrent/qbt_value"
+o.btnclick = "randomToken();"
 
 e = t:taboption("connection", Value, "GlobalDLLimit", translate("Global Download Speed"))
 e.datatype = "float"

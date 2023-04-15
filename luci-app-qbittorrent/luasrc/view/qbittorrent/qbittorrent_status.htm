@@ -18,6 +18,11 @@ function openwebui(){
 	var url = window.location.host + ':<%=luci.sys.exec("uci -q get qbittorrent.main.Port"):gsub("^%s*(.-)%s*$", "%1")%>';
 	window.open('http://' + url, 'qbittorrent', '');
 };
+
+function randomToken() {
+	document.getElementById('cbid.qbittorrent.main.PortRangeMin').value = Math.floor( Math.random() * (65535 - 1024)) + 1024;
+};
+
 //]]>
 </script>
 <style>.mar-10 {margin-left: 20px; margin-right: 10px;}</style>

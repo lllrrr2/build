@@ -14,23 +14,31 @@ end
 
 function act_status()
 	local BinaryLocation = uci:get("qbittorrent", "main", "BinaryLocation") or "/usr/bin/qbittorrent-nox"
-	local e = {running = "", pat = ""}
+	local status = {
+		pid = 0,
+		pat = "",
+		running = "";
+	}
+	status.pid = sys.exec("pidof " .. BinaryLocation) or 0
 	if BinaryLocation ~= "/usr/bin/qbittorrent-nox" then
-		e.pat = BinaryLocation
+		status.pat = BinaryLocation
 	end
-	e.running = sys.call("ps | grep " .. BinaryLocation .. " | grep -v grep >/dev/null") == 0
+	status.running = sys.call("ps | grep " .. BinaryLocation .. " | grep -v grep >/dev/null") == 0
 	luci.http.prepare_content("application/json")
-	luci.http.write_json(e)
+	luci.http.write_json(status)
 end
 
 function action_log_read()
-	local t = {log = "", syslog = ""}
-	local config_dir = uci:get("qbittorrent", "main", "RootProfilePath") or "/tmp"
-	local config_file = config_dir .. "/qBittorrent/data/logs/qbittorrent.log"
-	if nixio.fs.access(config_file) then
-		t.log = sys.exec("tail -n 50 %s | sed 'x;1!H;$!d;x'" %config_file)
+	local file = {
+		log = "",
+		syslog = "";
+	}
+	local log_dir = uci:get("qbittorrent", "main", "RootProfilePath") or "/tmp"
+	local log_file = log_dir .. "/qBittorrent/data/logs/qbittorrent.log"
+	if nixio.fs.access(log_file) then
+		file.log = sys.exec("tail -n 50 %s | sed 'x;1!H;$!d;x'" %log_file)
 	end
-	t.syslog = sys.exec("/sbin/logread -e qbittorrent | tail -n 50")
+	file.syslog = sys.exec("/sbin/logread -e qbittorrent | tail -n 50")
 	luci.http.prepare_content("application/json")
-	luci.http.write_json(t)
+	luci.http.write_json(file)
 end
