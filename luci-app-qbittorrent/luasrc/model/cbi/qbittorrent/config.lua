@@ -10,9 +10,10 @@ function titlesplit(e)
 end
 
 a = Map("qbittorrent", translate("qBittorrent Downloader"),
-translate("A cross-platform open source BitTorrent client based on QT<br>" ..
-	"WebUI default username: admin password: adminadmin<br>" ..
-	"<b>Current version of qBitTorrent: </b><b style='color:red'>".. v .. "</b>"));
+	translate("A cross-platform open source BitTorrent client based on QT<br>") ..
+	translate("WebUI default username: admin password: adminadmin<br><b>") ..
+	translate("Current version: ") ..
+	translate("</b><b style='color:red'>".. v .. "</b>"))
 a:section(SimpleSection).template = "qbittorrent/qbittorrent_status"
 
 t = a:section(NamedSection, "main", "qbittorrent")
@@ -29,18 +30,22 @@ e.default = '0'
 
 e = t:taboption("basic", ListValue, "user", translate("Run daemon as user"),
 	translate("留空以使用默认用户。"))
-for t in util.execi("cat /etc/passwd | cut -d ':' -f1") do
+for t in util.execi("cut -d ':' -f1 /etc/passwd") do
 	e:value(t)
 end
 
 e = t:taboption("basic", Value, "RootProfilePath", translate("Root Path of the Profile"),
-translate("Specify the root path of all profiles which is equivalent to the commandline parameter: <b>--profile [PATH]</b>. The default value is /tmp."))
+	translate("Specify the root path of all profiles which is equivalent to the commandline parameter: <b>--profile [PATH]</b>. The default value is /tmp."))
 e.default = '/tmp'
 
 e = t:taboption("basic", Value, "SavePath", translate("Save Path"),
-	translate("The directory to store the downloaded file. For example <code>/mnt/sda1</code>."))
+	translate("The files are stored in the download directory automatically created under the selected mounted disk"))
+local array = {}
 for t in util.execi("mount | awk '/mnt/{print $3}' | cut -d/ -f-3 | uniq") do
-	e:value(t)
+    for x = 1,6 do
+        array[x] = sys.exec("df -h | grep " .. t .. " | awk '{print $" .. x .. "}'")
+    end
+    e:value(t, translate(t .. ' 大小: ' .. array[2] .. '/' .. '可用:' .. array[4] .. '/' .. '已用:' .. array[3] .. '(' .. array[5] .. ')'))
 end
 
 e = t:taboption("basic", Value, "Locale", translate("Locale Language"),
@@ -55,7 +60,7 @@ e.default = "zh_CN"
 --e.password = true
 
 e = t:taboption("basic", Value, "Port", translate("Listening Port"),
-translate("The listening port for WebUI."))
+	translate("The listening port for WebUI."))
 e.datatype = "port"
 e.default = "8080"
 
@@ -72,13 +77,13 @@ e.disabled = 'false'
 e.default = e.enabled
 
 e = t:taboption("connection", Flag, "UPnP", translate("Use UPnP for Connections"),
-translate("Using the UPnP / NAT-PMP port of the router for connecting to WebUI."))
+	translate("Using the UPnP / NAT-PMP port of the router for connecting to WebUI."))
 e.enabled = "true"
 e.disabled = "false"
 e.default = e.enabled
 
 e = t:taboption("connection", Flag, "UseRandomPort", translate("Use Random Port"),
-translate("Assign a different port randomly every time when qBittorrent starts up," ..
+	translate("Assign a different port randomly every time when qBittorrent starts up," ..
 	' which will invalidate the customized options.'))
 e.enabled = "true"
 e.disabled = "false"

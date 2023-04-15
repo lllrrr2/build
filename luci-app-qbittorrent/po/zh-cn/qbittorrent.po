@@ -1,12 +1,12 @@
 
-msgid ""
-"A cross-platform open source BitTorrent client based on QT<br>"
-"WebUI default username: admin password: adminadmin<br>"
-"<b>Current version of qBitTorrent: </b><b style='color:red'>"
-msgstr ""
-"一个基于QT的跨平台的开源BitTorrent客户端<br>"
-"WebUI默认用户名：admin 密码：adminadmin<br>"
-"<b>当前 qBittorrent 版本: </b><b style='color:red'>"
+msgid "A cross-platform open source BitTorrent client based on QT<br>"
+msgstr "一个基于QT的跨平台的开源BitTorrent客户端<br>"
+
+msgid "WebUI default username: admin password: adminadmin<br><b>"
+msgstr "WebUI默认用户名：admin 密码：adminadmin<br><b>"
+
+msgid "Current version of qBitTorrent: "
+msgstr "当前 qBittorrent 版本: "
 
 msgid "Open Web Interface"
 msgstr "打开 Web 管理界面"
@@ -53,8 +53,8 @@ msgstr "配置目录保存的路径，默认值是/tmp。"
 msgid "Save Path"
 msgstr "下载目录"
 
-msgid "The directory to store the downloaded file. For example <code>/mnt/sda1</code>."
-msgstr "用于放置下载文件的目录，例如：<code>/mnt/sda1</code>。"
+msgid "The files are stored in the download directory automatically created under the selected mounted disk"
+msgstr "文件存放在所选已挂载磁盘下自动创建的download目录中"
 
 msgid "Locale Language"
 msgstr "语言"
