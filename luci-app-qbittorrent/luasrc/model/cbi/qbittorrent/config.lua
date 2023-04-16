@@ -3,7 +3,7 @@ local sys  = require "luci.sys"
 local util = require "luci.util"
 local uci  = require "luci.model.uci".cursor()
 local BinaryLocation = uci:get("qbittorrent", "main", "BinaryLocation") or "/usr/bin/qbittorrent-nox"
-local v = sys.exec("export HOME=/tmp/qbittorrent;".. BinaryLocation .. " -v 2>/dev/null | awk '{print $2}'")
+local v = sys.exec("export HOME=/tmp/qbittorrent;" .. BinaryLocation .. " -v 2>/dev/null | awk '{print $2}'")
 
 function titlesplit(e)
 	return "<p style = 'font-size:15px;font-weight:bold;color: DodgerBlue'>" .. translate(e) .. "</p>"
@@ -12,7 +12,7 @@ end
 a = Map("qbittorrent", translate("qBittorrent Downloader"),
 	translate("A cross-platform open source BitTorrent client based on QT<br>") ..
 	translate("WebUI default username: admin password: adminadmin<br><b>") ..
-	translate("当前版本: </b><b style=\"color:red\">".. v .. "</b>"))
+	translate("Current version: </b><b style=\"color:red\">".. v .. "</b>"))
 a:section(SimpleSection).template = "qbittorrent/qbittorrent_status"
 
 t = a:section(NamedSection, "main", "qbittorrent")
@@ -28,7 +28,7 @@ e = t:taboption("basic", Flag, "EnableService", translate("Enabled"))
 e.default = '0'
 
 e = t:taboption("basic", ListValue, "user", translate("Run daemon as user"),
-	translate("留空以使用默认用户。"))
+	translate("Leave blank to use the default user."))
 for t in util.execi("cut -d ':' -f1 /etc/passwd") do
 	e:value(t)
 end
@@ -42,9 +42,9 @@ e = t:taboption("basic", Value, "SavePath", translate("Save Path"),
 local array = {}
 for disk in util.execi("mount | awk '/mnt/{print $3}' | cut -d/ -f-3 | uniq") do
     for x = 1,4 do
-        array[x] = sys.exec("df -h | grep " ..disk.." | awk '{print $"..x.."}'")
+        array[x] = sys.exec("df -h | grep " .. disk .. " | awk '{print $" .. x .. "}'")
     end
-    e:value(disk, translate(disk.."（大小："..array[2].."）（可用："..array[4].."）"))
+    e:value(disk, translate(disk .. "(size: " .. array[2] .. ") (Available: " .. array[4] .. "）"))
 end
 
 e = t:taboption("basic", Value, "Locale", translate("Locale Language"),
@@ -94,10 +94,11 @@ e.disabled = "false"
 e.default = e.disabled
 
 o = t:taboption("connection", Value, "PortRangeMin",
-	translate("Connection Port"), translate("Generate Randomly"))
+	translate("Connection Port"), translate(" "))
 o:depends("UseRandomPort", false)
 o.datatype = "range(1024,65535)"
 o.template = "qbittorrent/qbt_value"
+o.btntext = translate("Generate Randomly")
 o.btnclick = "randomToken();"
 
 e = t:taboption("connection", Value, "GlobalDLLimit", translate("Global Download Speed"))
@@ -229,7 +230,7 @@ e = t:taboption("bittorrent", Flag, "LSD", translate("Enable LSD"),
 	translate("Enable Local Peer Discovery to find more peers."))
 e.enabled = "true"
 e.disabled = "false"
---e.default = e.disabled
+e.default = e.disabled
 
 e = t:taboption("bittorrent", Flag, "uTP_rate_limited", translate("μTP Rate Limit"),
 	translate("Apply rate limit to μTP protocol."))
@@ -326,10 +327,10 @@ e.enabled = "true"
 e.disabled = "false"
 e.default = e.disabled
 
--- e = t:taboption("webgui", Value, "WebUIa", translate("使用备用 Web UI"))
+-- e = t:taboption("webgui", Value, "WebUIa", translate("Use Alternate Web UI"))
 -- e.enabled = "true"
 -- e.disabled = "false"
--- e.placeholder = translate('文件路径')
+-- e.placeholder = translate('file path')
 
 e = t:taboption("webgui", Flag, "CSRFProtection", translate("CSRF Protection"),
 	translate("Enable Cross-Site Request Forgery (CSRF) protection."))
@@ -361,7 +362,7 @@ e.enabled = "true"
 e.disabled = "false"
 e.default = e.disabled
 
-e = t:taboption("webgui", DynamicList, "AuthSubnetWhitelist", translate("Subnet Whitelist"))
+e = t:taboption("webgui", DynamicList, "AuthSubnetWhitelist", translate(" "))
 e.placeholder = translate('Example: 172.17.32.0/24, fdff:ffff:c8::/40')
 e:depends("AuthSubnetWhitelistEnabled", "true")
 
@@ -371,7 +372,7 @@ e.enabled = 'true'
 e.disabled = 'false'
 e.default = e.disabled
 
-e = t:taboption('webgui', TextValue, 'CustomHTTPHeaders', translate(' '))
+e = t:taboption('webgui', DynamicList, 'CustomHTTPHeaders', translate(' '))
 e:depends('CustomHTTPHeadersEnabled', 'true')
 e.placeholder = translate('Header: value pairs, one per line')
         
@@ -387,8 +388,7 @@ e.enabled = 'true'
 e.disabled = 'false'
 e.default = e.disabled
 
-e = t:taboption('logger', Value, 'Path', translate('Log Path'),
-	translate('The path for qBittorrent log.'))
+e = t:taboption('logger', Value, 'Path', translate('Log Path'))
 e:depends('Enabled', 'true')
 e.placeholder = translate('The path for qBittorrent log.')
 
@@ -422,11 +422,11 @@ e.enabled = 'true'
 e.disabled = 'false'
 e.default = e.enabled
 
-e = t:taboption("advanced", Flag, "SuperSeeding", translate("Super Seeding"),
+--[[ e = t:taboption("advanced", Flag, "SuperSeeding", translate("Super Seeding"),
 	translate("The super seeding mode."))
 e.enabled = "true"
 e.disabled = "false"
-e.default = e.disabled
+e.default = e.disabled ]]
 
 e = t:taboption("advanced", Flag, "IncludeOverhead", translate("Limit Overhead Usage"),
 	translate("The overhead usage is been limitted."))

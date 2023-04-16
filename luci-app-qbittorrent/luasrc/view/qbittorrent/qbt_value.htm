@@ -23,12 +23,9 @@
 			ifattr(self.onmouseover, "onmouseover")
 		%> />
 		<% if self.description and #self.description > 0 then -%>
-			<div class="cbi-value-description">
-				<input class="cbi-button cbi-input-<%=self.inputstyle or "button" %>" type="button"<%=
-					attr("value", self.description) ..
-					ifattr(self.btnclick, "onclick", self.btnclick)
-				%> />
-			</div>
+		<div class="cbi-button cbi-button-neutral" title="<%=self.btntext%>" aria-label="<%=self.btntext%>"<%=
+			ifattr(self.btnclick, "onclick", self.btnclick)
+			%>><span style="font-weight: normal;"><%=self.btntext%></span></div>
 		<%- end %>
 	<%- if self.title and #self.title > 0 then -%>
 	</div>

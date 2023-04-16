@@ -629,16 +629,20 @@ msgid "Failed to load log data."
 msgstr "无法加载日志数据。"
 
 msgid ""
-"[Size:"
-"],[Available:"
-"],[used:"
+"(size: "
+") (Available: "
 msgstr ""
-"[大小："
-"],[可用："
-"],[已用："
+"（大小："
+"）（可用："
+
+msgid "Leave blank to use the default user."
+msgstr "留空以使用默认用户。"
 
 msgid ""
-msgstr ""
+msgstr "使用备用 Web UI"
+
+msgid "file path"
+msgstr "文件路径"
 
 msgid ""
 msgstr ""
