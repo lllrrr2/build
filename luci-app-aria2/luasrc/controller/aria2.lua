@@ -1,7 +1,8 @@
 module("luci.controller.aria2",package.seeall)
-local ucic = luci.model.uci.cursor()
+local uci = luci.model.uci.cursor()
 local http = require "luci.http"
 local util = require "luci.util"
+local sys  = require "luci.sys"
 
 function index()
 	if not nixio.fs.access("/etc/config/aria2") then return end
@@ -15,23 +16,33 @@ function index()
 	entry({"admin", "nas", "aria2", "status"}, call("action_status"))
 end
 
+local log_dir = uci:get("aria2", "main", "log_dir") or "/var/log"
+local aria2_log = log_dir .. '/aria2.log'
+local aria2_syslog = log_dir .. '/aria2_syslog.log'
+
 function action_status()
-	local t = {running = luci.sys.call("ps | grep /usr/bin/aria2c | grep -v grep >/dev/null") == 0}
+	local status = {running = sys.call("ps | grep /usr/bin/aria2c | grep -v grep >/dev/null") == 0}
 	http.prepare_content("application/json")
-	http.write_json(t)
+	http.write_json(status)
 end
 
 function clear_log()
-	luci.sys.call("cat > /var/log/aria2_1.log")
+	if nixio.fs.access(aria2_syslog) then
+		sys.call(":> " .. aria2_syslog)
+	end
 end
 
 function action_log_read()
-	local t = {log = "", syslog = ""}
-	local o = ucic:get("aria2", "main", "log") or "/var/log/aria2.log"
-		if nixio.fs.access(o) then
-			t.log = util.trim(luci.sys.exec("tail -n 50 %s | sed 'x;1!H;$!d;x'" %o))
-		end
-	t.syslog = util.trim(luci.sys.exec("[ -f '/var/log/aria2_1.log' ] && tail -n -50 /var/log/aria2_1.log"))
+	local t = {
+		log = "",
+		syslog = "";
+	}
+	if nixio.fs.access(aria2_log) then
+		t.log = util.trim(sys.exec("tail -n 50 %s | sed 'x;1!H;$!d;x'" %aria2_log))
+	end
+	if nixio.fs.access(aria2_syslog) then
+		t.syslog = util.trim(sys.exec("tail -n -50 %s" %aria2_syslog))
+	end
 	http.prepare_content("application/json")
 	http.write_json(t)
 end

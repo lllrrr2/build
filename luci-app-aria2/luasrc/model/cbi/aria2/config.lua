@@ -1,15 +1,16 @@
-local a = require"luci.sys"
-local i = require"luci.util"
-local o, t, e
-local s = luci.util.trim(luci.sys.exec("aria2c -v 2>/dev/null | awk '/^aria2 version/{print $3}'"))
+local fs   = require "nixio.fs"
+local sys  = require "luci.sys"
+local util = require "luci.util"
+local uci  = require "luci.model.uci".cursor()
 
+local o, t, e
 local function n()
-if a.call("command -v aria2c >/dev/null") ~= 0 then
+if sys.call("command -v aria2c >/dev/null") ~= 0 then
 	return nil
 end
 local t = {}
 local e
-for e in i.execi("aria2c -v 2>/dev/null | grep -E '^(aria2 version|Enabled Features)'") do
+for e in util.execi("aria2c -v 2>/dev/null | grep -E '^(aria2 version|Enabled Features)'") do
 	if e:match("^aria2 version") then
 		local a, a, e = e:find("([%d%.]+)$")
 		t.version = e
@@ -26,10 +27,9 @@ end
 return t end
 local a = n()
 o = Map("aria2", "%s - %s"%{translate("Aria2"), translate("Settings")},
-"<p>%s</p><p>%s</p>"%{
-translate("Aria2 is a lightweight multi-protocol &amp; multi-source,  cross platform download utility."),
-translatef("")
-})
+	"<p>%s</p><p>%s</p>"%{
+		translate("Aria2 is a lightweight multi-protocol &amp; multi-source,  cross platform download utility."),
+	translatef("")})
 if not a then
 	o:section(SimpleSection, nil, "<span style=\"color:red;\">%s</span>"%
 	translate("Error: Can't find aria2c in PATH,  please reinstall aria2."))
@@ -45,42 +45,46 @@ t.anonymous = true
 
 t:tab("basic", translate("Basic Options"))
 e = t:taboption("basic", Flag, "enabled", translate("Enabled"))
-e.description = e.description .. translatef("Current version of aria2: <b style=\"color:green\"> %s", s) .. "</b>"
+e.description = e.description .. translatef("Current version of aria2: <b style=\"color:green\"> %s", a.version) .. "</b>"
 e.rmempty = false
 
 e = t:taboption("basic", ListValue, "user", translate("Run daemon as user"),
-translate("Leave blank to use default user."))
+	translate("Leave blank to use default user."))
 e:value("")
-for t in i.execi("cut -d':' -f1 /etc/passwd") do
+for t in util.execi("cut -d':' -f1 /etc/passwd") do
 	e:value(t)
 end
 
-mount = t:taboption("basic", Value, "dir", translate("Download directory"),
-translate("The directory to store the downloaded file. eg. <code>/mnt/sda1</code>"))
-mount.rmempty = false
-for t in i.execi("mount | awk '{print $3}' | grep mnt") do
-	mount:value(t)
+e = t:taboption("basic", Value, "dir", translate("Download directory"),
+	translate("The files are stored in the download directory automatically created under the selected mounted disk"))
+local array = {}
+for disk in util.execi("mount | awk '/mnt/{print $3}' | cut -d/ -f-3 | uniq") do
+    for x = 1,4 do
+        array[x] = sys.exec("df -h | grep " ..disk.." | awk '{print $"..x.."}'")
+    end
+    e:value(disk .. "/download", translate(disk.."/download（大小："..array[2].."）（可用："..array[4].."）"))
 end
 
 e = t:taboption("basic", Value, "config_dir", translate("Config file directory"),
-translate("The directory to store the config file,  session file and DHT file."))
+	translate("The directory to store the config file,  session file and DHT file."))
 e.placeholder = "/var/etc/aria2"
 
-e = t:taboption("basic", Flag, "enable_pro", translate("Enable Aria2 pro"), translate("When enabled,  the original system configuration directory will be merged."))
+e = t:taboption("basic", Flag, "enable_pro", translate("Enable Aria2 pro"),
+	translate("When enabled,  the original system configuration directory will be merged."))
 e.rmempty = false
 
 e = t:taboption("basic", Value, "pro", translate("Aria2 pro file"),
-translate("Use the configuration scheme of p3terx to realize the enhancement and expansion of aria2 function."))
+	translate("Use the configuration scheme of p3terx to realize the enhancement and expansion of aria2 function."))
 e:depends("enable_pro", "1")
 e.default = "/usr/share/aria2"
 
 e = t:taboption("basic", Flag, "enable_logging", translate("Enable logging"))
 e.rmempty = false
 
-e = t:taboption("basic", Value, "log", translate("Log file"),
-translate("The file name of the log file."))
+e = t:taboption("basic", Value, "log_dir", translate("Log file"),
+	translate("The file name of the log file."))
 e:depends("enable_logging", "1")
-e.placeholder = "/var/log/aria2.log"
+e.placeholder = "/var/log"
 
 e = t:taboption("basic", ListValue, "log_level", translate("Log level"))
 e:depends("enable_logging", "1")
@@ -101,16 +105,18 @@ e.disabled = "false"
 e.default = "false"
 
 e = t:taboption("rpc", Flag, "pause_metadata", translate("Pause metadata"),
-translate("Pause downloads created as a result of metadata download."))
+	translate("Pause downloads created as a result of metadata download."))
 e.enabled = "true"
 e.disabled = "false"
 e.default = "false"
 
-e = t:taboption("rpc", Value, "rpc_listen_port", translate("RPC port"), translate("The webui port defaults to 6800."))
+e = t:taboption("rpc", Value, "rpc_listen_port", translate("RPC port"),
+	translate("The webui port defaults to 6800."))
 e.datatype = "range(1024, 65535)"
 e.placeholder = "6800"
 
-e = t:taboption("rpc", ListValue, "rpc_auth_method", translate("RPC authentication method"))
+e = t:taboption("rpc", ListValue, "rpc_auth_method",
+	translate("RPC authentication method"))
 e:value("none", translate("No Authentication"))
 e:value("token", translate("Token"))
 
@@ -156,27 +162,29 @@ e = t:taboption("http", Flag, "enable_proxy", translate("Enable proxy"))
 e.rmempty = false
 
 e = t:taboption("http", Value, "all_proxy", translate("All proxy"),
-translate("Use a proxy server for all protocols."))
+	translate("Use a proxy server for all protocols."))
 e:depends("enable_proxy", "1")
 e.placeholder = "[http://][USER:PASSWORD@]HOST[:PORT]"
 
-e = t:taboption("http", Value, "all_proxy_user", translate("Proxy user"))
+e = t:taboption("http", Value, "all_proxy_user",
+	translate("Proxy user"))
 e:depends("enable_proxy", "1")
 
-e = t:taboption("http", Value, "all_proxy_passwd", translate("Proxy password"))
+e = t:taboption("http", Value, "all_proxy_passwd",
+	translate("Proxy password"))
 e:depends("enable_proxy", "1")
 e.password = true
 
 if a.https then
 	e = t:taboption("http", Flag, "check_certificate", translate("Check certificate"),
-	translate("Verify the peer using certificates specified in \"CA certificate\" option."))
+		translate("Verify the peer using certificates specified in \"CA certificate\" option."))
 	e.enabled = "true"
 	e.disabled = "false"
 	e.default = "true"
 	e.rmempty = false
 
 	e = t:taboption("http", Value, "ca_certificate", translate("CA certificate"),
-	translate("Use the certificate authorities in FILE to verify the peers. The certificate"
+		translate("Use the certificate authorities in FILE to verify the peers. The certificate"
 	.. " file must be in PEM format and can contain multiple CA certificates."))
 	e:depends("check_certificate", "true")
 	e.datatype = "file"
@@ -214,10 +222,10 @@ e.disabled = "false"
 e.default = "false"
 
 e = t:taboption("http", DynamicList, "header", translate("Header"),
-translate("Append HEADERs to HTTP request header."))
+	translate("Append HEADERs to HTTP request header."))
 
 e = t:taboption("http", Value, "connect_timeout", translate("Connect timeout"),
-translate("Set the connect timeout in seconds to establish connection to HTTP/FTP/proxy server." ..
+	translate("Set the connect timeout in seconds to establish connection to HTTP/FTP/proxy server." ..
 " After the connection is established,  this option makes no effect and \"Timeout\" option is used instead."))
 e.datatype = "uinteger"
 e.placeholder = "60"
@@ -235,17 +243,17 @@ translate("You can append K or M.")
 e.placeholder = "0"
 
 e = t:taboption("http", Value, "max_connection_per_server", translate("Max connection per server"),
-translate("The maximum number of connections to one server for each download."))
+	translate("The maximum number of connections to one server for each download."))
 e.datatype = "uinteger"
 e.placeholder = "1"
 
 e = t:taboption("http", Value, "split", translate("Max number of split"),
-translate("Download a file using N connections."))
+	translate("Download a file using N connections."))
 e.datatype = "uinteger"
 e.placeholder = "5"
 
 e = t:taboption("http", Value, "min_split_size", translate("Min split size"),
-translate("Don't split less than 2*SIZE byte range. Possible values: 1M-1024M."))
+	translate("Don't split less than 2*SIZE byte range. Possible values: 1M-1024M."))
 e.placeholder = "20M"
 
 e = t:taboption("http", Value, "max_tries", translate("Max tries"))
@@ -253,12 +261,12 @@ e.datatype = "uinteger"
 e.placeholder = "5"
 
 e = t:taboption("http", Value, "retry_wait", translate("Retry wait"),
-translate("Set the seconds to wait between retries."))
+	translate("Set the seconds to wait between retries."))
 e.datatype = "uinteger"
 e.placeholder = "0"
 
 e = t:taboption("http", Value, "user_agent", translate("User agent"),
-translate("Set user agent for HTTP(S) downloads."))
+	translate("Set user agent for HTTP(S) downloads."))
 e.placeholder = "aria2/%s"%{a.version and a.version or"$VERSION"}
 
 if a.bt then
@@ -406,28 +414,28 @@ end
 
 t:tab("advance", translate("Advanced Options"))
 e = t:taboption("advance", Flag, "disable_ipv6", translate("IPv6 disabled"),
-translate("Disable IPv6. This is useful if you have to use broken DNS and want to avoid terribly"
-.. " slow AAAA record lookup."))
+	translate("Disable IPv6. This is useful if you have to use broken DNS and want to avoid terribly"
+		.. " slow AAAA record lookup."))
 e.enabled = "true"
 e.disabled = "false"
 e.default = "false"
 
 e = t:taboption("advance", Value, "auto_save_interval", translate("Auto save interval"),
-translate("Save a control file(*.aria2) every N seconds. If 0 is given,  a control file is not"
-.. " saved during download."))
+	translate("Save a control file(*.aria2) every N seconds. If 0 is given,  a control file is not"
+		.. " saved during download."))
 e.datatype = "range(0,  600)"
 e.placeholder = "60"
 
 e = t:taboption("advance", Value, "save_session_interval", translate("Save session interval"),
-translate("Save error/unfinished downloads to session file every N seconds. If 0 is given,  file"
-.. " will be saved only when aria2 exits."))
+	translate("Save error/unfinished downloads to session file every N seconds. If 0 is given,  file"
+		.. " will be saved only when aria2 exits."))
 e.datatype = "uinteger"
 e.placeholder = "0"
 
 e = t:taboption("advance", Value, "disk_cache", translate("Disk cache"),
 "%s %s"%{
-translate("Enable disk cache (in bytes),  set 0 to disabled."),
-translate("You can append K or M.")
+	translate("Enable disk cache (in bytes),  set 0 to disabled."),
+	translate("You can append K or M.")
 })
 e.placeholder = "64M"
 

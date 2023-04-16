@@ -716,8 +716,8 @@ msgid "The directory to store the downloaded file. eg. <code>/mnt/sda1</code>"
 msgstr "用于放置下载文件的目录。例如：<code>/mnt/sda1</code>"
 
 #: applications/luci-app-aria2/luasrc/model/cbi/aria2/config.lua:81
-msgid "The file name of the log file."
-msgstr "日志路径以及文件名。"
+msgid "Log save path"
+msgstr "日志保存路径。"
 
 #: applications/luci-app-aria2/luasrc/model/cbi/aria2/config.lua:249
 msgid "The maximum number of connections to one server for each download."

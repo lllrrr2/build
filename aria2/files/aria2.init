@@ -10,7 +10,7 @@ PROG=/usr/bin/aria2c
 
 _info() {
 	local d="$(date "+%Y-%m-%d %H:%M:%S")"
-	echo -e "$d: $*" >>/var/log/aria2_1.log
+	echo -e "$d: $*" >> "$log_dir"/aria2_syslog.log
 }
 
 _make_dir() {
@@ -132,7 +132,7 @@ aria2_validate() {
 	'http_accept_gzip:or("true","false")' \
 	'http_no_cache:or("true","false")' \
 	'listen_port:string' \
-	'log:string' \
+	'log_dir:string:/var/log' \
 	'log_level:or("debug","info","notice","warn","error")' \
 	'lowest_speed_limit:string' \
 	'max_concurrent_downloads:uinteger' \
@@ -193,23 +193,18 @@ aria2_start() {
 
 	# 创建tmp文件
 	append_setting "all-proxy-passwd=$all_proxy_passwd" "all-proxy-user=$all_proxy_user" \
-	"enable-rpc=true" "quiet=true" "input-file=$session_file" "log-level=$log_level" "log=$log" \
+	"enable-rpc=true" "quiet=true" "input-file=$session_file" "log-level=$log_level" "log_dir=$log_dir" "log=$log" \
 	"save-session=$a/$NAME.session" "rpc-allow-origin-all=true" "rpc-listen-all=true" \
 	"rpc-private-key=$rpc_private_key"
 
 	if [ -z "$enable_logging" ]; then
-		append_options "log" "log_level"
+		append_options "log_dir" "log_level" "log"
 	elif [ "$enable_logging" = "1" ]; then
-		log=${log:-"/var/log/aria2.log"}
-
-		local log_dir
-		log_dir="$(dirname "$log")"
-
 		_make_dir "$log_dir"
-		# create or clear log file
-		echo >"$log"
-		append_setting "log=$log"
+		[ x$log_dir = x ] && log="/var/log/aria2.log" || log="${log_dir}/aria2.log"
+		append_setting "log_dir=$log_dir" "log=$log"
 		append_options "log_level"
+		[ -s "$log_dir"/aria2.log ] || echo > "$log_dir"/aria2.log
 	fi
 
 	if [ -z "$enable_proxy" ] || [ "$enable_proxy" = "1" ]; then

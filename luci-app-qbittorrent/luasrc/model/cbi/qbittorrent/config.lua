@@ -12,8 +12,7 @@ end
 a = Map("qbittorrent", translate("qBittorrent Downloader"),
 	translate("A cross-platform open source BitTorrent client based on QT<br>") ..
 	translate("WebUI default username: admin password: adminadmin<br><b>") ..
-	translate("当前版本: ") ..
-	translate("</b><b style='color:red'>".. v .. "</b>"))
+	translate("当前版本: </b><b style=\"color:red\">".. v .. "</b>"))
 a:section(SimpleSection).template = "qbittorrent/qbittorrent_status"
 
 t = a:section(NamedSection, "main", "qbittorrent")
@@ -42,10 +41,10 @@ e = t:taboption("basic", Value, "SavePath", translate("Save Path"),
 	translate("The files are stored in the download directory automatically created under the selected mounted disk"))
 local array = {}
 for disk in util.execi("mount | awk '/mnt/{print $3}' | cut -d/ -f-3 | uniq") do
-    for x = 1,6 do
+    for x = 1,4 do
         array[x] = sys.exec("df -h | grep " ..disk.." | awk '{print $"..x.."}'")
     end
-    e:value(disk, translate(disk.."[大小："..array[2].."],[可用："..array[4].."],[已用："..array[3]..'('..array[5]..')]'))
+    e:value(disk, translate(disk.."（大小："..array[2].."）（可用："..array[4].."）"))
 end
 
 e = t:taboption("basic", Value, "Locale", translate("Locale Language"),
