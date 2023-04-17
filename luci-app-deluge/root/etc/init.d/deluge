@@ -1,53 +1,74 @@
 #!/bin/sh /etc/rc.common
-#
-# Copyright (C) 2015 OpenWrt-dist
-# Copyright (C) 2022 hong0980 <win3gp@gmail.com>
 
 START=99
 
 get_config() {
-	while [ x"$*" != x ]; do
+	while [ $# != 0 ]; do
 		eval ${1}='`uci get deluge.main.$1`' 2>/dev/null
 		shift
 	done
 }
 
-_boot() {
+deluge_config() {
+	eval _${2} = $(grep '"${2}"' $1 | sed -r 's/"${2}": (.*),/\1/') 2>/dev/null || \
+	$(grep '"${2}"' $1 | sed -r 's/"${2}": "(.*)",/\1/') 2>/dev/null || echo ""
+}
+
+make_dir() {
+	while [ $# != 0 ]; do
+		[ -d "$1" ] || mkdir -m 755 -p "$1" 2>/dev/null
+		shift
+	done
+}
+
+deluge_boot() {
 	[ -f $profile_dir_web ] && {
-		_port=`jq -r '.port' $profile_dir_web | grep -v "null" 2>/dev/null`
-		_https=`jq -r '.https' $profile_dir_web | grep -v "null" 2>/dev/null`
-		_pwd_salt=`jq -r '.pwd_salt' $profile_dir_web | grep -v "null" 2>/dev/null`
-		_pwd_sha1=`jq -r '.pwd_sha1' $profile_dir_web | grep -v "null" 2>/dev/null`
-		_language=`jq -r '.language' $profile_dir_web | grep -v "null" 2>/dev/null`
+		deluge_config $profile_dir_web port
+		deluge_config $profile_dir_web https
+		deluge_config $profile_dir_web pwd_salt
+		deluge_config $profile_dir_web pwd_sha1
+		deluge_config $profile_dir_web language
 	}
 	[ -f $profile_dir_core ] && {
-		_cache_size=`jq -r '.cache_size' $profile_dir_core | grep -v "null" 2>/dev/null`
-		_download_location=`jq -r '.download_location' $profile_dir_core | grep -v "null" 2>/dev/null`
-		_move_completed_path=`jq -r '.move_completed_path' $profile_dir_core | grep -v "null" 2>/dev/null`
-		_torrentfiles_location=`jq -r '.torrentfiles_location' $profile_dir_core | grep -v "null" 2>/dev/null`
+		deluge_config $profile_dir_core cache_size
+		deluge_config $profile_dir_core download_location
+		deluge_config $profile_dir_core move_completed_path
+		deluge_config $profile_dir_core torrentfiles_location
 	}
-	[ -d "$profile_dir"  ] || mkdir -m 755 -p "$profile_dir"
-	[ -d "$download_location" ] || mkdir -m 755 -p "$download_location"
+	make_dir "$profile_dir" "$download_location"
 	if [ x$enable_logging = x1 ]; then
-		[ -d "$log_dir"  ] || mkdir -m 755 -p "$log_dir"
+		[ -n "$log_dir" ] && {
+			make_dir "$log_dir"
+			log_file="-l $log_dir/deluge.log"
+		} || {
+			log_file="-l $profile_dir/deluge.log"
+		}
 		[ -n "$log_level" ] && log_level="-L $log_level"
-		[ -n "$log_dir" ] && log_dir="-l $log_dir/deluge.log"
 	else
-		log_dir=""
+		log_file=""
 		log_level=""
 	fi
 	if [ -f $profile_dir_core ]; then
-		[ "$cache_size" = "$_cache_size" ] || sed -i "/cache_size/ {s|:.*,|: $cache_size,|}" $profile_dir_core
-		[ "$download_location" = "$_download_location" ] || sed -i "/download_location/ {s|: \".*\"|: \"$download_location\"|}" $profile_dir_core
-		[ x$move_completed_enabled != x1 ] && sed -i "/move_completed\"/ {s|:.*,|: false,|}" $profile_dir_core || {
+		[ "$cache_size" = "$_cache_size" ] || \
+		sed -i "/cache_size/ {s|:.*,|: $cache_size,|}" $profile_dir_core
+
+		[ "$download_location" = "$_download_location" ] || \
+		sed -i "/download_location/ {s|: \".*\"|: \"$download_location\"|}" $profile_dir_core
+
+		[ x$move_completed_enabled != x1 ] && \
+		sed -i "/move_completed\"/ {s|:.*,|: false,|}" $profile_dir_core || \
+		{
 			sed -i "/move_completed\"/ {s|:.*,|: true,|}" $profile_dir_core
-			[ -d "$move_completed_path"  ] || mkdir -m 755 -p "$move_completed_path"
+			make_dir "$move_completed_path"
 			[ "$move_completed_path" = "$_move_completed_path" ] || \
 			sed -i "/move_completed_path/ {s|: \".*\"|: \"$move_completed_path\"|}" $profile_dir_core
 		}
-		[ x$copy_torrent_file_enabled != x1 ] && sed -i "/copy_torrent_file/ {s|:.*,|: false,|}" $profile_dir_core || {
+
+		[ x$copy_torrent_file_enabled != x1 ] && \
+		sed -i "/copy_torrent_file/ {s|:.*,|: false,|}" $profile_dir_core || \
+		{
 			sed -i "/copy_torrent_file/ {s|:.*,|: true,|}" $profile_dir_core
-			[ -d "$torrentfiles_location"  ] || mkdir -m 755 -p "$torrentfiles_location"
+			make_dir "$torrentfiles_location"
 			[ "$torrentfiles_location" = "$_torrentfiles_location" ] || \
 			sed -i "/torrentfiles_location/ {s|: \".*\"|: \"$torrentfiles_location\"|}" $profile_dir_core
 		}
@@ -65,7 +86,7 @@ _boot() {
 		}
 		EOF
 	fi
-	if [ ! -f "$profile_dir/sha1.py" ]; then
+	if [ ! -e "$profile_dir/sha1.py" ]; then
 		cat <<-EOF > "$profile_dir/sha1.py"
 			#!/usr/bin/env python
 			import sys
@@ -81,11 +102,10 @@ _boot() {
 	[ x$_pwd_salt != x ] && dwsalt=$_pwd_salt || \
 	dwsalt="$(head /dev/urandom | tr -dc 'a-e0-9' 2>&1 | head -c 40; echo)"
 	dwsha1="$(/usr/bin/python3 $profile_dir/sha1.py $password $dwsalt)"
-	[ "$https" = "https" ] && https=true || https=false
 	if [ -f $profile_dir_web ]; then
-		[ "$port" = "$_port" ] || sed -i '/port/ {s|:.*,|: '"$port"',|}' $profile_dir_web
-		[ "$https" = "$_https" ] || sed -i '/https/ {s|:.*,|: '"$https"',|}' $profile_dir_web
-		[ "$dwsha1" = "$_dwsha1" ] || sed -i '/pwd_sha1/ {s|: ".*"|: "'"$dwsha1"'"|}' $profile_dir_web
+		[ "$port"     =     "$_port" ] || sed -i '/port/ {s|:.*,|: '"$port"',|}' $profile_dir_web
+		[ "$https"    =    "$_https" ] || sed -i '/https/ {s|:.*,|: '"$https"',|}' $profile_dir_web
+		[ "$dwsha1"   =   "$_dwsha1" ] || sed -i '/pwd_sha1/ {s|: ".*"|: "'"$dwsha1"'"|}' $profile_dir_web
 		[ "$language" = "$_language" ] || sed -i '/language/ {s|: ".*"|: "'"$language"'"|}' $profile_dir_web
 	else
 		cat <<-EOF > $profile_dir_web
@@ -106,27 +126,28 @@ _boot() {
 		touch "$profile_dir/.configured"
 	fi
 	port="-p $port"; user="-U $user"; profile_dir="-c $profile_dir"
-	/usr/bin/python3 /usr/bin/deluged    $profile_dir $log_dir $log_level $user
-	/usr/bin/python3 /usr/bin/deluge-web $profile_dir $log_dir $log_level $user $port
-	sleep 3
-	ps | grep deluge | awk '/usr/{print $1}' >/dev/null 2>&1 && logger -t 'deluge' -p 'daemon.info' 'Start deluge service'
-	ps | grep deluge | awk '/web/{print $1}' >/dev/null 2>&1 && logger -t 'deluge' -p 'daemon.info' 'Start deluge-web service'
+	/usr/bin/python3 /usr/bin/deluged    $profile_dir $log_file $log_level $user
+	/usr/bin/python3 /usr/bin/deluge-web $profile_dir $log_file $log_level $user $port
 }
 
 start() {
 	get_config `awk '/option/{print $2}' /etc/config/deluge`
-	profile_dir_web="$profile_dir/web.conf"
-	profile_dir_core="$profile_dir/core.conf"
+	profile_dir_web  = "$profile_dir/web.conf"
+	profile_dir_core = "$profile_dir/core.conf"
 	if [ x$enabled = x1 ]; then
 		if [ -d "$profile_dir" ]; then
-			_boot
+			deluge_boot
 		else
-			_boot
+			deluge_boot
+			sleep 3
 			restart
 		fi
 	else
 		return 1
 	fi
+	sleep 3
+	ps | grep deluge | awk '/usr/{print $1}' >/dev/null 2>&1 && logger -t 'deluge' -p 'daemon.info' 'Start deluge service'
+	ps | grep deluge | awk '/web/{print $1}' >/dev/null 2>&1 && logger -t 'deluge' -p 'daemon.info' 'Start deluge-web service'
 }
 
 stop() {

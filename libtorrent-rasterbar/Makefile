@@ -1,7 +1,3 @@
-#
-# Copyright (C) 2007-2021
-#
-
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libtorrent-rasterbar

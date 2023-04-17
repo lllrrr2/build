@@ -5,11 +5,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=Mako
-PKG_VERSION:=1.2.3
+PKG_VERSION:=1.2.4
 PKG_RELEASE:=1
 
 PYPI_NAME:=$(PKG_NAME)
-PKG_HASH:=7fde96466fcfeedb0eed94f187f20b23d85e4cb41444be0e542e2c8c65c396cd
+PKG_HASH:=d60a3903dc3bb01a18ad6a89cdbe2e4eadc69c0bc8ef1e3773ba53d44c3f7a34
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=BSD-3-Clause

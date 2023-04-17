@@ -17,7 +17,7 @@ function index()
 end
 
  function act_status()
-	local e = { running = (sys.call("ps 2>/dev/null | grep 'deluge' 2>/dev/null | grep 'usr' >/dev/null") == 0) }
+	local e = { running = sys.call("ps 2>/dev/null | grep 'deluge' 2>/dev/null | grep 'usr' >/dev/null" == 0) }
 	http.prepare_content("application/json")
 	http.write_json(e)
  end
@@ -26,7 +26,7 @@ function action_log_read()
 	local data = { log = "", syslog = "" }
 	local o = string.gsub(uci:get("deluge", "main", "log_dir") .. "/deluge.log", '/+', '/')
 	data.log = util.trim(sys.exec("tail -n 30 " .. o))
-	data.syslog = util.trim(sys.exec("logread | grep deluge | tail -n 30"))
+	data.syslog = util.trim(sys.exec("logread -e deluge | tail -n 30"))
 	http.prepare_content("application/json")
 	http.write_json(data)
 end

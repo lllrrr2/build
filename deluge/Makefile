@@ -26,12 +26,15 @@ define Package/$(PKG_NAME)
 	    +python3-chardet \
 	    +python3-libtorrent \
 	    +python3-mako \
+	    +python3-markupsafe \
 	    +python3-pillow \
 	    +python3-pyopenssl \
 	    +python3-pyxdg \
 	    +python3-rencode \
 	    +python3-service-identity \
 	    +python3-setproctitle \
+	    +python3-setuptools \
+	    +python3-markupsafe \
 	    +python3-twisted
 endef
 
