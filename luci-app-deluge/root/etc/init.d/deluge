@@ -26,13 +26,12 @@ make_dir() {
 }
 
 deluge_boot() {
-	[ -f $profile_dir_web ] && {
-		deluge_config "$profile_dir_web" "port" "https" "pwd_salt" "pwd_sha1" "language"
-	}
-	[ -f $profile_dir_core ] && {
-		deluge_config "$profile_dir_core" "cache_size" "download_location" "move_completed_path" "torrentfiles_location"
-	}
+	local profile_dir_web="$profile_dir/web.conf"
+	local profile_dir_core="$profile_dir/core.conf"
+	[ -f $profile_dir_web ] && \
+	deluge_config "$profile_dir_web" "port" "https" "pwd_salt" "pwd_sha1" "language"
 	make_dir "$profile_dir" "$download_location"
+
 	if [ x$enable_logging = x1 ]; then
 		[ -n "$log_dir" ] && {
 			make_dir "$log_dir"
@@ -45,7 +44,9 @@ deluge_boot() {
 		log_file=""
 		log_level=""
 	fi
+
 	if [ -f $profile_dir_core ]; then
+		deluge_config "$profile_dir_core" "cache_size" "download_location" "move_completed_path" "torrentfiles_location"
 		[ "$cache_size" = "$_cache_size" ] || \
 		sed -i "/cache_size/ {s|:.*,|: $cache_size,|}" $profile_dir_core
 
@@ -83,6 +84,7 @@ deluge_boot() {
 		}
 		EOF
 	fi
+
 	if [ ! -e "$profile_dir/sha1.py" ]; then
 		cat <<-EOF > "$profile_dir/sha1.py"
 			#!/usr/bin/env python
@@ -129,8 +131,6 @@ deluge_boot() {
 
 start() {
 	get_config `awk '/option/{print $2}' /etc/config/deluge`
-	profile_dir_web="$profile_dir/web.conf"
-	profile_dir_core="$profile_dir/core.conf"
 	if [ x$enabled = x1 ]; then
 		if [ -d "$profile_dir" ]; then
 			deluge_boot

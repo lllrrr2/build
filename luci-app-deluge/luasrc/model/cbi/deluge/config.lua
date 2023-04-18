@@ -10,11 +10,12 @@ a = Map("deluge", translate("Deluge 下载器"), translate("Deluge是一个通�
 a:section(SimpleSection).template = "deluge/deluge_status"
 
 t = a:section(NamedSection, "main", "deluge")
-
 t:tab("basic", translate("Basic Settings"))
+t:tab("WebUI", translate("WebUI设置"))
+t:tab("download", translate("下载设置"))
+
 e = t:taboption("basic", Flag, "enabled", translate("Enabled"))
 e = t:option(Flag, "enabled", translate("Enabled"))
---e.description = translatef("当前Deluge的版本: <b style=\"color:green\"> %s", luci.sys.exec("deluge -v | awk '/deluge/{print $2}'")) .. "</b>"
 e.default = "0"
 
 e = t:taboption("basic", ListValue, "user", translate("Run daemon as user"))
@@ -47,7 +48,6 @@ e:value("info", translate("Info"))
 e:value("debug", translate("Debug"))
 e.default = "error"
 
-t:tab("download", translate("下载设置"))
 e = t:taboption("download", Value, "download_location", translate("下载文件路径"),
 	translate("The files are stored in the download directory automatically created under the selected mounted disk"))
 local array = {}
@@ -68,7 +68,6 @@ e = t:taboption("download", Value, "torrentfiles_location", translate("路径"))
 e.placeholder = "/mnt/sda3/download"
 e:depends("copy_torrent_file_enabled", 1)
 
-t:tab("WebUI", translate("WebUI设置"))
 e = t:taboption("WebUI", Value, "language", translate("Locale Language"))
 e:value("zh_CN", translate("Simplified Chinese"))
 e:value("en_GB", translate("English"))
