@@ -628,12 +628,11 @@ msgstr "qBittorrent 下载器"
 msgid "Failed to load log data."
 msgstr "无法加载日志数据。"
 
-msgid ""
-"(size: "
-") (Available: "
-msgstr ""
-"（大小："
-"）（可用："
+msgid "(size: "
+msgstr "（大小："
+
+msgid ") (Available: "
+msgstr "）（可用："
 
 msgid "Leave blank to use the default user."
 msgstr "留空以使用默认用户。"

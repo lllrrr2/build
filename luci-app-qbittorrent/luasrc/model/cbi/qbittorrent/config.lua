@@ -12,7 +12,8 @@ end
 a = Map("qbittorrent", translate("qBittorrent Downloader"),
 	translate("A cross-platform open source BitTorrent client based on QT<br>") ..
 	translate("WebUI default username: admin password: adminadmin<br><b>") ..
-	translate("Current version: </b><b style=\"color:red\">".. v .. "</b>"))
+	translate('Current version: </b><b style=\"color:red\">') ..
+	translate(v .. "</b>"))
 a:section(SimpleSection).template = "qbittorrent/qbittorrent_status"
 
 t = a:section(NamedSection, "main", "qbittorrent")
@@ -42,9 +43,10 @@ e = t:taboption("basic", Value, "SavePath", translate("Save Path"),
 local array = {}
 for disk in util.execi("mount | awk '/mnt/{print $3}' | cut -d/ -f-3 | uniq") do
     for x = 1,4 do
-        array[x] = sys.exec("df -h | grep " .. disk .. " | awk '{print $" .. x .. "}'")
+        array[x] = sys.exec("df -h | grep " .. disk .. " | awk 'NR==1{print $" .. x .. "}'")
     end
-    e:value(disk, translate(disk .. "(size: " .. array[2] .. ") (Available: " .. array[4] .. "）"))
+	e:value(disk .. "/download",
+		translate(disk .. "/download " .. "(size: " .. array[2] .. ") (Available: " .. array[4] .. ")"))
 end
 
 e = t:taboption("basic", Value, "Locale", translate("Locale Language"),
@@ -53,7 +55,7 @@ e:value("zh_CN", translate("Simplified Chinese"))
 e:value("en", translate("English"))
 e.default = "zh_CN"
 
-if sys.exec("echo " .. v .. "| sed 's/v//' | awk -F. '{printf $1$2}'") <= '41' then
+--[[ if v:sub(2,4) <= '4.1' then
 	e = t:taboption("basic", Value, "Username", translate("Username"),
 		translate("The login name for WebUI."))
 	e.placeholder = "admin"
@@ -61,7 +63,7 @@ if sys.exec("echo " .. v .. "| sed 's/v//' | awk -F. '{printf $1$2}'") <= '41' t
 	e = t:taboption("basic", Value, "Password", translate("Password"),
 		translate("The login password for WebUI."))
 	e.password = true
-end
+end ]]
 
 e = t:taboption("basic", Value, "Port", translate("Listening Port"),
 	translate("The listening port for WebUI."))
@@ -327,10 +329,10 @@ e.enabled = "true"
 e.disabled = "false"
 e.default = e.disabled
 
--- e = t:taboption("webgui", Value, "WebUIa", translate("Use Alternate Web UI"))
--- e.enabled = "true"
--- e.disabled = "false"
--- e.placeholder = translate('file path')
+--[[ e = t:taboption("webgui", Value, "WebUIa", translate("Use Alternate Web UI"))
+e.enabled = "true"
+e.disabled = "false"
+e.placeholder = translate('file path') ]]
 
 e = t:taboption("webgui", Flag, "CSRFProtection", translate("CSRF Protection"),
 	translate("Enable Cross-Site Request Forgery (CSRF) protection."))
@@ -421,12 +423,6 @@ e = t:taboption('connection', Flag, 'UPnP', translate('Use UPnP for Connections'
 e.enabled = 'true'
 e.disabled = 'false'
 e.default = e.enabled
-
---[[ e = t:taboption("advanced", Flag, "SuperSeeding", translate("Super Seeding"),
-	translate("The super seeding mode."))
-e.enabled = "true"
-e.disabled = "false"
-e.default = e.disabled ]]
 
 e = t:taboption("advanced", Flag, "IncludeOverhead", translate("Limit Overhead Usage"),
 	translate("The overhead usage is been limitted."))

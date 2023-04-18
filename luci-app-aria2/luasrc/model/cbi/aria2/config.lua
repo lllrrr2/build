@@ -60,7 +60,7 @@ e = t:taboption("basic", Value, "dir", translate("Download directory"),
 local array = {}
 for disk in util.execi("mount | awk '/mnt/{print $3}' | cut -d/ -f-3 | uniq") do
     for x = 1,4 do
-        array[x] = sys.exec("df -h | grep " ..disk.." | awk '{print $"..x.."}'")
+        array[x] = sys.exec("df -h | grep " ..disk.." | awk 'NR==1{print $"..x.."}'")
     end
     e:value(disk .. "/download", translate(disk.."/download（大小："..array[2].."）（可用："..array[4].."）"))
 end

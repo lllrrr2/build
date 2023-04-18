@@ -27,7 +27,7 @@
 
 <script type="text/javascript" src="<%=resource%>/cbi.js?v=git-19.300.11807-7668d3e"></script>
 <script type="text/javascript">//<![CDATA[
-	XHR.poll(10, '<%=url("admin/nas/deluge/log/read")%>', null,
+	XHR.poll(10, '<%=url("admin/nas/deluge/action_log")%>', null,
 		function(x, data) {
 			var logElm = document.getElementById('log_text');
 			if (data && logElm) {

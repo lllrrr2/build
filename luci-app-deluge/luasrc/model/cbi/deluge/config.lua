@@ -53,9 +53,10 @@ e = t:taboption("download", Value, "download_location", translate("下载文件�
 local array = {}
 for disk in util.execi("mount | awk '/mnt/{print $3}' | cut -d/ -f-3 | uniq") do
     for x = 1,4 do
-        array[x] = sys.exec("df -h | grep " .. disk .. " | awk '{print $" .. x .. "}'")
+        array[x] = sys.exec("df -h | grep " .. disk .. " | awk 'NR==1{print $" .. x .. "}'")
     end
-    e:value(disk .. '/download', translate(disk .. '/download' .. "(size: " .. array[2] .. ") (Available: " .. array[4] .. "）"))
+	e:value(disk .. "/download",
+		translate(disk .. "/download " .. "(size: " .. array[2] .. ") (Available: " .. array[4] .. ")"))
 end
 
 e = t:taboption("download", Flag, "move_completed_enabled", translate("将已完成的任务移动到"))

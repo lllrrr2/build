@@ -7,10 +7,9 @@ function index()
 	if not nixio.fs.access("/etc/config/deluge") then return end
 	entry({"admin", "nas", "deluge"}, firstchild(), _("Deluge")).dependent = false
 	entry({"admin", "nas", "deluge", "config"}, cbi("deluge/config"), _("Global settings"), 1).leaf = true
-	-- entry({"admin", "nas", "deluge", "file"}, form("deluge/files"), _("configuration file"), 2).leaf = true
-	entry({"admin", "nas", "deluge", "log"}, firstchild(), _("Operation log"), 3).leaf = true
-	entry({"admin", "nas", "deluge", "log", "view"}, template("deluge/log")).leaf = true
-	entry({"admin", "nas", "deluge", "log", "read"}, call("action_log_read")).leaf = true
+	entry({"admin", "nas", "deluge", "file"}, form("deluge/files"), _("configuration file"), 2).leaf = true
+	entry({"admin", "nas", "deluge", "log"}, form("deluge/log"), _("Log"), 3).leaf = true
+	entry({"admin", "nas", "deluge", "action_log"}, call("action_log_read")).leaf = true
 	entry({"admin", "nas", "deluge", "status"}, call("act_status")).leaf = true
 end
 
