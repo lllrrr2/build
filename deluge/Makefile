@@ -34,7 +34,6 @@ define Package/$(PKG_NAME)
 	    +python3-service-identity \
 	    +python3-setproctitle \
 	    +python3-setuptools \
-	    +python3-markupsafe \
 	    +python3-twisted
 endef
 
