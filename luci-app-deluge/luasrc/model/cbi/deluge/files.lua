@@ -2,13 +2,14 @@ local fs   = require "nixio.fs"
 local util = require "luci.util"
 local uci  = require "luci.model.uci".cursor()
 
-local config_dir = uci:get("qbittorrent", "main", "RootProfilePath") or "/tmp"
+local config_dir = uci:get("deluge", "main", "profile_dir") or "/etc/deluge"
 local files = {}
-files.conf = "/etc/config/qbittorrent"
-files.qbittorrent = config_dir .. "/qBittorrent/config/qBittorrent.conf"
+files.web  = config_dir .. "/web.conf"
+files.core = config_dir .. "/core.conf"
+files.config = "/etc/config/deluge"
 
-m = SimpleForm("qbittorrent", "%s - %s"%{translate("qBittorrent"), translate("configuration file")},
-	translate("This page is the configuration file content of qBittorrent."))
+m = SimpleForm("deluge", "%s - %s"%{translate("Deluge"), translate("configuration file")},
+	translate("This page is the configuration file content of Deluge."))
 m.reset = false
 m.submit = false
 

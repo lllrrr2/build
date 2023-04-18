@@ -15,14 +15,15 @@ t.submit = false
 
 for key, value in pairs(files) do
 	if fs.readfile(value) then
-		a = t:section(SimpleSection, nil,
+		s = t:section(SimpleSection, nil,
 			translatef("This is the content of the configuration file under <code>%s</code>:", value))
-		e = a:option(TextValue, key)
-		e.rows = 20
-		e.readonly = true
-		e.cfgvalue = function()
-		local e = fs.readfile(value) or translate("File does not exist.")
-		return util.trim(e) ~= "" and e or translate("Empty file.") end
+		o = s:option(TextValue, key)
+		o.rows = 20
+		o.readonly = true
+		o.cfgvalue = function()
+			local v = fs.readfile(value) or translate("File does not exist.")
+			return util.trim(v) ~= "" and v or translate("Empty file.")
+		end
 	end
 end
 

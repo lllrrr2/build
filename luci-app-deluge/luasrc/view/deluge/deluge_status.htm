@@ -14,7 +14,7 @@ XHR.poll(5, '<%=url("admin/nas/deluge/status")%>', null,
 );
 
 function openwebui(){
-	<%local uci = require "luci.model.uci".cursor()%>
+	<% local uci = require "luci.model.uci".cursor() %>
 	var url = window.location.host + ':<%= uci:get("deluge", "main", "port"):gsub("^%s*(.-)%s*$", "%1") %>';
 	<% if uci:get("deluge", "main", "https") == 'false' then %>
 		window.open('http://' + url, 'deluge');
