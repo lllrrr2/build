@@ -13,10 +13,15 @@ function index()
 	entry({"admin", "nas", "deluge", "status"}, call("act_status")).leaf = true
 end
 
+local con = uci:get_all("deluge", "main")
 function act_status()
 	local status = {
+		port = "",
+		https = "",
 		running = "";
 	}
+	status.port    = con.port or '8112'
+	status.https   = con.https or 'false'
 	status.running = sys.call("ps 2>/dev/null | grep deluged 2>/dev/null | grep /usr/bin >/dev/null") == 0
 	http.prepare_content("application/json")
 	http.write_json(status)
@@ -27,9 +32,11 @@ function action_log_read()
 		log = "",
 		syslog = "";
 	}
-	local log_dir = uci:get("deluge", "main", "log_dir") or uci:get("deluge", "main", "profile_dir")
-	local o = string.gsub(log_dir .. "/deluge.log", '/+', '/')
-	data.log = sys.exec("tail -n 30 " .. o)
+	local log_dir  = con.log_dir or con.profile_dir
+	local log_file = log_dir .. "/deluge.log"
+	if nixio.fs.access(log_file) then
+		data.log = sys.exec("tail -n 30 " .. log_file)
+	end
 	data.syslog = sys.exec("logread -e deluge | tail -n 30")
 	http.prepare_content("application/json")
 	http.write_json(data)

@@ -2,27 +2,27 @@
 XHR.poll(5, '<%=url("admin/nas/deluge/status")%>', null,
 	function(x, data) {
 		var tb = document.getElementById('deluge_status');
-		if (data && tb) {
+		if (data) {
 			if (data.running) {
-				var links = '<em><b><font color=green>Deluge <%:RUNNING%></font></b></em><input class="cbi-button  cbi-button-apply mar-10" type="button" value="<%:Open Web Interface%>" onclick="openwebui();" />';
+				tb.innerHTML = '<em><b><font color=green>Deluge <%:RUNNING%></font></b></em><input class="cbi-button cbi-button-apply mar-10" type="button" value="<%:Open Web Interface%>";/>';
+				tb.onclick = function() {
+					openwebui(data.port, data.https)
+				}
 			} else {
-				var links = '<em><b><font color=red>Deluge <%:NOT RUNNING%></font></b></em>';
+				tb.innerHTML = '<em><b><font color=red>Deluge <%:NOT RUNNING%></font></b></em>';
 			}
-			tb.innerHTML = links;
 		}
 	}
 );
 
-function openwebui(){
-	<% local uci = require "luci.model.uci".cursor() %>
-	var url = window.location.host + ':<%= uci:get("deluge", "main", "port"):gsub("^%s*(.-)%s*$", "%1") %>';
-	<% if uci:get("deluge", "main", "https") == 'false' then %>
+function openwebui(port, https){
+	var url = window.location.host + ':' + port;
+	if (https == 'false') {
 		window.open('http://' + url, 'deluge');
-	<% else %>
+	} else {
 		window.open('https://' + url, 'deluge');
-	<% end %>
+	}
 };
-
 //]]>
 </script>
 <style>.mar-10 {margin-left: 20px; margin-right: 10px;}</style>
