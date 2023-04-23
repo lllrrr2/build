@@ -27,7 +27,6 @@ set_conf() {
 	local file=$1
 	local node=$2
 	local value=$3
-	local xk=$(grep "\"$node\"" $file | grep -o '"' | wc -l)
 	local deluge_conf=$(grep "\"$node\"" "$file" | sed 's/ //g; s/"//g; s/,/:/g;' | cut -d':' -f2)
 	if [ "$value" != "$deluge_conf" ]; then
 		if [ "$(grep "\"$node\"" $file | grep -o '"' | wc -l)" = 2 ]; then
@@ -97,59 +96,44 @@ deluge_boot() {
 		EOF
 	fi
 
-	if [ ! -e "$profile_dir/sha1.py" ]; then
-		cat <<-EOF > "$profile_dir/sha1.py"
-			#!/usr/bin/env python
-			import sys
-			import hashlib
-			password = sys.argv[1]
-			pwd_sha1 = sys.argv[2]
-			s = hashlib.sha1()
-			s.update(pwd_sha1.encode('utf-8'))
-			s.update(password.encode('utf-8'))
-			print (s.hexdigest())
-		EOF
+	if [ ! -e "$profile_dir/set_get.py" ]; then
 		cat <<-EOF > $profile_dir/set_get.py
+		#!/usr/bin/env python
+		from deluge.config import Config
+		import os
 		import sys
-		from deluge.configmanager import Config
-		def load_config(config_path):
-		    config = Config(config_path)
-		    config.load()
-		    return config
-		def write_config(config, key, value):
-		    value = True if value == 'true' else False if value == 'false' else value
+		import hashlib
+		def write_config(value):
 		    config[key] = value
-		    config.save()
-		def get_config(config, key):
-		    value = config.get(key)
-		    if value is None:
+		    try:
+		        config.save()
+		    except IOError as e:
 		        sys.exit(1)
-		    else:
-		        return value
+		def web_password(value):
+		    pwd_salt = config['pwd_salt']
+		    s = hashlib.sha1()
+		    s.update(pwd_salt.encode('utf-8'))
+		    s.update(value.encode('utf-8'))
+		    write_config(s.hexdigest())
 		if __name__ == '__main__':
 		    if not (3 <= len(sys.argv) <= 4):
 		        sys.exit(1)
-		    config_path, key = sys.argv[1:3]
-		    config = load_config(config_path)
+		    config_file, key = sys.argv[1:3]
+		    config = Config(config_file + '.conf', config_dir=os.path.dirname(__file__))
 		    if len(sys.argv) == 3:
-		        print(get_config(config, key))
+		    	print(config[key])
 		    else:
 		        value = sys.argv[3]
-		        if get_config(config, key) != value:
-		            write_config(config, key, value)
+		        if key == 'pwd_sha1':
+		            web_password(value)
 		        else:
-		            sys.exit(1)
-		# 第一个参数是配置文件的路径，2个参数是读取，3个参数修改值
+		            write_config(value)
 		EOF
 	fi
-	_pwd_salt=$(awk -F'"' '/pwd_salt/{print $4}' $profile_dir/web.conf 2>/dev/null)
-	[ -n "$_pwd_salt" ] && dwsalt=$_pwd_salt || \
-	dwsalt="$(head /dev/urandom | tr -dc 'a-e0-9' 2>&1 | head -c 40; echo)"
-	pwd_sha1="$(/usr/bin/python3 $profile_dir/sha1.py $password $dwsalt)"
 	if [ -e "$web_conf" ]; then
 		set_conf $web_conf port		$port
 		set_conf $web_conf https	$https
-		set_conf $web_conf pwd_sha1	$pwd_sha1
+		/usr/bin/python3 $profile_dir/set_get.py web pwd_sha1 $password
 		set_conf $web_conf language	$language
 	else
 		cat <<-EOF > $web_conf
@@ -159,7 +143,7 @@ deluge_boot() {
 			"language": "$language",
 			"show_session_speed": true,
 			"geoip_db_location": "$geoip_db_location/GeoIP.dat",
-			"pwd_salt": "$dwsalt",
+			"pwd_salt": "$(head /dev/urandom | tr -dc 'a-e0-9' 2>&1 | head -c 40; echo)",
 			"pwd_sha1": "$pwd_sha1"
 		}
 		EOF
@@ -181,7 +165,7 @@ start() {
 			deluge_boot
 		else
 			deluge_boot
-			sleep 3
+			sleep 5
 			restart
 		fi
 	else
