@@ -3,36 +3,25 @@
 START=99
 
 get_set_conf() {
-	/usr/bin/python3 $profile_dir/set_get.py $1 $2 $3
+	/usr/bin/python3 "$profile_dir/set_get.py" "$1" "$2" "$3"
 }
 
 get_config() {
 	while [ $# != 0 ]; do
-		eval ${1}=`uci get deluge.main.${1}` 2>/dev/null
+		eval "${1}"="`uci get deluge.main.${1}`" 2>/dev/null
 		shift
 	done
 }
 
-# get_deluge_conf() {
-# 	local xx=$1
-# 	shift
-# 	while [ $# != 0 ]; do
-# 		eval _${1}=$(grep "\"$1\"" "$xx" | sed 's/ //g; s/"//g; s/,/:/g;' | cut -d':' -f2) || echo ""
-# 		shift
-# 	done
-# }
-
 set_conf() {
 	# $1文件，$2节点，$3值
-	local file=$1
-	local node=$2
-	local value=$3
-	local deluge_conf=$(grep "\"$node\"" "$file" | sed 's/ //g; s/"//g; s/,/:/g;' | cut -d':' -f2)
+	file="$1" node="$2" value="$3"
+	deluge_conf=$(grep "\"$node\"" "$file" | sed 's/ //g; s/"//g; s/,/:/g;' | cut -d':' -f2)
 	if [ "$value" != "$deluge_conf" ]; then
-		if [ "$(grep "\"$node\"" $file | grep -o '"' | wc -l)" = 2 ]; then
-			sed -i "/\"$node\"/ {s|: .*,|: $value,|}" $file
+		if [ "$(grep "\"$node\"" "$file" | grep -o '"' | wc -l)" = 2 ]; then
+			sed -i "/\"$node\"/ {s|: .*,|: $value,|}" "$file"
 		else
-			sed -i "/\"$node\"/ {s|: \".*\"|: \"$value\"|}" $file
+			sed -i "/\"$node\"/ {s|: \".*\"|: \"$value\"|}" "$file"
 		fi
 	fi
 }
@@ -49,7 +38,7 @@ deluge_boot() {
 	core_conf="$profile_dir/core.conf"
 	make_dir "$profile_dir" "$download_location"
 
-	if [ x$enable_logging = x1 ]; then
+	if [ x"$enable_logging" = x1 ]; then
 		[ -n "$log_dir" ] && {
 			make_dir "$log_dir"
 			log_file="-l $log_dir/deluge.log"
@@ -63,26 +52,26 @@ deluge_boot() {
 	fi
 
 	if [ -e "$core_conf" ]; then
-		set_conf $core_conf cache_size $cache_size
-		set_conf $core_conf download_location $download_location
+		set_conf "$core_conf" cache_size "$cache_size"
+		set_conf "$core_conf" download_location "$download_location"
 
-		if [ x$move_completed_enabled = x1 ]; then
+		if [ x"$move_completed_enabled" = x1 ]; then
 			make_dir "$move_completed_path"
-			set_conf $core_conf move_completed 'true'
-			set_conf $core_conf move_completed_path $move_completed_path
+			set_conf "$core_conf" move_completed 'true'
+			set_conf "$core_conf" move_completed_path "$move_completed_path"
 		else
-			set_conf $core_conf move_completed 'false'
+			set_conf "$core_conf" move_completed 'false'
 		fi
 
-		if [ x$copy_torrent_file_enabled = x1 ]; then
+		if [ x"$copy_torrent_file_enabled" = x1 ]; then
 			make_dir "$torrentfiles_location"
-			set_conf $core_conf copy_torrent_file 'true'
-			set_conf $core_conf torrentfiles_location $torrentfiles_location
+			set_conf "$core_conf" copy_torrent_file 'true'
+			set_conf "$core_conf" torrentfiles_location "$torrentfiles_location"
 		else
-			set_conf $core_conf copy_torrent_file 'false'
+			set_conf "$core_conf" copy_torrent_file 'false'
 		fi
 	else
-		cat <<-EOF > $core_conf
+		cat <<-EOF > "$core_conf"
 		{
 			"random_port": false,
 			"queue_new_to_top": true,
@@ -95,48 +84,51 @@ deluge_boot() {
 		}
 		EOF
 	fi
-
 	if [ ! -e "$profile_dir/set_get.py" ]; then
-		cat <<-EOF > $profile_dir/set_get.py
+		cat <<-EOF > "$profile_dir/set_get.py"
 		#!/usr/bin/env python
+		from os import path
+		from hashlib import sha1
+		from sys import exit, argv
 		from deluge.config import Config
-		import os
-		import sys
-		import hashlib
-		def write_config(value):
-		    config[key] = value
+		def write_conf(value):
+		    value = False if value == 'false' else True if value == 'true' else value
 		    try:
-		        config.save()
-		    except IOError as e:
-		        sys.exit(1)
-		def web_password(value):
-		    pwd_salt = config['pwd_salt']
-		    s = hashlib.sha1()
-		    s.update(pwd_salt.encode('utf-8'))
-		    s.update(value.encode('utf-8'))
-		    write_config(s.hexdigest())
-		if __name__ == '__main__':
-		    if not (3 <= len(sys.argv) <= 4):
-		        sys.exit(1)
-		    config_file, key = sys.argv[1:3]
-		    config = Config(config_file + '.conf', config_dir=os.path.dirname(__file__))
-		    if len(sys.argv) == 3:
-		    	print(config[key])
+		        conf[key] = value
+		    except:
+		        exit(1)
 		    else:
-		        value = sys.argv[3]
+		        conf.save()
+		def web_password(value):
+		    s = sha1()
+		    s.update(conf['pwd_salt'].encode('utf-8'))
+		    s.update(value.encode('utf-8'))
+		    write_conf(s.hexdigest())
+		if __name__ == '__main__':
+		    if not (3 <= len(argv) <= 4):
+		        exit(1)
+		    conf_file, key = argv[1:3]
+		    conf = Config(conf_file + '.conf', config_dir=path.dirname(__file__))
+		    if len(argv) == 3:
+		        print(conf[key])
+		    else:
+		        value = argv[3]
 		        if key == 'pwd_sha1':
 		            web_password(value)
 		        else:
-		            write_config(value)
+		            write_conf(value)
 		EOF
 	fi
 	if [ -e "$web_conf" ]; then
-		set_conf $web_conf port		$port
-		set_conf $web_conf https	$https
-		/usr/bin/python3 $profile_dir/set_get.py web pwd_sha1 $password
-		set_conf $web_conf language	$language
+		set_conf "$web_conf" port "$port"
+		set_conf "$web_conf" https "$https"
+		set_conf "$web_conf" language "$language"
+		# /usr/bin/python3 $profile_dir/set_get.py web port $port
+		# /usr/bin/python3 $profile_dir/set_get.py web https $https
+		# /usr/bin/python3 $profile_dir/set_get.py web language $language
+		/usr/bin/python3 "$profile_dir/set_get.py" web pwd_sha1 "$password"
 	else
-		cat <<-EOF > $web_conf
+		cat <<-EOF > "$web_conf"
 		{
 			"port": $port,
 			"https": $https,
@@ -150,7 +142,7 @@ deluge_boot() {
 	fi
 	if [ ! -f "$profile_dir/.configured" ]; then
 		logger -t "deluge" -p "Setting default deluge ui to console ... "
-		/usr/bin/deluge -s console
+		/usr/bin/deluge -s console -c "$profile_dir"
 		touch "$profile_dir/.configured"
 	fi
 	port="-p $port"; user="-U $user"; profile_dir="-c $profile_dir"

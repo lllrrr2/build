@@ -32,7 +32,7 @@ function action_log_read()
 		log = "",
 		syslog = "";
 	}
-	local log_dir  = con.log_dir or con.profile_dir
+	local log_dir  = con.log_dir or con.profile_dir or ""
 	local log_file = log_dir .. "/deluge.log"
 	if nixio.fs.access(log_file) then
 		data.log = sys.exec("tail -n 30 " .. log_file)
