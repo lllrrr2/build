@@ -84,7 +84,18 @@ deluge_boot() {
 		}
 		EOF
 	fi
-	if [ ! -e "$profile_dir/set_get.py" ]; then
+	if [ ! -e "$profile_dir/sha1.py" ]; then
+		cat <<-EOF > "$profile_dir/sha1.py"
+		#!/usr/bin/env python
+		from sys import argv
+		from hashlib import sha1
+		password = argv[1]
+		pwd_sha1 = argv[2]
+		s = sha1()
+		s.update(pwd_sha1.encode('utf-8'))
+		s.update(password.encode('utf-8'))
+		print (s.hexdigest())
+		EOF
 		cat <<-EOF > "$profile_dir/set_get.py"
 		#!/usr/bin/env python
 		from os import path
@@ -119,23 +130,28 @@ deluge_boot() {
 		            write_conf(value)
 		EOF
 	fi
+	_pwd_salt=$(awk -F'"' '/pwd_salt/{print $4}' $profile_dir/web.conf 2>/dev/null)
+	[ -n "$_pwd_salt" ] && dwsalt=$_pwd_salt || \
+	dwsalt="$(head /dev/urandom | tr -dc 'a-e0-9' 2>&1 | head -c 40; echo)"
+	pwd_sha1="$(/usr/bin/python3 $profile_dir/sha1.py $password $dwsalt)"
 	if [ -e "$web_conf" ]; then
 		set_conf "$web_conf" port "$port"
 		set_conf "$web_conf" https "$https"
 		set_conf "$web_conf" language "$language"
+		set_conf "$web_conf" pwd_sha1 "$pwd_sha1"
 		# /usr/bin/python3 $profile_dir/set_get.py web port $port
 		# /usr/bin/python3 $profile_dir/set_get.py web https $https
 		# /usr/bin/python3 $profile_dir/set_get.py web language $language
-		/usr/bin/python3 "$profile_dir/set_get.py" web pwd_sha1 "$password"
+		# /usr/bin/python3 "$profile_dir/set_get.py" web pwd_sha1 "$password"
 	else
 		cat <<-EOF > "$web_conf"
 		{
 			"port": $port,
 			"https": $https,
-			"language": "$language",
+			"language": $language,
 			"show_session_speed": true,
 			"geoip_db_location": "$geoip_db_location/GeoIP.dat",
-			"pwd_salt": "$(head /dev/urandom | tr -dc 'a-e0-9' 2>&1 | head -c 40; echo)",
+			"pwd_salt": "$dwsalt",
 			"pwd_sha1": "$pwd_sha1"
 		}
 		EOF
