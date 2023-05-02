@@ -82,12 +82,11 @@ command:value('poweroff', translate("Turn off the power"))
 command:value('logread | egrep -v "miniupnpd|uhttpd" | tail -20 > /etc/syslog.log', translate("save log"))
 command.rmempty = false
 
--- m.template = "timedtask/run"
--- btn = s:option(Button, "_baa", translate("Executed immediately"))
--- btn.inputtitle = translate("Execute")
--- btn.inputstyle = "apply"
--- btn.disabled = false
--- btn.template = "timedtask/button"
+btn = s:option(Button, "_baa", translate("Executed immediately"))
+btn.inputtitle = translate("Execute")
+btn.inputstyle = "apply"
+btn.disabled = false
+btn.template = "timedtask/button"
 
 function gen_uuid(format)
     local uuid = sys.exec("echo -n $(cat /proc/sys/kernel/random/uuid)")

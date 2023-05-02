@@ -197,12 +197,12 @@ local network_wan = uci:get_all("network", "wan")
 -- 	end
 -- end
 
-if wizard_node.ipv6 ~= network_wan.ipv6 then
+if wizard_node.ipv6 ~= network_wan.ipv6 and wizard_node.ipv6 then
 	uci:set("network", "wan", "ipv6", wizard_node.ipv6)
 	uci:commit("network")
 end
 
-if wizard_node.lan_dns ~= network_lan.dns then
+if wizard_node.lan_dns ~= network_lan.dns and wizard_node.lan_dns then
 	uci:set("network", "lan", "dns", wizard_node.lan_dns)
 	uci:commit("network")
 end
@@ -217,7 +217,7 @@ if wizard_node.lan_netmask ~= network_lan.netmask then
 	uci:commit("network")
 end
 
-if wizard_node.hostname ~= host then
+if wizard_node.hostname ~= host and wizard_node.hostname then
 	uci:set("system", "@system[0]", "hostname", wizard_node.hostname)
 	luci.sys.hostname(host)
 	uci:commit("system")

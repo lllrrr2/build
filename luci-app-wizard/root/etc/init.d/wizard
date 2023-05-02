@@ -1,7 +1,7 @@
 #!/bin/sh /etc/rc.common
 
 START=19
-# extra_command "reconfig" ""
+extra_command "reconfig" ""
 # uci revert network
 # uci changes network.lan
 # uci show bk_network.wan | cut -d_ -f2-
@@ -33,36 +33,39 @@ uci_res_type() {
 add_wizard() {
 	[ "$XBOOT" = 1 ] && return 0
 	wan_device=$(uci_get_type bk_network wan device)
+	wan_ifname=$(uci_get_type bk_network wan ifname)
 	lan_device=$(uci_get_type bk_network lan device)
+	lan_ifname=$(uci_get_type bk_network lan ifname)
 	lan_ip6assign=$(uci_get_type bk_network lan ip6assign)
 	get_config="dhcp enable_siderouter firewall fullcone ip_tables ipv6 lan_dns lan_gateway lan_ipaddr lan_netmask lan_sum masq old_firewall old_lan_gateway old_siderouter old_wan old_wifi_key old_wifi_ssid omasq pppoe_pass pppoe_user syn_flood wan wan_dns_1 wan_gateway wan_gateway_1 wan_ipaddr wan_ipaddr_1 wan_lan wan_netmask wan_netmask_1 wan_proto wifi_key wifi_ssid"
 	for x in $get_config; do config_get "$x" "$1" "$x"; done
 
-	# [ "$wan" != "$old_wan" ] && {
-	# 	[ -n "$wan" ] && {
-	# 		uci -q delete network.wan
-	# 		uci -q delete network.wan6
-	# 		test -n "${wan_dns}" && {
-	# 			uci_set_network wan peerdns '0'
-	# 			uci_set_network wan dns "${wan_dns}"
-	# 		}
-	# 	} || {
-	# 		uci_res_type network wan
-	# 		uci_res_type network wan6
-	# 	}
-	# 	uci_set_wizard old_wan "$wan"
-	# }
-	# [ "$wan_proto" = pppoe ] || {
-	# 	uci_res_type network lan
-	# 	uci_res_type network wan
-	# }
+	[ "$wan" != "$old_wan" ] && {
+		[ -n "$wan" ] && {
+			uci -q delete network.wan
+			uci -q delete network.wan6
+			test -n "${wan_dns}" && {
+				uci_set_network wan peerdns '0'
+				uci_set_network wan dns "${wan_dns}"
+			}
+		} || {
+			uci_res_type network wan
+			uci_res_type network wan6
+		}
+		uci_set_wizard old_wan "$wan"
+	}
+	[ "$wan_proto" = pppoe ] || {
+		uci_res_type network lan
+		uci_res_type network wan
+	}
 
 	case $wan_proto in
 		dhcp)
 			uci -q delete network.wan
 			uci -q set network.wan=interface
 			uci_set_network wan proto dhcp
-			uci_set_network wan device "$wan_device"
+			[ -n $wan_ifname ] && uci_set_network wan ifname "$wan_ifname"
+			[ -n $wan_device ] && uci_set_network wan device "$wan_device"
 			# uci_set_network wan metric '40'
 		;;
 		pppoe)
@@ -70,12 +73,13 @@ add_wizard() {
 				uci -q delete network.wan
 				uci -q set network.wan=interface
 				uci_set_network wan proto pppoe
-				uci_set_network wan device "$wan_device"
+				[ -n $wan_ifname ] && uci_set_network wan ifname "$wan_ifname"
+				[ -n $wan_device ] && uci_set_network wan device "$wan_device"
 				uci_set_network wan username "$pppoe_user"
 				uci_set_network wan password "$pppoe_pass"
+				uci_set_network wan keepalive '0'
 				# uci_set_network wan mtu '1492'
 				# uci_set_network wan metric '40'
-				# uci_set_network wan keepalive '5 5'
 			}
 		;;
 		siderouter)
@@ -86,7 +90,8 @@ add_wizard() {
 				uci_set_network lan type 'bridge'
 				uci_set_network lan proto 'static'
 				uci_set_network lan ipaddr "$lan_ipaddr"
-				uci_set_network lan device "$lan_device"
+				[ -n $lan_ifname ] && uci_set_network lan ifname "$lan_ifname"
+				[ -n $lan_device ] && uci_set_network lan device "$lan_device"
 				uci_set_network lan gateway "$lan_gateway"
 				uci_set_network lan netmask "$lan_netmask"
 				uci_set_network lan ip6assign "$lan_ip6assign"

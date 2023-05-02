@@ -1,3 +1,121 @@
+<!-- 定义一个样式表 -->
+<style>
+	/* 定义弹窗遮罩层的样式 */
+	.alertMask {
+		position: fixed; /* 固定定位 */
+		display: flex; /* 使用 Flex 布局 */
+		flex-direction: row; /* 设置主轴为水平方向 */
+		align-items: center; /* 主轴上的对齐方式为居中对齐 */
+		justify-content: center; /* 交叉轴上的对齐方式为居中对齐 */
+		top: 0; /* 距离顶部为0 */
+		left: 0; /* 距离左侧为0 */
+		width: 100%; /* 宽度100% */
+		height: 100%; /* 高度100% */
+		z-index: 999999; /* 设置层级，使其在最上层显示 */
+		background: #0000002b; /* 设置背景颜色，使用半透明黑色 */
+	}
+	/* 定义弹窗容器的样式 */
+	.alertContainer {
+		height: auto; /* 自动高度 */
+		width: 100%; /* 宽度100% */
+		background:#fff; /* 白色背景 */
+		border: 1px solid #0000002b; /* 细边框，使用半透明黑色 */
+		border-radius: 3px; /* 圆角边框 */
+		color: #1f0000; /* 字体颜色为深红色 */
+		overflow: hidden; /* 溢出隐藏 */
+	}
+	/* 定义弹窗内容的样式 */
+	.alertDes {
+		padding: 35px 30px; /* 上下内边距为35像素，左右内边距为30像素 */
+		text-align: left; /* 文字左对齐 */
+		/*letter-spacing: 0px; /* 字符间距为1像素 */
+		font-size: 14px; /* 字体大小为14像素 */
+		color: #000000; /* 字体颜色为深红色 */
+	}
+	/* 定义弹窗中的图片样式 */
+	.alertDes img{
+		max-width: 100%; /* 图片最大宽度为100% */
+		height: auto; /* 高度自适应 */
+	}
+	/* 定义弹窗确认按钮的父容器样式 */
+	.alertConfirmParent{
+		width: 100%; /* 宽度100% */
+		padding: 8px 30px; /* 上下内边距为20像素，左右内边距为30像素 */
+		text-align: right; /* 文字右对齐 */
+		box-sizing: border-box; /* 设置盒模型为border-box */
+		background: #f2f2f2; /* 浅灰色背景 */
+	}
+	/* 定义弹窗确认按钮的样式 */
+	.alertConfirmBtn{
+		cursor: pointer; /* 鼠标移上去变成手型 */
+		padding: 8px 10px; /* 上下内边距为8像素，左右内边距为10像素 */
+		border: none; /* 去除边框 */
+		border-radius: 2px; /* 圆角边框 */
+		color: #fff; /* 字体颜色为白色 */
+		background-color: hsl(0, 94%, 48%); /* 深蓝色背景 */
+		box-shadow: 0 0 2px #000384; /* 设置阴影效果 */
+	}
+</style>
+
+<!-- 定义一个JavaScript脚本 -->
+<script type="text/javascript">
+	/* 定义一个自定义的弹窗函数alert，接收msg参数 */
+	function alert(msg){
+		var body = document.getElementsByTagName('body')[0]; // 获取body元素
+
+		var alertMask = document.createElement('div'); // 创建弹窗遮罩层
+		alertMask.className = 'alertMask'; // 设置样式类名
+
+		var alertContainer = document.createElement('div'); // 创建弹窗容器
+		alertContainer.className = 'alertContainer'; // 设置样式类名
+
+		var alertDes = document.createElement('div'); // 创建用于显示提示信息的div
+		alertDes.className = 'alertDes'; // 设置样式类名
+		alertDes.innerHTML = msg; // 将参数msg作为提示信息显示在弹窗中
+
+		var alertConfirmParent = document.createElement('div'); // 创建按钮的父容器
+		alertConfirmParent.className = 'alertConfirmParent'; // 设置样式类名
+
+		var alertConfirmBtn = document.createElement('button'); // 创建关闭按钮
+		alertConfirmBtn.className = 'alertConfirmBtn'; // 设置样式类名
+		alertConfirmBtn.innerText = '关闭'; // 设置按钮文字
+		alertConfirmBtn.addEventListener("click", function(){ // 给按钮添加点击事件，单击关闭按钮时移除弹窗
+			body.removeChild(alertMask);
+		});
+
+		alertConfirmParent.appendChild(alertConfirmBtn); // 将关闭按钮添加到按钮的父容器中
+
+		alertContainer.appendChild(alertDes); // 将用于显示提示信息的div添加到弹窗容器中
+		alertContainer.appendChild(alertConfirmParent); // 将按钮的父容器添加到弹窗容器中
+
+		alertMask.appendChild(alertContainer); // 将弹窗容器添加到遮罩层中
+
+		body.appendChild(alertMask); // 将遮罩层添加到body元素中
+	}
+
+	/* 定义一个名为onclick_awake的函数，接收一个参数id */
+	function onclick_awake(id) {
+		var xhr = new XMLHttpRequest(); // 创建XHR对象
+		var section = id.split(".")[2]; // 获取id第三个部分作为section
+		var url = '<%=url("admin/services/timedtask/button")%>/' + section; // 拼接请求url，使用服务器端模板引擎获取具体的路径
+		var token = '<%=token%>'; // 获取token值
+		
+		xhr.open('POST', url); // 使用POST方法发送请求
+		xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded'); // 设置请求头信息
+		xhr.onload = function() { // 请求成功后执行的回调函数
+			if (xhr.status === 200) {
+				alert(JSON.parse(xhr.response).data); // 请求成功，弹出返回的数据
+			} else {
+				alert('请求失败，状态码: ' + xhr.status); // 请求失败，弹出状态码
+			}
+		};
+		xhr.send('token=' + token); // 发送POST请求，将token作为参数发送
+	}
+</script>
+
+<!-- 使用服务器端模板引擎生成一个表单元素的头部 -->
 <%+cbi/valueheader%>
-	<input class="btn cbi-button cbi-button-<%=self.inputstyle or "apply"%>" style="font-size: 100%;" type="button" onclick="onclick_awake(this.id)" <%=attr("name", section) .. attr("id", cbid) .. attr("value", self.inputtitle or "Run")%> />
+	<!-- 创建一个输入按钮，使用默认样式或者自定义样式 -->
+	<input class="btn cbi-button cbi-button-<%=self.inputstyle or 'apply'%>" style="font-size: 100%;" type="button" onclick="onclick_awake(this.id)" <%=attr('name', section) .. attr("id", cbid) .. attr("value", self.inputtitle or "Run")%> />
+<!-- 使用服务器端模板引擎生成一个表单元素的尾部 -->
 <%+cbi/valuefooter%>

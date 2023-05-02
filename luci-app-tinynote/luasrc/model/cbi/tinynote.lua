@@ -132,10 +132,10 @@ f.anonymous = true -- 删除
 -- f.sortable  = true -- 移动
 
 f:tab("note", translate("Note设置"))
-local note_path = f:taboption("note", Value, "note_path", translate("保存路径"))
+note_path = f:taboption("note", Value, "note_path", translate("保存路径"))
 note_path.default = "/etc/tinynote"
 
-local note_sum = f:taboption("note", Value, "note_sum", translate("文本数量"))
+note_sum = f:taboption("note", Value, "note_sum", translate("文本数量"))
 note_sum.default = 1
 note_sum.rmempty = false
 note_sum.datatype = "uinteger"
@@ -147,7 +147,7 @@ note_sum.validate = function(self, value)
 	return Value.validate(self, value)
 end
 
-local note_type = f:taboption("note", ListValue, "note_type", translate("文本类形"))
+note_type = f:taboption("note", ListValue, "note_type", translate("文本类形"))
 note_type.default = "txt"
 note_type:value('txt', translate('txt'))
 note_type:value('sh', translate('sh'))
@@ -228,7 +228,7 @@ for sum in string.gmatch(sys.exec("seq -w 01 " .. note_sum), "%d+") do
 		local note = ("note" .. sum)
 		s:tab(note, translate("笔记 " .. sum), translate("笔记" .. sum .. "设置"))
 		
-		path = s:taboption(note, Value, "model_note" .. sum, translate("类形"))
+		path = s:taboption(note, ListValue, "model_note" .. sum, translate("类形"))
 		path.default = ""
 		path:value('txt', translate('txt'))
 		path:value('sh', translate('sh'))
