@@ -98,5 +98,5 @@ msgstr "释放内存"
 msgid "Executed immediately"
 msgstr "立即执行"
 
-msgid "locking"
-msgstr "锁定"
+msgid "task lock"
+msgstr "任务锁定"

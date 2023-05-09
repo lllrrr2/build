@@ -70,11 +70,18 @@ e = t:taboption("basic", Value, "Port", translate("Listening Port"),
 e.datatype = "port"
 e.default = "8080"
 
-e = t:taboption("basic", Value, "ConfigurationName", translate("The Suffix of the Profile Root Path"),
-	translate("Specify the suffix of the profile root path and a new profile root path will be formated as <b>[ROOT_PROFILE_PATH]_[SUFFIX]</b>. This value is empty by default."))
+-- e = t:taboption("basic", Value, "ConfigurationName", translate("The Suffix of the Profile Root Path"),
+-- 	translate("Specify the suffix of the profile root path and a new profile root path will be formated as <b>[ROOT_PROFILE_PATH]_[SUFFIX]</b>. This value is empty by default."))
 
-e = t:taboption("basic", Value, "BinaryLocation", translate("Customized Location"),
+e = t:taboption("basic", Flag, "EnableBinaryLocation", translate("Enable additional qBittorrent"))
+e.enabled = 'true'
+e.disabled = 'false'
+e.default = e.disabled
+
+e = t:taboption("basic", Value, "BinaryLocation", translate(" "),
 	translate("Specify the binary location of qBittorrent."))
+e:depends('EnableBinaryLocation', 'true')
+e.placeholder = "/usr/sbin/qbittorrent-nox"
 
 e = t:taboption("basic", Flag, "Overwrite", translate("Overwrite the settings"),
 	translate("If this option is enabled, the configuration set in WebUI will be replaced by the one in the LuCI."))

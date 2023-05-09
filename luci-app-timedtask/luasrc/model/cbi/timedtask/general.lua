@@ -1,5 +1,3 @@
-sys = require "luci.sys"
-util = require "luci.util"
 uci = require "luci.model.uci".cursor()
 m = Map("timedtask", translate("timedtask Plus+"),
 translate("<font color='green'><b>The plug-in that makes scheduled tasks easier to use is modified with the original version by wulishhui@gmail.com. </font></b><br>") ..
@@ -24,7 +22,7 @@ f:value(9, translate("Warning"))
 f.default = "9"
 
 local sy_level = uci:get("system", "@system[0]", "cronloglevel")
-local ti_level = uci:get("timedtask", "@cronloglevel[0]", "cronloglevel")
+local ti_level = uci:get("timedtask", "@cronloglevel[0]", "cronloglevel") or ""
 if (ti_level ~= sy_level) then
     uci:set("system", "@system[0]", "cronloglevel", ti_level)
     uci:commit("system")
@@ -41,21 +39,25 @@ enable = s:option(Flag, "enable", translate("enable"))
 enable.rmempty = false
 enable.default = 0
 
-enable = s:option(Flag, "enable_lock", translate("locking"))
+enable = s:option(Flag, "enable_lock", translate("task lock"))
 enable.rmempty = false
 enable.default = 0
 
 minute = s:option(Value, "minute", translate("minute"))
 minute.default = '0'
+minute.size = 4
 
 hour = s:option(Value, "hour", translate("Hour"))
 hour.default = '5'
+hour.size = 4
 
 day = s:option(Value, "day", translate("day"))
 day.default = '*'
+day.size = 4
 
 month = s:option(Value, "month", translate("Month"))
 month.default = '*'
+month.size = 4
 
 week = s:option(Value, "week", translate("weeks"))
 week:value('*', translate("Every day"))
@@ -67,6 +69,7 @@ week:value(5, translate("Friday"))
 week:value(6, translate("Saturday"))
 week:value(7, translate("Sunday"))
 week.default = '*'
+week.size = 4
 
 command = s:option(Value, "command", translate("Task"))
 command:value('sleep 5 && touch /etc/banner && reboot', translate("Reboots"))
@@ -81,24 +84,25 @@ command:value('sync && echo 3 > /proc/sys/vm/drop_caches', translate("Free up me
 command:value('poweroff', translate("Turn off the power"))
 command:value('logread | egrep -v "miniupnpd|uhttpd" | tail -20 > /etc/syslog.log', translate("save log"))
 command.rmempty = false
+command.size = 25
 
-btn = s:option(Button, "_baa", translate("Executed immediately"))
+btn = s:option(Button, "Button", translate("Executed immediately"))
 btn.inputtitle = translate("Execute")
 btn.inputstyle = "apply"
 btn.disabled = false
 btn.template = "timedtask/button"
 
-function gen_uuid(format)
-    local uuid = sys.exec("echo -n $(cat /proc/sys/kernel/random/uuid)")
-    if format == nil then
-        uuid = string.gsub(uuid, "-", "")
+function random_cfg()
+    local cfg = ''
+    math.randomseed(os.time())
+    for i = 1, 6 do
+        cfg = cfg .. string.char(math.random(97, 122))
     end
-    return uuid
+    return cfg
 end
 
 function s.create(e, t)
-    local uuid = gen_uuid()
-    t = uuid
+    t = "cfg" .. random_cfg()
     TypedSection.create(e, t)
 end
 

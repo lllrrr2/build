@@ -92,8 +92,8 @@ msgstr "配置文件根路径的后缀"
 msgid "Specify the suffix of the profile root path and a new profile root path will be formated as <b>[ROOT_PROFILE_PATH]_[SUFFIX]</b>. This value is empty by default."
 msgstr "指定配置文件根路径的后缀，生成以下格式的新的根路径：<b>[ROOT_PROFILE_PATH]_[SUFFIX]</b>。该值默认为空。"
 
-msgid "Customized Location"
-msgstr "二进制目录"
+msgid "Enable additional qBittorrent"
+msgstr "启用其他 qBittorrent"
 
 msgid "Specify the binary location of qBittorrent."
 msgstr "指定 qBittorrent 二进制文件的路径"
