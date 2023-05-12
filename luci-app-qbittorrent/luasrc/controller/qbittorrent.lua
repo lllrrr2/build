@@ -25,11 +25,11 @@ function act_status()
 	}
 	status.port  = con.port  or '8080'
 	status.https = con.https or 'false'
-	status.pid   = sys.exec("pidof " .. BinaryLocation) or 0
+	status.pid   = sys.exec("pidof " .. BinaryLocation) or ""
+	status.running = status.pid
 	if BinaryLocation ~= "/usr/bin/qbittorrent-nox" then
 		status.pat = BinaryLocation
 	end
-	status.running = sys.call("ps | grep " .. BinaryLocation .. " | grep -v grep >/dev/null") == 0
 	http.prepare_content("application/json")
 	http.write_json(status)
 end
