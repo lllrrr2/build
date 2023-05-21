@@ -2,11 +2,11 @@
 msgid "This page is the configuration file content of Deluge."
 msgstr "本页是Deluge的配置文件内容。"
 
-msgid "Last 30 lines of log file:"
-msgstr "日志文件最新的 30 行："
+msgid "Last 30 lines of run log:"
+msgstr "运行日志的最新 30 行："
 
-msgid "Last 30 lines of syslog:"
-msgstr "系统日志最新的 30 行："
+msgid "The last 30 lines of the syslog:"
+msgstr "系统日志的最新 30 行："
 
 msgid ""
 msgstr ""

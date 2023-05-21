@@ -5,13 +5,13 @@ local uci = require "luci.model.uci".cursor()
 -- wulishui 20200108-20230301
 
 local note_type_array = {
-	["sh"]  = "#!/bin/sh /etc/rc.common",
-	["lua"] = [[#!/usr/bin/env lua
-local fs   = require \"nixio.fs\"
-local sys  = require \"luci.sys\"
-local util = require \"luci.util\"
-local uci  = require \"luci.model.uci\".cursor()]],
-	["py"]  = "#!/usr/bin/env python",
+    sh = "#!/bin/sh /etc/rc.common",
+    lua = [[#!/usr/bin/env lua
+local fs   = require "nixio.fs"
+local sys  = require "luci.sys"
+local util = require "luci.util"
+local uci  = require "luci.model.uci".cursor()]],
+    py = "#!/usr/bin/env python",
 }
 
 if not uci:get("luci", "tinynote") then
@@ -41,9 +41,13 @@ end
 
 local new_note = function(file, note_type)
 	if contains(note_type_array, note_type) then
-		return sys.exec('echo "' .. contains(note_type_array, note_type) ..'"  > ' .. file)
+		local content = contains(note_type_array, note_type)
+		local f = io.open(file, "w")
+		f:write(content)
+		f:close()
 	else
-		return sys.exec(":> " .. file)
+		local f = io.open(file, "w")
+		f:close()
 	end
 end
 
@@ -155,7 +159,6 @@ note_type:value('js', translate('js'))
 note_type:value('py', translate('py'))
 note_type:value('lua', translate('lua'))
 
-
 f:tab("codemirror", translate("CodeMirror 支持"),
 	translate("CodeMirror 支持语法高亮，行号显示，自动缩进等等<br><b>") ..
 	translate("<a href='https://www.staticfile.org/?ln=zh' target='_blank'> staticfile资源 </a>&nbsp;&nbsp;&nbsp;") ..
@@ -219,41 +222,43 @@ local note_path = con.note_path or "/etc/tinynote"
 if sys.call("test ! -d " .. note_path) == 0 then fs.mkdirr(note_path) end
 local path_arg,note_arg = {},{}
 
-for sum in string.gmatch(sys.exec("seq -w 01 " .. note_sum), "%d+") do
+for sum_str = 1, note_sum do
+	local sum = string.format("%02d", sum_str)
 	local file = note_path .. "/note" .. sum .. "." .. note_type
 	note_arg[sum] = file
-	if sys.call("[ -e " .. file .. " ]") == 1 then new_note(file, note_type) end
+	if sys.call("[ -f " .. file .. " ]") == 1 then new_note(file, note_type) end
 
 	if sys.call("[ -f " .. file .. " ]") == 0 then
 		local note = ("note" .. sum)
 		s:tab(note, translate("笔记 " .. sum), translate("笔记" .. sum .. "设置"))
 		
 		path = s:taboption(note, ListValue, "model_note" .. sum, translate("类形"))
-		path.default = ""
+		path:value('')
 		path:value('txt', translate('txt'))
 		path:value('sh', translate('sh'))
 		path:value('js', translate('js'))
 		path:value('py', translate('py'))
 		path:value('lua', translate('lua'))
 		path:value('htmlmixed', translate('html'))
-		for _, v in pairs(note_mode_array) do
-			path:value(v)
+		for mode, label in ipairs(note_mode_array) do
+			path:value(mode, translate(label))
 		end
 		
 		note_only = s:taboption(note, Flag, "only_note" .. sum, translate("只读"))
 
---[[		if sys.call("[ $(sed -n '$=' " .. file .. ") -gt 1 ]") == 0 then
-			button = s:taboption(note, Button, sum .. ".rm")
-			button.inputtitle = translate("清空笔记 " .. sum)
-			button.template = "tinynote/button"
-			button.inputstyle = "remove"
-		end
-		
-		button = s:taboption(note, Button, sum .. ".st")
-		button.inputtitle = translate("运行笔记 " .. sum)
-		button.template = "tinynote/button"
-		button.inputstyle = "apply"
-		button.forcewrite = true--]]
+		-- local line_count = tonumber(io.popen("sed -n '$=' " .. file):read("*a"))
+		-- if line_count and line_count > 1 then
+		--   local clear_button = s:taboption(note, Button, sum .. ".rm")
+		--   clear_button.inputtitle = translate("清空笔记 " .. sum)
+		--   clear_button.template = "tinynote/button"
+		--   clear_button.inputstyle = "remove"
+		-- end
+
+		-- local run_button = s:taboption(note, Button, sum .. ".st")
+		-- run_button.inputtitle = translate("运行笔记 " .. sum)
+		-- run_button.template = "tinynote/button"
+		-- run_button.inputstyle = "apply"
+		-- -- run_button.forcewrite = true
 
 		local a = s:taboption(note, TextValue, "note" .. sum .. "." .. note_type)
 		a.template = "cbi/tvalue"
@@ -263,34 +268,22 @@ for sum in string.gmatch(sys.exec("seq -w 01 " .. note_sum), "%d+") do
 			return fs.readfile(file) or ""
 		end
 		function a.write(self, section, value)
-			if value and value ~= nil and value ~= "" then
-				value = value:gsub("\r\n?", "\n")
-				local old_value = fs.readfile(value)
-				if value ~= old_value then
-					fs.writefile(file, value)
-				end
-			end
+		  if not value or value == "" then return end
+		  value = value:gsub("\r\n?", "\n")
+		  local old_value = fs.readfile(file) or ""
+		  if value ~= old_value then
+		    local f = io.open(file, "w")
+		    if f then
+		      f:write(value)
+		      f:close()
+		    end
+		  end
 		end
-
---[[		if sys.call("[ $(sed -n '$=' " .. file .. ") -gt 1 ]") == 0 then
-			button = s:taboption(note, Button, sum .. ".rm")
-			button.inputtitle = translate("清空笔记 " .. sum)
-			button.template = "tinynote/button"
-			button.inputstyle = "remove"
-		end
-		
-		button = s:taboption(note, Button, sum .. ".st")
-		button.inputtitle = translate("运行笔记 " .. sum)
-		button.template = "tinynote/button"
-		button.inputstyle = "apply"
-		button.forcewrite = true--]]
 	end
 end
 
 for i in fs.dir(note_path) do path_arg[i] = note_path .. "/" .. i end
 if not rawequal(path_arg,note_arg) then delenote(path_arg,note_arg) end
-path_arg,note_arg = nil,nil
-
 if enable == "1" then
 	m:append(Template("tinynote/codemirror"))
 end

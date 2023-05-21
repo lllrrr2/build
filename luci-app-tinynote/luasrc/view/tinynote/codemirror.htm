@@ -177,31 +177,33 @@ function jqid(id) {
 
 <%
   local id_model = {}
-  for sum in sys.exec("seq -w 01 " .. con.note_sum):gmatch("%d+") do
+  for sum_str = 1, con.note_sum do
+      local sum = string.format("%02d", sum_str)
       local id = 'cbid.luci.tinynote.note' .. sum .. '.' .. con.note_type
-      id_model[id] = {}
-      id_model[id]["model_note" .. sum] = con.note_type
-      id_model[id]['only_note' .. sum] = con.only or '0'
+      id_model[id] = {
+          ["model_note" .. sum] = con.note_type,
+          ['only_note' .. sum] = con.only or '0'
+      }
       for note, model in pairs(con) do
-          if note:find("model_note" .. sum) then
-              id_model[id][note] = model
-          elseif note:find('only_note' .. sum) then
+          if note:find("model_note" .. sum) or note:find('only_note' .. sum) then
               id_model[id][note] = model
           end
       end
   end
 
   for id, value in pairs(id_model) do
-    for k, v in pairs(value) do
-      if k:find('model') then
-        model = v
-      elseif k:find('only') then
-        if v == '1' then only = true else only = false end
+      local model, only = nil, false
+      for k, v in pairs(value) do
+          if k:find('model') then
+              model = v
+              if model == "sh" then model = "shell"
+              elseif model == "py" then model = "python"
+              elseif model == "js" then model = "javascript"
+              end
+          elseif k:find('only') then
+              only = (v == '1')
+          end
       end
-      if model == "sh" then model = "shell" end
-      if model == "py" then model = "python" end
-      if model == "js" then model = "javascript" end
-    end
 %>
   editor('<%=id%>', '<%=model%>', '<%=only%>');
 <%end%>
