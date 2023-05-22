@@ -77,135 +77,116 @@
 <script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/edit/closebrackets.min.js"></script>
 
 <!-- mode -->
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/xml/xml.min.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/css/css.min.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/lua/lua.min.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/yaml/yaml.min.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/shell/shell.min.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/python/python.min.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/markdown/markdown.min.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/htmlmixed/htmlmixed.min.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/javascript/javascript.min.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/yaml-frontmatter/yaml-frontmatter.min.js"></script>
-
+<%
+local keys = {}
+for v, k in pairs(con) do
+  if v:find("model_") or v:find("note_type") then
+    if not keys[k] then
+%>
+<script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/<%=k%>/<%=k%>.min.js"></script>
+<% keys[k] = true
+  end end end %>
 <script>//<![CDATA[
-var editor = function(id, mode, only) {
-  var editor = CodeMirror.fromTextArea(document.getElementById(id), {
-    mode: mode,
-    autoRefresh: true,          // 自动更新
-    lint: true,                 // 检查格式
-    tabSize: 4,                 // tab的空格个数
-    keyMap: 'sublime',          // sublime编辑器效果
-    theme: "<%=con.theme%>",    // 主题
-    readOnly: only,      // 只读模式
-    foldGutter: true,           // 可将对象折叠，与下面的gutters一起使用
-    indentUnit: 4,              // 每个缩进块由几个空格组成。默认为2。
-    autocorrect: true,          // 自动更正
-    spellcheck: true,           // 拼写检查
-    autoCloseBrackets: true,    // 在键入时将自动关闭括号和引号
-    smartIndent: true,          // 自动缩进
-    lineNumbers: true,          // 是否显示行号
-    matchBrackets: true,        // 光标匹配括号
-    styleActiveLine: true,      // 选中行高亮
-    lineWrapping: true,         // 是否应滚动或换行以显示长行
-    lineWiseCopyCut: true,      // 在没有选择的情况下进行复制或剪切将复制或剪切有光标的整行。
-    showCursorWhenSelecting: true,  // 选择处于活动状态时是否应绘制光标
-    maxHighlightLength: Infinity,   // 默认为 10000（行），最多渲染行数.为 Infinity 时，渲染所有行。
-    viewportMargin: 15,         // 渲染可视范围前后的多少行。建议使用默认值 10。
-    gutters: ["CodeMirror-lint-markers", "CodeMirror-foldgutter", "CodeMirror-linenumbers", "breakpoints"],
-    // highlightSelectionMatches: {showToken: /\w/, annotateScrollbar: true}, //高亮匹配
-    extraKeys: {
-      "F11": function(cm) {
-        cm.setOption("fullScreen", !cm.getOption("fullScreen"));
-      },
-      "Esc": function(cm) {
-        if (cm.getOption("fullScreen")) cm.setOption("fullScreen", false);
-      },
-      "Tab": function(cm) {
-        if (cm.somethingSelected()) {
-          cm.indentSelection('add')
-        } else {
-          var spaces = Array(cm.getOption("indentUnit") + 1).join(" ")
-          cm.replaceSelection(spaces)
-        }
-      },
-      "Alt-F": "findPersistent",
-      "Ctrl-J": "toMatchingTag",
-    },
-  });
-  editor.setSize("<%=con.width%>", "<%=con.height%>");
-  editor.on("gutterClick", function(cm, n) {
-    var info = cm.lineInfo(n);
-    cm.setGutterMarker(n, "breakpoints", info.gutterMarkers ? null : makeMarker());
-  });
-  editor.on("change", function(cm) {
-    cm.save();
-        });
+// 定义 gutter 类型常量。
+const GUTTERS = ["CodeMirror-lint-markers", "CodeMirror-foldgutter", "CodeMirror-linenumbers", "breakpoints"];
 
-  function makeMarker() {
-    var marker = document.createElement("div");
-    marker.style.color = "#822";
-    marker.innerHTML = "●";
-    return marker;
-  }
+// 切换全屏函数，如果编辑器不在全屏模式下，则设置其为全屏模式，否则取消全屏模式。
+const toggleFullScreen = (cm) => cm.setOption("fullScreen", !cm.getOption("fullScreen") ? true : false);
+
+// 创建 marker 函数，返回一个包含样式和内容的标记符号元素。
+const makeMarker = () => {
+  const marker = document.createElement("div");
+  marker.style.color = "#822";
+  marker.innerHTML = "●";
+  return marker;
 };
 
-/*$(document).ready(function() {
-  $.post('/cgi-bin/luci/admin/nas/tinynote/id', function(data, x) {
-  // XHR.get('/cgi-bin/luci/admin/nas/tinynote/id', null, function(x, data) {
-    $.each(data, function(key, value) {
-      $.each(value, function(k, v) {
-        if (k.match('path_note')) {
-          model = v;
-          if (v == "sh") model = "shell";
-          else if (v == "py") model = "python";
-          else if (v == "js") model = "javascript";
-        };
-        if (k.match('only_note')) {
-          if (v == '1') {only = true} else {only = false};
-        };
-      });
-      var key = key, only = only, model = model;
-      editor(key, model, only);
-    });
-  });
-});*/
+// 保存更改函数，将更改保存到 CodeMirror 编辑器实例相关联的文本区域中。
+const saveChanges = (cm) => cm.save();
+
+/**
+ * 创建 CodeMirror 编辑器实例。
+ *
+ * @param {string} id - HTML 元素的 ID，用于将编辑器附加到 DOM 中。
+ * @param {string} mode - 编辑器的语言模式。
+ * @param {boolean} readOnly - 是否启用只读模式。
+ * @returns {Object} 返回创建的 CodeMirror 编辑器实例。
+ */
+const editor = (id, mode, readOnly) => {
+  // 定义 CodeMirror 编辑器选项。
+  const options = {
+    mode,                       // 编辑器的语言模式。
+    autoRefresh: true,          // 自动刷新。
+    lint: true,                 // 启用代码检查。
+    tabSize: 4,                 // Tab 键缩进空格数。
+    keyMap: 'sublime',          // 映射键盘。
+    theme: "<%=con.theme%>",    // 主题。
+    readOnly,                   // 是否启用只读模式。
+    foldGutter: true,           // 启用折叠 gutter。
+    indentUnit: 4,              // 缩进单位，默认为 2。
+    autocorrect: true,          // 自动更正。
+    spellcheck: true,           // 拼写检查。
+    autoCloseBrackets: true,    // 自动关闭括号和引号。
+    smartIndent: true,          // 智能缩进。
+    lineNumbers: true,          // 显示行号。
+    matchBrackets: true,        // 光标匹配括号。
+    styleActiveLine: true,      // 选中行高亮。
+    lineWrapping: true,         // 是否应滚动或换行以显示长行。
+    lineWiseCopyCut: true,      // 行内复制剪切。
+    showCursorWhenSelecting: true,   // 聚焦时显示光标。
+    maxHighlightLength: Infinity,    // 最大高亮长度，Infinity 表示渲染所有行。
+    viewportMargin: 15,         // 滚动可视范围前后的行数。
+    gutters: GUTTERS,           // gutter 类型。
+    extraKeys: {
+      "F11": toggleFullScreen,  // 切换全屏。
+      "Esc": toggleFullScreen,  // 退出全屏。
+      "Tab": cm => cm.somethingSelected() ? cm.indentSelection('add') : cm.replaceSelection(Array(cm.getOption("indentUnit") + 1).join(" ")),   // 缩进代码。
+      "Alt-F": "findPersistent",// 查找。
+      "Ctrl-J": "toMatchingTag",// 标签匹配。
+    },
+  };
+
+  // 创建 CodeMirror 实例。
+  const editor = CodeMirror.fromTextArea(document.getElementById(id), options);
+
+  // 设置编辑器大小。
+  editor.setSize("<%=con.width%>", "<%=con.height%>");
+
+  // 注册事件处理程序。
+  editor.on("gutterClick", (cm, n) => {
+    const info = cm.lineInfo(n);
+    cm.setGutterMarker(
+      n,
+      "breakpoints",
+      info.gutterMarkers ? null : makeMarker()
+    );
+  }); // 点击 gutter 切换 marker。
+
+  editor.on("change", saveChanges); // 文本更改时保存。
+
+  // 返回创建的 CodeMirror 编辑器实例。
+  return editor;
+};
 
 function jqid(id) {
   return (!id) ? null : '#' + id.replace(/([#;?%&,.+*~\':"!^$[\]()=>|\/@_])/g, '\\$1');
 };
 
 <%
-  local id_model = {}
   for sum_str = 1, con.note_sum do
-      local sum = string.format("%02d", sum_str)
-      local id = 'cbid.luci.tinynote.note' .. sum .. '.' .. con.note_type
-      id_model[id] = {
-          ["model_note" .. sum] = con.note_type,
-          ['only_note' .. sum] = con.only or '0'
-      }
-      for note, model in pairs(con) do
-          if note:find("model_note" .. sum) or note:find('only_note' .. sum) then
-              id_model[id][note] = model
-          end
+    local sum = string.format("%02d", sum_str)
+    local id = string.format('cbid.luci.tinynote.note%s.%s', sum, con.note_type)
+    local id_model = {
+      ['model_note' .. sum] = con.note_type,
+      ['only_note' .. sum] = con.only or false
+    }
+    for note, model in pairs(con) do
+      if note:find("model_note" .. sum) or note:find('only_note' .. sum) then
+        id_model[note] = model
       end
-  end
-
-  for id, value in pairs(id_model) do
-      local model, only = nil, false
-      for k, v in pairs(value) do
-          if k:find('model') then
-              model = v
-              if model == "sh" then model = "shell"
-              elseif model == "py" then model = "python"
-              elseif model == "js" then model = "javascript"
-              end
-          elseif k:find('only') then
-              only = (v == '1')
-          end
-      end
+    end
 %>
-  editor('<%=id%>', '<%=model%>', '<%=only%>');
+    editor('<%=id%>', '<%=id_model["model_note" .. sum]%>', '<%=id_model["only_note" .. sum]%>');
 <%end%>
 
 //]]>

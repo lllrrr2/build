@@ -40,8 +40,8 @@ local delenote = function(list1, list2)
 end
 
 local new_note = function(file, note_type)
-	if contains(note_type_array, note_type) then
-		local content = contains(note_type_array, note_type)
+	local content = contains(note_type_array, note_type)
+	if content then
 		local f = io.open(file, "w")
 		f:write(content)
 		f:close()
@@ -111,19 +111,126 @@ local note_theme_array = {
 }
 
 local note_mode_array = {
-	"apl", "asciiarmor", "asn.1", "asterisk", "brainfuck", "clike", "clojure", "cmake", "cobol",
-	"coffeescript", "commonlisp", "crystal", "css", "cypher", "d", "dart", "diff", "django",
-	"dockerfile", "dtd", "dylan", "ebnf", "ecl", "eiffel", "elm", "erlang", "factor", "fcl",
-	"forth", "fortran", "gas", "gfm", "gherkin", "go", "groovy", "haml", "handlebars", "haskell",
-	"haskell-literate", "haxe", "htmlembedded", "htmlmixed", "http", "idl", "javascript", "jinja2",
-	"jsx", "julia", "livescript", "lua", "markdown", "mathematica", "mbox", "mirc", "mllike",
-	"modelica", "mscgen", "mumps", "nginx", "nsis", "ntriples", "octave", "oz", "pascal",
-	"pegjs", "perl", "php", "pig", "powershell", "properties", "protobuf", "pug", "puppet",
-	"python", "q", "r", "rpm", "rst", "ruby", "rust", "sas", "sass", "scheme", "shell",
-	"sieve", "slim", "smalltalk", "smarty", "solr", "soy", "sparql", "spreadsheet", "sql",
-	"stex", "stylus", "swift", "tcl", "textile", "tiddlywiki", "tiki", "toml", "tornado",
-	"troff", "ttcn", "ttcn-cfg", "turtle", "twig", "vb", "vbscript", "velocity", "verilog",
-	"vhdl", "vue", "wast", "webidl", "xml", "xquery", "yacas", "yaml", "yaml-frontmatter", "z80",
+	{"shell",		"sh"			},
+	{"javascript",	"js"			},
+	{"lua",			"lua"			},
+	{"python",		"py"			},
+	{"htmlmixed",	"html"			},
+	{"cmake",		"cmake"			},
+	{"yaml",		"yaml"			},
+	{"diff",		"patch(diff)"	},
+	{"css",			"css"			},
+	{"xml",			"xml"			},
+	{"ttcn-cfg",	"cfg"			},
+	{"http",		"http"			},
+	{"perl",		"pl"			},
+	{"php",			"php"			},
+	{"sql",			"sql"			},
+	{"vb",			"vb"			},
+	{"vbscript",	"vbs"			},
+	{"velocity",	"vm"			},
+	{"apl",			"apl"			},
+	{"asciiarmor",	"asc"			},
+	{"asn.1",		"asn1"			},
+	{"asterisk",	"asterisk"		},
+	{"brainfuck", 	"bf"			},
+	{"clike",		"c"				},
+	{"clojure",		"clj"			},
+	{"cobol",		"cobol"			},
+	{"coffeescript",	"coffee"	},
+	{"commonlisp",	"lisp"			},
+	{"crystal",		"cr"			},
+	{"cypher",		"cypher"		},
+	{"d",			"d"				},
+	{"dart",		"dart"			},
+	{"django",		"django"		},
+	{"dockerfile",	"dockerfile"	},
+	{"dtd",			"dtd"			},
+	{"dylan",		"dylan"			},
+	{"ebnf",		"ebnf"			},
+	{"ecl",			"ecl"			},
+	{"eiffel",		"eiffel"		},
+	{"elm",			"elm"			},
+	{"erlang",		"erl"			},
+	{"factor",		"factor"		},
+	{"fcl",			"fcl"			},
+	{"forth",		"forth"			},
+	{"fortran",		"f90"			},
+	{"gas",			"gas"			},
+	{"gfm",			"gfm"			},
+	{"gherkin",		"gherkin"		},
+	{"go",			"go"			},
+	{"groovy",		"groovy"		},
+	{"haml",		"haml"			},
+	{"handlebars",	"hbs"			},
+	{"haskell",		"hs"			},
+	{"haskell-literate", "lhs"		},
+	{"haxe",		"hx"			},
+	{"idl",			"idl"			},
+	{"jinja2",		"jinja2"		},
+	{"jsx",			"jsx"			},
+	{"julia",		"jl"			},
+	{"livescript",	"ls"			},
+	{"markdown",	"md"			},
+	{"mathematica",	"m"				},
+	{"mbox",		"mbox"			},
+	{"mirc",		"mirc"			},
+	{"mllike",		"sml"			},
+	{"modelica",	"mo"			},
+	{"mscgen",		"mscgen"		},
+	{"mumps",		"mumps"			},
+	{"nginx",		"nginx"			},
+	{"nsis",		"nsi"			},
+	{"ntriples",	"ntriples"		}, 
+	{"octave",		"octave"		},
+	{"oz",			"oz"			},
+	{"pascal",		"pascal"		},
+	{"pegjs",		"pegjs"			},
+	{"pig",			"pig"			},
+	{"powershell",	"ps1"			},
+	{"properties",	"properties"	},
+	{"protobuf",	"protobuf"		},
+	{"pug",			"pug"			},
+	{"puppet",		"pp"			},
+	{"q",			"q"				},
+	{"r",			"r"				},
+	{"rpm",			"rpm"			},
+	{"rst",			"rst"			},
+	{"ruby",		"rb"			},
+	{"rust",		"rs"			},
+	{"sas",			"sas"			},
+	{"sass",		"sass"			},
+	{"scheme",		"scheme"		},
+	{"sieve",		"sieve"			},
+	{"slim",		"slim"			},
+	{"smalltalk",	"st"			},
+	{"smarty",		"smarty"		},
+	{"solr",		"solr"			},
+	{"soy",			"soy"			},
+	{"sparql",		"sparql"		},
+	{"spreadsheet",	"spreadsheet"	},
+	{"stex",		"latex"			},
+	{"stylus",		"styl"			},
+	{"swift",		"swift"			},
+	{"tcl",			"tcl"			},
+	{"textile",		"textile"		},
+	{"tiddlywiki",	"tiddlywiki"	},
+	{"tiki",		"tiki"			},
+	{"toml",		"toml"			},
+	{"tornado",		"tornado"		},
+	{"troff",		"troff"			},
+	{"ttcn",		"ttcn"			},
+	{"turtle",		"turtle"		},
+	{"twig",		"twig"			},
+	{"verilog",		"v"				},
+	{"vhdl",		"vhdl"			},
+	{"vue",			"vue"			},
+	{"wast",		"wast"			},
+	{"webidl",		"webidl"		},
+	{"xquery",		"xq"			},
+	{"yacas",		"ys"			},
+	{"yaml-frontmatter", "yfm"		},
+	{"z80",			"z80"			},
 }
 
 m = Map("luci", translate(""), translate([[<font color="red"><strong>文本内容不能大于90Kb（约1000行），否则失去响应。</strong></font>]]))
@@ -230,21 +337,26 @@ for sum_str = 1, note_sum do
 
 	if sys.call("[ -f " .. file .. " ]") == 0 then
 		local note = ("note" .. sum)
-		s:tab(note, translate("笔记 " .. sum), translate("笔记" .. sum .. "设置"))
+		s:tab(note, translate("笔记 " .. sum), translate("笔记 " .. sum .. "." .. note_type .. " 设置"))
+		
+		enablenote = s:taboption(note, Flag, "enablenote" .. sum, translate("启用单个设置"))
+		enablenote.enabled = 'true'
+		enablenote.disabled = 'false'
+		enablenote.default = enablenote.disabled
 		
 		path = s:taboption(note, ListValue, "model_note" .. sum, translate("类形"))
+		path:depends('enablenote' .. sum, 'true')
+		path.remove_empty = true
 		path:value('')
-		path:value('txt', translate('txt'))
-		path:value('sh', translate('sh'))
-		path:value('js', translate('js'))
-		path:value('py', translate('py'))
-		path:value('lua', translate('lua'))
-		path:value('htmlmixed', translate('html'))
-		for mode, label in ipairs(note_mode_array) do
-			path:value(mode, translate(label))
+		for _, k in ipairs(note_mode_array) do
+			path:value(k[1], translate(k[2]))
 		end
 		
 		note_only = s:taboption(note, Flag, "only_note" .. sum, translate("只读"))
+		note_only:depends("enablenote" .. sum, 'true')
+		note_only.enabled = 'true'
+		note_only.disabled = 'false'
+		note_only.default = note_only.disabled
 
 		-- local line_count = tonumber(io.popen("sed -n '$=' " .. file):read("*a"))
 		-- if line_count and line_count > 1 then
