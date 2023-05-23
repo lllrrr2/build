@@ -14,41 +14,41 @@ local uci  = require "luci.model.uci".cursor()]],
     py = "#!/usr/bin/env python",
 }
 
-if not uci:get("luci", "tinynote") then
-	uci:set("luci", "tinynote", "tinynote")
-	uci:commit("luci")
-end
-
 local contains = function(list, value)
-	for k, v in pairs(list) do
-		if v == value then
-			return true
-		end
-		if k == value then
-			return v
-		end
-	end
-	return false
+    for k, v in pairs(list) do
+        if v == value then
+            return true
+        elseif k == value then
+            return v
+        end
+    end
+    return false
 end
 
 local delenote = function(list1, list2)
-	for _, x in pairs(list1) do
-		if not contains(list2, x) then
-			fs.remove(x)
-		end
-	end
+    for _, x in pairs(list1) do
+        if not contains(list2, x) then
+            fs.remove(x)
+        end
+    end
 end
 
 local new_note = function(file, note_type)
-	local content = contains(note_type_array, note_type)
-	if content then
-		local f = io.open(file, "w")
-		f:write(content)
-		f:close()
-	else
-		local f = io.open(file, "w")
-		f:close()
-	end
+    local content = contains(note_type_array, note_type)
+    if content then
+        local f = io.open(file, "w")
+        f:write(content)
+        f:close()
+    else
+        local f = io.open(file, "w")
+        f:close()
+    end
+end
+
+if not uci:get("tinynote", "tinynote") then
+    new_note("/etc/config/tinynote")
+    uci:set("tinynote", "tinynote", "tinynote")
+    uci:commit("tinynote")
 end
 
 local note_theme_array = {
@@ -233,7 +233,7 @@ local note_mode_array = {
     { "z80",              "z80"           },
 }
 
-m = Map("luci", translate(""), translate([[<font color="red"><strong>文本内容不能大于90Kb（约1000行），否则失去响应。</strong></font>]]))
+m = Map("tinynote", translate(""), translate([[<font color="red"><strong>The text content cannot exceed 90Kb (approximately 1000 lines), otherwise it will become unresponsive.</strong></font>]]))
 
 f = m:section(TypedSection, "tinynote")
 -- f.template = "cbi/tblsection"
@@ -242,37 +242,39 @@ f.anonymous = true -- 删除
 -- f.extedit   = true -- 修改
 -- f.sortable  = true -- 移动
 
-f:tab("note", translate("Note设置"))
-note_path = f:taboption("note", Value, "note_path", translate("保存路径"))
+f:tab("note", translate("Note Settings"))
+
+f:tab("codemirror", translate("CodeMirror Support"),
+    translate("CodeMirror supports syntax highlighting, line number display, automatic indentation, etc.<br><b>") ..
+    translate("<a href='https://www.staticfile.org/?ln=zh' target='_blank'> Staticfile Resources </a>&nbsp;&nbsp;&nbsp;") ..
+    translate("<a href='https://www.tun6.com/projects/code_mirror/' target='_blank'> User Manual </a>&nbsp;&nbsp;&nbsp;") ..
+    translate("<a href='https://www.tun6.com/projects/code_mirror/demo/demos/theme.html' target='_blank'> Theme Preview </a></b>")
+)
+
+note_path = f:taboption("note", Value, "note_path", translate("Save Path"))
 note_path.default = "/etc/tinynote"
 
-note_sum = f:taboption("note", Value, "note_sum", translate("文本数量"))
+note_sum = f:taboption("note", Value, "note_sum", translate("Number of Texts"))
 note_sum.default = 1
 note_sum.rmempty = false
 note_sum.datatype = "uinteger"
 note_sum.validate = function(self, value)
-	local count = tonumber(value) or 0
-	if count < 1 or count > 20 then
-		return nil, translate("请输入1到20之间的数字。")
-	end
-	return Value.validate(self, value)
+    local count = tonumber(value) or 0
+    if count < 1 or count > 20 then
+        return nil, translate("Please enter a number between 1 and 20.")
+    end
+    return Value.validate(self, value)
 end
 
-note_type = f:taboption("note", ListValue, "note_type", translate("文本类形"))
+note_type = f:taboption("note", ListValue, "note_type", translate("Text Type"))
 note_type.default = "txt"
 note_type:value('txt', translate('txt'))
 note_type:value('sh', translate('sh'))
-note_type:value('js', translate('js'))
-note_type:value('py', translate('py'))
 note_type:value('lua', translate('lua'))
+note_type:value('py', translate('py'))
+note_type:value('js', translate('js'))
 
-f:tab("codemirror", translate("CodeMirror 支持"),
-	translate("CodeMirror 支持语法高亮，行号显示，自动缩进等等<br><b>") ..
-	translate("<a href='https://www.staticfile.org/?ln=zh' target='_blank'> staticfile资源 </a>&nbsp;&nbsp;&nbsp;") ..
-	translate("<a href='https://www.tun6.com/projects/code_mirror/' target='_blank'> 中文用户手册 </a>&nbsp;&nbsp;&nbsp;") ..
-	translate("<a href='https://www.tun6.com/projects/code_mirror/demo/demos/theme.html' target='_blank'> 主题预览 </a></b>"))
-enable = f:taboption("codemirror", Flag, "enable", translate("enable"))
--- enable.rmempty = false -- 值为空时不删除
+enable = f:taboption("note", Flag, "enable", translate("Enable CodeMirror Support"))
 enable.default = '0'
 
 theme = f:taboption("codemirror", ListValue, "theme", translate("Design"))
@@ -282,7 +284,7 @@ for _, k in ipairs(note_theme_array) do
 end
 theme:depends("enable", 1)
 
-font_size = f:taboption("codemirror", Value, "font_size", translate("字体大小"))
+font_size = f:taboption("codemirror", Value, "font_size", translate("Font Size"))
 font_size.default = "14"
 font_size:value('12', translate('12'))
 font_size:value('14', translate('14'))
@@ -290,7 +292,7 @@ font_size:value('16', translate('16'))
 font_size.datatype = "uinteger"
 font_size:depends("enable", 1)
 
-line_spacing = f:taboption("codemirror", Value, "line_spacing", translate("文本行距"))
+line_spacing = f:taboption("codemirror", Value, "line_spacing", translate("Line Spacing"))
 line_spacing.default = "140"
 line_spacing:value('100', translate('100'))
 line_spacing:value('140', translate('140'))
@@ -298,7 +300,7 @@ line_spacing:value('150', translate('150'))
 line_spacing.datatype = "uinteger"
 line_spacing:depends("enable", 1)
 
-height = f:taboption("codemirror", Value, "height", translate("显示高度"))
+height = f:taboption("codemirror", Value, "height", translate("Display Height"))
 height.default = "500"
 height:value('auto', translate('auto'))
 height:value('500', translate('500'))
@@ -306,7 +308,7 @@ height:value('600', translate('600'))
 height:value('800', translate('800'))
 height:depends("enable", 1)
 
-width = f:taboption("codemirror", Value, "width", translate("显示宽度"))
+width = f:taboption("codemirror", Value, "width", translate("Display Width"))
 width.default = "auto"
 width:value('auto', translate('auto'))
 width:value('1000', translate('1000'))
@@ -314,90 +316,106 @@ width:value('1300', translate('1300'))
 width:value('1500', translate('1500'))
 width:depends("enable", 1)
 
-only = f:taboption("codemirror", Flag, "only", translate("只读模式"))
+only = f:taboption("codemirror", Flag, "only", translate("Read-Only Mode"))
 only:depends("enable", 1)
 
 s = m:section(TypedSection, "tinynote")
 s.anonymous = true
 s.addremove = false
 
-local con	= uci:get_all("luci", "tinynote")
-local enable	= con.enable    or "0"
-local note_sum	= con.note_sum  or "1"
+local con = uci:get_all("tinynote", "tinynote")
+local enable = con.enable or "0"
+local note_sum = con.note_sum or "1"
 local note_type = con.note_type or "txt"
 local note_path = con.note_path or "/etc/tinynote"
-if sys.call("test ! -d " .. note_path) == 0 then fs.mkdirr(note_path) end
-local path_arg,note_arg = {},{}
 
-for sum_str = 1, note_sum do
-	local sum = string.format("%02d", sum_str)
-	local file = note_path .. "/note" .. sum .. "." .. note_type
-	note_arg[sum] = file
-	if sys.call("[ -f " .. file .. " ]") == 1 then new_note(file, note_type) end
-
-	if sys.call("[ -f " .. file .. " ]") == 0 then
-		local note = ("note" .. sum)
-		s:tab(note, translate("笔记 " .. sum), translate("笔记 " .. sum .. "." .. note_type .. " 设置"))
-		
-		enablenote = s:taboption(note, Flag, "enablenote" .. sum, translate("启用单个设置"))
-		enablenote.enabled = 'true'
-		enablenote.disabled = 'false'
-		enablenote.default = enablenote.disabled
-		
-		path = s:taboption(note, ListValue, "model_note" .. sum, translate("类形"))
-		path:depends('enablenote' .. sum, 'true')
-		path.remove_empty = true
-		path:value('')
-		for _, k in ipairs(note_mode_array) do
-			path:value(k[1], translate(k[2]))
-		end
-		
-		note_only = s:taboption(note, Flag, "only_note" .. sum, translate("只读"))
-		note_only:depends("enablenote" .. sum, 'true')
-		note_only.enabled = 'true'
-		note_only.disabled = 'false'
-		note_only.default = note_only.disabled
-
-		-- local line_count = tonumber(io.popen("sed -n '$=' " .. file):read("*a"))
-		-- if line_count and line_count > 1 then
-		--   local clear_button = s:taboption(note, Button, sum .. ".rm")
-		--   clear_button.inputtitle = translate("清空笔记 " .. sum)
-		--   clear_button.template = "tinynote/button"
-		--   clear_button.inputstyle = "remove"
-		-- end
-
-		-- local run_button = s:taboption(note, Button, sum .. ".st")
-		-- run_button.inputtitle = translate("运行笔记 " .. sum)
-		-- run_button.template = "tinynote/button"
-		-- run_button.inputstyle = "apply"
-		-- -- run_button.forcewrite = true
-
-		local a = s:taboption(note, TextValue, "note" .. sum .. "." .. note_type)
-		a.template = "cbi/tvalue"
-		a.rows = 35
-		a.wrap = "off"
-		function a.cfgvalue(self, section)
-			return fs.readfile(file) or ""
-		end
-		function a.write(self, section, value)
-		  if not value or value == "" then return end
-		  value = value:gsub("\r\n?", "\n")
-		  local old_value = fs.readfile(file) or ""
-		  if value ~= old_value then
-		    local f = io.open(file, "w")
-		    if f then
-		      f:write(value)
-		      f:close()
-		    end
-		  end
-		end
-	end
+if sys.call("test ! -d " .. note_path) == 0 then
+    fs.mkdirr(note_path)
 end
 
-for i in fs.dir(note_path) do path_arg[i] = note_path .. "/" .. i end
-if not rawequal(path_arg,note_arg) then delenote(path_arg,note_arg) end
+local path_arg, note_arg = {}, {}
+
+for sum_str = 1, note_sum do
+    local sum = string.format("%02d", sum_str)
+    local file = note_path .. "/note" .. sum .. "." .. note_type
+    note_arg[sum] = file
+    if sys.call("[ -f " .. file .. " ]") == 1 then
+        new_note(file, note_type)
+    end
+
+    if sys.call("[ -f " .. file .. " ]") == 0 then
+        local note = ("note" .. sum)
+        s:tab(note, translate("Note %s" %sum))
+
+        enablenote = s:taboption(note, Flag, "enablenote" .. sum, translate("Note %s Settings" %sum))
+        enablenote.enabled = 'true'
+        enablenote.disabled = 'false'
+        enablenote.default = enablenote.disabled
+
+        path = s:taboption(note, ListValue, "model_note" .. sum, translate("Type"))
+        path:depends('enablenote' .. sum, 'true')
+        path.remove_empty = true
+        path:value('')
+        for _, k in ipairs(note_mode_array) do
+            path:value(k[1], k[2])
+        end
+
+        note_only = s:taboption(note, Flag, "only_note" .. sum, translate("Read-only"))
+        note_only:depends("enablenote" .. sum, 'true')
+        note_only.enabled = 'true'
+        note_only.disabled = 'false'
+        note_only.default = note_only.disabled
+
+        -- local line_count = tonumber(io.popen("sed -n '$=' " .. file):read("*a"))
+        -- if line_count and line_count > 1 then
+        --   local clear_button = s:taboption(note, Button, sum .. ".rm")
+        --   clear_button.inputtitle = translate("Clear Note " .. sum)
+        --   clear_button.template = "tinynote/button"
+        --   clear_button.inputstyle = "remove"
+        -- end
+
+        -- local run_button = s:taboption(note, Button, sum .. ".st")
+        -- run_button.inputtitle = translate("Run Note " .. sum)
+        -- run_button.template = "tinynote/button"
+        -- run_button.inputstyle = "apply"
+        -- -- run_button.forcewrite = true
+
+        a = s:taboption(note, TextValue, "note" .. sum .. "." .. note_type)
+        a.template = "cbi/tvalue"
+        a.rows = 35
+        a.wrap = "off"
+
+        function a.cfgvalue(self, section)
+            return fs.readfile(file) or ""
+        end
+
+        function a.write(self, section, value)
+            if not value or value == "" then
+                return
+            end
+            value = value:gsub("\r\n?", "\n")
+            local old_value = fs.readfile(file) or ""
+            if value ~= old_value then
+                local f = io.open(file, "w")
+                if f then
+                    f:write(value)
+                    f:close()
+                end
+            end
+        end
+    end
+end
+
+for i in fs.dir(note_path) do
+  path_arg[i] = note_path .. "/" .. i 
+end
+
+if not rawequal(path_arg, note_arg) then
+  delenote(path_arg, note_arg)
+end
+
 if enable == "1" then
-	m:append(Template("tinynote/codemirror"))
+  m:append(Template("tinynote/codemirror"))
 end
 
 return m

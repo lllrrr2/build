@@ -1,10 +1,6 @@
 <!-- https://www.min.jsdelivr.com/package/npm/codemirror -->
-<!-- <%local con = luci.model.uci:get_all("luci", "tinynote")%> -->
 <%
-  local fs  = require "nixio.fs"
-  local sys = require "luci.sys"
-  local uci = require "luci.model.uci".cursor()
-  local con = uci:get_all("luci", "tinynote")
+  local con = luci.model.uci:get_all("tinynote", "tinynote")
 %>
 <style>
   .CodeMirror {
@@ -25,67 +21,77 @@
   .cm-matchhighlight {background-color: hsl(256, 58%, 45%)}
   .CodeMirror-selection-highlight-scrollbar {background-color: rgb(192, 23, 23)}
 </style>
-
-<link rel="stylesheet" href="https://cdn.staticfile.org/codemirror/6.65.7/codemirror.min.css">
-<link rel="stylesheet" href="https://cdn.staticfile.org/codemirror/6.65.7/addon/lint/lint.min.css">
-<link rel="stylesheet" href="https://cdn.staticfile.org/codemirror/6.65.7/addon/dialog/dialog.min.css">
-<link rel="stylesheet" href="https://cdn.staticfile.org/codemirror/6.65.7/addon/hint/show-hint.min.css">
-<link rel="stylesheet" href="https://cdn.staticfile.org/codemirror/6.65.7/addon/fold/foldgutter.min.css">
-<link rel="stylesheet" href="https://cdn.staticfile.org/codemirror/6.65.7/addon/display/fullscreen.min.css">
-<link rel="stylesheet" href="https://cdn.staticfile.org/codemirror/6.65.7/addon/search/matchesonscrollbar.min.css">
 <!-- theme -->
-<link rel="stylesheet" href="https://cdn.staticfile.org/codemirror/6.65.7/theme/<%=con.theme%>.min.css">
+<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.13/theme/<%=con.theme%>.min.css">
 
-<!-- <script src="http://lib.sinaapp.com/js/jquery/2.2.4/jquery-2.2.4.min.js"></script> -->
-<script src="https://cdn.staticfile.org/jquery/2.2.4/jquery.min.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/codemirror.min.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/keymap/emacs.min.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/keymap/sublime.min.js"></script>
+<link rel="stylesheet" href="/luci-static/tinynote/codemirror/codemirror.min.css">
+<link rel="stylesheet" href="/luci-static/tinynote/codemirror/theme/monokai.min.css">
+<link rel="stylesheet" href="/luci-static/tinynote/codemirror/addon/dialog/dialog.min.css">
+<link rel="stylesheet" href="/luci-static/tinynote/codemirror/addon/fold/foldgutter.min.css">
+<link rel="stylesheet" href="/luci-static/tinynote/codemirror/addon/display/fullscreen.min.css">
+<link rel="stylesheet" href="/luci-static/tinynote/codemirror/addon/search/matchesonscrollbar.min.css">
 
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/dialog/dialog.min.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/fold/xml-fold.min.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/fold/foldcode.min.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/fold/foldgutter.min.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/fold/brace-fold.min.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/fold/markdown-fold.min.js"></script>
+<script src="/luci-static/tinynote/codemirror/jquery.min.js"></script>
+<script src="/luci-static/tinynote/codemirror/codemirror.min.js"></script>
+<script src="/luci-static/tinynote/codemirror/keymap/emacs.min.js"></script>
+<script src="/luci-static/tinynote/codemirror/keymap/sublime.min.js"></script>
 
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/search/search.min.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/search/jump-to-line.min.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/search/searchcursor.min.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/search/match-highlighter.min.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/search/matchesonscrollbar.min.js"></script>
+<script src="/luci-static/tinynote/codemirror/addon/dialog/dialog.min.js"></script>
+<script src="/luci-static/tinynote/codemirror/addon/fold/xml-fold.min.js"></script>
+<script src="/luci-static/tinynote/codemirror/addon/fold/foldcode.min.js"></script>
+<script src="/luci-static/tinynote/codemirror/addon/fold/indent-fold.min.js"></script>
+<script src="/luci-static/tinynote/codemirror/addon/fold/foldgutter.min.js"></script>
+<script src="/luci-static/tinynote/codemirror/addon/fold/brace-fold.min.js"></script>
+<script src="/luci-static/tinynote/codemirror/addon/fold/markdown-fold.min.js"></script>
 
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/selection/active-line.min.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/selection/mark-selection.min.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/scroll/annotatescrollbar.min.js"></script>
+<script src="/luci-static/tinynote/codemirror/addon/search/search.min.js"></script>
+<script src="/luci-static/tinynote/codemirror/addon/search/jump-to-line.min.js"></script>
+<script src="/luci-static/tinynote/codemirror/addon/search/searchcursor.min.js"></script>
+<script src="/luci-static/tinynote/codemirror/addon/search/match-highlighter.min.js"></script>
+<script src="/luci-static/tinynote/codemirror/addon/search/matchesonscrollbar.min.js"></script>
 
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/display/fullscreen.min.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/display/autorefresh.min.js"></script>
+<script src="/luci-static/tinynote/codemirror/addon/selection/active-line.min.js"></script>
+<script src="/luci-static/tinynote/codemirror/addon/selection/mark-selection.min.js"></script>
+<script src="/luci-static/tinynote/codemirror/addon/scroll/annotatescrollbar.min.js"></script>
 
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/lint/lint.min.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/lint/yaml-lint.min.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/hint/xml-hint.min.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/hint/css-hint.min.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/hint/html-hint.min.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/hint/show-hint.min.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/hint/anyword-hint.min.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/hint/javascript-hint.min.js"></script>
+<script src="/luci-static/tinynote/codemirror/addon/display/fullscreen.min.js"></script>
+<script src="/luci-static/tinynote/codemirror/addon/display/autorefresh.min.js"></script>
 
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/edit/closetag.min.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/edit/matchtags.min.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/edit/matchbrackets.min.js"></script>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/addon/edit/closebrackets.min.js"></script>
+<script src="/luci-static/tinynote/codemirror/addon/edit/closetag.min.js"></script>
+<script src="/luci-static/tinynote/codemirror/addon/edit/matchtags.min.js"></script>
+<script src="/luci-static/tinynote/codemirror/addon/edit/matchbrackets.min.js"></script>
+<script src="/luci-static/tinynote/codemirror/addon/edit/closebrackets.min.js"></script>
 
 <!-- mode -->
 <%
 local keys = {}
+local languages = {
+  json = true,
+  coffeescript = true,
+  xml = true,
+  javascript = true,
+  yaml = true,
+  css = true,
+  html = true
+}
 for v, k in pairs(con) do
-  if v:find("model_") or v:find("note_type") then
-    if not keys[k] then
+    if v:find("model_") or v:find("note_type") then
+        if not keys[k] then
 %>
-<script src="https://cdn.staticfile.org/codemirror/6.65.7/mode/<%=k%>/<%=k%>.min.js"></script>
-<% keys[k] = true
-  end end end %>
+            <script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.13/mode/<%=k%>/<%=k%>.min.js"></script>
+<%
+            keys[k] = true
+        end
+        if languages[k] then
+%>
+            <script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.js"></script>
+            <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.css">
+            <script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.13/addon/lint/<%=k%>-lint.min.js"></script>
+<%
+        end
+    end
+end
+%>
 <script>//<![CDATA[
 // 定义 gutter 类型常量。
 const GUTTERS = ["CodeMirror-lint-markers", "CodeMirror-foldgutter", "CodeMirror-linenumbers", "breakpoints"];
@@ -100,9 +106,6 @@ const makeMarker = () => {
   marker.innerHTML = "●";
   return marker;
 };
-
-// 保存更改函数，将更改保存到 CodeMirror 编辑器实例相关联的文本区域中。
-const saveChanges = (cm) => cm.save();
 
 /**
  * 创建 CodeMirror 编辑器实例。
@@ -120,7 +123,7 @@ const editor = (id, mode, readOnly) => {
     lint: true,                 // 启用代码检查。
     tabSize: 4,                 // Tab 键缩进空格数。
     keyMap: 'sublime',          // 映射键盘。
-    theme: "<%=con.theme%>",    // 主题。
+    theme: "<%=con.theme%>" || "monokai",    // 主题。
     readOnly,                   // 是否启用只读模式。
     foldGutter: true,           // 启用折叠 gutter。
     indentUnit: 4,              // 缩进单位，默认为 2。
@@ -162,8 +165,6 @@ const editor = (id, mode, readOnly) => {
     );
   }); // 点击 gutter 切换 marker。
 
-  editor.on("change", saveChanges); // 文本更改时保存。
-
   // 返回创建的 CodeMirror 编辑器实例。
   return editor;
 };
@@ -173,20 +174,18 @@ function jqid(id) {
 };
 
 <%
-  for sum_str = 1, con.note_sum do
+for sum_str = 1, con.note_sum do
     local sum = string.format("%02d", sum_str)
-    local id = string.format('cbid.luci.tinynote.note%s.%s', sum, con.note_type)
-    local id_model = {
-      ['model_note' .. sum] = con.note_type,
-      ['only_note' .. sum] = con.only or false
-    }
-    for note, model in pairs(con) do
-      if note:find("model_note" .. sum) or note:find('only_note' .. sum) then
-        id_model[note] = model
-      end
+    local id = string.format('cbid.tinynote.tinynote.note%s.%s', sum, con.note_type)
+    local only, model = false, con.note_type
+
+    if con['only_note' .. sum] then
+        only = true
+    elseif con['model_note' .. sum] then
+        model = con['model_note' .. sum]
     end
 %>
-    editor('<%=id%>', '<%=id_model["model_note" .. sum]%>', '<%=id_model["only_note" .. sum]%>');
+    editor('<%=id%>', '<%=model%>', '<%=only%>');
 <%end%>
 
 //]]>

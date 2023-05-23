@@ -1,0 +1,86 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n > 1;\n"
+
+msgid "CodeMirror supports syntax highlighting, line number display, automatic indentation, etc.<br><b>"
+msgstr "CodeMirror 支持语法高亮，行号显示，自动缩进等等<br><b>"
+
+msgid "<a href='https://www.staticfile.org/?ln=zh' target='_blank'> Staticfile Resources </a>&nbsp;&nbsp;&nbsp;"
+msgstr "<a href='https://www.staticfile.org/?ln=zh' target='_blank'> staticfile资源 </a>&nbsp;&nbsp;&nbsp;"
+
+msgid "<a href='https://www.tun6.com/projects/code_mirror/' target='_blank'> User Manual </a>&nbsp;&nbsp;&nbsp;"
+msgstr "<a href='https://www.tun6.com/projects/code_mirror/' target='_blank'> 中文用户手册 </a>&nbsp;&nbsp;&nbsp;"
+
+msgid "<a href='https://www.tun6.com/projects/code_mirror/demo/demos/theme.html' target='_blank'> Theme Preview </a></b>"
+msgstr "<a href='https://www.tun6.com/projects/code_mirror/demo/demos/theme.html' target='_blank'> 主题预览 </a></b>"
+
+msgid "Note Settings"
+msgstr "Note设置"
+
+msgid "CodeMirror Support"
+msgstr "CodeMirror 支持"
+
+msgid "<font color="red"><strong>The text content cannot exceed 90Kb (approximately 1000 lines), otherwise it will become unresponsive.</strong></font>"
+msgstr "<font color=\"red\"><strong>文本内容不能大于90Kb（约1000行），否则失去响应。</strong></font>"
+
+msgid "Save Path"
+msgstr "保存路径"
+
+msgid "Number of Texts"
+msgstr "文本数量"
+
+msgid "Please enter a number between 1 and 20."
+msgstr "请输入1到20之间的数字。"
+
+msgid "Text Type"
+msgstr "文本类形"
+
+msgid "Enable CodeMirror Support"
+msgstr "启用 CodeMirror 支持"
+
+msgid "CodeMirror Support"
+msgstr "CodeMirror 支持"
+
+msgid "Design"
+msgstr "主题"
+
+msgid "Font Size"
+msgstr "字体大小"
+
+msgid "Line Spacing"
+msgstr "文本行距"
+
+msgid "Display Height"
+msgstr "显示高度"
+
+msgid "Display Width"
+msgstr "显示宽度"
+
+msgid "Read-Only Mode"
+msgstr "只读模式"
+
+msgid "Note %s"
+msgstr "笔记 %s"
+
+msgid "Note %s Settings"
+msgstr "笔记 %s 设置"
+
+msgid "Type"
+msgstr "类形"
+
+msgid "Read-only"
+msgstr "只读"
+
+msgid "Clear Note %s"
+msgstr "清空笔记 %s"
+
+msgid "Run Note %s"
+msgstr "运行笔记 %s"
