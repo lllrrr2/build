@@ -380,7 +380,7 @@ for sum_str = 1, note_sum do
         -- run_button.inputstyle = "apply"
         -- -- run_button.forcewrite = true
 
-        a = s:taboption(note, TextValue, "note" .. sum .. "." .. note_type)
+        local a = s:taboption(note, TextValue, "note" .. sum .. "." .. note_type)
         a.template = "cbi/tvalue"
         a.rows = 35
         a.wrap = "off"
@@ -401,6 +401,18 @@ for sum_str = 1, note_sum do
                     f:write(value)
                     f:close()
                 end
+            end
+        end
+
+        local b = s:taboption(note, Button, "_clear_note" .. sum .. "." .. note_type)
+        b.title = "重置笔记 " .. sum
+        b.inputstyle = "reset"
+        b.write = function(self, section)
+            a.value = ""
+            local f = io.open(file, "w")
+            if f then
+                new_note(file, note_type)
+                f:close()
             end
         end
     end
