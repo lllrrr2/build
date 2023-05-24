@@ -28,8 +28,8 @@ msgstr "Note设置"
 msgid "CodeMirror Support"
 msgstr "CodeMirror 支持"
 
-msgid "<font color="red"><strong>The text content cannot exceed 90Kb (approximately 1000 lines), otherwise it will become unresponsive.</strong></font>"
-msgstr "<font color=\"red\"><strong>文本内容不能大于90Kb（约1000行），否则失去响应。</strong></font>"
+msgid "<font color='red'><strong>The text content cannot exceed 90Kb (approximately 1000 lines), otherwise it will become unresponsive.</strong></font>"
+msgstr "<font color='red'><strong>文本内容不能大于90Kb（约1000行），否则失去响应。</strong></font>"
 
 msgid "Save Path"
 msgstr "保存路径"
@@ -84,3 +84,6 @@ msgstr "清空笔记 %s"
 
 msgid "Run Note %s"
 msgstr "运行笔记 %s"
+
+msgid "reset notes %s"
+msgstr "重置笔记  %s"

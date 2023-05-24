@@ -233,7 +233,7 @@ local note_mode_array = {
     { "z80",              "z80"           },
 }
 
-m = Map("tinynote", translate(""), translate([[<font color="red"><strong>The text content cannot exceed 90Kb (approximately 1000 lines), otherwise it will become unresponsive.</strong></font>]]))
+m = Map("tinynote", translate(""), translate("<font color='red'><strong>The text content cannot exceed 90Kb (approximately 1000 lines), otherwise it will become unresponsive.</strong></font>"))
 
 f = m:section(TypedSection, "tinynote")
 -- f.template = "cbi/tblsection"
@@ -345,9 +345,9 @@ for sum_str = 1, note_sum do
 
     if sys.call("[ -f " .. file .. " ]") == 0 then
         local note = ("note" .. sum)
-        s:tab(note, translate("Note %s" %sum))
+        s:tab(note, translate("Note %s") %sum)
 
-        enablenote = s:taboption(note, Flag, "enablenote" .. sum, translate("Note %s Settings" %sum))
+        enablenote = s:taboption(note, Flag, "enablenote" .. sum, translate("Note %s Settings") %sum)
         enablenote.enabled = 'true'
         enablenote.disabled = 'false'
         enablenote.default = enablenote.disabled
@@ -405,7 +405,7 @@ for sum_str = 1, note_sum do
         end
 
         local b = s:taboption(note, Button, "_clear_note" .. sum .. "." .. note_type)
-        b.title = "重置笔记 " .. sum
+        b.title = translate("reset notes %s") %sum
         b.inputstyle = "reset"
         b.write = function(self, section)
             a.value = ""
