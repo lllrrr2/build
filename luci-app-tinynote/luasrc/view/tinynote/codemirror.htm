@@ -176,7 +176,7 @@ function jqid(id) {
 <%
 for sum_str = 1, con.note_sum do
     local sum = string.format("%02d", sum_str)
-    local id = string.format('cbid.tinynote.tinynote.note%s.%s', sum, con.note_type)
+    local id = string.format('cbid.tinynote.tinynote.note%s', sum)
     local only, model = false, con.note_type
 
     if con['only_note' .. sum] then

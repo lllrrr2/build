@@ -366,21 +366,7 @@ for sum_str = 1, note_sum do
         note_only.disabled = 'false'
         note_only.default = note_only.disabled
 
-        -- local line_count = tonumber(io.popen("sed -n '$=' " .. file):read("*a"))
-        -- if line_count and line_count > 1 then
-        --   local clear_button = s:taboption(note, Button, sum .. ".rm")
-        --   clear_button.inputtitle = translate("Clear Note " .. sum)
-        --   clear_button.template = "tinynote/button"
-        --   clear_button.inputstyle = "remove"
-        -- end
-
-        -- local run_button = s:taboption(note, Button, sum .. ".st")
-        -- run_button.inputtitle = translate("Run Note " .. sum)
-        -- run_button.template = "tinynote/button"
-        -- run_button.inputstyle = "apply"
-        -- -- run_button.forcewrite = true
-
-        local a = s:taboption(note, TextValue, "note" .. sum .. "." .. note_type)
+        local a = s:taboption(note, TextValue, "note" .. sum)
         a.template = "cbi/tvalue"
         a.rows = 35
         a.wrap = "off"
@@ -404,10 +390,11 @@ for sum_str = 1, note_sum do
             end
         end
 
-        local b = s:taboption(note, Button, "_clear_note" .. sum .. "." .. note_type)
-        b.title = translate("reset notes %s") %sum
-        b.inputstyle = "reset"
-        b.write = function(self, section)
+        local clear_button = s:taboption(note, Button, "_clear_note" .. sum,
+            translate("reset notes %s") %sum)
+        clear_button.inputstyle = "reset"
+        clear_button.template = "tinynote/button"
+        clear_button.write = function(self, section)
             a.value = ""
             local f = io.open(file, "w")
             if f then
@@ -415,6 +402,11 @@ for sum_str = 1, note_sum do
                 f:close()
             end
         end
+
+        -- local run_button = s:taboption(note, Button, "_run_note" .. sum,
+        --     translate("Run notes %s") %sum)
+        -- run_button.inputstyle = "apply"
+        -- run_button.template = "tinynote/button"
     end
 end
 
