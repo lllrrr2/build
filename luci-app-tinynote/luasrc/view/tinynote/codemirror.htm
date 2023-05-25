@@ -1,6 +1,7 @@
 <!-- https://www.min.jsdelivr.com/package/npm/codemirror -->
 <%
-  local con = luci.model.uci:get_all("tinynote", "tinynote")
+  local uci  = require "luci.model.uci".cursor()
+  local con = uci:get_all("tinynote", "tinynote")
 %>
 <style>
   .CodeMirror {

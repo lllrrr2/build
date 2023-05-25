@@ -15,6 +15,9 @@ local uci  = require "luci.model.uci".cursor()]],
 }
 
 local check_list = function(list, value)
+    if not value then
+        return
+    end
     for k, v in pairs(list) do
         if v == value then
             return true
@@ -33,17 +36,19 @@ local remove_files = function(list1, list2)
     end
 end
 
-local new_note = function(file, note_type, value)
+local new_write_file = function(file, note_type, value)
     local content = value or check_list(note_type_array, note_type)
-    local f = assert(io.open(file, "w"))
-    if content then
-        f:write(content)
+    if file and content then
+        local f = assert(io.open(file, "w"))
+        if content then
+            f:write(content)
+        end
+        f:close()
     end
-    f:close()
 end
 
 if not uci:get("tinynote", "tinynote") then
-    new_note("/etc/config/tinynote")
+    new_write_file("/etc/config/tinynote", nil, nil)
     uci:set("tinynote", "tinynote", "tinynote")
     uci:commit("tinynote")
 end
@@ -230,8 +235,7 @@ local note_mode_array = {
     { "z80",              "z80"           },
 }
 
-m = Map("tinynote", translate(""),
-    translate("<font color='red'><strong>The text content cannot exceed 90Kb (approximately 1000 lines), otherwise it will become unresponsive.</strong></font>"))
+m = Map("tinynote", translate(""))
 
 f = m:section(TypedSection, "tinynote")
 -- f.template = "cbi/tblsection"
@@ -239,6 +243,11 @@ f.anonymous = true -- 删除
 -- f.addremove = true -- 添加
 -- f.extedit   = true -- 修改
 -- f.sortable  = true -- 移动
+
+if fs.access("/etc/config/tinynote") then
+    f:tab("note1", translate("Note display"))
+    note_path = f:taboption("note1", DummyValue, "", nil)
+end
 
 f:tab("note", translate("Note Settings"))
 
@@ -349,7 +358,7 @@ for sum_str = 1, note_sum do
     local file = note_path .. "/note" .. sum .. "." .. note_type
     note_arg[sum] = file
     if sys.call("[ -f " .. file .. " ]") == 1 then
-        new_note(file, note_type)
+        new_write_file(file, note_type, nil)
     end
 
     if sys.call("[ -f " .. file .. " ]") == 0 then
@@ -384,7 +393,21 @@ for sum_str = 1, note_sum do
         a.wrap = "off"
 
         function a.cfgvalue(self, section)
-            return fs.readfile(file) or ""
+            local content = "" -- 文件内容
+            local file_handle = io.open(file, "rb") -- 打开文件
+            local chunk_size = 1024 * 1024 -- 读取块大小
+            if not file_handle then return "" end -- 判断文件是否存在
+
+            repeat
+                local chunk = file_handle:read(chunk_size) -- 读取文件块
+                if chunk then
+                    content = content .. chunk -- 将读取的数据拼接到content中
+                end
+                coroutine.yield() -- 让出CPU时间片
+            until not chunk -- 当文件块读取完毕时退出循环
+            
+            file_handle:close() -- 关闭文件句柄
+            return content -- 返回文件内容
         end
 
         function a.write(self, section, value)
@@ -392,9 +415,17 @@ for sum_str = 1, note_sum do
                 return
             end
             value = value:gsub("\r\n?", "\n")
-            local old_value = fs.readfile(file) or ""
+            local f = io.open(file, "rb")
+            if f then
+                local old_value = ""
+                while true do
+                    local chunk = f:read(4096)
+                    if chunk == nil then break end
+                    old_value = old_value .. chunk
+                end
+            end
             if value ~= old_value then
-                new_note(file, note_type, value)
+                new_write_file(file, nil, value)
             end
         end
 
@@ -404,7 +435,7 @@ for sum_str = 1, note_sum do
         clear_button.template = "tinynote/button"
         clear_button.write = function(self, section)
             a.value = ""
-            new_note(file, note_type)
+            new_write_file(file, note_type, nil)
         end
 
 --[[        local run_button = s:taboption(note, Button, "_run_note" .. sum,

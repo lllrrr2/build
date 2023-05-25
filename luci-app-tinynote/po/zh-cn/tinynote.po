@@ -10,6 +10,15 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
 
+msgid "Note display"
+msgstr "Note 展示"
+
+msgid "Note Settings"
+msgstr "Note 设置"
+
+msgid "CodeMirror Support"
+msgstr "CodeMirror 支持"
+
 msgid "CodeMirror supports syntax highlighting, line number display, automatic indentation, etc.<br><b>"
 msgstr "CodeMirror 支持语法高亮，行号显示，自动缩进等等<br><b>"
 
@@ -21,15 +30,6 @@ msgstr "<a href='https://www.tun6.com/projects/code_mirror/' target='_blank'> �
 
 msgid "<a href='https://www.tun6.com/projects/code_mirror/demo/demos/theme.html' target='_blank'> Theme Preview </a></b>"
 msgstr "<a href='https://www.tun6.com/projects/code_mirror/demo/demos/theme.html' target='_blank'> 主题预览 </a></b>"
-
-msgid "Note Settings"
-msgstr "Note设置"
-
-msgid "CodeMirror Support"
-msgstr "CodeMirror 支持"
-
-msgid "<font color='red'><strong>The text content cannot exceed 90Kb (approximately 1000 lines), otherwise it will become unresponsive.</strong></font>"
-msgstr "<font color='red'><strong>文本内容不能大于90Kb（约1000行），否则失去响应。</strong></font>"
 
 msgid "Save Path"
 msgstr "保存路径"
