@@ -1,11 +1,11 @@
-local fs  = require "nixio.fs"
-local sys = require "luci.sys"
+local fs   = require "nixio.fs"
+local sys  = require "luci.sys"
 local util = require "luci.util"
-local uci = require "luci.model.uci".cursor()
+local uci  = require "luci.model.uci".cursor()
 -- wulishui 20200108-20230301
 
 local note_type_array = {
-    sh = "#!/bin/sh /etc/rc.common",
+    sh  = "#!/bin/sh /etc/rc.common",
     lua = [[#!/usr/bin/env lua
 local fs   = require "nixio.fs"
 local sys  = require "luci.sys"
@@ -14,30 +14,14 @@ local uci  = require "luci.model.uci".cursor()]],
     py = "#!/usr/bin/env python",
 }
 
-local check_list = function(list, value)
-    if not value then
-        return
-    end
-    for k, v in pairs(list) do
-        if v == value then
-            return true
-        elseif k == value then
-            return v
-        end
-    end
-    return false
-end
-
-local remove_files = function(list1, list2)
-    for _, x in pairs(list1) do
-        if not check_list(list2, x) then
-            fs.remove(x)
-        end
-    end
-end
-
 local new_write_file = function(file, note_type, value)
-    local content = value or check_list(note_type_array, note_type)
+    local content
+    for k, v in pairs(note_type_array) do
+        if k == note_type then
+            content = v
+        end
+    end
+    content = value or content
     if file and content then
         local f = assert(io.open(file, "w"))
         if content then
@@ -393,21 +377,18 @@ for sum_str = 1, note_sum do
         a.wrap = "off"
 
         function a.cfgvalue(self, section)
-            local content = "" -- 文件内容
-            local file_handle = io.open(file, "rb") -- 打开文件
-            local chunk_size = 1024 * 1024 -- 读取块大小
-            if not file_handle then return "" end -- 判断文件是否存在
+            local value = ""
+            local f = io.open(file, "rb")
+            if not f then return "" end
 
             repeat
-                local chunk = file_handle:read(chunk_size) -- 读取文件块
-                if chunk then
-                    content = content .. chunk -- 将读取的数据拼接到content中
-                end
-                coroutine.yield() -- 让出CPU时间片
-            until not chunk -- 当文件块读取完毕时退出循环
+                local chunk = f:read(1024 * 512)
+                if chunk then value = value .. chunk end
+                coroutine.yield()
+            until not chunk
             
-            file_handle:close() -- 关闭文件句柄
-            return content -- 返回文件内容
+            f:close()
+            return value
         end
 
         function a.write(self, section, value)
@@ -415,15 +396,7 @@ for sum_str = 1, note_sum do
                 return
             end
             value = value:gsub("\r\n?", "\n")
-            local f = io.open(file, "rb")
-            if f then
-                local old_value = ""
-                while true do
-                    local chunk = f:read(4096)
-                    if chunk == nil then break end
-                    old_value = old_value .. chunk
-                end
-            end
+            local old_value = fs.readfile(file) or ""
             if value ~= old_value then
                 new_write_file(file, nil, value)
             end
@@ -445,12 +418,19 @@ for sum_str = 1, note_sum do
     end
 end
 
+local y = 0
 for i in fs.dir(note_path) do
-  path_arg[i] = note_path .. "/" .. i 
+    y = y + 1
+    local key = string.format("%02d", y)
+    path_arg[key] = note_path .. "/" .. i 
 end
 
-if not rawequal(path_arg, note_arg) then
-  remove_files(path_arg, note_arg)
+if path_arg ~= note_arg then
+    for k, v in pairs(path_arg) do
+        if v ~= note_arg[k] then
+            fs.remove(v)
+        end
+    end
 end
 
 if enable == "1" then
