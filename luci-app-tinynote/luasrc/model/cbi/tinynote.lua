@@ -16,19 +16,19 @@ local uci  = require "luci.model.uci".cursor()]],
 
 local new_write_file = function(file, note_type, value)
     local content
-    for k, v in pairs(note_type_array) do
-        if k == note_type then
-            content = v
+    if note_type and not value then
+        for k, v in pairs(note_type_array) do
+            if note_type == k then
+                content = v
+            end
         end
     end
     content = value or content
-    if file and content then
-        local f = assert(io.open(file, "w"))
-        if content then
-            f:write(content)
-        end
-        f:close()
+    local f = assert(io.open(file, "w"))
+    if content then
+        f:write(content)
     end
+    f:close()
 end
 
 if not uci:get("tinynote", "tinynote") then
@@ -326,9 +326,9 @@ s.anonymous = true
 s.addremove = false
 
 local con = uci:get_all("tinynote", "tinynote")
-local enable = con.enable or "0"
 local note_sum = con.note_sum or "1"
 local note_type = con.note_type or "txt"
+local codemirror_enable = con.enable or nil
 local note_path = con.note_path or "/etc/tinynote"
 
 if sys.call("test ! -d " .. note_path) == 0 then
@@ -339,14 +339,14 @@ local path_arg, note_arg = {}, {}
 
 for sum_str = 1, note_sum do
     local sum = string.format("%02d", sum_str)
-    local file = note_path .. "/note" .. sum .. "." .. note_type
+    local file = table.concat({note_path, "/note", sum, ".", note_type})
     note_arg[sum] = file
     if sys.call("[ -f " .. file .. " ]") == 1 then
         new_write_file(file, note_type, nil)
     end
 
     if sys.call("[ -f " .. file .. " ]") == 0 then
-        local note = ("note" .. sum)
+        local note = "note" .. sum
         s:tab(note, translate("Note %s") %sum)
 
         enablenote = s:taboption(note, Flag, "enablenote" .. sum,
@@ -373,12 +373,12 @@ for sum_str = 1, note_sum do
 
         local a = s:taboption(note, TextValue, "note" .. sum)
         a.template = "cbi/tvalue"
-        a.rows = 35
+        a.rows = 20
         a.wrap = "off"
 
         function a.cfgvalue(self, section)
             local value = ""
-            local f = io.open(file, "rb")
+            local f = io.open(file, "r")
             if not f then return "" end
 
             repeat
@@ -386,7 +386,7 @@ for sum_str = 1, note_sum do
                 if chunk then value = value .. chunk end
                 coroutine.yield()
             until not chunk
-            
+
             f:close()
             return value
         end
@@ -418,22 +418,21 @@ for sum_str = 1, note_sum do
     end
 end
 
-local y = 0
+local _sum = 0
 for i in fs.dir(note_path) do
-    y = y + 1
-    local key = string.format("%02d", y)
-    path_arg[key] = note_path .. "/" .. i 
+    _sum = _sum + 1
+    path_arg[string.format("%02d", _sum)] = note_path .. "/" .. i 
 end
 
 if path_arg ~= note_arg then
     for k, v in pairs(path_arg) do
-        if v ~= note_arg[k] then
+        if note_arg[k] ~= v then
             fs.remove(v)
         end
     end
 end
 
-if enable == "1" then
+if codemirror_enable then
   m:append(Template("tinynote/codemirror"))
 end
 
