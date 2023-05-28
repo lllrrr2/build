@@ -16,16 +16,17 @@ local uci  = require "luci.model.uci".cursor()]],
 
 local new_write_file = function(file, note_type, value)
     local content
-    if note_type and not value then
+    if value then
+        content = value
+    else
         for k, v in pairs(note_type_array) do
             if note_type == k then
                 content = v
             end
         end
     end
-    content = value or content
     local f = assert(io.open(file, "w"))
-    if content then
+    if content ~= "" then
         f:write(content)
     end
     f:close()
@@ -412,7 +413,7 @@ for sum_str = 1, note_sum do
         end
 
 --[[        local run_button = s:taboption(note, Button, "_run_note" .. sum,
-            translate("Run notes %s") %sum)
+            translate("Run Note %s") %sum)
         run_button.inputstyle = "apply"
         run_button.template = "tinynote/button"--]]
     end

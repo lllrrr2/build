@@ -176,15 +176,10 @@ function jqid(id) {
 
 <%
 for sum_str = 1, con.note_sum do
-    local sum = string.format("%02d", sum_str)
-    local id = string.format('cbid.tinynote.tinynote.note%s', sum)
-    local only, model = false, con.note_type
-
-    if con['only_note' .. sum] then
-        only = true
-    elseif con['model_note' .. sum] then
-        model = con['model_note' .. sum]
-    end
+    local sum   = string.format("%02d", sum_str)
+    local only  = con['only_note'  .. sum] or false
+    local model = con['model_note' .. sum] or con.note_type
+    local id    = string.format('cbid.tinynote.tinynote.note%s', sum)
 %>
     editor('<%=id%>', '<%=model%>', '<%=only%>');
 <%end%>
