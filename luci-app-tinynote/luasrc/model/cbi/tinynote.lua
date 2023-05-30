@@ -404,9 +404,9 @@ for sum_str = 1, note_sum do
         end
 
         local clear_button = s:taboption(note, Button, "_clear_note" .. sum,
-            translate("reset notes %s") %sum)
+            translate("Reset Notes %s") %sum)
         clear_button.inputstyle = "reset"
-        clear_button.template = "tinynote/button"
+        clear_button.template = "tinynote/clear_button"
         clear_button.write = function(self, section)
             a.value = ""
             new_write_file(file, note_type, nil)
@@ -414,8 +414,11 @@ for sum_str = 1, note_sum do
 
 --[[        local run_button = s:taboption(note, Button, "_run_note" .. sum,
             translate("Run Note %s") %sum)
+        run_button.template = "tinynote/run_button"
         run_button.inputstyle = "apply"
-        run_button.template = "tinynote/button"--]]
+        run_button.write = function(self, section)
+            self.value = section
+        end--]]
     end
 end
 

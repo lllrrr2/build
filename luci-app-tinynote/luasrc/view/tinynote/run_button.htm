@@ -17,10 +17,10 @@
 
     /* 定义弹窗容器的样式 */
     .alert-container {
-        min-width: 300px;
-        max-width: 600px;
-        max-height: 90vh;
-        overflow: auto;
+        min-width: 500px;/* 最小宽度为500像素 */
+        max-width: 1000px;/* 最大宽度为1000像素 */
+        max-height: 90vh;/* 最大高度为屏幕高度的90% */
+        overflow: auto;/* 超出部分自动滚动 */
         background-color: #fff; /* 白色背景 */
         border-radius: 5px; /* 圆角边框 */
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3); /* 设置阴影效果 */
@@ -31,7 +31,7 @@
         font-size: 20px;
         font-weight: bold;
         text-align: center;
-        margin-top: 20px;
+        margin-top: 10px;
     }
 
     /* 定义弹窗内容的样式 */
@@ -39,6 +39,7 @@
         padding: 20px;
         text-align: left; /* 文字左对齐 */
         font-size: 16px; /* 字体大小为14像素 */
+        font-family: Consolas, monospace !important; /* 字体设置为Consolas */
         color: #000; /* 字体颜色为深红色 */
     }
 
@@ -50,16 +51,16 @@
 
     /* 定义弹窗确认按钮的父容器样式 */
     .alert-confirm {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin: 20px 0;
+        display: flex; /* 使用 Flexbox 布局 */
+        justify-content: center; /* 在主轴上居中对齐 */
+        align-items: center; /* 在交叉轴上居中对齐 */
+        margin: 20px 0; /* 上下边距为 20 像素，左右边距为 0 */
     }
 
     /* 定义弹窗确认按钮的样式 */
     .alert-btn {
         cursor: pointer; /* 鼠标移上去变成手型 */
-        padding: 10px 20px; /* 上下内边距为8像素，左右内边距为10像素 */
+        padding: 8px 10px; /* 上下内边距为8像素，左右内边距为10像素 */
         border: none; /* 去除边框 */
         border-radius: 5px; /* 圆角边框 */
         color: #fff; /* 字体颜色为白色 */
@@ -70,7 +71,7 @@
 
     /* 定义弹窗确认按钮的悬浮样式 */
     .alert-btn:hover {
-        background-color: hsl(214, 90%, 42%); /* 略微调暗颜色 */
+        background-color: hsl(0, 90%, 42%); /* 略微调暗颜色 */
     }
 </style>
 
@@ -111,32 +112,30 @@
         alertContainer.appendChild(alertContent); // 将内容添加到弹窗容器中
         alertContainer.appendChild(alertConfirm); // 将确认按钮父容器添加到弹窗容器中
         alertMask.appendChild(alertContainer); // 将弹窗容器添加到遮罩层中
-
         body.appendChild(alertMask); // 将遮罩层添加到body元素中
     }
 
-	/* 定义一个名为onclick_awake的函数，接收一个参数id */
-	 function onclick_awake(id) {
-	 	var xhr = new XMLHttpRequest(); // 创建XHR对象
-	 	var section = id.split(".")[2]; // 获取id第三个部分作为section
-	 	var url = '<%=url("admin/services/timedtask/button")%>/' + section; // 拼接请求url，使用服务器端模板引擎获取具体的路径
-		
-	 	xhr.open('POST', url); // 使用POST方法发送请求
-	 	xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded'); // 设置请求头信息
-	 	xhr.onload = function() { // 请求成功后执行的回调函数
-	 		if (xhr.status === 200) {
-                 alert('<pre>' + JSON.parse(xhr.response).data + '</pre>'); // 请求成功，弹出返回的数据
-	 		} else {
-	 			alert('请求失败，状态码: ' + xhr.status); // 请求失败，弹出状态码
-	 		}
-	 	};
-	 	xhr.send('token=' + '<%=token%>'); // 发送POST请求，将token作为参数发送
-	 }
+  function onclick_awake() {
+    XHR.get('<%=url("admin/nas/tinynote/run_button")%>', null,
+      function(x, data) {
+      if (x.status == 200) {
+        alert('<pre>' + data + '</pre>');
+      } else {
+        alert('请求失败，状态码: ' + x.status);
+      }
+    })
+  }
+
 </script>
 
-<!-- 使用服务器端模板引擎生成一个表单元素的头部 -->
-<%+cbi/valueheader%>
-	<!-- 创建一个输入按钮，使用默认样式或者自定义样式 -->
-	<input class="btn cbi-button cbi-button-<%=self.inputstyle or 'apply'%>" style="font-size: 100%;" type="button" onclick="onclick_awake(this.id)" <%=attr('name', section) .. attr("id", cbid) .. attr("value", self.inputtitle or "Run")%> />
-<!-- 使用服务器端模板引擎生成一个表单元素的尾部 -->
-<%+cbi/valuefooter%>
+<div style="display: inline-block; margin-right: 10px; margin-left: 20px; padding-bottom: 20px;">
+  <% if self:cfgvalue(section) ~= false then %>
+    <input class="cbi-button cbi-button-<%=self.inputstyle or 'button' %>" type='button'" onclick="onclick_awake(this.id)"
+      <% if self.disable then %>
+        disabled
+      <% end %>
+    <%=attr("name", cbid) .. attr("id", cbid) .. attr("value", self.inputtitle or self.title)%>/>
+  <% else %>
+    -
+  <% end %>
+</div>
