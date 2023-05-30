@@ -17,9 +17,11 @@
 
     /* 定义弹窗容器的样式 */
     .alert-container {
+        border-left: 5px solid #fff; /* 左边框，颜色为白色 */
+        border-right: 5px solid #fff; /* 右边框，颜色为白色 */
         min-width: 500px;/* 最小宽度为500像素 */
         max-width: 1000px;/* 最大宽度为1000像素 */
-        max-height: 90vh;/* 最大高度为屏幕高度的90% */
+        max-height: 70vh;/* 最大高度为屏幕高度的70% */
         overflow: auto;/* 超出部分自动滚动 */
         background-color: #fff; /* 白色背景 */
         border-radius: 5px; /* 圆角边框 */
@@ -28,25 +30,19 @@
 
     /* 定义弹窗标题的样式 */
     .alert-title {
-        font-size: 20px;
-        font-weight: bold;
-        text-align: center;
-        margin-top: 10px;
+        font-size: 20px;/* 设置字体大小为20像素  */
+        font-weight: bold;/* 设置字体加粗 */
+        text-align: center;/* 文本居中对齐 */
+        margin-top: 10px;/* 上边距为10像素 */
+        margin-bottom: 10px;/* 下边距为10像素 */
     }
 
-    /* 定义弹窗内容的样式 */
-    .alert-content {
-        padding: 20px;
+    .alert-content pre {
         text-align: left; /* 文字左对齐 */
-        font-size: 16px; /* 字体大小为14像素 */
-        font-family: Consolas, monospace !important; /* 字体设置为Consolas */
-        color: #000; /* 字体颜色为深红色 */
-    }
-
-    /* 定义弹窗中的图片样式 */
-    .alert-content img{
-        max-width: 100%; /* 图片最大宽度为100% */
-        height: auto; /* 高度自适应 */
+        font-size: 14px; /* 字体大小为14像素 */
+        background-color: black; /* 背景颜色为黑色 */
+        font-family: Consolas; /* 字体设置为Consolas */
+        color: white; /* 字体颜色为白色 */
     }
 
     /* 定义弹窗确认按钮的父容器样式 */
@@ -84,7 +80,6 @@
         var alertMask = document.createElement('div'); // 创建弹窗遮罩层
         alertMask.className = 'alert-mask'; // 设置样式类名
 
-        var alertContainer = document.createElement('div'); // 创建弹
         var alertContainer = document.createElement('div'); // 创建弹窗容器
         alertContainer.className = 'alert-container'; // 设置样式类名
 
@@ -119,7 +114,7 @@
     XHR.get('<%=url("admin/nas/tinynote/run_button")%>', null,
       function(x, data) {
       if (x.status == 200) {
-        alert('<pre>' + data + '</pre>');
+        alert("<pre>" + data.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") + "</pre>");
       } else {
         alert('请求失败，状态码: ' + x.status);
       }
