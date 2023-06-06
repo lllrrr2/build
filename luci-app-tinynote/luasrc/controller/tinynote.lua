@@ -27,7 +27,7 @@ function process_command_result(result_output, exit_code, command_name, file_pat
         end
     else
         return send_json_response({
-            result = i18n_module.translatef("Failed to execute '%s %s'! Exit code: %d. \nError message: <div style='color: red';>%s</div>", command_name, file_path, exit_code, result_output)
+            result = i18n_module.translatef("Failed to execute %s %s<br><div style='text-align: left;'>Exit code: %d<br>Error message: <div style='color: yellow;'>%s</div>", command_name, file_path, exit_code, result_output)
         })
     end
 end
