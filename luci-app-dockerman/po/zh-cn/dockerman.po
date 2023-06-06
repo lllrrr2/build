@@ -1093,5 +1093,29 @@ msgstr "哪些接口可以访问桥接网络下的容器，请填写接口名称
 #~ msgid "Contaienr Info"
 #~ msgstr "容器信息"
 
-msgid "%:Please input new filename%>: "
+msgid "Please input new filename"
 msgstr "请输入新文件名"
+
+msgid "[%s] %s %s Container ID: %s Container Name: %s\n"
+msgstr "[%s] %s %s 容器 ID：%s 容器名称：%s\n"
+
+msgid "[%s] %s %s Container ID: %s Network Name: %s Network type: %s\n"
+msgstr "[%s] %s %s 容器 ID：%s 网络名称：%s 网络类型：%s\n"
+
+msgid "[%s] %s %s Image: %s Image name: %s\n"
+msgstr "[%s] %s %s 镜像：%s 镜像名称：%s\n"
+
+msgid "Cannot remove the last tag"
+msgstr "无法删除最后一个标签"
+
+msgid "no tag name"
+msgstr "没有标签名称"
+
+msgid "no image id or tag"
+msgstr "没有镜像 ID 或标签"
+
+msgid "no image id"
+msgstr "没有镜像标识"
+
+msgid "No container name or id"
+msgstr "没有容器名称或 ID"

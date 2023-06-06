@@ -3,6 +3,7 @@ LuCI - Lua Configuration Interface
 Copyright 2019 lisaac <https://github.com/lisaac/luci-app-dockerman>
 ]]--
 
+local i18n = require "luci.i18n"
 local docker = require "luci.model.docker"
 -- local uci = (require "luci.model.uci").cursor()
 
@@ -192,14 +193,14 @@ function action_events()
 
 			if v and v.Type == "container" then
 				local id = v.Actor.ID or "unknown"
-				logs = logs .. string.format("[%s] %s %s Container ID: %s Container Name: %s\n", date, v.Type, action, id, name)
+				logs = logs .. i18n.translatef("[%s] %s %s Container ID: %s Container Name: %s\n", date, v.Type, action, id, name)
 			elseif v.Type == "network" then
 				local container = v.Actor.Attributes.container or "unknown"
 				local network = v.Actor.Attributes.type or "unknown"
-				logs = logs .. string.format("[%s] %s %s Container ID: %s Network Name: %s Network type: %s\n", date, v.Type, action, container, name, network)
+				logs = logs .. i18n.translatef("[%s] %s %s Container ID: %s Network Name: %s Network type: %s\n", date, v.Type, action, container, name, network)
 			elseif v.Type == "image" then
 				local id = v.Actor.ID or "unknown"
-				logs = logs .. string.format("[%s] %s %s Image: %s Image name: %s\n", date, v.Type, action, id, name)
+				logs = logs .. i18n.translatef("[%s] %s %s Image: %s Image name: %s\n", date, v.Type, action, id, name)
 			end
 		end
 	end
@@ -287,7 +288,7 @@ local function get_stat(container_id)
 			end
 		end
 	else
-		return 404, "No container name or id"
+		return 404, i18n.translate("No container name or id")
 	end
 end
 function action_get_container_stats(container_id)
@@ -524,7 +525,7 @@ function get_image_tags(image_id)
 	if not image_id then
 		luci.http.status(400, "no image id")
 		luci.http.prepare_content("application/json")
-		luci.http.write_json({message = "no image id"})
+		luci.http.write_json({message = i18n.translate("no image id")})
 		return
 	end
 
@@ -552,7 +553,7 @@ function tag_image(image_id)
 	if type(src) ~= "string" or not image_id then
 		luci.http.status(400, "no image id or tag")
 		luci.http.prepare_content("application/json")
-		luci.http.write_json({message = "no image id or tag"})
+		luci.http.write_json({message = i18n.translate("no image id or tag")})
 		return
 	end
 
@@ -583,9 +584,9 @@ function untag_image(tag)
 	local tag = tag or luci.http.formvalue("tag")
 
 	if not tag then
-		luci.http.status(400, "no tag name")
+		luci.http.status(400, i18n.translate("no tag name"))
 		luci.http.prepare_content("application/json")
-		luci.http.write_json({message = "no tag name"})
+		luci.http.write_json({message = i18n.translate("no tag name")})
 		return
 	end
 
@@ -601,9 +602,9 @@ function untag_image(tag)
 			luci.http.prepare_content("application/json")
 			luci.http.write_json({message = msg})
 		else
-			luci.http.status(500, "Cannot remove the last tag")
+			luci.http.status(500, i18n.translate("Cannot remove the last tag"))
 			luci.http.prepare_content("application/json")
-			luci.http.write_json({message = "Cannot remove the last tag"})
+			luci.http.write_json({message = i18n.translate("Cannot remove the last tag")})
 		end
 	else
 		local msg = res and res.body and res.body.message or nil

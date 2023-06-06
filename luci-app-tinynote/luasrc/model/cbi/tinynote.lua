@@ -26,7 +26,7 @@ local new_write_file = function(file, note_type, value)
         end
     end
     local f = assert(io.open(file, "w"))
-    if content ~= "" then
+    if content ~= nil then
         f:write(content)
     end
     f:close()
@@ -168,7 +168,7 @@ local note_mode_array = {
     { "mumps",            "mumps"         },
     { "nginx",            "nginx"         },
     { "nsis",             "nsi"           },
-    { "ntriples",         "ntriples"      }, 
+    { "ntriples",         "ntriples"      },
     { "octave",           "octave"        },
     { "oz",               "oz"            },
     { "pascal",           "pascal"        },
@@ -412,20 +412,18 @@ for sum_str = 1, note_sum do
             new_write_file(file, note_type, nil)
         end
 
---[[        local run_button = s:taboption(note, Button, "_run_note" .. sum,
+        local run_button = s:taboption(note, Button, "_run_note" .. sum,
             translate("Run Note %s") %sum)
         run_button.template = "tinynote/run_button"
         run_button.inputstyle = "apply"
-        run_button.write = function(self, section)
-            self.value = section
-        end--]]
+        run_button.file_path = file
     end
 end
 
 local _sum = 0
 for i in fs.dir(note_path) do
     _sum = _sum + 1
-    path_arg[string.format("%02d", _sum)] = note_path .. "/" .. i 
+    path_arg[string.format("%02d", _sum)] = note_path .. "/" .. i
 end
 
 if path_arg ~= note_arg then
@@ -437,7 +435,7 @@ if path_arg ~= note_arg then
 end
 
 if codemirror_enable then
-  m:append(Template("tinynote/codemirror"))
+    m:append(Template("tinynote/codemirror"))
 end
 
 return m

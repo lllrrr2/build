@@ -1,14 +1,5 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=n > 1;\n"
 
 msgid "Note display"
 msgstr "Note 展示"
@@ -79,11 +70,80 @@ msgstr "类形"
 msgid "Read-only"
 msgstr "只读"
 
-msgid "Clear Note %s"
-msgstr "清空笔记 %s"
-
 msgid "Run Note %s"
 msgstr "运行笔记 %s"
 
-msgid "reset notes %s"
+msgid "Reset Notes %s"
 msgstr "重置笔记  %s"
+
+msgid "Execution of command '%s %s' failed!"
+msgstr "执行命令 '%s %s' 失败！"
+
+msgid "The current system cannot find the '%s' command you entered!"
+msgstr "当前系统找不到你输入的 '%s' 命令！"
+
+msgid "Enter command to run:"
+msgstr "输入运行命令："
+
+msgid "Enter the command to run the current page script, leave it blank to run the script in Lua."
+msgstr "输入运行当前页面脚本的命令，留空默以 lua 运行脚本。"
+
+msgid "Enter shell command:"
+msgstr "输入 shell 命令："
+
+msgid "Enter a shell command that can be run"
+msgstr "输入可以运行的 shell 命令"
+
+msgid "Execute Command"
+msgstr "执行命令"
+
+msgid "The request processing failed with an error code:"
+msgstr "请求处理失败，错误码为："
+
+msgid "Dismiss"
+msgstr "关闭"
+
+msgid "Run Demo"
+msgstr "运行展示"
+
+msgid "No input for the command line yet. Don't click 'Execute Command'!"
+msgstr "还没有命令行的输入不要点击 '执行命令' ！"
+
+msgid "The current system cannot find the command '%s' you entered!"
+msgstr "现在的系统找不到你输入的 '%s' 命令！"
+
+msgid "Execution '%s %s' has no output!"
+msgstr "执行 '%s %s' 没有输出！"
+
+msgid "Failed to execute '%s %s'! Exit code: %d. \nError message: <div style=\"color: red;\">%s</div>"
+msgstr "无法执行 '%s %s'！退出代码：%d。 \n错误信息：<div style=\"color: red;\">%s</div>"
+
+msgid "Select request type"
+msgstr "选择请求类型"
+
+msgid "something went wrong"
+msgstr "出现错误了"
+
+msgid "Bad Request: The request was invalid or cannot be served."
+msgstr "错误请求：请求无效或无法处理。"
+
+msgid "Unauthorized: The request requires authentication."
+msgstr "未授权：请求需要身份验证。"
+
+msgid "Forbidden: The server refuses to authorize the request."
+msgstr "禁止：服务器拒绝授权请求。"
+
+msgid "Not Found: The requested resource could not be found."
+msgstr "未找到：找不到请求的资源。"
+
+msgid "Internal Server Error: The server failed to fulfill the request."
+msgstr "内部服务器错误：服务器无法满足请求。"
+
+msgid "Service Unavailable: The server is temporarily unable to handle the request."
+msgstr "服务不可用：服务器暂时无法处理请求。"
+
+msgid "An unexpected error occurred. Error code: %s"
+msgstr "发生意外错误。错误代码：%s"
+
+msgid ""
+msgstr ""
