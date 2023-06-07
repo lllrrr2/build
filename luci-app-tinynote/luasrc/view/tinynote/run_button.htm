@@ -14,9 +14,9 @@
 
     .alert-container {                            /* 定义弹窗容器的样式 */
         position: relative;                       /* 设置相对定位 */
-        border-left: 5px solid #fff;              /* 左边框，颜色为白色 */
-        border-right: 5px solid #fff;             /* 右边框，颜色为白色 */
-        border-bottom: 5px solid #fff;            /* 下边框，颜色为白色 */
+        border-left: 2px solid #fff;              /* 左边框，颜色为白色 */
+        border-right: 2px solid #fff;             /* 右边框，颜色为白色 */
+        border-bottom: 2px solid #fff;            /* 下边框，颜色为白色 */
         max-width: 900px;                         /* 最大宽度为900像素 */
         width: 70%;                               /* 宽度为父元素宽度的70% */
         max-height: 70vh;                         /* 最大高度为屏幕高度的70% */
@@ -43,9 +43,9 @@
         text-align: left;                         /* 文字左对齐 */
         font-size: 14px;                          /* 字体大小为13像素 */
         line-height: 1.5;                         /* 行高 */
-        color: white;                             /* 字体颜色为白色 */
+        /*color: white;                             /* 字体颜色为白色 */
         background-color: #272822;                /* 背景颜色为黑色 */
-        /*color: #66D9EF;                           /* 字体颜色为蓝色 */
+        color: #66D9EF;                           /* 字体颜色为蓝色 */
         font-family: Consolas;                    /* 字体设置为Consolas */
     }
 
@@ -279,7 +279,7 @@
 <div style="display: inline-block; margin-right: 20px; padding-bottom: 20px;">
     <% if self:cfgvalue(section) ~= false then %>
         <label for="<%=cbid%>_commandInput"><%:Enter command to run:%></label>
-        <input type="text" id="<%=cbid%>_commandInput" style="width: 70px;" title="<%:Enter the command to run the current page script, leave it blank to run the script in Lua.%>" list="<%=cbid%>_options">
+        <input id="<%=cbid%>_commandInput" style="width: 70px;" title="<%:Enter the command to run the current page script, leave it blank to run the script in Lua.%>" list="<%=cbid%>_options">
         <datalist id="<%=cbid%>_options">
             <option value="lua"></option>
             <option value="bash"></option>
@@ -287,16 +287,16 @@
             <option value="python"></option>
         </datalist>
         <label for="<%=cbid%>_requestType"></label>
-        <select id="<%=cbid%>_requestType" style="width: 60px;" title="<%:Select request type%>">
+        <select id="<%=cbid%>_requestType" style="width: 60px; margin-right: 10px;" title="<%:Select request type%>">
           <option value="fetch">fetch</option>
           <option value="jQuery">jQuery</option>
           <option value="xhr">xhr</option>
         </select>
-        <input class="apply-button" type="button" style="margin-right: 18px;"
-               onclick="handleCommandRequest(getElementBy_Id('<%=cbid%>_commandInput'), '<%=self.file_path%>', getElementBy_Id('<%=cbid%>_requestType'));"
+        <input class="apply-button" type="button" style="margin-right: 18px;" onclick="handleCommandRequest(getElementBy_Id('<%=cbid%>_commandInput'), '<%=self.file_path%>', getElementBy_Id('<%=cbid%>_requestType'));"
                <% if self.disable then %>disabled<% end %>
-               <%=attr("name", cbid) .. attr("id", cbid) .. attr("value", self.inputtitle or self.title)%>/> <% else %> - <% end %>
+               <%=attr("name", cbid) .. attr("id", cbid) .. attr("value", self.inputtitle or self.title)%>/>
+               <% else %> - <% end %>
     <label for="<%=cbid%>_shellInput"><%:Enter shell command:%></label>
-    <input type="text" id="<%=cbid%>_shellInput" style="width: 150px; margin-right: 8px;" title="<%:Enter a shell command that can be run%>">
-    <button class="apply-button" type="button" onclick="handleCommandRequest(getElementBy_Id('<%=cbid%>_shellInput'), '', getElementBy_Id('<%=cbid%>_requestType'))"><%:Execute Command%></button>
+    <input type="text" id="<%=cbid%>_shellInput" style="width: 150px; margin-right: 10px;" title="<%:Enter a shell command that can be run%>">
+    <button class="apply-button" type="button" onclick="handleCommandRequest(getElementBy_Id('<%=cbid%>_shellInput'), '', getElementBy_Id('<%=cbid%>_requestType'));"><%:Execute Command%></button>
 </div>

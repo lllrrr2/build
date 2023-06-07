@@ -1,0 +1,171 @@
+<style>
+    .alert-mask {
+        position: fixed;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 9999;
+    }
+
+    .alert-container {
+        position: relative;
+        max-width: 900px;
+        width: 70%;
+        max-height: 70vh;
+        overflow: auto;
+        background-color: #fff;
+        border-radius: 5px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        cursor: move;
+    }
+
+    .alert-container:active {
+        cursor: grabbing;
+    }
+
+    .alert-title {
+        font-size: 20px;
+        font-weight: bold;
+        text-align: center;
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+
+    .alert-content pre {
+        text-align: left;
+        font-size: 14px;
+        line-height: 1.5;
+        background-color: #272822;
+        color: #66D9EF;
+        font-family: Consolas;
+    }
+
+    .alert-confirm {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    .alert-btn {
+        position: sticky;
+        bottom: 10px;
+        cursor: pointer;
+        padding: 6px 10px;
+        border: none;
+        border-radius: 5px;
+        color: #fff;
+        background-color: hsl(214, 90%, 52%);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        transition: all 0.2s ease-in-out;
+    }
+
+    .alert-btn:hover {
+        background-color: hsl(0, 90%, 42%);
+    }
+
+    .alert-content {
+        max-height: calc(70vh - 100px);
+        overflow: auto;
+    }
+</style>
+
+<script type="text/javascript">
+    function makeAlertDraggable(alert) {
+        let mouseStartX = 0;
+        let mouseStartY = 0;
+        let alertStartX = 0;
+        let alertStartY = 0;
+
+        alert.addEventListener('mousedown', (e) => {
+            mouseStartX = e.clientX;
+            mouseStartY = e.clientY;
+            alertStartX = alert.offsetLeft;
+            alertStartY = alert.offsetTop;
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (mouseStartX === 0 && mouseStartY === 0) return;
+            const mouseX = e.clientX;
+            const mouseY = e.clientY;
+            const deltaX = mouseX - mouseStartX;
+            const deltaY = mouseY - mouseStartY;
+            alert.style.position = 'absolute';
+            alert.style.top = `${alertStartY + deltaY}px`;
+            alert.style.left = `${alertStartX + deltaX}px`;
+        });
+
+        document.addEventListener('mouseup', () => {
+            mouseStartX = 0;
+            mouseStartY = 0;
+            alertStartX = 0;
+            alertStartY = 0;
+        });
+    }
+
+    function alert(msg){
+        var body = document.getElementsByTagName('body')[0];
+
+        var alertMask = document.createElement('div');
+        alertMask.className = 'alert-mask';
+
+        var alertContainer = document.createElement('div');
+        alertContainer.className = 'alert-container';
+
+        var alertContent = document.createElement('div');
+        alertContent.className = 'alert-content';
+        alertContent.innerHTML = '<pre>' + msg + '\n\n\n</pre>';
+
+        var alertConfirm = document.createElement('div');
+        alertConfirm.className = 'alert-confirm';
+
+        var alertBtn = document.createElement('button');
+        alertBtn.className = 'alert-btn';
+        alertBtn.innerHTML = '关闭';
+
+        alertBtn.onclick = function() {
+            body.removeChild(alertMask);
+        }
+
+        alertConfirm.appendChild(alertBtn);
+        alertContainer.appendChild(alertContent);
+        alertContainer.appendChild(alertConfirm);
+        alertMask.appendChild(alertContainer);
+
+        body.appendChild(alertMask);
+        makeAlertDraggable(alertContainer);
+    }
+
+    async function onclick_awake(id) {
+        const section = id.split(".")[2];
+        const url = `<%=url("admin/services/timedtask/action_run")%>/${section}`;
+        const data = new URLSearchParams();
+        data.append('token', '<%=token%>');
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST', body: data, headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                alert(result.data);
+            } else {
+                alert(`请求失败，状态码: ${response.status}`);
+            }
+        } catch (error) {
+            alert(`请求失败，错误信息: ${error.message}`);
+        }
+    }
+</script>
+
+<%+cbi/valueheader%>
+    <input class="btn cbi-button cbi-button-<%=self.inputstyle or 'apply'%>" style="font-size: 100%;" type="button" onclick="onclick_awake(this.id)" <%=attr('name', section) .. attr("id", cbid) .. attr("value", self.inputtitle or "Run")%> />
+<%+cbi/valuefooter%>

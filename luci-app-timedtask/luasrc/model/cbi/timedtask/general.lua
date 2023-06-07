@@ -90,7 +90,7 @@ btn = s:option(Button, "Button", translate("Executed immediately"))
 btn.inputtitle = translate("Execute")
 btn.inputstyle = "apply"
 btn.disabled = false
-btn.template = "timedtask/button"
+btn.template = "timedtask/action_run"
 
 function random_cfg()
     local cfg = ''

@@ -1,6 +1,6 @@
-local http_module = require "luci.http"
-local sys_module  = require "luci.sys"
-local i18n_module = require "luci.i18n"
+local sys  = require "luci.sys"
+local http = require "luci.http"
+local i18n = require "luci.i18n"
 
 module("luci.controller.tinynote", package.seeall)
 
@@ -10,11 +10,11 @@ function index()
 end
 
 function send_json_response(output)
-    http_module.prepare_content("application/json")
-    http_module.write_json(output)
+    http.prepare_content("application/json")
+    http.write_json(output)
 end
 
-function process_command_result(result_output, exit_code, command_name, file_path)
+function process_result(result_output, exit_code, command, file_path)
     if exit_code == 0 then
         if #result_output > 2 then
             return send_json_response({
@@ -22,40 +22,40 @@ function process_command_result(result_output, exit_code, command_name, file_pat
             })
         else
             return send_json_response({
-                result = i18n_module.translatef("Execution '%s %s' has no output!", command_name, file_path)
+                result = i18n.translatef("Execution '%s %s' has no output!", command, file_path)
             })
         end
     else
         return send_json_response({
-            result = i18n_module.translatef("Failed to execute %s %s<br><div style='text-align: left;'>Exit code: %d<br>Error message: <div style='color: yellow;'>%s</div>", command_name, file_path, exit_code, result_output)
+            result = i18n.translatef("Failed to execute <div style='color: #f92672;'>%s %s</div><div style='text-align: left;'>Exit code: %d<br>Error message: <div style='color: #e6db74;'>%s</div>", command, file_path, exit_code, result_output)
         })
     end
 end
 
 function action_run()
-    local input_command_name = http_module.formvalue('command')
-    local input_file_path    = http_module.formvalue('file_path')
+    local command   = http.formvalue('command')
+    local file_path = http.formvalue('file_path')
 
-    if input_command_name == '' and input_file_path == '' then
+    if command == '' and file_path == '' then
         return send_json_response({
-            result = i18n_module.translate("No input for the command line yet. Don't click 'Execute Command'!")
+            result = i18n.translate("No input for the command line yet. Don't click 'Execute Command'!")
         })
     end
 
-    input_command_name = input_command_name == '' and input_file_path ~= '' and 'lua' or input_command_name
-    local command_fullpath = input_command_name ~= '' and sys_module.exec("/usr/bin/which " .. input_command_name:match("^([^%s]+)")) or ''
+    command = command == '' and file_path ~= '' and 'lua' or command
+    local command_name = command ~= '' and sys.exec("/usr/bin/which " .. command:match("^([^%s]+)")) or ''
 
-    if #command_fullpath < 4 or command_fullpath:find("no ") == 1 then
+    if #command_name < 4 or command_name:find("no ") == 1 then
         return send_json_response({
-            result = i18n_module.translatef("The current system cannot find the command '%s' you entered!", input_command_name:match("^%S+"))
+            result = i18n.translatef("The current system cannot find the command '%s' you entered!", command:match("^%S+"))
         })
     end
 
-    local command_handle = io.popen(string.format("%s %s 2>&1; echo $?", input_command_name, input_file_path))
-    local command_result = command_handle:read("*a")
-    command_handle:close()
+    local handle = io.popen(string.format("%s %s 2>&1; echo $?", command, file_path))
+    local output = handle:read("*a")
+    handle:close()
 
-    local result_data      = command_result:sub(1, -3)
-    local result_exit_code = tonumber(command_result:sub(-2))
-    process_command_result(result_data, result_exit_code, input_command_name, input_file_path)
+    local data      = output:sub(1, -3)
+    local exit_code = tonumber(output:sub(-2))
+    process_result(data, exit_code, command, file_path)
 end
