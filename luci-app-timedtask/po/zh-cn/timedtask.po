@@ -1,5 +1,5 @@
 
-msgid "timedtask Plus+"
+msgid "TimedTask Plus+"
 msgstr "定时任务 Plus+"
 
 msgid "crontabs"

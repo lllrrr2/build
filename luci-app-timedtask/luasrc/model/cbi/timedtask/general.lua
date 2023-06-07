@@ -1,5 +1,5 @@
 uci = require "luci.model.uci".cursor()
-m = Map("timedtask", translate("timedtask Plus+"),
+m = Map("timedtask", translate("TimedTask Plus+"),
 translate("<font color='green'><b>The plug-in that makes scheduled tasks easier to use is modified with the original version by wulishhui@gmail.com. </font></b><br>") ..
 translate("The string of the CRON expression is composed of five fields separated by spaces and the execution command: <font color=red> * * * * * [command]</font><br>") ..
 translate("According to the definition of the position and the range of values: minute (0-59), hour (0-23), day (1-31), month (1-12), week (1-7), (commond) The command to execute. <br>") ..

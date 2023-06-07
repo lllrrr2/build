@@ -2,34 +2,23 @@ local fs   = require "nixio.fs"
 local sys  = require "luci.sys"
 local util = require "luci.util"
 local uci  = require "luci.model.uci".cursor()
--- wulishui 20200108-20230301
 
-local note_type_array = {
-    sh  = "#!/bin/sh /etc/rc.common",
-    lua = [[#!/usr/bin/env lua
-local fs   = require "nixio.fs"
-local sys  = require "luci.sys"
-local util = require "luci.util"
-local uci  = require "luci.model.uci".cursor()]],
-    py = "#!/usr/bin/env python",
-}
-
-local new_write_file = function(file, note_type, value)
-    local content
-    if value then
-        content = value
-    else
-        for k, v in pairs(note_type_array) do
-            if note_type == k then
-                content = v
-            end
-        end
+local function new_write_file(file, note_type, value)
+    local note_type_array = {
+        py  = "#!/usr/bin/env python\n",
+        sh  = "#!/bin/sh /etc/rc.common\n",
+        lua = "#!/usr/bin/env lua\n" ..
+              "local fs   = require \"nixio.fs\"\n" ..
+              "local sys  = require \"luci.sys\"\n" ..
+              "local util = require \"luci.util\"\n" ..
+              "local uci  = require \"luci.model.uci\".cursor()\n",
+    }
+    local content = value or note_type_array[note_type] or ''
+    local file_handle = assert(io.open(file, "w"))
+    if #content > 0 then
+        file_handle:write(content)
     end
-    local f = assert(io.open(file, "w"))
-    if content ~= nil then
-        f:write(content)
-    end
-    f:close()
+    file_handle:close()
 end
 
 if not uci:get("tinynote", "tinynote") then
@@ -326,22 +315,22 @@ s = m:section(TypedSection, "tinynote")
 s.anonymous = true
 s.addremove = false
 
-local con = uci:get_all("tinynote", "tinynote")
-local note_sum = con.note_sum or "1"
-local note_type = con.note_type or "txt"
-local codemirror_enable = con.enable or nil
-local note_path = con.note_path or "/etc/tinynote"
+local con         = uci:get_all("tinynote", "tinynote")
+local note_sum    = con.note_sum  or "1"
+local note_type   = con.note_type or "txt"
+local code_enable = con.enable    or nil
+local note_path   = con.note_path or "/etc/tinynote"
 
 if sys.call("test ! -d " .. note_path) == 0 then
     fs.mkdirr(note_path)
 end
 
 local path_arg, note_arg = {}, {}
-
 for sum_str = 1, note_sum do
     local sum = string.format("%02d", sum_str)
-    local file = table.concat({note_path, "/note", sum, ".", note_type})
+    local file = string.format("%s/note%s.%s", note_path, sum, note_type)
     note_arg[sum] = file
+
     if sys.call("[ -f " .. file .. " ]") == 1 then
         new_write_file(file, note_type, nil)
     end
@@ -378,28 +367,28 @@ for sum_str = 1, note_sum do
         a.wrap = "off"
 
         function a.cfgvalue(self, section)
-            local value = ""
-            local f = io.open(file, "r")
-            if not f then return "" end
+            local file_handle = io.open(file, "r")
+            if not file_handle then return "" end
 
+            local chunks = {}
             repeat
-                local chunk = f:read(1024 * 512)
-                if chunk then value = value .. chunk end
+                local chunk = file_handle:read(1024 * 512)
+                if chunk then table.insert(chunks, chunk) end
                 coroutine.yield()
             until not chunk
 
-            f:close()
-            return value
+            file_handle:close()
+            return table.concat(chunks)
         end
 
-        function a.write(self, section, value)
-            if not value or value == "" then
+        function a.write(self, section, note_content)
+            if not note_content or note_content == "" then
                 return
             end
-            value = value:gsub("\r\n?", "\n")
-            local old_value = fs.readfile(file) or ""
-            if value ~= old_value then
-                new_write_file(file, nil, value)
+            note_content = note_content:gsub("\r\n?", "\n")
+            local old_note_content = fs.readfile(file) or ""
+            if note_content ~= old_note_content then
+                new_write_file(file, nil, note_content)
             end
         end
 
@@ -427,14 +416,15 @@ for i in fs.dir(note_path) do
 end
 
 if path_arg ~= note_arg then
-    for k, v in pairs(path_arg) do
-        if note_arg[k] ~= v then
-            fs.remove(v)
+    local file_path
+    for k, file_path in pairs(path_arg) do
+        if note_arg[k] ~= file_path then
+            fs.remove(file_path)
         end
     end
 end
 
-if codemirror_enable then
+if code_enable then
     m:append(Template("tinynote/codemirror"))
 end
 
