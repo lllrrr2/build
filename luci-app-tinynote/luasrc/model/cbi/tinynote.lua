@@ -13,9 +13,9 @@ local function new_write_file(file, note_type, value)
               "local util = require \"luci.util\"\n" ..
               "local uci  = require \"luci.model.uci\".cursor()\n",
     }
-    local content = value or note_type_array[note_type] or ''
+    local content = value or note_type_array[note_type]
     local file_handle = assert(io.open(file, "w"))
-    if #content > 0 then
+    if content ~= nil then
         file_handle:write(content)
     end
     file_handle:close()
@@ -331,11 +331,11 @@ for sum_str = 1, note_sum do
     local file = string.format("%s/note%s.%s", note_path, sum, note_type)
     note_arg[sum] = file
 
-    if sys.call("[ -f " .. file .. " ]") == 1 then
+    if not fs.access(file) then
         new_write_file(file, note_type, nil)
     end
 
-    if sys.call("[ -f " .. file .. " ]") == 0 then
+    if fs.access(file, 'w') then
         local note = "note" .. sum
         s:tab(note, translate("Note %s") %sum)
 
@@ -410,15 +410,14 @@ for sum_str = 1, note_sum do
 end
 
 local _sum = 0
-for i in fs.dir(note_path) do
+for file_name in fs.dir(note_path) do
     _sum = _sum + 1
-    path_arg[string.format("%02d", _sum)] = note_path .. "/" .. i
+    path_arg[string.format("%02d", _sum)] = string.format("%s/%s", note_path, file_name)
 end
 
 if path_arg ~= note_arg then
-    local file_path
     for k, file_path in pairs(path_arg) do
-        if note_arg[k] ~= file_path then
+        if note_arg[k] ~= file_path and fs.access(file_path, 'w') then
             fs.remove(file_path)
         end
     end

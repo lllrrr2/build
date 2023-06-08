@@ -168,14 +168,14 @@ add_wizard() {
 		fi
 	}
 
-	# ETH() {
-	# 	eth=0
-	# 	while [ "$eth" -le $(expr "$1" - 1) ]; do
-	# 		eth=$(expr $eth + 1)
-	# 		a=$(expr $eth - 1)
-	# 		echo "eth$a"
-	# 	done
-	# }
+	ETH() {
+		eth=0
+		while [ "$eth" -le $(expr "$1" - 1) ]; do
+			eth=$(expr $eth + 1)
+			a=$(expr $eth - 1)
+			echo "eth$a"
+		done
+	}
 
 	#模拟输入
 	# if [ "$network" -eq 0 -o -z "$network" ]; then
@@ -192,9 +192,11 @@ add_wizard() {
 	# fi
 	uci -q commit wizard
 	/etc/init.d/dnsmasq reload &
-	[ `uci -q changes network | wc -l` -gt 0 ] && {
+	[[ "$(uci -q changes network | wc -l)" -gt 0 ]] && {
 		uci -q commit network
-		/etc/init.d/network reload &
+		service network restart &
+		ifup wan
+		# /etc/init.d/network reload &
 	}
 }
 
@@ -224,6 +226,5 @@ restart() {
 }
 
 boot() {
-	reconfig
 	XBOOT=1 start
 }
