@@ -48,15 +48,20 @@ e:value("info", translate("Info"))
 e:value("debug", translate("Debug"))
 e.default = "error"
 
-e = t:taboption("download", Value, "download_location", translate("下载文件路径"),
-	translate("The files are stored in the download directory automatically created under the selected mounted disk"))
-local array = {}
+local download_location = t:taboption("download", Value, "download_location", translate("下载文件路径"),
+    translate("The files are stored in the download directory automatically created under the selected mounted disk"))
+local disks = {}
 for disk in util.execi("mount | awk '/mnt/{print $3}' | cut -d/ -f-3 | uniq") do
-    for x = 1,4 do
-        array[x] = sys.exec("df -h | grep " .. disk .. " | awk 'NR==1{print $" .. x .. "}'")
+    local info = {}
+    for _, value in ipairs({"1", "2", "4"}) do
+        table.insert(info, sys.exec(string.format("df -h | grep %s | awk 'NR==1{print $%s}'", disk, value)))
     end
-	e:value(disk .. "/download",
-		translate(disk .. "/download " .. "(size: " .. array[2] .. ") (Available: " .. array[4] .. ")"))
+    table.insert(disks, {name = disk, size = info[2], available = info[3]})
+end
+for _, disk in ipairs(disks) do
+    local name = string.format("%s/download", disk.name)
+    local label = string.format("%s (size: %s) (Available: %s)", name, disk.size, disk.available)
+    download_location:value(name, translate(label))
 end
 
 e = t:taboption("download", Flag, "move_completed_enabled", translate("将已完成的任务移动到"))

@@ -1,12 +1,14 @@
 local fs   = require "nixio.fs"
-local sys  = require "luci.sys"
-local util = require "luci.util"
 local uci  = require "luci.model.uci".cursor()
 
 local function new_write_file(file, note_type, value)
     local note_type_array = {
-        py  = "#!/usr/bin/env python\n",
         sh  = "#!/bin/sh /etc/rc.common\n",
+        py  = "#!/usr/bin/env python\n" ..
+              "import os   # 用于导入系统变量\n" ..
+              "import sys  # 实现 sys.exit\n" ..
+              "import time # 时间\n" ..
+              "import re   # 正则过滤\n",
         lua = "#!/usr/bin/env lua\n" ..
               "local fs   = require \"nixio.fs\"\n" ..
               "local sys  = require \"luci.sys\"\n" ..
@@ -321,7 +323,7 @@ local note_type   = con.note_type or "txt"
 local code_enable = con.enable    or nil
 local note_path   = con.note_path or "/etc/tinynote"
 
-if sys.call("test ! -d " .. note_path) == 0 then
+if luci.sys.call("test ! -d " .. note_path) == 0 then
     fs.mkdirr(note_path)
 end
 
