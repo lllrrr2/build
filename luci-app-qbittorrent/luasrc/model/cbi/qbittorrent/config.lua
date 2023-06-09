@@ -41,17 +41,12 @@ e.default = '/tmp'
 local download_location = t:taboption("basic", Value, "SavePath", translate("Save Path"),
     translate("The files are stored in the download directory automatically created under the selected mounted disk"))
 local disks = {}
-for disk in util.execi("mount | awk '/mnt/{print $3}' | cut -d/ -f-3 | uniq") do
-    local info = {}
-    for _, value in ipairs({"1", "2", "4"}) do
-        table.insert(info, sys.exec(string.format("df -h | grep %s | awk 'NR==1{print $%s}'", disk, value)))
-    end
-    table.insert(disks, {name = disk, size = info[2], available = info[3]})
+for disk in io.popen("df -h | awk '/dev.*mnt/{print $6,$2,$3,$5}'"):lines() do
+    table.insert(disks, util.split(disk, " "))
 end
 for _, disk in ipairs(disks) do
-    local name = string.format("%s/download", disk.name)
-    local label = string.format("%s (size: %s) (Available: %s)", name, disk.size, disk.available)
-    download_location:value(name, translate(label))
+    local label = ("%s/download (size: %s) (used: %s/%s)"):format(disk[1], disk[2], disk[3], disk[4])
+    download_location:value(disk[1] .. "/download", translate(label))
 end
 
 e = t:taboption("basic", Value, "Locale", translate("Locale Language"),

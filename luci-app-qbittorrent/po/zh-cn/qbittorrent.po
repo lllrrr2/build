@@ -628,8 +628,8 @@ msgstr "qBittorrent 下载器"
 msgid "Failed to load log data."
 msgstr "无法加载日志数据。"
 
-msgid "%s (size: %s) (Available: %s)""
-msgstr "%s（大小：%s）（可用：%s）"
+msgid "%s/download (size: %s) (used: %s/%s)"
+msgstr "%s/download (大小: %s) (已用: %s/%s)"
 
 msgid "Leave blank to use the default user."
 msgstr "留空以使用默认用户。"
@@ -639,6 +639,9 @@ msgstr "使用备用 Web UI"
 
 msgid "file path"
 msgstr "文件路径"
+
+msgid "Click to randomly generate port"
+msgstr "点击随机生成端口"
 
 msgid ""
 msgstr ""

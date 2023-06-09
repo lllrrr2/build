@@ -1,33 +1,36 @@
-<%#
- Copyright 2019 xxx <xxx@xxx.com>
- Licensed to the public under the Apache License 2.0.
--%>
-
-<div class="cbi-value<% if self.error and self.error[section] then %> cbi-value-error<% end %> <% if self.last_child then %> cbi-value-last <% end %>" id="cbi-<%=self.config.."-"..section.."-"..self.option%>" data-index="<%=self.index%>" data-depends="<%=pcdata(self:deplist2json(section))%>">
-	<%- if self.title and #self.title > 0 then -%>
-	<label class="cbi-value-title"<%= attr("for", cbid) %>><%-=self.title-%></label>
-	<div class="cbi-value-field">
-	<%- end -%>
-		<input data-update="change"<%=
-			attr("id", cbid) ..
-			attr("name", cbid) ..
-			attr("type", self.password and "password" or "text") ..
-			attr("class", self.password and "cbi-input-password" or "cbi-input-text") ..
-			attr("value", self:cfgvalue(section) or self.default) ..
-			ifattr(self.size, "size") ..
-			ifattr(self.placeholder, "placeholder") ..
-			ifattr(self.readonly, "readonly") ..
-			ifattr(self.maxlength, "maxlength") ..
-			ifattr(self.datatype, "data-type", self.datatype) ..
-			ifattr(self.datatype, "data-optional", self.optional or self.rmempty) ..
-			ifattr(self.onmouseover, "onmouseover")
-		%> />
-		<% if self.description and #self.description > 0 then -%>
-		<div class="cbi-button cbi-button-neutral" title="<%=self.btntext%>" aria-label="<%=self.btntext%>"<%=
-			ifattr(self.btnclick, "onclick", self.btnclick)
-			%>><span style="font-weight: normal;"><%=self.btntext%></span></div>
-		<%- end %>
-	<%- if self.title and #self.title > 0 then -%>
-	</div>
-	<%- end -%>
+<div class="cbi-value <%= self.error and self.error[section] and 'cbi-value-error' %> <%= self.last_child and 'cbi-value-last' %>"
+     id="cbi-<%=self.config..'-'..section..'-'..self.option%>"
+     data-index="<%=self.index%>"
+     data-depends="<%=pcdata(self:deplist2json(section))%>">
+  <% if self.title and #self.title > 0 then %>
+    <label class="cbi-value-title" <%= attr("for", cbid) %>><%= self.title %></label>
+    <div class="cbi-value-field">
+  <% end %>
+    <input data-update="change"
+           <%= attr("id", cbid) ..                      -- ID 属性，格式为 'cbi-配置名-配置项名'
+               attr("name", cbid) ..                    -- name 属性，格式同 ID 属性
+               attr("type", self.password and "password" or "text") ..  -- 输入框类型
+               attr("class", self.password and "cbi-input-password" or "cbi-input-text") ..  -- 样式类名
+               attr("value", self:cfgvalue(section) or self.default) ..  -- 输入框的默认值
+               ifattr(self.size, "size") ..              -- 输入框的尺寸
+               ifattr(self.placeholder, "placeholder") ..  -- 输入框的占位符文本
+               ifattr(self.readonly, "readonly") ..      -- 只读属性，如果设置为 true，则用户无法修改输入框的值
+               ifattr(self.maxlength, "maxlength") ..    -- 最大字节数，用于限制输入框的输入长度
+               ifattr(self.datatype, "data-type", self.datatype) ..  -- 数据类型
+               ifattr(self.datatype, "data-optional", self.optional or self.rmempty) ..  -- 是否可选
+               ifattr(self.onmouseover, "onmouseover")   -- 鼠标悬浮提示文本
+           %>
+    />
+    <% if self.description and #self.description > 0 then %>
+      <div class="cbi-button cbi-button-apply"
+           style="margin-left: 10px;"
+           title="<%:Click to randomly generate port%>"
+           aria-label="<%= self.btntext %>"
+           <%= ifattr(self.btnclick, "onclick", self.btnclick) %>
+           <span style="font-weight: normal;"><%= self.btntext %></span>
+      </div>
+    <% end %>
+  <% if self.title and #self.title > 0 then %>
+    </div>
+  <% end %>
 </div>

@@ -8,8 +8,8 @@ msgstr "运行日志的最新 30 行："
 msgid "The last 30 lines of the syslog:"
 msgstr "系统日志的最新 30 行："
 
-msgid "%s (size: %s) (Available: %s)""
-msgstr "%s（大小：%s）（可用：%s）"
+msgid "%s/download (size: %s) (used: %s/%s)"
+msgstr "%s/download (大小: %s) (已用: %s/%s)"
 
 msgid ""
 msgstr ""
