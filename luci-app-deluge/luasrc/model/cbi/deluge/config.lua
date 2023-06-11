@@ -56,8 +56,7 @@ for disk in io.popen("df -h | awk '/dev.*mnt/{print $6,$2,$3,$5}'"):lines() do
     table.insert(diskArray, fields)
 end
 for i, v in ipairs(diskArray) do
-    local label = ("%s/download (size: %s) (used: %s/%s)"):format(v[1], v[2], v[3], v[4])
-    download_location:value(v[1] .. "/download", translate(label))
+    download_location:value(v[1] .. "/download", translatef(("%s/download (size: %s) (used: %s/%s)"), v[1], v[2], v[3], v[4]))
 end
 
 e = t:taboption("download", Flag, "move_completed_enabled", translate("将已完成的任务移动到"))

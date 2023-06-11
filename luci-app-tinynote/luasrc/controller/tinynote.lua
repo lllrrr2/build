@@ -1,7 +1,3 @@
-local sys  = require "luci.sys"
-local http = require "luci.http"
-local i18n = require "luci.i18n"
-
 module("luci.controller.tinynote", package.seeall)
 
 function index()
@@ -10,44 +6,44 @@ function index()
 end
 
 function send_json_response(output)
-    http.prepare_content("application/json")
-    http.write_json(output)
+    luci.http.prepare_content("application/json")
+    luci.http.write_json(output)
 end
 
 function process_result(result_output, exit_code, command, file_path)
     if exit_code == 0 then
         if #result_output > 2 then
             return send_json_response({
-                result = "success", data = result_output
+                result = "success", data = luci.xml.pcdata(result_output)
             })
         else
             return send_json_response({
-                result = i18n.translatef("Execution '%s %s' has no output!", command, file_path)
+                result = luci.i18n.translatef("Execution '%s %s' has no output!", command, file_path)
             })
         end
     else
         return send_json_response({
-            result = i18n.translatef("Failed to execute <div style='color: #f92672;'>%s %s</div><div style='text-align: left;'>Exit code: %d<br>Error message: <div style='color: #e6db74;'>%s</div>", command, file_path, exit_code, result_output)
+            result = luci.i18n.translatef("Failed to execute <div style='color: #f92672;'>%s %s</div><div style='text-align: left;'>Exit code: %d<br>Error message: <div style='color: #e6db74;'>%s</div>", command, file_path, exit_code, result_output)
         })
     end
 end
 
 function action_run()
-    local command   = http.formvalue('command')
-    local file_path = http.formvalue('file_path')
+    local command   = luci.http.formvalue('command')
+    local file_path = luci.http.formvalue('file_path')
 
     if command == '' and file_path == '' then
         return send_json_response({
-            result = i18n.translate("No input for the command line yet. Don't click 'Execute Command'!")
+            result = luci.i18n.translate("No input for the command line yet. Don't click 'Execute Command'!")
         })
     end
 
     command = command == '' and file_path ~= '' and 'lua' or command
-    local command_name = command ~= '' and sys.exec("/usr/bin/which " .. command:match("^([^%s]+)")) or ''
+    local command_name = command ~= '' and luci.sys.exec("/usr/bin/which " .. command:match("^([^%s]+)")) or ''
 
     if #command_name < 4 or command_name:find("no ") == 1 then
         return send_json_response({
-            result = i18n.translatef("The current system cannot find the command '%s' you entered!", command:match("^%S+"))
+            result = luci.i18n.translatef("The current system cannot find the command '%s' you entered!", command:match("^%S+"))
         })
     end
 

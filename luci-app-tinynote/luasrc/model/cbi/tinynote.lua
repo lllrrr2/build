@@ -1,8 +1,8 @@
 local fs   = require "nixio.fs"
 local uci  = require "luci.model.uci".cursor()
 
-local function new_write_file(file, note_type, value)
-    local note_type_array = {
+local function new_write_file(file, note_suffix, value)
+    local note_suffix_array = {
         sh  = "#!/bin/sh /etc/rc.common\n",
         py  = "#!/usr/bin/env python\n" ..
               "import os   # 用于导入系统变量\n" ..
@@ -15,7 +15,7 @@ local function new_write_file(file, note_type, value)
               "local util = require \"luci.util\"\n" ..
               "local uci  = require \"luci.model.uci\".cursor()\n",
     }
-    local content = value or note_type_array[note_type]
+    local content = value or note_suffix_array[note_suffix]
     local file_handle = assert(io.open(file, "w"))
     if content ~= nil then
         file_handle:write(content)
@@ -24,7 +24,7 @@ local function new_write_file(file, note_type, value)
 end
 
 if not uci:get("tinynote", "tinynote") then
-    new_write_file("/etc/config/tinynote", nil, nil)
+    new_write_file("/etc/config/tinynote")
     uci:set("tinynote", "tinynote", "tinynote")
     uci:commit("tinynote")
 end
@@ -252,14 +252,14 @@ note_sum.validate = function(self, value)
     return Value.validate(self, value)
 end
 
-note_type = f:taboption("note", ListValue, "note_type",
+note_suffix = f:taboption("note", ListValue, "note_suffix",
     translate("Text Type"))
-note_type.default = "txt"
-note_type:value('txt', translate('txt'))
-note_type:value('sh', translate('sh'))
-note_type:value('lua', translate('lua'))
-note_type:value('py', translate('py'))
-note_type:value('js', translate('js'))
+note_suffix.default = "txt"
+note_suffix:value('txt', translate('txt'))
+note_suffix:value('sh', translate('sh'))
+note_suffix:value('lua', translate('lua'))
+note_suffix:value('py', translate('py'))
+note_suffix:value('js', translate('js'))
 
 enable = f:taboption("note", Flag, "enable",
     translate("Enable CodeMirror Support"))
@@ -319,22 +319,22 @@ s.addremove = false
 
 local con         = uci:get_all("tinynote", "tinynote")
 local note_sum    = con.note_sum  or "1"
-local note_type   = con.note_type or "txt"
+local note_suffix = con.note_suffix or "txt"
 local code_enable = con.enable    or nil
 local note_path   = con.note_path or "/etc/tinynote"
 
-if luci.sys.call("test ! -d " .. note_path) == 0 then
+if not fs.access(note_path) then
     fs.mkdirr(note_path)
 end
 
-local path_arg, note_arg = {}, {}
+local note_arg = {}
 for sum_str = 1, note_sum do
     local sum = string.format("%02d", sum_str)
-    local file = string.format("%s/note%s.%s", note_path, sum, note_type)
+    local file = string.format("%s/note%s.%s", note_path, sum, note_suffix)
     note_arg[sum] = file
 
     if not fs.access(file) then
-        new_write_file(file, note_type, nil)
+        new_write_file(file, note_suffix)
     end
 
     if fs.access(file, 'w') then
@@ -400,7 +400,7 @@ for sum_str = 1, note_sum do
         clear_button.template = "tinynote/clear_button"
         clear_button.write = function(self, section)
             a.value = ""
-            new_write_file(file, note_type, nil)
+            new_write_file(file, note_suffix)
         end
 
         local run_button = s:taboption(note, Button, "_run_note" .. sum,
@@ -411,17 +411,13 @@ for sum_str = 1, note_sum do
     end
 end
 
-local _sum = 0
-for file_name in fs.dir(note_path) do
-    _sum = _sum + 1
-    path_arg[string.format("%02d", _sum)] = string.format("%s/%s", note_path, file_name)
-end
 
-if path_arg ~= note_arg then
-    for k, file_path in pairs(path_arg) do
-        if note_arg[k] ~= file_path and fs.access(file_path, 'w') then
-            fs.remove(file_path)
-        end
+local index = 0
+for file_name in fs.dir(note_path) do
+    index = index + 1
+    local file_path = string.format("%s/%s", note_path, file_name)
+    if file_path ~= note_arg[string.format("%02d", index)] and fs.access(file_path) then
+        os.remove(file_path)
     end
 end
 

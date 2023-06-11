@@ -146,7 +146,7 @@
         if (alertText) {
             alertContent.innerHTML = '<pre style="text-align: center; font-size: 16px">' + alertText + '\n\n\n</pre>';
         } else {
-            alertContent.innerHTML = "<pre>" + data.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + "\n</pre>";
+            alertContent.innerHTML = "<pre>" + data + "\n</pre>";
         }
         var alertConfirm = createEleWithClass('div', 'alert-confirm');       // 创建弹窗确认按钮的父容器元素
         var alertBtn = createEleWithClass('button', 'alert-btn');            // 创建弹窗确认按钮元素

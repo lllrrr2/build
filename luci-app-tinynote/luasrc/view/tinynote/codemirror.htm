@@ -76,7 +76,7 @@ local languages = {
   html = true
 }
 for v, k in pairs(con) do
-    if v:find("model_") or v:find("note_type") then
+    if v:find("model_") or v:find("note_suffix") then
         if not keys[k] then
 %>
             <script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.13/mode/<%=k%>/<%=k%>.min.js"></script>
@@ -178,7 +178,7 @@ function jqid(id) {
 for sum_str = 1, con.note_sum do
     local sum   = string.format("%02d", sum_str)
     local only  = con['only_note'  .. sum] or false
-    local model = con['model_note' .. sum] or con.note_type
+    local model = con['model_note' .. sum] or con.note_suffix
     local id    = string.format('cbid.tinynote.tinynote.note%s', sum)
 %>
     editor('<%=id%>', '<%=model%>', '<%=only%>');

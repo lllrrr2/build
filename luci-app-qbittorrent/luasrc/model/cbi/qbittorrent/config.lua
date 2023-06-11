@@ -45,8 +45,7 @@ for disk in io.popen("df -h | awk '/dev.*mnt/{print $6,$2,$3,$5}'"):lines() do
     table.insert(disks, util.split(disk, " "))
 end
 for _, disk in ipairs(disks) do
-    local label = ("%s/download (size: %s) (used: %s/%s)"):format(disk[1], disk[2], disk[3], disk[4])
-    download_location:value(disk[1] .. "/download", translate(label))
+    download_location:value(disk[1] .. "/download", translatef(("%s/download (size: %s) (used: %s/%s)"), disk[1], disk[2], disk[3], disk[4]))
 end
 
 e = t:taboption("basic", Value, "Locale", translate("Locale Language"),
