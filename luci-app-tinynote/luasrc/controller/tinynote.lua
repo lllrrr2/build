@@ -32,7 +32,7 @@ function action_run()
     local command   = luci.http.formvalue('command')
     local file_path = luci.http.formvalue('file_path')
 
-    if command == '' and file_path == '' then
+    if command == '' and (file_path == '' or not nixio.fs.access(file_path)) then
         return send_json_response({
             result = luci.i18n.translate("No input for the command line yet. Don't click 'Execute Command'!")
         })
@@ -43,7 +43,7 @@ function action_run()
         if con[sum] == 'shell' or con[sum] == 'python' then
             command = con[sum] == 'shell' and "sh" or con[sum]
         else
-            command = con.note_suffix
+            command = con.note_suffix ~= '' and con.note_suffix or "lua"
         end
     end
 
