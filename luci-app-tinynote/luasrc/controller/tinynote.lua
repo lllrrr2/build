@@ -36,9 +36,17 @@ function action_run()
         return send_json_response({
             result = luci.i18n.translate("No input for the command line yet. Don't click 'Execute Command'!")
         })
+    elseif command == '' and file_path ~= '' then
+        local uci = require "luci.model.uci".cursor()
+        local con = uci:get_all("tinynote", "tinynote")
+        local sum = 'model_note' .. file_path:match('%d+')
+        if con[sum] == 'shell' or con[sum] == 'python' then
+            command = con[sum] == 'shell' and "sh" or con[sum]
+        else
+            command = con.note_suffix
+        end
     end
 
-    command = command == '' and file_path ~= '' and 'lua' or command
     local command_name = command ~= '' and luci.sys.exec("/usr/bin/which " .. command:match("^([^%s]+)")) or ''
 
     if #command_name < 4 or command_name:find("no ") == 1 then

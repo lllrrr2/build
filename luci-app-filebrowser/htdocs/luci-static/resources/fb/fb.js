@@ -113,42 +113,51 @@ String.prototype.replaceAll = function(search, replacement) {
     }
   }
   function refresh_list(filenames, path) {
+    // 定义空的 HTML 字符串，用于存储生成的文件列表
     var listHtml = '<table class="cbi-section-table"><tbody>';
+    // 如果当前目录不是根目录，则需要添加一个指向上一级目录的表格行
     if (path !== '/') {
       listHtml += '<tr><td class="parent-icon" colspan="6"><strong>..</strong></td></tr>';
     }
+    // 对于每个文件名，使用正则表达式对其进行解析，并将解析结果存储在对象中。然后将各种信息填充到 HTML 字符串中。
     if (filenames) {
       for (var i = 0; i < filenames.length; i++) {
+        // 使用正则表达式对文件名进行解析，得到文件的各种属性
         var line = filenames[i];
         if (line) {
           var f = line.match(/(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+([\S\s]+)/);
+          // 判断当前文件是否为链接
           var isLink = f[1][0] === 'z' || f[1][0] === 'l' || f[1][0] === 'x';
+          // 将文件属性存储在对象中
           var o = {
-            displayname: f[9],
-            filename: isLink ? f[9].split(' -> ')[0] : f[9],
-            perms: f[1],
-            date: f[7] + ' ' + f[6] + ' ' + f[8],
-            size: f[5],
-            owner: f[3],
-            icon: (f[1][0] === 'd') ? "folder-icon" : (isLink ? "link-icon" : "file-icon")
+            displayname: f[9], // 文件名称
+            filename: isLink ? f[9].split(' -> ')[0] : f[9], // 文件名（如果是链接，则只保留真实文件名）
+            perms: f[1], // 文件权限
+            date: f[7] + ' ' + f[6] + ' ' + f[8], // 文件日期
+            size: f[5], // 文件大小
+            owner: f[3], // 文件所有者
+            icon: (f[1][0] === 'd') ? "folder-icon" : (isLink ? "link-icon" : "file-icon") // 根据文件类型确定图标样式类
           };
-          listHtml += '<tr class="cbi-section-table-row cbi-rowstyle-' + (1 + i%2)
-            + '" data-filename="' + o.filename + '" data-isdir="' + Number(f[1][0] === 'd' || f[1][0] === 'z') + '"'
-            + ((f[1][0] === 'z' || f[1][0] === 'l') ? (' data-linktarget="' + f[9].split(' -> ')[1]) : '')
-            + '">' + '<td class="cbi-value-field ' + o.icon + '">'
+          // 将文件的各种信息填充到 HTML 字符串中
+          listHtml += '<tr class="cbi-section-table-row cbi-rowstyle-' + (1 + i%2) // 设置表格行的样式
+            + '" data-filename="' + o.filename + '" data-isdir="' + Number(f[1][0] === 'd' || f[1][0] === 'z') + '"' // 将文件名和文件类型定义为数据属性，用于后续的 JavaScript 脚本
+            + ((f[1][0] === 'z' || f[1][0] === 'l') ? (' data-linktarget="' + f[9].split(' -> ')[1]) : '') // 如果是链接，则将链接目标作为数据属性
+            + '">' + '<td class="cbi-value-field ' + o.icon + '">' // 添加文件图标和名称
             + '<strong>' + o.displayname + '</strong>'+'</td>'
-            + '<td class="cbi-value-field cbi-value-owner">'+o.owner+'</td>'
-            + '<td class="cbi-value-field cbi-value-size">' +o.size+ '</td>'
-            + '<td class="cbi-value-field cbi-value-date">' +o.date+ '</td>'
-            + '<td class="cbi-value-field cbi-value-perm">' +o.perms+'</td>'
+            + '<td class="cbi-value-field cbi-value-owner">'+o.owner+'</td>' // 添加文件所有者
+            + '<td class="cbi-value-field cbi-value-size">' +o.size+ '</td>' // 添加文件大小
+            + '<td class="cbi-value-field cbi-value-date">' +o.date+ '</td>' // 添加文件日期
+            + '<td class="cbi-value-field cbi-value-perm">' +o.perms+'</td>' // 添加文件权限
             + '<td class="cbi-section-table-cell">\
                <button class="cbi-button cbi-button-edit">重命名</button>\
-               <button class="cbi-button cbi-button-remove">删除</button></td>'
+               <button class="cbi-button cbi-button-remove">删除</button></td>' // 添加重命名和删除按钮，用于后续的 JavaScript 脚本
             + '</tr>';
         }
       }
     }
+    // 完成 HTML 字符串的拼接，使其成为一个完整的文件列表
     listHtml += "</table>";
+    // 将生成的文件列表插入到指定的 HTML 元素中
     listElem.innerHTML = listHtml;
   }
   function update_list(path, opt) {

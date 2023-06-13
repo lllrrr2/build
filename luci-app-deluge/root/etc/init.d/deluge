@@ -73,14 +73,14 @@ deluge_boot() {
 	else
 		cat <<-EOF > "$core_conf"
 		{
-			"random_port": false,
-			"queue_new_to_top": true,
-			"new_release_check": false,
-			"listen_random_port": null,
-			"pre_allocate_storage": true,
-			"download_location": "$download_location",
-			"move_completed_path": "$move_completed_path",
-			"torrentfiles_location": "$torrentfiles_location"
+		    "random_port": false,
+		    "queue_new_to_top": true,
+		    "new_release_check": false,
+		    "listen_random_port": null,
+		    "pre_allocate_storage": true,
+		    "download_location": "$download_location",
+		    "move_completed_path": "$move_completed_path",
+		    "torrentfiles_location": "$torrentfiles_location"
 		}
 		EOF
 	fi
@@ -146,13 +146,13 @@ deluge_boot() {
 	else
 		cat <<-EOF > "$web_conf"
 		{
-			"port": $port,
-			"https": $https,
-			"language": $language,
-			"show_session_speed": true,
-			"geoip_db_location": "$geoip_db_location/GeoIP.dat",
-			"pwd_salt": "$dwsalt",
-			"pwd_sha1": "$pwd_sha1"
+		    "port": $port,
+		    "https": $https,
+		    "language": $language,
+		    "show_session_speed": true,
+		    "geoip_db_location": "$geoip_db_location/GeoIP.dat",
+		    "pwd_salt": "$dwsalt",
+		    "pwd_sha1": "$pwd_sha1"
 		}
 		EOF
 	fi
@@ -167,17 +167,14 @@ deluge_boot() {
 }
 
 start() {
+	[ x$(uci get deluge.main.enabled) = x ] && return 1
 	get_config `awk '/option/{print $2}' /etc/config/deluge`
-	if [ x$enabled = x1 ]; then
-		if [ -d "$profile_dir" ]; then
-			deluge_boot
-		else
-			deluge_boot
-			sleep 5
-			restart
-		fi
+	if [ -d "$profile_dir" ]; then
+		deluge_boot
 	else
-		return 1
+		deluge_boot
+		sleep 5
+		restart
 	fi
 	sleep 3
 	ps | grep deluge | awk '/usr/{print $1}' >/dev/null 2>&1 && logger -t 'deluge' -p 'daemon.info' 'Start deluge service'

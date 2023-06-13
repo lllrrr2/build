@@ -279,12 +279,12 @@
 <div style="display: inline-block; margin-right: 20px; padding-bottom: 20px;">
     <% if self:cfgvalue(section) ~= false then %>
         <label for="<%=cbid%>_commandInput"><%:Enter command to run:%></label>
-        <input id="<%=cbid%>_commandInput" style="width: 70px;" title="<%:Enter the command to run the current page script, leave it blank to run the script in Lua.%>" list="<%=cbid%>_options">
+        <input id="<%=cbid%>_commandInput" style="width: 70px;" title="<%:Enter or select the running command of the script on the current page, and leave blank to set the default command.%>" list="<%=cbid%>_options">
         <datalist id="<%=cbid%>_options">
             <option value="lua"></option>
-            <option value="bash"></option>
             <option value="sh"></option>
             <option value="python"></option>
+            <option value="bash"></option>
         </datalist>
         <label for="<%=cbid%>_requestType"></label>
         <select id="<%=cbid%>_requestType" style="width: 60px; margin-right: 10px;" title="<%:Select request type%>">

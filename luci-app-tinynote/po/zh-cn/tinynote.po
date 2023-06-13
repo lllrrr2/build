@@ -85,8 +85,8 @@ msgstr "当前系统找不到你输入的 '%s' 命令！"
 msgid "Enter command to run:"
 msgstr "输入运行命令："
 
-msgid "Enter the command to run the current page script, leave it blank to run the script in Lua."
-msgstr "输入运行当前页面脚本的命令，留空默以 lua 运行脚本。"
+msgid "Enter or select the running command of the script on the current page, and leave blank to set the default command."
+msgstr "输入或选择当前页面脚本的运行命令，留空是设置的默认命令。"
 
 msgid "Enter shell command:"
 msgstr "输入 shell 命令："

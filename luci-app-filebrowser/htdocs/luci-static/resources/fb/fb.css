@@ -1,68 +1,124 @@
+/* 容器样式 */
 .fb-container {
-    margin-top: 1rem;
+  max-width: 800px; /* 容器最大宽度 */
+  margin: 0 auto; /* 居中显示 */
+  margin-top: 1rem; /* 顶部边距 */
 }
+
+/* 表格样式 */
+table {
+  margin: 0; /* 边距 */
+  border-collapse: collapse; /* 去掉表格边框 */
+  width: 100%; /* 宽度自适应 */
+}
+
+td, th {
+  padding: 10px; /* 内边距 */
+  text-align: center; /* 文字居中 */
+}
+
+th {
+  background-color: #ECECEC; /* 表头背景色 */
+}
+
+tr {
+  border-bottom: 1px solid #ddd;
+}
+
+tr:nth-child(even) {
+  background-color: #F5F5F5; /* 偶数行背景色 */
+}
+
+tr:last-child td {
+  border-bottom: none; /* 最后一行没有底部边框 */
+}
+
+tr td:first-child {
+  border-left: none; /* 每行第一个单元格没有左侧边框 */
+}
+
+tr td:last-child {
+  border-right: none; /* 每行最后一个单元格没有右侧边框 */
+}
+
+/* 表单样式 */
 .fb-container .cbi-button {
-    height: 1.8rem;
+  height: 1.8rem; /* 按钮高度 */
 }
+
 .fb-container .cbi-input-text {
-    margin-bottom: 1rem;
-    width: 100%;
+  margin-bottom: 1rem; /* 底部边距 */
+  width: 100%; /* 宽度自适应 */
 }
+
 .fb-container .panel-title {
-    padding-bottom: 0;
-    width: 50%;
-    border-bottom: none;
+  padding-bottom: 0; /* 底部内边距设为0 */
+  width: 50%; /* 标题所占容器宽度的一半 */
+  border-bottom: none; /* 去掉底部边框 */
 }
+
 .fb-container .panel-container {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid #eee;
+  display: flex; /* 使用flex布局 */
+  align-items: center; /* 垂直居中 */
+  justify-content: space-around; /* 空间均分 */
+  align-items: center; /* 再次确保垂直居中 */
+  padding-bottom: 1rem; /* 底部边距 */
+  border-bottom: 1px solid #eee; /* 底部边框 */
 }
+
 .fb-container .upload-container {
-    display: none;
-    margin: 1rem 0;
+  display: none; /* 隐藏上传文件容器 */
+  margin: 1rem 0; /* 上下间距 */
 }
+
 .fb-container .upload-file {
-    margin-right: 2rem;
+  margin-right: 2rem; /* 右侧间距 */
 }
+
 .fb-container .cbi-value-field {
-    text-align: left;
+  text-align: left; /* 文字左对齐 */
 }
+
 .fb-container .parent-icon strong {
-    margin-left: 1rem;
+  margin-left: 1rem; /* 左侧间距 */
 }
+
 .fb-container td[class$="-icon"] {
-    cursor: pointer;
+  cursor: pointer; /* 鼠标样式 */
 }
+
 .fb-container .file-icon, .fb-container .folder-icon, .fb-container .link-icon {
-    position: relative;
+  position: relative; /* 相对定位 */
 }
+
 .fb-container .file-icon:before, .fb-container .folder-icon:before, .fb-container .link-icon:before {
-    display: inline-block;
-    width: 1.5rem;
-    height: 1.5rem;
-    content: '';
-    background-size: contain;
-    margin: 0 0.5rem 0 1rem;
-    vertical-align: middle;
+  display: inline-block; /* 行内块元素 */
+  width: 1.5rem; /* 宽度 */
+  height: 1.5rem; /* 高度 */
+  content: ''; /* 伪元素的内容为空 */
+  background-size: contain; /* 背景图自适应 */
+  margin: 0 0.5rem 0 1rem; /* 内部间距 */
+  vertical-align: middle; /* 垂直居中 */
 }
+
 .fb-container .file-icon:before {
-    background-image: url(file-icon.png);
+  background-image: url(file-icon.png); /* 文件图标 */
 }
+
 .fb-container .folder-icon:before {
-    background-image: url(folder-icon.png);
+  background-image: url(folder-icon.png); /* 文件夹图标 */
 }
+
 .fb-container .link-icon:before {
-    background-image: url(link-icon.png);
+  background-image: url(link-icon.png); /* 链接图标 */
 }
+
 @media screen and (max-width: 480px) {
-    .fb-container .upload-file {
-        width: 14.6rem;
-    }
-    .fb-container .cbi-value-owner,
-    .fb-container .cbi-value-perm {
-        display: none;
-    }
+  .fb-container .upload-file {
+    width: 14.6rem; /* 根据屏幕宽度调整上传文件容器的宽度 */
+  }
+  .fb-container .cbi-value-owner,
+  .fb-container .cbi-value-perm {
+    display: none; /* 在480px以下的屏幕上隐藏权限信息 */
+  }
 }
