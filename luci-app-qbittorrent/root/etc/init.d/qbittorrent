@@ -66,7 +66,7 @@ init_instance() {
 	esac
 
 	local group=$(id -ng $user)
-	for directory in "$RootProfilePath/$confdir" "$RootProfilePath/$confdir/config" "$SavePath/download" "$fullTempPath" "$FinishedTorrentExportDir" "$TorrentExportDir"; do
+	for directory in "$RootProfilePath/$confdir" "$RootProfilePath/$confdir/config" "$SavePath" "$fullTempPath" "$FinishedTorrentExportDir" "$TorrentExportDir"; do
 		if [ -n "$directory" -a ! -d "$directory" ]; then
 			mkdir -m 755 -p "$directory"
 			chmod -R g+w "$directory"

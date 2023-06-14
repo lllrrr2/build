@@ -38,7 +38,7 @@ function action_run()
         })
     elseif command == '' and file_path ~= '' then
         local uci = require "luci.model.uci".cursor()
-        local con = uci:get_all("tinynote", "tinynote")
+        local con = uci:get_all("luci", "tinynote")
         local sum = 'model_note' .. file_path:match('%d+')
         if con[sum] == 'shell' or con[sum] == 'python' then
             command = con[sum] == 'shell' and "sh" or con[sum]

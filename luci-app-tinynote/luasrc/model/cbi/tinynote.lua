@@ -23,10 +23,9 @@ local function new_write_file(file, note_suffix, value)
     file_handle:close()
 end
 
-if not uci:get("tinynote", "tinynote") then
-    new_write_file("/etc/config/tinynote")
-    uci:set("tinynote", "tinynote", "tinynote")
-    uci:commit("tinynote")
+if not uci:get("luci", "tinynote") then
+    uci:set("luci", "tinynote", "tinynote")
+    uci:commit("luci")
 end
 
 local note_theme_array = {
@@ -211,7 +210,7 @@ local note_mode_array = {
     { "z80",              "z80"           },
 }
 
-m = Map("tinynote", translate(""))
+m = Map("luci", translate(""))
 
 f = m:section(TypedSection, "tinynote")
 -- f.template = "cbi/tblsection"
@@ -220,7 +219,7 @@ f.anonymous = true -- 删除
 -- f.extedit   = true -- 修改
 -- f.sortable  = true -- 移动
 
-if fs.access("/etc/config/tinynote") then
+if uci:get("luci", "tinynote", "note_path") then
     f:tab("note1", translate("Note display"))
     note_path = f:taboption("note1", DummyValue, "", nil)
 end
@@ -317,7 +316,7 @@ s = m:section(TypedSection, "tinynote")
 s.anonymous = true
 s.addremove = false
 
-local con         = uci:get_all("tinynote", "tinynote")
+local con         = uci:get_all("luci", "tinynote")
 local note_sum    = con.note_sum  or "1"
 local note_suffix = con.note_suffix or "txt"
 local code_enable = con.enable    or nil
