@@ -1,20 +1,20 @@
 include $(TOPDIR)/rules.mk
 
-PKG_NAME := pciutils
-PKG_VERSION := 3.10.0
-PKG_RELEASE := 2
-PKG_SOURCE := $(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL := https://github.com/pciutils/pciutils/archive/refs/tags/v$(PKG_VERSION).tar.gz
-PKG_HASH := e579d87f1afe2196db7db648857023f80adb500e8194c4488c8b47f9a238c1c6
-PKG_INSTALL := 1
+PKG_NAME:=pciutils
+PKG_VERSION:=3.10.0
+PKG_RELEASE:=2
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://github.com/pciutils/pciutils/archive/refs/tags/v$(PKG_VERSION).tar.gz?
+PKG_HASH:=skip
+PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
 define Package/$(PKG_NAME)
-    SECTION := utils
-    CATEGORY := Utilities
-    TITLE := Linux PCI Utilities
-    DEPENDS := +libkmod +libpci +pciids
+    SECTION:=utils
+    CATEGORY:=Utilities
+    TITLE:=Linux PCI Utilities
+    DEPENDS:=+libkmod +libpci +pciids
 endef
 
 define Package/$(PKG_NAME)/description
@@ -23,9 +23,9 @@ define Package/$(PKG_NAME)/description
 endef
 
 define Package/libpci
-    SECTION := libs
-    CATEGORY := Libraries
-    TITLE := Linux PCI Libraries
+    SECTION:=libs
+    CATEGORY:=Libraries
+    TITLE:=Linux PCI Libraries
 endef
 
 TARGET_CFLAGS += $(FPIC)
