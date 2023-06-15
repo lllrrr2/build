@@ -14,7 +14,7 @@ function process_result(result_output, exit_code, command, file_path)
     if exit_code == 0 then
         if #result_output > 2 then
             return send_json_response({
-                result = "success", data = luci.xml.pcdata(result_output)
+                result = "success", data = luci.util.pcdata(result_output)
             })
         else
             return send_json_response({
@@ -51,7 +51,7 @@ function action_run()
 
     if #command_name < 4 or command_name:find("no ") == 1 then
         return send_json_response({
-            result = luci.i18n.translatef("The current system cannot find the command '%s' you entered!", command:match("^%S+"))
+            result = luci.i18n.translatef("The current system cannot find the command '%s' you entered!", command:match("^([^%s]+)"))
         })
     end
 

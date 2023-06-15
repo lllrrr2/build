@@ -172,25 +172,25 @@
 
         switch (status) {
             case 400:
-                errorMessage = 'Bad Request: The request was invalid or cannot be served.';
+                errorMessage = '<%:Bad Request: The request was invalid or cannot be served.%>';
                 break;
             case 401:
-                errorMessage = 'Unauthorized: The request requires authentication.';
+                errorMessage = '<%:Unauthorized: The request requires authentication.%>';
                 break;
             case 403:
-                errorMessage = 'Forbidden: The server refuses to authorize the request.';
+                errorMessage = '<%:Forbidden: The server refuses to authorize the request.%>';
                 break;
             case 404:
-                errorMessage = 'Not Found: The requested resource could not be found.';
+                errorMessage = '<%:Not Found: The requested resource could not be found.%>';
                 break;
             case 500:
-                errorMessage = 'Internal Server Error: The server failed to fulfill the request.';
+                errorMessage = '<%:Internal Server Error: The server failed to fulfill the request.%>';
                 break;
             case 503:
-                errorMessage = 'Service Unavailable: The server is temporarily unable to handle the request.';
+                errorMessage = '<%:Service Unavailable: The server is temporarily unable to handle the request.%>';
                 break;
             default:
-                errorMessage = String.format('An unexpected error occurred. Error code: %s', status);
+                errorMessage = String.format('<%:An unexpected error occurred. Error code: %s%>', status);
         }
 
         displayError(errorMessage);

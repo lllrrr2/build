@@ -68,6 +68,26 @@ define Package/$(PKG_NAME)-ui-web/install
 	$(call Python3/FixShebang,$(1)/usr/bin/*)
 endef
 
+# define Build/Configure
+# 	$(call Py3Build/Configure)
+# 	$(SED) 's/^#.*disable-libevent/disable-libevent/' $(PKG_BUILD_DIR)/setup.cfg
+# 	export CFLAGS="$(TARGET_CFLAGS)"; \
+# 	export LDFLAGS="$(TARGET_LDFLAGS)"; \
+# 	export PYTHON="$(PYTHON3)"; \
+# 	cd $(PKG_BUILD_DIR); \
+# 	$(PYTHON3) setup.py build_ext --inplace --force --disable-shared \
+# 		--curl-config=$(STAGING_DIR_HOST)/bin/curl-config \
+# 		--openssl=$(STAGING_DIR_HOST)/usr
+# endef
+
+# define Build/Compile
+# 	$(call Py3Build/Compile)
+
+# 	mkdir -p $(PKG_INSTALL_DIR)$(PYTHON3_PKG_DIR)/deluge
+# 	$(CP) $(PKG_BUILD_DIR)/deluge/*.py $(PKG_INSTALL_DIR)$(PYTHON3_PKG_DIR)/deluge/
+# 	$(TARGET_CC) -static -o $(PKG_INSTALL_DIR)/usr/bin/deluge $(PKG_BUILD_DIR)/deluge-*/deluge
+# endef
+
 $(eval $(call Py3Package,$(PKG_NAME)))
 $(eval $(call BuildPackage,$(PKG_NAME)))
 

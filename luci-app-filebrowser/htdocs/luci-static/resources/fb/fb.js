@@ -117,7 +117,7 @@ String.prototype.replaceAll = function(search, replacement) {
     var listHtml = '<table class="cbi-section-table"><tbody>';
     // 如果当前目录不是根目录，则需要添加一个指向上一级目录的表格行
     if (path !== '/') {
-      listHtml += '<tr><td class="parent-icon" colspan="6"><strong>..</strong></td></tr>';
+      listHtml += '<tr><td class="parent-icon" colspan="6"><strong>返回上一级</strong></td></tr>';
     }
     // 对于每个文件名，使用正则表达式对其进行解析，并将解析结果存储在对象中。然后将各种信息填充到 HTML 字符串中。
     if (filenames) {
