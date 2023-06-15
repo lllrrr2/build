@@ -277,26 +277,61 @@
 </script>
 
 <div style="display: inline-block; margin-right: 20px; padding-bottom: 20px;">
-    <% if self:cfgvalue(section) ~= false then %>
-        <label for="<%=cbid%>_commandInput"><%:Enter command to run:%></label>
-        <input id="<%=cbid%>_commandInput" style="width: 70px;" title="<%:Enter or select the running command of the script on the current page, and leave blank to set the default command.%>" list="<%=cbid%>_options">
-        <datalist id="<%=cbid%>_options">
-            <option value="lua"></option>
-            <option value="sh"></option>
-            <option value="python"></option>
-            <option value="bash"></option>
-        </datalist>
-        <label for="<%=cbid%>_requestType"></label>
-        <select id="<%=cbid%>_requestType" style="width: 60px; margin-right: 10px;" title="<%:Select request type%>">
-          <option value="fetch">fetch</option>
-          <option value="jQuery">jQuery</option>
-          <option value="xhr">xhr</option>
-        </select>
-        <input class="apply-button" type="button" style="margin-right: 18px;" onclick="handleCommandRequest(getElementBy_Id('<%=cbid%>_commandInput'), '<%=self.file_path%>', getElementBy_Id('<%=cbid%>_requestType'));"
-               <% if self.disable then %>disabled<% end %>
-               <%=attr("name", cbid) .. attr("id", cbid) .. attr("value", self.inputtitle or self.title)%>/>
-               <% else %> - <% end %>
-    <label for="<%=cbid%>_shellInput"><%:Enter shell command:%></label>
-    <input type="text" id="<%=cbid%>_shellInput" style="width: 150px; margin-right: 10px;" title="<%:Enter a shell command that can be run%>">
-    <button class="apply-button" type="button" onclick="handleCommandRequest(getElementBy_Id('<%=cbid%>_shellInput'), '', getElementBy_Id('<%=cbid%>_requestType'));"><%:Execute Command%></button>
+  <% if self:cfgvalue(section) ~= false then %>
+    <label for="<%=cbid%>_commandInput"><%:Enter command to run:%></label>
+    <input
+      id="<%=cbid%>_commandInput"
+      style="width: 70px;"
+      title="<%:Enter or select the running command of the script on the current page, and leave blank to set the default command.%>"
+      list="<%=cbid%>_options"
+    >
+    <datalist id="<%=cbid%>_options">
+      <option value="lua"></option>
+      <option value="sh"></option>
+      <option value="python"></option>
+      <option value="bash"></option>
+    </datalist>
+
+    <label for="<%=cbid%>_requestType"></label>
+    <select
+      id="<%=cbid%>_requestType"
+      style="width: 60px; margin-right: 10px;"
+      title="<%:Select request type%>"
+    >
+      <option value="xhr">xhr</option>
+      <option value="jQuery">jQuery</option>
+      <option value="fetch">fetch</option>
+    </select>
+
+    <input
+      class="cbi-button cbi-button-apply"
+      type="button"
+      style="margin-right: 18px;"
+      onclick="handleCommandRequest(
+        getElementBy_Id('<%=cbid%>_commandInput'),
+        '<%=self.file_path%>',
+        getElementBy_Id('<%=cbid%>_requestType')
+      );"
+      <% if self.disable then %>disabled<% end %>
+      <%=attr("name", cbid) .. attr("id", cbid) .. attr("value", self.inputtitle or self.title)%>
+    />
+
+  <% else %>
+    -
+  <% end %>
+
+  <label for="<%=cbid%>_shellInput"><%:Enter shell command:%></label>
+  <input
+    type="text"
+    id="<%=cbid%>_shellInput"
+    style="width: 150px; margin-right: 10px;"
+    title="<%:Enter a shell command that can be run%>"
+  >
+  <button
+    class="cbi-button cbi-button-apply"
+    type="button"
+    onclick="handleCommandRequest(getElementBy_Id('<%=cbid%>_shellInput'), '', getElementBy_Id('<%=cbid%>_requestType'));"
+  >
+    <%:Execute Command%>
+  </button>
 </div>
