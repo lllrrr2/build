@@ -1,4 +1,19 @@
 <style>
+    .alert-content {
+        max-height: calc(70vh - 100px);           /* 减去按钮高度和上下边距的高度 */
+        overflow: auto;                           /* 如果弹窗内容超出设置的高度，显示滚动条 */
+    }
+
+    .alert-content pre {
+        text-align: left;                         /* 文字左对齐 */
+        font-size: 14px;                          /* 字体大小为13像素 */
+        line-height: 1.5;                         /* 行高 */
+        /*color: white;                             /* 字体颜色为白色 */
+        background-color: #272822;                /* 背景颜色为黑色 */
+        color: #66D9EF;                           /* 字体颜色为蓝色 */
+        font-family: Consolas;                    /* 字体设置为Consolas */
+    }
+
     .alert-mask {
         position: fixed;                          /* 使用固定定位将遮罩层固定在页面上 */
         display: flex;                            /* 使用 Flex 布局 */
@@ -39,16 +54,6 @@
         margin-bottom: 10px;                      /* 下边距为10像素 */
     }
 
-    .alert-content pre {
-        text-align: left;                         /* 文字左对齐 */
-        font-size: 14px;                          /* 字体大小为13像素 */
-        line-height: 1.5;                         /* 行高 */
-        /*color: white;                             /* 字体颜色为白色 */
-        background-color: #272822;                /* 背景颜色为黑色 */
-        color: #66D9EF;                           /* 字体颜色为蓝色 */
-        font-family: Consolas;                    /* 字体设置为Consolas */
-    }
-
     .alert-confirm {                              /* 定义弹窗确认按钮的父容器样式 */
         position: absolute;                       /* 设置绝对定位 */
         bottom: 20px;                             /* 距离底部 10 像素 */
@@ -58,7 +63,7 @@
 
     .alert-btn {                                  /* 定义弹窗确认按钮的样式 */
         position: sticky;                         /* 设置为粘性定位 */
-        bottom: 10px;                             /* 距离底部 10 像素 */
+        bottom: 5px;                             /* 距离底部 10 像素 */
         cursor: pointer;                          /* 鼠标移上去变成手型 */
         padding: 6px 10px;                        /* 上下内边距为6像素，左右内边距为10像素 */
         border: none;                             /* 去除边框 */
@@ -72,24 +77,6 @@
 
     .alert-btn:hover {                            /* 定义弹窗确认按钮的悬浮样式 */
         background-color: hsl(0, 90%, 42%);       /* 略微调暗颜色 */
-    }
-
-    .alert-content {
-        max-height: calc(70vh - 100px);           /* 减去按钮高度和上下边距的高度 */
-        overflow: auto;                           /* 如果弹窗内容超出设置的高度，显示滚动条 */
-    }
-
-    .apply-button {
-        cursor: pointer;                         /* 鼠标悬停时显示手形光标 */
-        display: inline-block;                   /* 将按钮显示为行内块元素 */
-        background: #fff;                        /* 按钮的背景颜色为白色 */
-        padding: 0 14px;                         /* 设置按钮的左右内边距为14像素，上下内边距为0 */
-        color: #1976d2;                          /* 设置按钮的字体颜色为深蓝色 */
-        font-size: 13px;                         /* 设置按钮的字体大小为13像素 */
-        line-height: 2em;                        /* 设置按钮的行高为2倍字体大小 */
-        border: 1px solid #1976d2;               /* 设置按钮的边框为1像素的深蓝色实线 */
-        border-radius: 4px;                      /* 设置按钮的边框圆角半径为4像素 */
-        white-space: pre;                        /* 设置按钮的空白符处理方式为保留 */
     }
 </style>
 
@@ -273,56 +260,31 @@
     function getElementBy_Id(id) {
         return document.getElementById(id).value;
     }
-
 </script>
 
 <div style="display: inline-block; margin-right: 20px; padding-bottom: 20px;">
+  <label for="<%=cbid%>_commandInput"><%:Enter command to run:%></label>
+  <input
+    id="<%=cbid%>_commandInput"
+    style="width: 60px;"
+    title="<%:Enter or select the running command of the script on the current page, and leave blank to set the default command.%>"
+    list="<%=cbid%>_options"
+  >
   <% if self:cfgvalue(section) ~= false then %>
-    <label for="<%=cbid%>_commandInput"><%:Enter command to run:%></label>
-    <input
-      id="<%=cbid%>_commandInput"
-      style="width: 70px;"
-      title="<%:Enter or select the running command of the script on the current page, and leave blank to set the default command.%>"
-      list="<%=cbid%>_options"
-    >
-    <datalist id="<%=cbid%>_options">
-      <option value="lua"></option>
-      <option value="sh"></option>
-      <option value="python"></option>
-      <option value="bash"></option>
-    </datalist>
-
-    <label for="<%=cbid%>_requestType"></label>
-    <select
-      id="<%=cbid%>_requestType"
-      style="width: 60px; margin-right: 10px;"
-      title="<%:Select request type%>"
-    >
-      <option value="xhr">xhr</option>
-      <option value="jQuery">jQuery</option>
-      <option value="fetch">fetch</option>
-    </select>
-
     <input
       class="cbi-button cbi-button-apply"
       type="button"
-      style="margin-right: 18px;"
+      style="margin-right: 10px; margin-left: 10px;"
       onclick="handleCommandRequest(
         getElementBy_Id('<%=cbid%>_commandInput'),
         '<%=self.file_path%>',
         getElementBy_Id('<%=cbid%>_requestType')
       );"
       <% if self.disable then %>disabled<% end %>
-      <%=attr("name", cbid) .. attr("id", cbid) .. attr("value", self.inputtitle or self.title)%>
-    />
-
-  <% else %>
-    -
-  <% end %>
-
+      <%=attr("name", cbid) .. attr("id", cbid) .. attr("value", self.inputtitle or self.title)%>/>
+  <% else %> - <% end %>
   <label for="<%=cbid%>_shellInput"><%:Enter shell command:%></label>
   <input
-    type="text"
     id="<%=cbid%>_shellInput"
     style="width: 150px; margin-right: 10px;"
     title="<%:Enter a shell command that can be run%>"
@@ -331,7 +293,17 @@
     class="cbi-button cbi-button-apply"
     type="button"
     onclick="handleCommandRequest(getElementBy_Id('<%=cbid%>_shellInput'), '', getElementBy_Id('<%=cbid%>_requestType'));"
-  >
-    <%:Execute Command%>
-  </button>
+  ><%:Execute Command%></button>
+  <datalist id="<%=cbid%>_options">
+    <option value="lua"></option>
+    <option value="sh"></option>
+    <option value="python"></option>
+    <option value="bash"></option>
+  </datalist>
+  <label for="<%=cbid%>_requestType"></label>
+  <select id="<%=cbid%>_requestType" style="width: 60px; margin-left: 10px;" title="<%:Select request type%>">
+    <option value="xhr">xhr</option>
+    <option value="jQuery">jQuery</option>
+    <option value="fetch">fetch</option>
+  </select>
 </div>
