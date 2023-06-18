@@ -50,13 +50,17 @@ e.default = "error"
 
 local download_location = t:taboption("download", Value, "download_location", translate("下载文件路径"),
     translate("The files are stored in the download directory automatically created under the selected mounted disk"))
-local diskArray = {}
-for disk in io.popen("df -h | awk '/dev.*mnt/{print $6,$2,$3,$5}'"):lines() do
+local disks, dev_map = {}, {}
+for disk in io.popen("df -h | awk '/dev.*mnt/{print $6,$2,$3,$5,$1}'"):lines() do
     local fields = util.split(disk, " ")
-    table.insert(diskArray, fields)
+    local dev = fields[5]
+    if not dev_map[dev] then
+        dev_map[dev] = true
+        table.insert(disks, fields)
+    end
 end
-for i, v in ipairs(diskArray) do
-    download_location:value(v[1] .. "/download", translatef(("%s/download (size: %s) (used: %s/%s)"), v[1], v[2], v[3], v[4]))
+for _, disk in ipairs(disks) do
+    download_location:value(disk[1] .. "/download", translatef(("%s/download (size: %s) (used: %s/%s)"), disk[1], disk[2], disk[3], disk[4]))
 end
 
 e = t:taboption("download", Flag, "move_completed_enabled", translate("将已完成的任务移动到"))

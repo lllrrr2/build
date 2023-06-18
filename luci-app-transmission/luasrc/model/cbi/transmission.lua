@@ -16,7 +16,21 @@ enable.description = enable.description .. translatef("Current version of transm
 enable.rmempty = false
 
 config_dir = s:taboption("global", Value, "config_dir", translate("Config file directory"))
-download_dir = s:taboption("global", Value, "download_dir", translate("Download directory"))
+download_dir = s:taboption("global", Value, "download_dir", translate("Download directory"),
+    translate("The files are stored in the download directory automatically created under the selected mounted disk"))
+local disks, dev_map = {}, {}
+for disk in io.popen("df -h | awk '/dev.*mnt/{print $6,$2,$3,$5,$1}'"):lines() do
+    local fields = luci.util.split(disk, " ")
+    local dev = fields[5]
+    if not dev_map[dev] then
+        dev_map[dev] = true
+        table.insert(disks, fields)
+    end
+end
+for _, disk in ipairs(disks) do
+    download_dir:value(disk[1] .. "/download", translatef(("%s/download (size: %s) (used: %s/%s)"), disk[1], disk[2], disk[3], disk[4]))
+end
+
 incomplete_dir_enabled = s:taboption("global", Flag, "incomplete_dir_enabled", translate("Incomplete directory enabled"))
 incomplete_dir_enabled.enabled = "true"
 incomplete_dir_enabled.disabled = "false"

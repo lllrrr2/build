@@ -57,12 +57,17 @@ end
 
 e = t:taboption("basic", Value, "dir", translate("Download directory"),
 	translate("The files are stored in the download directory automatically created under the selected mounted disk"))
-local array = {}
-for disk in util.execi("mount | awk '/mnt/{print $3}' | cut -d/ -f-3 | uniq") do
-    for x = 1,4 do
-        array[x] = sys.exec("df -h | grep " ..disk.." | awk 'NR==1{print $"..x.."}'")
+local disks, dev_map = {}, {}
+for disk in io.popen("df -h | awk '/dev.*mnt/{print $6,$2,$3,$5,$1}'"):lines() do
+    local fields = util.split(disk, " ")
+    local dev = fields[5]
+    if not dev_map[dev] then
+        dev_map[dev] = true
+        table.insert(disks, fields)
     end
-    e:value(disk .. "/download", translate(disk.."/download（大小："..array[2].."）（可用："..array[4].."）"))
+end
+for _, disk in ipairs(disks) do
+    e:value(disk[1] .. "/download", translatef(("%s/download (size: %s) (used: %s/%s)"), disk[1], disk[2], disk[3], disk[4]))
 end
 
 e = t:taboption("basic", Value, "config_dir", translate("Config file directory"),
