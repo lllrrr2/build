@@ -1,6 +1,4 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2019 Jianpeng Xiang (1505020109@mail.hnust.edu.cn)
-# This is free software, licensed under the GNU General Public License v3.
 
 START=52
 STOP=10
@@ -10,102 +8,168 @@ STOP=10
 . /usr/bin/softwarecenter/web_install.sh
 a_delaytime=$(uci -q get softwarecenter.main.a_delaytime)
 
+port() {
+
+    if [ -x "/opt/bin/deluged" -a -n "$de_port" ]; then
+        old_de_port=$(grep -oP '(?<=-p )\d+' /opt/etc/init.d/S81deluge-web)
+        if [ "$de_port" != "$old_de_port" ]; then
+            sed -i "s/-p $old_de_port/-p $de_port/" /opt/etc/init.d/S81deluge-web
+            /opt/etc/init.d/S80deluged restart >/dev/null 2>&1
+        fi
+    fi
+
+    if [ -x "/opt/bin/transmission-daemon" -a -n "$tr_port" ]; then
+        # old_tr_port=$(sed -n 's/.*"rpc-port": \([0-9]\+\).*/\1/p' /opt/etc/transmission/settings.json)
+        old_tr_port=$(jq '.["rpc-port"]' /opt/etc/transmission/settings.json)
+        if [ -f /opt/etc/init.d/S88transmission ]; then
+            /opt/etc/init.d/S88transmission stop >/dev/null 2>&1
+        else
+            /opt/etc/init.d/S88transmission-cfp stop >/dev/null 2>&1
+        fi
+
+        if [ "$old_tr_port" != "$tr_port" ]; then
+            sleep 1
+            sed -i "s/\"rpc-port\": $old_tr_port/\"rpc-port\": $tr_port/" /opt/etc/transmission/settings.json
+            sleep 2
+        fi
+
+        if [ -f /opt/etc/init.d/S88transmission ]; then
+            /opt/etc/init.d/S88transmission start >/dev/null 2>&1
+        else
+            /opt/etc/init.d/S88transmission-cfp start >/dev/null 2>&1
+        fi
+    fi
+
+    if [ -x "/opt/bin/amuled" -a -n "$am_port" ]; then
+        old_am_port=$(sed -n '/PasswordLow/{n;p;q}' /opt/var/amule/amule.conf | grep -oP 'Port=\K\d+')
+        if [ "$old_am_port" != "$am_port" ]; then
+            sed -i "s/Port=$old_am_port/Port=$am_port/" /opt/var/amule/amule.conf
+            /opt/etc/init.d/S57amuled restart >/dev/null 2>&1
+        fi
+    fi
+
+    if [ -x "/opt/bin/qbittorrent-nox" -a -n "$qb_port" ]; then
+        old_qb_port=$(grep -oP '(?<=webui-port=)\d+' /opt/etc/init.d/S89qbittorrent)
+        if [ "$old_qb_port" != "$qb_port" ]; then
+            sed -i "s/webui-port=$old_qb_port/webui-port=$qb_port/" /opt/etc/init.d/S89qbittorrent
+            /opt/etc/init.d/S89qbittorrent restart >/dev/null 2>&1
+        fi
+    fi
+
+    if [ -x "/opt/bin/rtorrent" -a -n "$rt_port" ]; then
+        old_rt_port=$(grep -oP '^server.port=\s*\K\d+' /opt/etc/lighttpd/conf.d/99-rtorrent-fastcgi-scgi-auth.conf)
+        if [ "$old_rt_port" != "$rt_port" ]; then
+            sed -i "s/\(server.port\).*/\1= $rt_port/" /opt/etc/lighttpd/conf.d/99-rtorrent-fastcgi-scgi-auth.conf
+            /opt/etc/init.d/S80lighttpd restart >/dev/null 2>&1
+        fi
+    fi
+}
+
 CDG() {
-	config_load softwarecenter
-	get_config="cpu_model delaytime deploy_entware deploy_mysql deploy_nginx disk_mount download_dir entware_enable mysql_enabled nginx_enabled partition_disk pass swap_enabled swap_path swap_size user"
+    config_load softwarecenter
+    get_config="cpu_model delaytime deploy_entware deploy_mysql deploy_nginx disk_mount download_dir entware_enable mysql_enabled nginx_enabled partition_disk pass swap_enabled swap_path swap_size user am_port ar_port de_port qb_port tr_port rt_port"
 
-	for rt in $get_config; do
-		config_get_bool $rt main $rt
-		config_get $rt main $rt
-	done
+    for rt in $get_config; do
+        config_get_bool $rt main $rt
+        config_get $rt main $rt
+    done
+    # entware环境
+    source /etc/profile >/dev/null 2>&1
+    if [ $entware_enable ]; then
+        if [ ! -e /etc/init.d/entware ]; then
+            echo_time "========= 开始部署entware环境 =========\n"
+            entware_set $disk_mount $cpu_model
+            source /etc/profile >/dev/null 2>&1
+        fi
+    else
+        if [ -x /etc/init.d/entware ]; then
+            entware_unset
+            echo_time "========= entware环境已删除 =========\n"
+        fi
+        return 1
+    fi
 
-	# entware环境
-	source /etc/profile >/dev/null 2>&1
-	if [ $entware_enable ]; then
-		if [ ! -e /etc/init.d/entware ]; then
-			echo_time "========= 开始部署entware环境 =========\n"
-			entware_set $disk_mount $cpu_model
-			source /etc/profile >/dev/null 2>&1
-		fi
-	else
-		if [ -x /etc/init.d/entware ]; then
-			entware_unset
-			echo_time "========= entware环境已删除 =========\n"
-		fi
-		return 1
-	fi
+    # Nginx
+    if [ $deploy_nginx ]; then
+        [ ! -x /opt/etc/init.d/S80nginx ] && echo_time "========= 开始安装Nginx =========\n" && init_nginx
+        if [ $nginx_enabled ]; then
+            [ "$(pidof nginx)" ] || nginx_manage start
+        else
+            nginx_manage stop
+        fi
+    else
+        [ -x /opt/etc/init.d/S80nginx ] && echo_time "========= 卸载Nginx相关的软件包 =========\n" && del_nginx
+    fi
 
-	# Nginx
-	if [ $deploy_nginx ]; then
-		[ ! -x /opt/etc/init.d/S80nginx ] && echo_time "========= 开始安装Nginx =========\n" && init_nginx
-		if [ $nginx_enabled ]; then
-			[ "$(pidof nginx)" ] || nginx_manage start
-		else
-			nginx_manage stop
-		fi
-	else
-		[ -x /opt/etc/init.d/S80nginx ] && echo_time "========= 卸载Nginx相关的软件包 =========\n" && del_nginx
-	fi
+    # MySQL
+    if [ $deploy_mysql ]; then
+        [ ! -x /opt/etc/init.d/S70mysqld ] && echo_time "========= 开始安装MySQL =========\n" && init_mysql
+        if [ $mysql_enabled ]; then
+            [ "$(pidof mysqld)" ] || /opt/etc/init.d/S70mysqld start >/dev/null 2>&1
+        else
+            /opt/etc/init.d/S70mysqld stop >/dev/null 2>&1
+        fi
+    else
+        [ -x /opt/etc/init.d/S70mysqld ] && echo_time "========= 卸载MySQL相关的软件包 =========\n" && del_mysql
+    fi
 
-	# MySQL
-	if [ $deploy_mysql ]; then
-		[ ! -x /opt/etc/init.d/S70mysqld ] && echo_time "========= 开始安装MySQL =========\n" && init_mysql
-		if [ $mysql_enabled ]; then
-			[ "$(pidof mysqld)" ] || /opt/etc/init.d/S70mysqld start >/dev/null 2>&1
-		else
-			/opt/etc/init.d/S70mysqld stop >/dev/null 2>&1
-		fi
-	else
-		[ -x /opt/etc/init.d/S70mysqld ] && echo_time "========= 卸载MySQL相关的软件包 =========\n" && del_mysql
-	fi
+    [ "$(pidof nginx)" ] && {
+        config_foreach handle_website website test
+        clean_vhost_config
+    }
+    port
 
-	[ "$(pidof nginx)" ] && {
-		config_foreach handle_website website test
-		clean_vhost_config
-	}
+    [ $swap_enabled ] && config_swap_init $swap_size $swap_path || config_swap_del $swap_path
 
-	[ $swap_enabled ] && config_swap_init $swap_size $swap_path || config_swap_del $swap_path
+    grep -q "_boot" /etc/config/softwarecenter && {
+        for package_name in $(awk '/_boot/ {sub(/_boot/, "", $2); print $2}' /etc/config/softwarecenter); do
+            if [ "$(uci get softwarecenter.main.${package_name}_boot 2>/dev/null 2>&1)" = 1 ]; then
+                init=$(find /opt/etc/init.d/ -perm '-u+x' -name "*$package_name*")
 
-	grep -q "_boot" /etc/config/softwarecenter && {
-		for pk in $(awk '/_boot/{print $2}' /etc/config/softwarecenter | sed 's/_boot//'); do
-			[ "$(uci get softwarecenter.main.${pk}_boot 2>/dev/null 2>&1)" = 1 ] && {
-				jd=`find /opt/etc/init.d/ -perm '-u+x' -name "*$pk"`
-				if [ -x "$jd" ]; then
-					if ! _pidof "$pk" >/dev/null 2>&1; then
-						# echo_time "$pk 启动"
-						[ $delaytime ] && sleep $delaytime
-						if $jd start >/dev/null 2>&1; then
-							echo_time "$pk 启动成功"
-						else
-							echo_time "$pk 启动失败"
-						fi
-					# else
-						# echo_time "$pk 已在运行"
-					fi
-				else
-					echo_time "=========== 开始安装 $pk ==========="
-					/usr/bin/softwarecenter/app_install.sh $pk
-					echo_time "=========== $pk 安装完成 ===========\n"
-				fi
-			}
-		done
-	}
+                if [ -x "$init" ]; then
+                    if ! _pidof "$package_name" >/dev/null 2>&1; then
+                        # echo_time "$package_name 启动"
+                        [ $delaytime ] && sleep $delaytime
+                        if $init start >/dev/null 2>&1; then
+                            echo_time "$package_name 启动成功"
+                        else
+                            echo_time "$package_name 启动失败"
+                        fi
+                    # else
+                        # echo_time "$package_name 已在运行"
+                    fi
+                else
+                    echo_time "=========== 开始安装 $package_name ==========="
+                    case "$package_name" in
+                        amule) install_amule >> "$log" ;;
+                        aria2) install_aria2 >> "$log" ;;
+                        deluged) install_deluge >> "$log" ;;
+                        rtorrent) install_rtorrent >> "$log" ;;
+                        qbittorrent) install_qbittorrent >> "$log" ;;
+                        transmission) install_transmission >> "$log" ;;
+                        *) break ;;
+                    esac
+                    echo_time "=========== $package_name 安装完成 ===========\n"
+                fi
+            fi
+        done
+    }
 }
 
 start() {
-	CDG >>/tmp/log/softwarecenter.log
+    CDG >>"$log"
 }
 
 stop() {
-	:
+    :
 }
 
 restart() {
-	stop
-	start
+    stop
+    start
 }
 
 boot() {
-	sleep ${a_delaytime}m
-	start
+    sleep ${a_delaytime}m
+    start
 }

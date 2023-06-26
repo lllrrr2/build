@@ -43,3 +43,7 @@ config website
 config website
 	option website_select '10'
 	option website_name 'DzzOffice (开源办公平台)'
+
+config website
+	option website_select '11'
+	option website_name 'x-prober (X探針)'

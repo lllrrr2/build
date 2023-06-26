@@ -326,7 +326,7 @@ if not fs.access(note_path) then
     fs.mkdirr(note_path)
 end
 
-local note_arg = {}
+local note_arg, note_files = {}, {}
 for sum_str = 1, note_sum do
     local sum = string.format("%02d", sum_str)
     local file = string.format("%s/note%s.%s", note_path, sum, note_suffix)
@@ -410,13 +410,25 @@ for sum_str = 1, note_sum do
     end
 end
 
-
-local index = 0
 for file_name in fs.dir(note_path) do
-    index = index + 1
     local file_path = string.format("%s/%s", note_path, file_name)
-    if file_path ~= note_arg[string.format("%02d", index)] and fs.access(file_path) then
+    table.insert(note_files, file_path)
+end
+
+-- 逆序循环保证下标不会发生变化
+for i = #note_files, 1, -1 do
+    local file_path = note_files[i]
+    local found = false
+    for _, value in pairs(note_arg) do
+        if value == file_path then
+            found = true
+            break
+        end
+    end
+    -- 如果文件路径未在 note_arg 数组中出现过且该文件存在
+    if not found and fs.access(file_path) then
         os.remove(file_path)
+        table.remove(note_files, i)
     end
 end
 

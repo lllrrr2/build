@@ -1,37 +1,53 @@
 <fieldset class="cbi-section">
-	<legend><%:已部署的网站%></legend>
-	<table width="100%" cellspacing="10" id="website_list">
-		<tr><td width="33%"><%:网站名称%></td><td id="php_run_state"><%:访问地址%></td></tr>
-	</table>
+    <legend><%:已部署的网站%></legend>
+    <table width="100%" cellspacing="10" id="website_list">
+        <tr><td width="33%" style="text-align:center;"><%:网站名称%></td><td id="php_run_state"><%:访问地址%></td></tr>
+    </table>
 </fieldset>
 
-<script type="text/javascript">//<![CDATA[
-	var website_list = document.getElementById('website_list');
+<script type="text/javascript">
+//<![CDATA[
+const websiteList = document.getElementById('website_list');
+XHR.poll(5, '<%=luci.dispatcher.build_url("admin", "services", "softwarecenter", "status")%>', null, (x, status) => {
+    if (x && x.status === 200) { // 判断是否成功获取数据
+        const tbodyDelete = websiteList.getElementsByTagName('tbody'); // 获取现有表格所有 tbody 元素
+        const tbodySizeDelete = tbodyDelete.length; // 记录现有 tbody 数量
+        for (let i = 1; i < tbodySizeDelete; i++) { // 遍历现有 tbody 元素，除第一个外全部删除
+            websiteList.removeChild(tbodyDelete[1]);
+        }
 
-	XHR.poll(5, '<%=luci.dispatcher.build_url("admin", "services", "softwarecenter", "status")%>', null, function(x, status) {
-		if ( x && x.status == 200 ) {
-			var tbody_delete = website_list.getElementsByTagName('tbody');
-			var tbody_size_delete = tbody_delete.length;
-			for(var i = 1; i < tbody_size_delete; i++){
-				website_list.removeChild(tbody_delete[1]);
-			}
-			var list = status.website_list.split(" ");
-			var list_size = parseInt(status.website_list_size);
-			for(var i = 0; i < list_size; i++){
-				var tbody = document.createElement("tbody")
-				var tr = document.createElement("tr");
-				var name = document.createElement("td");
-				name.innerHTML = list[2*i];
-				name.style = "display: table-cell;"
-				name.width = "33%"
-				var address = document.createElement("td")
-				address.innerHTML = "<a href='http://"+list[2*i+1]+"' target='_blank'>"+list[2*i+1]+"</a>";
-				address.style="display: table-cell;"
-				tr.appendChild(name);
-				tr.appendChild(address);
-				tbody.appendChild(tr);
-				website_list.appendChild(tbody);
-			}
-		}
-	});
-//]]></script>
+        const websiteListArr = status.website_list.split(" "); // 解析从服务器返回的数据列表，并按照空格进行分割
+        const listSize = status.website_list.split(":").length - 1; // 计算网站列表数组的长度（去除最后一个空字符串）
+        let websiteListArrWith = []; // 创建一个带端口号的网站列表数组
+
+        // 构造带端口号的网站列表数组
+        for (let i = 0; i < listSize; i++) { // 循环处理每个网站信息
+            const index = i * 2; // 计算当前网站在数组中对应的下标位置
+            const name = websiteListArr[index]; // 获取网站名称和地址信息
+            const address = websiteListArr[index + 1];
+            websiteListArrWith.push({name, address}); // 将名称和地址构成的对象添加到网站列表数组中
+        }
+
+        // 按照端口升序排序带端口号的网站列表数组
+        websiteListArrWith.sort((a, b) => {
+            let portA = parseInt(a.address.split(':')[1]); // 提取网站地址中的端口号并转换为整数
+            let portB = parseInt(b.address.split(':')[1]);
+            return portA - portB; // 比较端口号并返回比较结果
+        });
+
+        // 显示排好序的带端口号的网站列表
+        let tbodyHTML = ''; // 创建用于存储 tbody 元素 HTML 的字符串
+        for (let i = 0; i < websiteListArrWith.length; i++) { // 循环遍历排好序的带端口号的网站列表数组
+            const name = websiteListArrWith[i].name;
+            const address = websiteListArrWith[i].address;
+            const bgColor = i % 2 === 0 ? '' : ' style="background-color: #f2f2f2;"'; // 判断当前行是否为偶数行，并设置背景色样式
+            tbodyHTML += `<tr${bgColor}>
+            <td style="border-bottom: 1px solid #ccc; line-height: 2.8; text-align:center;">${name}</td>
+            <td style="border-bottom: 1px solid #ccc; line-height: 2.8; width:45%;">
+            <a href="http://${address}" target="_blank">${address}</a></td></tr>`;
+        }
+        websiteList.innerHTML += tbodyHTML; // 将所有 tr 元素的 HTML 字符串添加到 tbody 元素中
+    }
+});
+//]]>
+</script>

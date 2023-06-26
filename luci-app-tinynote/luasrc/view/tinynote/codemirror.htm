@@ -78,18 +78,19 @@ local languages = {
 for v, k in pairs(con) do
     if v:find("model_") or v:find("note_suffix") then
         if not keys[k] then
+          if k == 'sh' or k == 'py' then
+            k = k == 'sh' and 'shell' or 'python'
+          end
 %>
-            <script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.13/mode/<%=k%>/<%=k%>.min.js"></script>
-<%
-            keys[k] = true
+          <script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.13/mode/<%=k%>/<%=k%>.min.js"></script>
+<%        keys[k] = true
         end
         if languages[k] then
 %>
-            <script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.js"></script>
-            <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.css">
-            <script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.13/addon/lint/<%=k%>-lint.min.js"></script>
-<%
-        end
+          <script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.js"></script>
+          <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.css">
+          <script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.13/addon/lint/<%=k%>-lint.min.js"></script>
+<%      end
     end
 end
 %>
@@ -180,6 +181,9 @@ for sum_str = 1, con.note_sum do
     local only  = con['only_note'  .. sum] or false
     local model = con['model_note' .. sum] or con.note_suffix
     local id    = string.format('cbid.luci.tinynote.note%s', sum)
+    if model == 'sh' or model == 'py' then
+      model = model == 'sh' and 'shell' or 'python'
+    end
 %>
     editor('<%=id%>', '<%=model%>', '<%=only%>');
 <%end%>
