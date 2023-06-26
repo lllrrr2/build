@@ -442,15 +442,15 @@ install_rtorrent() {
 
 install_transmission() {
 	local time_out="timeout 2m"
-	[ $1 = '4' ] && pr="transmission-daemon transmission-cli transmission-remote" || pr="transmission-cfp-daemon transmission-cfp-cli transmission-cfp-remote"
+	[ $1 = '277' ] && pr="transmission-cfp-daemon transmission-cfp-cli transmission-cfp-remote" || pr="transmission-daemon transmission-cli transmission-remote"
 	version=$(curl -sL "api.github.com/repos/ronggang/transmission-web-control/releases" | jq -r '.[0].tag_name')
 	if opkg_install $pr; then
 		if wget -qO /tmp/tr.zip https://github.com/ronggang/transmission-web-control/archive/refs/tags/$version.zip; then
 			make_dir /opt/share/transmission
 			unzip -oq /tmp/tr.zip -d /tmp
-			[ $1 = "4" ] && public_html="public_html"
-			mv -f /tmp/transmission-web-control*/src/ /opt/share/transmission/${public_html:-web}
-			sed -i '/original/d' /opt/share/transmission/${public_html:-web}/*.html
+			[ $1 = "277" ] && web="web"
+			mv -f /tmp/transmission-web-control*/src/ /opt/share/transmission/${web:-public_html}
+			sed -i '/original/d' /opt/share/transmission/${web:-public_html}/*.html
 		else
 			echo_time "下载 transmission-web-control 出错！"
 			opkg_install transmission-web-control
@@ -468,8 +468,8 @@ install_transmission() {
 		# '.["port-forwarding-enabled"] = true | .["rpc-authentication-required"] = true | .["rpc-port"] = ($tr_port | tonumber) | .["rpc-username"] = $webui_name | .["rpc-password"] = $webui_pass | .["download-dir"] = $download_dir' \
 		# /opt/etc/transmission/settings.json > temp.json && mv temp.json /opt/etc/transmission/settings.json
 		ln -sf /opt/etc/transmission/settings.json /opt/etc/config/transmission.json
-		[ $1 = '4' ] && /opt/etc/init.d/S88transmission start >/dev/null 2>&1 || \
-		/opt/etc/init.d/S88transmission-cfp start >/dev/null 2>&1
+		[ $1 = '277' ] && /opt/etc/init.d/S88transmission-cfp start >/dev/null 2>&1 || \
+		/opt/etc/init.d/S88transmission start >/dev/null 2>&1
 		echo_time "登录WebUI的用户名 $webui_name 密码 $webui_pass"
 		_pidof transmission
 	else

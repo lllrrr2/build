@@ -69,10 +69,10 @@ p = s:taboption("entware", Flag, "mysql_enabled", translate("Enabled"),
     translate("留空是默认登录用户  root  密码  123456"))
 p:depends("deploy_mysql", 1)
 
-p = s:taboption("entware", Value, "user", translate("用户"),
-    translate("MySQL数据库服务器登录用户"))
-p.placeholder = "root"
-p:depends("mysql_enabled", 1)
+-- p = s:taboption("entware", Value, "user", translate("用户"),
+--     translate("MySQL数据库服务器登录用户"))
+-- p.placeholder = "root"
+-- p:depends("mysql_enabled", 1)
 
 p = s:taboption("entware", Value, "pass", translate("密码"),
     translate("MySQL数据库服务器登录密码"))

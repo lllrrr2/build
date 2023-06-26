@@ -6,7 +6,6 @@ STOP=10
 . /usr/bin/softwarecenter/nmp_install.sh
 . /usr/bin/softwarecenter/app_install.sh
 . /usr/bin/softwarecenter/web_install.sh
-a_delaytime=$(uci -q get softwarecenter.main.a_delaytime)
 
 port() {
 
@@ -67,7 +66,7 @@ port() {
 
 CDG() {
     config_load softwarecenter
-    get_config="cpu_model delaytime deploy_entware deploy_mysql deploy_nginx disk_mount download_dir entware_enable mysql_enabled nginx_enabled partition_disk pass swap_enabled swap_path swap_size user am_port ar_port de_port qb_port tr_port rt_port"
+    get_config="a_delaytime cpu_model delaytime deploy_entware deploy_mysql deploy_nginx disk_mount download_dir entware_enable mysql_enabled nginx_enabled partition_disk pass old_pass swap_enabled swap_path swap_size user am_port ar_port de_port qb_port tr_port rt_port"
 
     for rt in $get_config; do
         config_get_bool $rt main $rt
@@ -84,33 +83,37 @@ CDG() {
     else
         if [ -x /etc/init.d/entware ]; then
             entware_unset
-            echo_time "========= entware环境已删除 =========\n"
+            echo_time "\n========= entware环境已删除 =========\n"
         fi
         return 1
     fi
 
     # Nginx
     if [ $deploy_nginx ]; then
-        [ ! -x /opt/etc/init.d/S80nginx ] && echo_time "========= 开始安装Nginx =========\n" && init_nginx
+        [ ! -x /opt/etc/init.d/S80nginx ] && echo_time "========= 开始安装Nginx =========" && init_nginx
         if [ $nginx_enabled ]; then
             [ "$(pidof nginx)" ] || nginx_manage start
         else
             nginx_manage stop
         fi
     else
-        [ -x /opt/etc/init.d/S80nginx ] && echo_time "========= 卸载Nginx相关的软件包 =========\n" && del_nginx
+        [ -x /opt/etc/init.d/S80nginx ] && echo_time "========= 卸载Nginx相关的软件包 =========" && del_nginx
     fi
 
     # MySQL
     if [ $deploy_mysql ]; then
-        [ ! -x /opt/etc/init.d/S70mysqld ] && echo_time "========= 开始安装MySQL =========\n" && init_mysql
+        [ ! -x /opt/etc/init.d/S70mysqld ] && echo_time "========= 开始安装MySQL =========" && init_mysql
         if [ $mysql_enabled ]; then
+            [ "$pass" != "$old_pass" ] && {
+                uci_set_type old_pass $pass
+                mysqladmin -u root password "$pass"
+            }
             [ "$(pidof mysqld)" ] || /opt/etc/init.d/S70mysqld start >/dev/null 2>&1
         else
             /opt/etc/init.d/S70mysqld stop >/dev/null 2>&1
         fi
     else
-        [ -x /opt/etc/init.d/S70mysqld ] && echo_time "========= 卸载MySQL相关的软件包 =========\n" && del_mysql
+        [ -x /opt/etc/init.d/S70mysqld ] && echo_time "========= 卸载MySQL相关的软件包 =========" && del_mysql
     fi
 
     [ "$(pidof nginx)" ] && {
@@ -123,7 +126,7 @@ CDG() {
 
     grep -q "_boot" /etc/config/softwarecenter && {
         for package_name in $(awk '/_boot/ {sub(/_boot/, "", $2); print $2}' /etc/config/softwarecenter); do
-            if [ "$(uci get softwarecenter.main.${package_name}_boot 2>/dev/null 2>&1)" = 1 ]; then
+            if [ "$(uci_get_type ${package_name}_boot)" = 1 ]; then
                 init=$(find /opt/etc/init.d/ -perm '-u+x' -name "*$package_name*")
 
                 if [ -x "$init" ]; then

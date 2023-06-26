@@ -22,6 +22,7 @@ del_nginx() {
     rm -rf /opt/etc/nginx
     /usr/bin/find -name "*nginx*" -exec rm -rf {} \;
     rm /opt/etc/redis.conf
+    echo_time "========= 卸载Nginx完成 =========\n"
 }
 
 # 卸载PHP
@@ -29,6 +30,7 @@ del_php() {
     remove_soft "$pkglist_php8" "$phpmod"
     rm /opt/etc/php.ini
     /usr/bin/find /opt -name "php*" -exec rm -rf {} \;
+    echo_time "========= 卸载PHP完成 =========\n"
 }
 
 del_mysql() {
@@ -40,6 +42,7 @@ del_mysql() {
     # 卸载相关的软件包，文件与目录
     remove_soft "`opkg list-installed | awk '/mariadb/{print $1}' | xargs echo`"
     rm -rf /opt/etc/mysql /opt/var/mariadb/ /opt/var/mysql
+    echo_time "========= 卸载MySQ完成 =========\n"
 }
 
 # PHP初始化
@@ -80,7 +83,7 @@ init_php() {
 	env[TMPDIR] = /opt/tmp
 	env[TEMP] = /opt/tmp
 	PHPFPM
-    echo_time " PHP 安装完成\n"
+    echo_time "========= PHP 安装完成 =========\n"
 }
 
 # 安装nginx
@@ -133,7 +136,7 @@ init_nginx() {
 
     # 初始化redis
     echo -e "unixsocket /opt/var/run/redis.sock\nunixsocketperm 777" >> /opt/etc/redis.conf
-    echo_time " nginx 安装完成\n"
+    echo_time "========= nginx 安装完成 =========\n"
 }
 
 # 重置、初始化MySQL #
@@ -185,18 +188,18 @@ init_mysql() {
     # 数据库安装，同步方式，无需延时等待
     echo_time "正在初始化数据库，请稍等1分钟"
     mysql_install_db --user=$username --basedir=/opt --datadir=/opt/var/mariadb/ >/dev/null 2>&1
-    sleep 20
 
-    # 初次启动MySQL，异步方式，加延时等待
-    echo_time "正在启动MySQL"
-    /opt/etc/init.d/S70mysqld start >/dev/null 2>&1
+	# 初次启动MySQL，异步方式，加延时等待
+	echo_time "正在启动MySQL"
+	/opt/etc/init.d/S70mysqld start >/dev/null 2>&1
+	sleep 20
 
-    # 设置数据库密码
-	user=${user:-root}
+	# 设置数据库密码
+	# user=${user:-root}
 	pass=${pass:-123456}
-	mysqladmin -u $user password $pass
-	echo_time "使用自定义数据库用户：$user 密码：$pass"
-	echo_time "MySQL 安装完成\n"
+	mysqladmin -u $username password $pass
+	echo_time "使用自定义数据库用户：$username 密码：$pass"
+    echo_time "========= MySQL 安装完成 =========\n"
 }
 
 # 特定程序的nginx配置

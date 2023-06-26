@@ -7,9 +7,14 @@ uci_get_type() {
     echo ${ret:-$2}
 }
 
+uci_set_type() {
+    uci -q set softwarecenter.main."$1"="$2" && \
+    uci -q commit softwarecenter
+}
+
 make_dir() {
 	for p in "$@"; do
-		mkdir -p -m 777 "$p" >/dev/null 2>&1
+		[ -d "$p" ] || mkdir -m 777 -p $p
 	done
 	return 0
 }
@@ -21,7 +26,7 @@ _pidof() {
 			return 0
 		fi
 	done
-	echo_time "${@} 没有运行"
+	echo_time "$1 没有运行"
 	return 1
 }
 
@@ -217,7 +222,7 @@ entware_unset() {
 	source /etc/profile >/dev/null 2>&1
 	umount -lf /opt
 	rm -rf /opt
-	rm -rf $(get_entware_path)/opt
+	# rm -rf $(get_entware_path)/opt
 }
 
 # 磁盘分区挂载
@@ -283,14 +288,7 @@ config_swap_del() {
 
 # 获取通用环境变量
 get_env() {
-	[ "$USER" ] && username=$USER || username=$(id -un)
-
-	localhost=$(ifconfig | awk '/inet addr/{print substr($2,6)}' | head -n 1)
-	[ "$localhost" ] || localhost="你的路由器IP"
-}
-
-# 容量验证 参数：$1：目标位置
-check_available_size() {
-	available_size="$(lsblk -s | grep $1 | awk '{print $4}')"
-	[ $available_size ] && echo "$available_size"
+    username=${USER:-$(id -un)}
+    localhost=$(ip addr show br-lan | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
+    localhost=${localhost:-"你的路由器IP"}
 }
