@@ -132,33 +132,6 @@ add_vhost() {
 	EOF
 }
 
-port_settings() {
-    local name=$website_name
-    find_port() {
-        for f in `seq 2100 2120`; do
-            /opt/bin/lsof -i:$f >/dev/null 2>&1 || {
-                port=$f
-                break
-            }
-        done
-    }
-
-    if [ -n "$port" ]; then
-        /opt/bin/lsof -i:$port >/dev/null 2>&1 && {
-            echo_time "$name 设置的端口 $port 已在用，查找可用端口。"
-            find_port
-            echo_time "$name 使用空闲 $port 的端口"
-        } || {
-            port=$port
-            echo_time "$name 使用自定义 $port 的端口"
-        }
-    else
-        echo_time "$name 没有设置端口，查找可用端口。"
-        find_port
-        echo_time "$name 使用空闲 $port 的端口"
-    fi
-}
-
 # 恢复网站查端口
 port_custom() {
     port=`grep -oP 'listen \K\d+' $1`
@@ -170,20 +143,16 @@ port_custom() {
 # 端口修改
 port_modification() {
     local name=$website_name
-    for kj in $@; do
-        local pu=$(grep -oP 'listen \K\d+' $kj)
-        if [ $port ]; then
-            if [ $pu -ne $port ]; then
-                port_settings
-                sed -i "s|listen.*|listen $port;|" $kj
-                echo_time "$name 端口修改完成\n"
-            fi
-        else
-            if [ $pu -lt 2100 -o $pu -gt 2120 ]; then
-                port_settings
-                sed -i "s|listen.*|listen $port;|" $kj
-                echo_time "$name 端口修改完成\n"
-            fi
+    for kj in "$@"; do
+        local pu=$(grep -oP 'listen \K\d+' "$kj")
+        if [ $port ] && [ $pu -ne $port ]; then
+            port_settings
+            sed -i "s|listen.*|listen $port;|" "$kj"
+            echo_time "$name 端口修改完成\n"
+        elif [ ! $port ] && ([ $pu -lt 2100 ] || [ $pu -gt 2120 ]); then
+            port_settings
+            sed -i "s|listen.*|listen $port;|" "$kj"
+            echo_time "$name 端口修改完成\n"
         fi
     done
 }
@@ -209,9 +178,11 @@ vhost_config_list() {
 # 网站一览 说明：显示已经配置注册的网站
 vhost_list() {
     # echo_time "已运行的网站列表："
-    for conf in /opt/etc/nginx/vhost/*; do
-        vhost_config_list $conf
-    done
+    if [ -n "$(ls -A "/opt/etc/nginx/vhost")" ]; then
+        for conf in /opt/etc/nginx/vhost/*; do
+            vhost_config_list $conf
+        done
+    fi
 }
 
 # 开启 Redis 参数: $1: 安装目录
@@ -267,8 +238,10 @@ clean_vhost_config() {
         webdir=$(vhost_config_list $conf | awk '{print $1}')
         delete_website $conf /opt/wwwroot/$webdir
     done
-    cat > /opt/wwwroot/website_list
-    vhost_list | grep '[a-zA-Z]' >> /opt/wwwroot/website_list
+    [ -e /opt/wwwroot/website_list ] && {
+        cat > /opt/wwwroot/website_list
+        vhost_list | grep '[a-zA-Z]' >> /opt/wwwroot/website_list
+    }
 }
 
 # 网站迭代处理，本函数迭代的配置网站（处理逻辑也许可以更好的优化？）

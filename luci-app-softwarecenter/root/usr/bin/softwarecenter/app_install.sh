@@ -17,12 +17,13 @@ make_dir /opt/share/www /opt/etc/config $download_dir
 install_amule() {
 	local time_out="timeout 2m"
 	if opkg_install amule; then
-		/opt/etc/init.d/S57amuled start >/dev/null 2>&1 && sleep 5
-		/opt/etc/init.d/S57amuled stop >/dev/null 2>&1
-		if wget -t5 -qO /tmp/AmuleWebUI.zip github.com/MatteoRagni/AmuleWebUI-Reloaded/archive/refs/heads/master.zip; then
-			unzip -q /tmp/AmuleWebUI.zip -d /tmp
-			mv /tmp/AmuleWebUI-Reloaded-master /opt/share/amule/webserver/AmuleWebUI-Reloaded
-			sed -i 's/ajax.googleapis.com/ajax.lug.ustc.edu.cn/g' /opt/share/amule/webserver/AmuleWebUI-Reloaded/*.php
+		/opt/etc/*/S57amuled start >/dev/null 2>&1 && sleep 5
+		/opt/etc/*/S57amuled stop >/dev/null 2>&1
+		if wget -t5 -qO /tmp/AmuleWebUI.zip github.com/hong0980/AmuleWebUI-Reloaded/archive/refs/tags/220923.zip; then
+			rm -rf /opt/share/amule/webserver/AmuleWebUI-Reloaded*
+			unzip -oq /tmp/AmuleWebUI.zip -d /opt/share/amule/webserver && rm -f /tmp/AmuleWebUI.zip
+			mv /opt/share/amule/webserver/AmuleWebUI-Reloaded* /opt/share/amule/webserver/AmuleWebUI-Reloaded
+			wget -qO- https://raw.githubusercontent.com/hong0980/diy/master/AmuleWebUI-Reloaded-zh-cn.patch | patch -s -p1 -d /opt/share/amule/webserver/ && echo_time "patch AmuleWebUI-Reloaded-zh-cn 成功" || echo_time "patch AmuleWebUI-Reloaded-zh-cn 失败"
 		else
 			echo_time "AmuleWebUI-Reloaded 下载失败，使用原版UI。"
 		fi
@@ -38,7 +39,7 @@ install_amule() {
 			/PasswordLow=/{n;s/Port=[0-9]*/Port=$am_port/;}
 		}" /opt/var/amule/amule.conf
 		ln -sf /opt/var/amule/amule.conf /opt/etc/config/amule.conf
-		/opt/etc/init.d/S57amuled restart >/dev/null 2>&1
+		/opt/etc/*/S57amuled restart >/dev/null 2>&1
 		echo_time "登录WebUI的密码 $webui_pass"
 		_pidof amuled
 	else
@@ -65,7 +66,7 @@ install_aria2() {
 			sed -i "{
 				s|path=/opt/etc|path=$pro|
 				s|/opt/var/aria2/session.dat|$pro/aria2.session|g
-			}" /opt/etc/init.d/S81aria2
+			}" /opt/etc/*/S81aria2
 			sed -i "{
 				s|/root/\.aria2|$pro|g
 				s|^dir=.*|dir=$download_dir|
@@ -81,13 +82,13 @@ install_aria2() {
 		sed -i "s/\(rpc-listen-port\).*/\1=$ar_port/" $pro/aria2.conf
 
 		wget -qO /tmp/ariang.zip $(curl -Ls api.github.com/repos/mayswind/AriaNg/releases | jq -r '.[0].assets[0].browser_download_url') && \
-		unzip -oq /tmp/ariang.zip -d /opt/share/www/ariang-aria2
+		unzip -oq /tmp/ariang.zip -d /opt/share/www/ariang-aria2 && rm -f /tmp/ariang.zip
 
 		if wget -qO /tmp/webui.zip github.com/ziahamza/webui-aria2/archive/refs/heads/master.zip; then
-			unzip -oq /tmp/webui.zip -d /opt/share/www/
+			unzip -oq /tmp/webui.zip -d /opt/share/www/ && rm -f /tmp/webui.zip
 			mv /opt/share/www/webui* /opt/share/www/webui-aria2
 		fi
-		/opt/etc/init.d/S81aria2 restart >/dev/null 2>&1
+		/opt/etc/*/S81aria2 restart >/dev/null 2>&1
 		echo_time "登录WebUI的密码 $webui_pass"
 		_pidof aria2c
 	else
@@ -99,10 +100,7 @@ install_aria2() {
 install_deluge() {
 	local time_out="timeout 3m"
 	if opkg_install deluge-ui-web; then
-		sed -i '{
-			/deluged -l/a\\tsleep 3\n\t/opt/etc/init.d/S81deluge-web start
-			/killall deluged/a\\tsleep 3\n\t/opt/etc/init.d/S81deluge-web stop
-		}' /opt/etc/init.d/S80deluged
+		sed -i '/^exit 0/i. /opt/etc/init.d/S81deluge-web $1 >/dev/null 2>&1' /opt/etc/*/S80deluged
 		cat <<-EOF >/opt/share/python_sha1.py # Deluge Password Calculatation
 		#!/opt/bin/env python
 		import hashlib
@@ -135,10 +133,10 @@ install_deluge() {
 			"torrentfiles_location": "$download_dir"
 		}
 		EOF
-		sed -i "s/error -p.*/error -p $de_port/" /opt/etc/init.d/S81deluge-web
+		sed -i "s/error -p.*/error -p $de_port/" /opt/etc/*/S81deluge-web
 		ln -sf /opt/etc/deluge/core.conf /opt/etc/config/deluge.conf
-		/opt/etc/init.d/S80deluged start >/dev/null 2>&1 && sleep 4
-		/opt/etc/init.d/S80deluged restart >/dev/null 2>&1
+		/opt/etc/*/S80deluged start >/dev/null 2>&1 && sleep 4
+		/opt/etc/*/S80deluged restart >/dev/null 2>&1
 		echo_time "登录WebUI的用户名 $webui_name 密码 $webui_pass"
 		_pidof deluged
 	else
@@ -150,8 +148,8 @@ install_deluge() {
 install_qbittorrent() {
 	local time_out="timeout 1m"
 	if opkg_install qbittorrent; then
-		/opt/etc/init.d/S89qbittorrent start >/dev/null 2>&1 && sleep 5
-		/opt/etc/init.d/S89qbittorrent stop >/dev/null 2>&1
+		/opt/etc/*/S89qbittorrent start >/dev/null 2>&1 && sleep 5
+		/opt/etc/*/S89qbittorrent stop >/dev/null 2>&1
 		cat > /opt/etc/qBittorrent_entware/config/qBittorrent.conf <<-EOF
 		[AutoRun]
 		enabled=false
@@ -177,7 +175,7 @@ install_qbittorrent() {
 		Downloads\SavePath=$download_dir
 		Downloads\PreAllocation=true
 		EOF
-		sed -i "s/--webui-port=[0-9]*/--webui-port=$qb_port/" /opt/etc/init.d/S89qbittorrent
+		sed -i "s/--webui-port=[0-9]*/--webui-port=$qb_port/" /opt/etc/*/S89qbittorrent
 		[ $cpu_model == x86_64 ] && {
 			if [ -z $(command -v qbpass) ]; then
 				wget -qO /opt/bin/qbpass github.com/KozakaiAya/libqbpasswd/releases/download/v0.2/qb_password_gen_static && \
@@ -194,21 +192,18 @@ install_qbittorrent() {
 		cd /opt/share/www
 		[ -d CzBiX-qb-web ] || {
 			if wget -qO CzBiX-qb-web.zip $(curl -sL "api.github.com/repos/CzBiX/qb-web/releases" | jq -r '.[0].assets[0].browser_download_url'); then
-				unzip -qo CzBiX-qb-web.zip
+				unzip -qo CzBiX-qb-web.zip && rm -f CzBiX-qb-web.zip dist CzBiX-qb-web
 				echo 'WebUI\RootFolder=/opt/share/www/CzBiX-qb-web/' >> /opt/etc/qBittorrent_entware/config/qBittorrent.conf
-				mv -f dist CzBiX-qb-web
-				rm -f CzBiX-qb-web.zip
 			fi
 		}
 
 		[ -d miniers-qb-web ] || {
 			if curl -sL "api.github.com/repos/miniers/qb-web/releases/latest" | jq -r '.assets[0].browser_download_url' | xargs wget -qO miniers-qb-web.zip; then
-				unzip -qo miniers-qb-web.zip -d miniers-qb-web
-				rm -rf miniers-qb-web.zip
+				unzip -qo miniers-qb-web.zip -d miniers-qb-web && rm -f miniers-qb-web.zip
 			fi
 		}
 		ln -sf /opt/etc/qBittorrent_entware/config/qBittorrent.conf /opt/etc/config/qBittorrent.conf
-		/opt/etc/init.d/S89qbittorrent restart >/dev/null 2>&1
+		/opt/etc/*/S89qbittorrent restart >/dev/null 2>&1
 		[ $cpu_model == x86_64 ] && echo_time "登录WebUI的用户名 $webui_name 密码 $webui_pass" || \
 		echo_time "登录WebUI的用户名 admin 密码 adminadmin"
 		_pidof qbittorrent-nox
@@ -221,15 +216,15 @@ install_qbittorrent() {
 install_rtorrent() {
 	local time_out="timeout 2m"
 	if opkg_install rtorrent-easy-install; then
-		sed -i "/^server.port/ {s/=.*/= $rt_port/}" /opt/etc/lighttpd/conf.d/99-rtorrent-fastcgi-scgi-auth.conf
-		/opt/etc/init.d/S85rtorrent start >/dev/null 2>&1 && sleep 5
-		/opt/etc/init.d/S85rtorrent stop >/dev/null 2>&1
+		sed -i "s/\(server.port\).*/\1=$rt_port/" /opt/etc/*/*/99*.conf
+		/opt/etc/*/S85rtorrent start >/dev/null 2>&1
 		opkg_install ffmpeg mediainfo unrar
+		/opt/etc/*/S85rtorrent stop >/dev/null 2>&1
 
 		version=$(curl -sL "api.github.com/repos/Novik/ruTorrent/releases" | jq -r '.[0].tag_name')
 		if wget -qO /tmp/rutorrent.zip "https://github.com/Novik/ruTorrent/archive/refs/tags/${version}.zip"; then
 			[ -d /opt/share/www/rutorrent ] && rm -rf /opt/share/www/rutorrent
-			unzip -oq /tmp/rutorrent.zip -d /opt/share/www/ && \
+			unzip -oq /tmp/rutorrent.zip -d /opt/share/www/ && rm -f /tmp/rutorrent.zip 
 			mv /opt/share/www/ruTorrent* /opt/share/www/rutorrent
 		fi
 
@@ -430,8 +425,8 @@ install_rtorrent() {
 		execute2 = {sh,-c,/opt/bin/php-cgi /opt/share/www/rutorrent/php/initplugins.php $USER &}
 		EOF
 
-		echo '. /opt/etc/init.d/S80lighttpd $1 >/dev/null 2>&1' >> /opt/etc/init.d/S85rtorrent
-		/opt/etc/init.d/S85rtorrent restart >/dev/null 2>&1
+		echo '. /opt/etc/init.d/S80lighttpd $1 >/dev/null 2>&1' >> /opt/etc/*/S85rtorrent
+		/opt/etc/*/S85rtorrent restart >/dev/null 2>&1
 		ln -sf /opt/etc/rtorrent/rtorrent.conf /opt/etc/config/rtorrent.conf
 		_pidof rtorrent
 	else
@@ -442,15 +437,16 @@ install_rtorrent() {
 
 install_transmission() {
 	local time_out="timeout 2m"
-	[ $1 = '277' ] && pr="transmission-cfp-daemon transmission-cfp-cli transmission-cfp-remote" || pr="transmission-daemon transmission-cli transmission-remote"
+	[ $1 = '277' ] && tr="transmission-cfp-daemon transmission-cfp-cli transmission-cfp-remote" || tr="transmission-daemon transmission-cli transmission-remote"
 	version=$(curl -sL "api.github.com/repos/ronggang/transmission-web-control/releases" | jq -r '.[0].tag_name')
-	if opkg_install $pr; then
+	if opkg_install $tr; then
+		sed -i "s|etc/transmission|etc/transmission --port $tr_port|" /opt/etc/*/S88transmission*
 		if wget -qO /tmp/tr.zip https://github.com/ronggang/transmission-web-control/archive/refs/tags/$version.zip; then
 			make_dir /opt/share/transmission
-			unzip -oq /tmp/tr.zip -d /tmp
-			[ $1 = "277" ] && web="web"
-			mv -f /tmp/transmission-web-control*/src/ /opt/share/transmission/${web:-public_html}
-			sed -i '/original/d' /opt/share/transmission/${web:-public_html}/*.html
+			unzip -oq /tmp/tr.zip -d /tmp && rm -f /tmp/tr.zip
+			mv -f /tmp/transmission-web*/src /opt/share/transmission/web && \
+			rm -rf /tmp/transmission-web*
+			ln -sf /opt/share/transmission/web /opt/share/transmission/public_html
 		else
 			echo_time "下载 transmission-web-control 出错！"
 			opkg_install transmission-web-control
@@ -459,17 +455,12 @@ install_transmission() {
 		sed -i '{
 			/forwarding/ {s|false|true|}
 			/authentication/ {s|false|true|}
-			/rpc-port/s|: .*,|: '"$tr_port"',|
 			/username/s|: ".*"|: "'"$webui_name"'"|
 			/password/s|: ".*"|: "'"$webui_pass"'"|
 			/download-dir/s|: ".*"|: "'"$download_dir"'"|
 		}' /opt/etc/transmission/settings.json
-		# jq --arg tr_port "$tr_port" --arg webui_name "$webui_name" --arg webui_pass "$webui_pass" --arg download_dir "$download_dir" \
-		# '.["port-forwarding-enabled"] = true | .["rpc-authentication-required"] = true | .["rpc-port"] = ($tr_port | tonumber) | .["rpc-username"] = $webui_name | .["rpc-password"] = $webui_pass | .["download-dir"] = $download_dir' \
-		# /opt/etc/transmission/settings.json > temp.json && mv temp.json /opt/etc/transmission/settings.json
 		ln -sf /opt/etc/transmission/settings.json /opt/etc/config/transmission.json
-		[ $1 = '277' ] && /opt/etc/init.d/S88transmission-cfp start >/dev/null 2>&1 || \
-		/opt/etc/init.d/S88transmission start >/dev/null 2>&1
+		/opt/etc/*/S88transmission* start >/dev/null 2>&1
 		echo_time "登录WebUI的用户名 $webui_name 密码 $webui_pass"
 		_pidof transmission
 	else

@@ -66,10 +66,36 @@ status() {
 	fi
 }
 
+port_settings() {
+    local name=$website_name
+    find_port() {
+        for f in `seq 2100 2120`; do
+            /opt/bin/lsof -i:$f >/dev/null 2>&1 || {
+                port=$f
+                break
+            }
+        done
+    }
+
+    if [ -n "$port" ]; then
+        /opt/bin/lsof -i:$port >/dev/null 2>&1 && {
+            echo_time "$name 设置的端口 $port 已在用，查找可用端口。"
+            find_port
+            echo_time "$name 使用空闲 $port 的端口"
+        } || {
+            echo_time "$name 使用自定义 $port 的端口"
+        }
+    else
+        echo_time "$name 没有设置端口，查找可用端口。"
+        find_port
+        echo_time "$name 使用空闲 $port 的端口"
+    fi
+}
+
 # 应用安装 参数: $@:安装列表
 opkg_install() {
 	check_url "bin.entware.net"
-	/opt/bin/opkg update | xargs echo | grep -q "bin.entware.net" || {
+	[ -e /opt/var/opkg-lists/entware ] || {
 		echo_time "更新软件源中"
 		source /etc/profile >/dev/null 2>&1 && \
 		/opt/bin/opkg update >/dev/null 2>&1
@@ -81,7 +107,7 @@ opkg_install() {
 				echo_time "$ipk    已经安装 $(which $ipk | grep -q opt)"
 			else
 				echo_time "正在安装  $ipk\c"
-				$time_out /opt/bin/opkg install $ipk >/dev/null 2>&1
+				$time_out /opt/bin/opkg install $ipk --force-maintainer --force-reinstall >/dev/null 2>&1
 				status || {
 					[ "x$time_out" = "x" ] && {
 						echo_time "强制安装  $ipk\c"
@@ -100,7 +126,7 @@ opkg_install() {
 remove_soft() {
 	for ipk in $@; do
 		echo_time "正在卸载 ${ipk}\c"
-		/opt/bin/opkg remove --force-depends $ipk >/dev/null 2>&1
+		/opt/bin/opkg remove $ipk --autoremove --force-depends >/dev/null 2>&1
 		status
 	done
 }
@@ -203,7 +229,6 @@ entware_set() {
 
 	sed -i '/^ansi/d' /opt/etc/init.d/rc.func
 	/opt/bin/opkg install e2fsprogs lsof coreutils-timeout jq >/dev/null 2>&1
-	rm -rf /tmp/luci-*
 	echo_time "Entware 安装成功！\n"
 }
 
@@ -221,8 +246,7 @@ entware_unset() {
 	sed -i "s|/opt/bin:/opt/sbin:||" /etc/profile
 	source /etc/profile >/dev/null 2>&1
 	umount -lf /opt
-	rm -rf /opt
-	# rm -rf $(get_entware_path)/opt
+	rm -rf /opt $(get_entware_path)/opt
 }
 
 # 磁盘分区挂载
