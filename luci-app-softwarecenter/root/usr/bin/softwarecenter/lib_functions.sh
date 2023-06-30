@@ -66,6 +66,28 @@ status() {
 	fi
 }
 
+# check_port_usage() {
+#     local xport=$1
+#     if /opt/bin/lsof -i:$xport >/dev/null 2>&1; then
+#         for port in $(seq 3100 3999); do
+#             if ! /opt/bin/lsof -i:$port >/dev/null 2>&1; then
+#                 xport=$port
+#                 break
+#             fi
+#         done
+#     fi
+#     port=$xport
+# }
+
+check_port_usage() {
+    local xport=$1
+    while lsof -i:${xport} >/dev/null 2>&1; do
+        random_number=$(head /dev/urandom | tr -dc '0-9' | fold -w 4 | head -n 1)
+        xport=$((random_number + 1024))
+    done
+    port=$xport
+}
+
 port_settings() {
     local name=$website_name
     find_port() {
