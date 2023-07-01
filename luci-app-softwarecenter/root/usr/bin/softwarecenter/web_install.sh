@@ -178,11 +178,9 @@ vhost_config_list() {
 # 网站一览 说明：显示已经配置注册的网站
 vhost_list() {
     # echo_time "已运行的网站列表："
-    if [ -n "$(ls -A "/opt/etc/nginx/vhost")" ]; then
-        for conf in /opt/etc/nginx/vhost/*; do
-            vhost_config_list $conf
-        done
-    fi
+    for conf in /opt/etc/nginx/vhost/*; do
+        vhost_config_list $conf
+    done
 }
 
 # 开启 Redis 参数: $1: 安装目录
@@ -238,10 +236,8 @@ clean_vhost_config() {
         webdir=$(vhost_config_list $conf | awk '{print $1}')
         delete_website $conf /opt/wwwroot/$webdir
     done
-    [ -e /opt/wwwroot/website_list ] && {
-        cat > /opt/wwwroot/website_list
-        vhost_list | grep '[a-zA-Z]' >> /opt/wwwroot/website_list
-    }
+    cat > /opt/wwwroot/website_list
+    [ -n "$(ls -A "/opt/etc/nginx/vhost")" ] && vhost_list | grep '[a-zA-Z]' >> /opt/wwwroot/website_list
 }
 
 # 网站迭代处理，本函数迭代的配置网站（处理逻辑也许可以更好的优化？）

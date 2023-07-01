@@ -66,26 +66,21 @@ status() {
 	fi
 }
 
-# check_port_usage() {
-#     local xport=$1
-#     if /opt/bin/lsof -i:$xport >/dev/null 2>&1; then
-#         for port in $(seq 3100 3999); do
-#             if ! /opt/bin/lsof -i:$port >/dev/null 2>&1; then
-#                 xport=$port
-#                 break
-#             fi
-#         done
-#     fi
-#     port=$xport
-# }
-
 check_port_usage() {
-    local xport=$1
-    while lsof -i:${xport} >/dev/null 2>&1; do
-        random_number=$(head /dev/urandom | tr -dc '0-9' | fold -w 4 | head -n 1)
-        xport=$((random_number + 1024))
+    local exists=false
+    local old_port=${1:-port}
+    local usage=$(/opt/bin/lsof -i:${old_port} 2>/dev/null | wc -l)
+    while [[ ${usage} -ne 0 ]]; do
+        new_port=$(head /dev/urandom | tr -dc '0-9' | fold -w 4 | head -n 1)
+        usage=$(/opt/bin/lsof -i:${new_port} 2>/dev/null | wc -l)
+        exists=true
     done
-    port=$xport
+
+    port=${new_port:-$old_port}
+    if [ "$exists" = true ] && [ -n "$2" ]; then
+        uci_set_type $2 $port
+        echo_time "$2 设定的 $old_port 端口已被占用，查找到可用端口 $port"
+    fi
 }
 
 port_settings() {
