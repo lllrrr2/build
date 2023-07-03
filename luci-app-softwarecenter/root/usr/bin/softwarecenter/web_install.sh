@@ -254,7 +254,7 @@ handle_website() {
             install_website $website_select $port
             if [ "$website_enabled" ]; then
                 echo_time " $name 安装完成"
-                echo_time "浏览器地址栏输入：$localhost:$port 即可访问\n"
+                echo_time "浏览器地址栏输入：$localhost:$port 即可访问"
             else
                 echo_time " $name 安装完成，但没有开启！\n"
             fi
@@ -381,6 +381,7 @@ install_h5ai() {
         /alwaysVisible/ {s|false|true|}
     }' /opt/wwwroot/h5ai/_h5ai/private/conf/options.json
     ln -s /etc/config /opt/wwwroot/h5ai
+    rm -rf /opt/usr/php/session/*
     echo_time "配置文件在/opt/wwwroot/$name/_h5ai/private/conf/options.json"
     echo_time "你可以通过修改它来获取更多功能"
 }

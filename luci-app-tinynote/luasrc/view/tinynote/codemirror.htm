@@ -67,13 +67,13 @@
 <%
 local keys = {}
 local languages = {
-  json = true,
-  coffeescript = true,
   xml = true,
-  javascript = true,
-  yaml = true,
   css = true,
-  html = true
+  json = true,
+  yaml = true,
+  html = true,
+  javascript = false,
+  coffeescript = true,
 }
 for v, k in pairs(con) do
     if v:find("model_") or v:find("note_suffix") then
@@ -87,7 +87,9 @@ for v, k in pairs(con) do
         end
         if languages[k] then
 %>
+          <script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.13/addon/lint/lint.js"></script>
           <script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.js"></script>
+          <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.13/addon/lint/lint.css">
           <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.css">
           <script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.13/addon/lint/<%=k%>-lint.min.js"></script>
 <%      end
@@ -125,7 +127,7 @@ const editor = (id, mode, readOnly) => {
     lint: true,                 // 启用代码检查。
     tabSize: 4,                 // Tab 键缩进空格数。
     keyMap: 'sublime',          // 映射键盘。
-    theme: "<%=con.theme%>" || "monokai",    // 主题。
+    theme: "<%=con.theme%>" ? "<%=con.theme%>" : "monokai",    // 主题。
     readOnly,                   // 是否启用只读模式。
     foldGutter: true,           // 启用折叠 gutter。
     indentUnit: 4,              // 缩进单位，默认为 2。
@@ -178,7 +180,7 @@ function jqid(id) {
 <%
 for sum_str = 1, con.note_sum do
     local sum   = string.format("%02d", sum_str)
-    local only  = con['only_note'  .. sum] or false
+    local only  = con.only or con['only_note'  .. sum] or false
     local model = con['model_note' .. sum] or con.note_suffix
     local id    = string.format('cbid.luci.tinynote.note%s', sum)
     if model == 'sh' or model == 'py' then

@@ -61,9 +61,8 @@ ipaddr.datatype="ip4addr"
 ipaddr.anonymous = false
 ipaddr:depends('enable_siderouter', false)
 
-local host_name = uci:get("system", "@system[0]", "hostname") or ""
 hostname = s:taboption("wansetup", Value, "hostname", translate("Hostname"))
-hostname.default = host_name
+hostname.default = sys.hostname() or ""
 hostname:depends('enable_siderouter', true)
 
 local ip_t = {}
@@ -204,42 +203,39 @@ ip_tables.default = "iptables -t nat -I POSTROUTING -o eth0 -j MASQUERADE"
 ip_tables.anonymous = false
 ip_tables:depends("omasq", true)
 
-local host = uci:get("system", "@system[0]", "hostname")
-local wizard_node = uci:get_all("wizard", "default")
+local con = uci:get_all("wizard", "default")
 -- local network_lan = uci:get_all("network", "lan")
 -- local network_wan = uci:get_all("network", "wan")
 
-if wizard_node.hostname ~= host and wizard_node.hostname then
-    uci:set("system", "@system[0]", "hostname", wizard_node.hostname)
-    sys.hostname(host)
-    uci:commit("system")
+if con.hostname and con.hostname ~= sys.hostname() then
+    sys.hostname(con.hostname)
 end
 
--- if wizard_node.wan_proto ~= pppoe then
---     if wizard_node.pppoe_user ~= network_wan.username or wizard_node.pppoe_pass ~= network_wan.password then
---         uci:set("network", "wan", "username", wizard_node.pppoe_user)
---         uci:set("network", "wan", "password", wizard_node.pppoe_pass)
+-- if con.wan_proto ~= pppoe then
+--     if con.pppoe_user ~= network_wan.username or con.pppoe_pass ~= network_wan.password then
+--         uci:set("network", "wan", "username", con.pppoe_user)
+--         uci:set("network", "wan", "password", con.pppoe_pass)
 --         uci:commit("network")
 --     end
 -- end
 
--- if wizard_node.ipv6 ~= network_wan.ipv6 and wizard_node.ipv6 then
---     uci:set("network", "wan", "ipv6", wizard_node.ipv6)
+-- if con.ipv6 ~= network_wan.ipv6 and con.ipv6 then
+--     uci:set("network", "wan", "ipv6", con.ipv6)
 --     uci:commit("network")
 -- end
 
--- if wizard_node.lan_dns ~= network_lan.dns and wizard_node.lan_dns then
---     uci:set("network", "lan", "dns", wizard_node.lan_dns)
+-- if con.lan_dns ~= network_lan.dns and con.lan_dns then
+--     uci:set("network", "lan", "dns", con.lan_dns)
 --     uci:commit("network")
 -- end
 
--- if wizard_node.lan_ipaddr ~= network_lan.ipaddr then
---     uci:set("network", "lan", "ipaddr",  wizard_node.lan_ipaddr)
+-- if con.lan_ipaddr ~= network_lan.ipaddr then
+--     uci:set("network", "lan", "ipaddr",  con.lan_ipaddr)
 --     uci:commit("network")
 -- end
 
--- if wizard_node.lan_netmask ~= network_lan.netmask then
---     uci:set("network", "lan", "netmask", wizard_node.lan_netmask)
+-- if con.lan_netmask ~= network_lan.netmask then
+--     uci:set("network", "lan", "netmask", con.lan_netmask)
 --     uci:commit("network")
 -- end
 
@@ -279,7 +275,7 @@ if fs.access(file_network) then
         local chunks = {}
         repeat
             local chunk = file_handle:read(1024 * 512)
-            if chunk then table.insert(chunks, chunk) end
+            if chunk then chunks[#chunks + 1] = chunk end
             coroutine.yield()
         until not chunk
         file_handle:close()
@@ -317,7 +313,7 @@ if fs.access(file_dhcp) then
         local chunks = {}
         repeat
             local chunk = file_handle:read(1024 * 512)
-            if chunk then table.insert(chunks, chunk) end
+            if chunk then chunks[#chunks + 1] = chunk end
             coroutine.yield()
         until not chunk
         file_handle:close()
@@ -355,7 +351,7 @@ if fs.access(file_firewall) then
         local chunks = {}
         repeat
             local chunk = file_handle:read(1024 * 512)
-            if chunk then table.insert(chunks, chunk) end
+            if chunk then chunks[#chunks + 1] = chunk end
             coroutine.yield()
         until not chunk
         file_handle:close()

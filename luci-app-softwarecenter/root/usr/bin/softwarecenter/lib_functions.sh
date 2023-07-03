@@ -30,6 +30,24 @@ _pidof() {
 	return 1
 }
 
+echo_time() {
+	echo -e "[ $(date +"%m月%d日 %H:%M:%S") ]  $@" | sed '/\\\033/d'
+}
+
+status() {
+	local pf=$?
+	# echo -en "\\033[40G[ "
+	if [ "$pf" = "0" ]; then
+		# echo -e "\\033[1;33m成功\\033[0;39m ]"
+		echo "   成功"
+		return 0
+	else
+		# echo -e "\\033[1;31m失败\\033[0;39m ]"
+		echo "   失败"
+		return 1
+	fi
+}
+
 check_url() {
     local ping_file="/tmp/ping"
     local url="$1"
@@ -52,20 +70,6 @@ check_url() {
     fi
 }
 
-status() {
-	local pf=$?
-	# echo -en "\\033[40G[ "
-	if [ "$pf" = "0" ]; then
-		# echo -e "\\033[1;33m成功\\033[0;39m ]"
-		echo "   成功"
-		return 0
-	else
-		# echo -e "\\033[1;31m失败\\033[0;39m ]"
-		echo "   失败"
-		return 1
-	fi
-}
-
 check_port_usage() {
     local exists=false
     local old_port=${1:-port}
@@ -77,9 +81,67 @@ check_port_usage() {
     done
 
     port=${new_port:-$old_port}
-    if [ "$exists" = true ] && [ -n "$2" ]; then
+    if [ "$exists" = true -a -n "$2" ]; then
         uci_set_type $2 $port
-        echo_time "$2 设定的 $old_port 端口已被占用，查找到可用端口 $port"
+        echo_time "$2 设定的 $old_port 端口已在使用，查找到可用端口 $port"
+    fi
+}
+
+modify_port() {
+
+    if [ -x "/opt/bin/amuled" -a -n "$am_port" ]; then
+        old_am_port=$(awk -F "=" '/\[WebServer\]/{flag=1;next} flag && /Port/{print $2;flag=0}' /opt/var/amule/amule.conf)
+        if [ "$old_am_port" != "$am_port" ]; then
+            check_port_usage "$am_port" am_port
+            [ -n "$port" ] && {
+                sed -i "s/Port=$old_am_port/Port=$port/" /opt/var/amule/amule.conf
+                /opt/etc/*/S57am* restart >/dev/null 2>&1
+            }
+        fi
+    fi
+
+    if [ -x "/opt/bin/deluged" -a -n "$de_port" ]; then
+        old_de_port=$(grep -oP '(?<=-p )\d+' /opt/etc/*/S81deluge-web)
+        if [ "$old_de_port" != "$de_port" ]; then
+            check_port_usage "$de_port" de_port
+            [ -n "$port" ] && {
+                sed -i "s/-p $old_de_port/-p $port/" /opt/etc/*/S81deluge-web
+                /opt/etc/*/S80de* restart >/dev/null 2>&1
+            }
+        fi
+    fi
+
+    if [ -x "/opt/bin/qbittorrent-nox" -a -n "$qb_port" ]; then
+        old_qb_port=$(grep -oP '(?<=webui-port=)\d+' /opt/etc/*/S89qb*)
+        if [ "$old_qb_port" != "$qb_port" ]; then
+            check_port_usage "$qb_port" qb_port
+            [ -n "$port" ] && {
+                sed -i "s/port=$old_qb_port/port=$port/" /opt/etc/*/S89qb*
+                /opt/etc/*/S89qb* restart >/dev/null 2>&1
+            }
+        fi
+    fi
+
+    if [ -x "/opt/bin/rtorrent" -a -n "$rt_port" ]; then
+        old_rt_port=$(grep -oP '^server.port=\s*\K\d+' /opt/etc/*/*/99-rtor*)
+        if [ "$old_rt_port" != "$rt_port" ]; then
+            check_port_usage "$rt_port" rt_port
+            [ -n "$port" ] && {
+                sed -i "s/port=$old_rt_port/port=$port/" /opt/etc/*/*/99-rtor*
+                /opt/etc/*/S80lig* restart >/dev/null 2>&1
+            }
+        fi
+    fi
+
+    if [ -x "/opt/bin/transmission-daemon" -a -n "$tr_port" ]; then
+        old_tr_port=$(grep -oP "(?<=--port )\d+" /opt/etc/*/S88tran*)
+        if [ "$old_tr_port" != "$tr_port" ]; then
+            check_port_usage "$tr_port" tr_port
+            [ -n "$port" ] && {
+                sed -i "s/\(--port \)[0-9]\+/\1$port/" /opt/etc/*/S88tran*
+                /opt/etc/*/S88tran* restart >/dev/null 2>&1
+            }
+        fi
     fi
 }
 
@@ -139,15 +201,6 @@ opkg_install() {
 	done
 }
 
-# 软件包卸载 参数: $1:卸载列表 说明：本函数将负责强制卸载指定的软件包
-remove_soft() {
-	for ipk in $@; do
-		echo_time "正在卸载 ${ipk}\c"
-		/opt/bin/opkg remove $ipk --autoremove --force-depends >/dev/null 2>&1
-		status
-	done
-}
-
 # 软件包安装 参数: $@:安装列表
 install_soft() {
 	check_url "bin.entware.net"
@@ -167,8 +220,13 @@ install_soft() {
 	done
 }
 
-echo_time() {
-	echo -e "[ $(date +"%m月%d日 %H:%M:%S") ]  $@" | sed '/\\\033/d'
+# 软件包卸载 参数: $1:卸载列表 说明：本函数将负责强制卸载指定的软件包
+remove_soft() {
+	for ipk in $@; do
+		echo_time "正在卸载 ${ipk}\c"
+		/opt/bin/opkg remove $ipk --autoremove --force-depends >/dev/null 2>&1
+		status
+	done
 }
 
 # entware环境设定 参数：$1:安装位置 $2:设备底层架构 说明：此函数用于写入新配置

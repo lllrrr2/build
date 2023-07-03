@@ -190,10 +190,10 @@ install_qbittorrent() {
 		}
 
 		cd /opt/share/www
-		[ -d CzBiX-qb-web ] || {
+		[ -d dist ] || {
 			if wget -qO CzBiX-qb-web.zip $(curl -sL "api.github.com/repos/CzBiX/qb-web/releases" | jq -r '.[0].assets[0].browser_download_url'); then
-				unzip -qo CzBiX-qb-web.zip && rm -f CzBiX-qb-web.zip dist CzBiX-qb-web
-				echo 'WebUI\RootFolder=/opt/share/www/CzBiX-qb-web/' >> /opt/etc/qBittorrent_entware/config/qBittorrent.conf
+				unzip -q CzBiX-qb-web.zip && rm -f CzBiX-qb-web.zip
+				echo 'WebUI\RootFolder=/opt/share/www/dist/' >> /opt/etc/qBittorrent_entware/config/qBittorrent.conf
 			fi
 		}
 
@@ -425,7 +425,7 @@ install_rtorrent() {
 		execute2 = {sh,-c,/opt/bin/php-cgi /opt/share/www/rutorrent/php/initplugins.php $USER &}
 		EOF
 
-		echo '. /opt/etc/init.d/S80lighttpd $1 >/dev/null 2>&1' >> /opt/etc/*/S85rtorrent
+		echo '. /opt/etc/init.d/S80lighttpd $1 >/dev/null 2>&1' >> /opt/etc/init.d/S85rtorrent
 		/opt/etc/*/S85rtorrent restart >/dev/null 2>&1
 		ln -sf /opt/etc/rtorrent/rtorrent.conf /opt/etc/config/rtorrent.conf
 		_pidof rtorrent
@@ -440,12 +440,12 @@ install_transmission() {
 	[ $1 = '277' ] && tr="transmission-cfp-daemon transmission-cfp-cli transmission-cfp-remote" || tr="transmission-daemon transmission-cli transmission-remote"
 	version=$(curl -sL "api.github.com/repos/ronggang/transmission-web-control/releases" | jq -r '.[0].tag_name')
 	if opkg_install $tr; then
-		sed -i "s|etc/transmission|etc/transmission --port $tr_port|" /opt/etc/*/S88transmission*
+		sed -i "s/on\"/on --port $tr_port\"/" /opt/etc/*/S88tr*
 		if wget -qO /tmp/tr.zip https://github.com/ronggang/transmission-web-control/archive/refs/tags/$version.zip; then
 			make_dir /opt/share/transmission
 			unzip -oq /tmp/tr.zip -d /tmp && rm -f /tmp/tr.zip
 			mv -f /tmp/transmission-web*/src /opt/share/transmission/web && \
-			rm -rf /tmp/transmission-web*
+			rm -rf /tmp/transmission-*
 			ln -sf /opt/share/transmission/web /opt/share/transmission/public_html
 		else
 			echo_time "下载 transmission-web-control 出错！"

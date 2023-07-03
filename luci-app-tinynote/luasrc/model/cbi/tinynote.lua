@@ -1,7 +1,8 @@
 local fs   = require "nixio.fs"
+local util = require "luci.util"
 local uci  = require "luci.model.uci".cursor()
 
-local function new_write_file(file, note_suffix, value)
+local function new_write_file(path, note_suffix, value)
     local note_suffix_array = {
         sh  = "#!/bin/sh /etc/rc.common\n",
         py  = "#!/usr/bin/env python\n" ..
@@ -15,12 +16,8 @@ local function new_write_file(file, note_suffix, value)
               "local util = require \"luci.util\"\n" ..
               "local uci  = require \"luci.model.uci\".cursor()\n",
     }
-    local content = value or note_suffix_array[note_suffix]
-    local file_handle = assert(io.open(file, "w"))
-    if content ~= nil then
-        file_handle:write(content)
-    end
-    file_handle:close()
+    local data = value or (note_suffix_array[note_suffix] or '')
+    fs.writefile(path, data)
 end
 
 if not uci:get("luci", "tinynote") then
@@ -301,7 +298,7 @@ height:depends("enable", 1)
 
 width = f:taboption("codemirror", Value, "width",
     translate("Display Width"))
-width.default = "auto"
+width.default = "1000"
 width:value('auto', translate('auto'))
 width:value('1000', translate('1000'))
 width:value('1300', translate('1300'))
@@ -309,7 +306,10 @@ width:value('1500', translate('1500'))
 width:depends("enable", 1)
 
 only = f:taboption("codemirror", Flag, "only",
-    translate("Read-Only Mode"))
+    translate("Read-Only Mode"), translate("maximum authority"))
+only.enabled = 'true'
+only.disabled = 'false'
+only.default = only.disabled
 only:depends("enable", 1)
 
 s = m:section(TypedSection, "tinynote")
@@ -330,7 +330,7 @@ local note_arg, note_files = {}, {}
 for sum_str = 1, note_sum do
     local sum = string.format("%02d", sum_str)
     local file = string.format("%s/note%s.%s", note_path, sum, note_suffix)
-    note_arg[sum] = file
+    note_arg[#note_arg + 1] = file
 
     if not fs.access(file) then
         new_write_file(file, note_suffix)
@@ -374,7 +374,7 @@ for sum_str = 1, note_sum do
             local chunks = {}
             repeat
                 local chunk = file_handle:read(1024 * 512)
-                if chunk then table.insert(chunks, chunk) end
+                if chunk then chunks[#chunks + 1] = chunk end
                 coroutine.yield()
             until not chunk
 
@@ -411,24 +411,12 @@ for sum_str = 1, note_sum do
 end
 
 for file_name in fs.dir(note_path) do
-    local file_path = string.format("%s/%s", note_path, file_name)
-    table.insert(note_files, file_path)
+    note_files[#note_files + 1] = string.format("%s/%s", note_path, file_name)
 end
 
--- 逆序循环保证下标不会发生变化
-for i = #note_files, 1, -1 do
-    local file_path = note_files[i]
-    local found = false
-    for _, value in pairs(note_arg) do
-        if value == file_path then
-            found = true
-            break
-        end
-    end
-    -- 如果文件路径未在 note_arg 数组中出现过且该文件存在
-    if not found and fs.access(file_path) then
-        os.remove(file_path)
-        table.remove(note_files, i)
+for _, file_path in pairs(note_files) do
+    if not util.contains(note_arg, file_path) then
+      fs.remove(file_path)
     end
 end
 

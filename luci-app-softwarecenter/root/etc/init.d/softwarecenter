@@ -7,67 +7,9 @@ STOP=10
 . /usr/bin/softwarecenter/app_install.sh
 . /usr/bin/softwarecenter/web_install.sh
 
-port() {
-
-    if [ -x "/opt/bin/amuled" ] && [ -n "$am_port" ]; then
-        old_am_port=$(awk -F "=" '/\[WebServer\]/{flag=1;next} flag && /Port/{print $2;flag=0}' /opt/var/amule/amule.conf)
-        if [ "$old_am_port" != "$am_port" ]; then
-            check_port_usage "$am_port" am_port
-            [ -n "$port" ] && {
-                sed -i "s/Port=$old_am_port/Port=$port/" /opt/var/amule/amule.conf
-                /opt/etc/*/S57am* restart >/dev/null 2>&1
-            }
-        fi
-    fi
-
-    if [ -x "/opt/bin/deluged" -a -n "$de_port" ]; then
-        old_de_port=$(grep -oP '(?<=-p )\d+' /opt/etc/*/S81deluge-web)
-        if [ "$old_de_port" != "$de_port" ]; then
-            check_port_usage "$de_port" de_port
-            [ -n "$port" ] && {
-                sed -i "s/-p $old_de_port/-p $port/" /opt/etc/*/S81deluge-web
-                /opt/etc/*/S80de* restart >/dev/null 2>&1
-            }
-        fi
-    fi
-
-    if [ -x "/opt/bin/qbittorrent-nox" -a -n "$qb_port" ]; then
-        old_qb_port=$(grep -oP '(?<=webui-port=)\d+' /opt/etc/*/S89qb*)
-        if [ "$old_qb_port" != "$qb_port" ]; then
-            check_port_usage "$qb_port" qb_port
-            [ -n "$port" ] && {
-                sed -i "s/port=$old_qb_port/port=$port/" /opt/etc/*/S89qb*
-                /opt/etc/*/S89qb* restart >/dev/null 2>&1
-            }
-        fi
-    fi
-
-    if [ -x "/opt/bin/rtorrent" -a -n "$rt_port" ]; then
-        old_rt_port=$(grep -oP '^server.port=\s*\K\d+' /opt/etc/*/*/99-rtor*)
-        if [ "$old_rt_port" != "$rt_port" ]; then
-            check_port_usage "$rt_port" rt_port
-            [ -n "$port" ] && {
-                sed -i "s/port=$old_rt_port/port=$port/" /opt/etc/*/*/99-rtor*
-                /opt/etc/*/S80lig* restart >/dev/null 2>&1
-            }
-        fi
-    fi
-
-    if [ -x "/opt/bin/transmission-daemon" ] && [ -n "$tr_port" ]; then
-        old_tr_port=$(grep -oP "(?<=--port )\d+" /opt/etc/*/S88tran*)
-        if [ "$old_tr_port" != "$tr_port" ]; then
-            check_port_usage "$tr_port" tr_port
-            [ -n "$port" ] && {
-                sed -i "s/\(--port \)[0-9]\+/\1$port/" /opt/etc/*/S88tran*
-                /opt/etc/*/S88tran* restart >/dev/null 2>&1
-            }
-        fi
-    fi
-}
-
 CDG() {
     config_load softwarecenter
-    get_config="a_delaytime cpu_model delaytime deploy_entware deploy_mysql deploy_nginx disk_mount download_dir entware_enable mysql_enabled nginx_enabled partition_disk pass old_pass swap_enabled swap_path swap_size user am_port ar_port de_port qb_port tr_port rt_port"
+    get_config="a_delaytime cpu_model delaytime deploy_entware deploy_mysql deploy_nginx disk_mount download_dir entware_enable mysql_enabled nginx_enabled partition_disk pass old_pass swap_enabled swap_path swap_size user"
 
     for rt in $get_config; do
         config_get_bool $rt main $rt
@@ -126,7 +68,7 @@ CDG() {
         config_foreach handle_website website test
         clean_vhost_config
     }
-    port
+    [ -d "/opt/etc/config" ] && modify_port
 
     [ $swap_enabled ] && config_swap_init $swap_size $swap_path || config_swap_del $swap_path
 
