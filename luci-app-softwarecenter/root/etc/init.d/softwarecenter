@@ -7,7 +7,7 @@ STOP=10
 . /usr/bin/softwarecenter/app_install.sh
 . /usr/bin/softwarecenter/web_install.sh
 
-CDG() {
+SOFTWARECENTER() {
     config_load softwarecenter
     get_config="a_delaytime cpu_model delaytime deploy_entware deploy_mysql deploy_nginx disk_mount download_dir entware_enable mysql_enabled nginx_enabled partition_disk pass old_pass swap_enabled swap_path swap_size user"
 
@@ -108,7 +108,7 @@ CDG() {
 }
 
 start() {
-    CDG >>"$log"
+    SOFTWARECENTER >> "$log"
 }
 
 stop() {

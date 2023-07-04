@@ -190,17 +190,17 @@ msgstr "WebUI登录端口"
 msgid "Install"
 msgstr "安装"
 
-msgid "Restart %s"
-msgstr "重启 %s"
+msgid "Restart"
+msgstr "重新启动"
 
-msgid "Stop %s"
-msgstr "停止 %s"
+msgid "Stop"
+msgstr "停止运行"
 
-msgid "Run %s"
-msgstr "运行 %s"
+msgid "Start"
+msgstr "启动应用"
 
-msgid "Delete %s"
-msgstr "删除 %s"
+msgid "Delete"
+msgstr "删除应用"
 
 msgid "Install %s"
 msgstr "安装 %s"
