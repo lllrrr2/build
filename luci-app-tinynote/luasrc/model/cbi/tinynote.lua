@@ -2,6 +2,11 @@ local fs   = require "nixio.fs"
 local util = require "luci.util"
 local uci  = require "luci.model.uci".cursor()
 
+if not uci:get("luci", "tinynote") then
+    uci:set("luci", "tinynote", "tinynote")
+    uci:commit("luci")
+end
+
 local function new_write_file(path, note_suffix, value)
     local note_suffix_array = {
         sh  = "#!/bin/sh /etc/rc.common\n",
@@ -18,11 +23,6 @@ local function new_write_file(path, note_suffix, value)
     }
     local data = value or (note_suffix_array[note_suffix] or '')
     fs.writefile(path, data)
-end
-
-if not uci:get("luci", "tinynote") then
-    uci:set("luci", "tinynote", "tinynote")
-    uci:commit("luci")
 end
 
 local note_theme_array = {
@@ -230,11 +230,11 @@ f:tab("codemirror", translate("CodeMirror Support"),
     translate("<a href='https://www.tun6.com/projects/code_mirror/demo/demos/theme.html' target='_blank'> Theme Preview </a></b>")
 )
 
-note_path = f:taboption("note", Value, "note_path",
+local note_path = f:taboption("note", Value, "note_path",
     translate("Save Path"))
 note_path.default = "/etc/tinynote"
 
-note_sum = f:taboption("note", Value, "note_sum",
+local note_sum = f:taboption("note", Value, "note_sum",
     translate("Number of Texts"))
 note_sum.default = 1
 note_sum.rmempty = false
@@ -248,7 +248,7 @@ note_sum.validate = function(self, value)
     return Value.validate(self, value)
 end
 
-note_suffix = f:taboption("note", ListValue, "note_suffix",
+local note_suffix = f:taboption("note", ListValue, "note_suffix",
     translate("Text Type"))
 note_suffix.default = "txt"
 note_suffix:value('txt', translate('txt'))
@@ -257,11 +257,11 @@ note_suffix:value('lua', translate('lua'))
 note_suffix:value('py', translate('py'))
 note_suffix:value('js', translate('js'))
 
-enable = f:taboption("note", Flag, "enable",
+local enable = f:taboption("note", Flag, "enable",
     translate("Enable CodeMirror Support"))
 enable.default = '0'
 
-theme = f:taboption("codemirror", ListValue, "theme",
+local theme = f:taboption("codemirror", ListValue, "theme",
     translate("Design"))
 theme.default = "monokai"
 for _, k in ipairs(note_theme_array) do
@@ -269,7 +269,7 @@ for _, k in ipairs(note_theme_array) do
 end
 theme:depends("enable", 1)
 
-font_size = f:taboption("codemirror", Value, "font_size",
+local font_size = f:taboption("codemirror", Value, "font_size",
     translate("Font Size"))
 font_size.default = "14"
 font_size:value('12', translate('12'))
@@ -278,7 +278,7 @@ font_size:value('16', translate('16'))
 font_size.datatype = "uinteger"
 font_size:depends("enable", 1)
 
-line_spacing = f:taboption("codemirror", Value, "line_spacing",
+local line_spacing = f:taboption("codemirror", Value, "line_spacing",
     translate("Line Spacing"))
 line_spacing.default = "140"
 line_spacing:value('100', translate('100'))
@@ -287,7 +287,7 @@ line_spacing:value('150', translate('150'))
 line_spacing.datatype = "uinteger"
 line_spacing:depends("enable", 1)
 
-height = f:taboption("codemirror", Value, "height",
+local height = f:taboption("codemirror", Value, "height",
     translate("Display Height"))
 height.default = "500"
 height:value('auto', translate('auto'))
@@ -296,7 +296,7 @@ height:value('600', translate('600'))
 height:value('800', translate('800'))
 height:depends("enable", 1)
 
-width = f:taboption("codemirror", Value, "width",
+local width = f:taboption("codemirror", Value, "width",
     translate("Display Width"))
 width.default = "1000"
 width:value('auto', translate('auto'))
@@ -305,30 +305,30 @@ width:value('1300', translate('1300'))
 width:value('1500', translate('1500'))
 width:depends("enable", 1)
 
-only = f:taboption("codemirror", Flag, "only",
+local only = f:taboption("codemirror", Flag, "only",
     translate("Read-Only Mode"), translate("maximum authority"))
 only.enabled = 'true'
 only.disabled = 'false'
 only.default = only.disabled
 only:depends("enable", 1)
 
-s = m:section(TypedSection, "tinynote")
+local s = m:section(TypedSection, "tinynote")
 s.anonymous = true
 s.addremove = false
 
 local con         = uci:get_all("luci", "tinynote")
-local note_sum    = con.note_sum  or "1"
+local note_sum    = con.note_sum    or "1"
+local code_enable = con.enable      or nil
 local note_suffix = con.note_suffix or "txt"
-local code_enable = con.enable    or nil
-local note_path   = con.note_path or "/etc/tinynote"
+local note_path   = con.note_path   or "/etc/tinynote"
 
 if not fs.access(note_path) then
     fs.mkdirr(note_path)
 end
 
-local note_arg, note_files = {}, {}
+local note_arg = {}
 for sum_str = 1, note_sum do
-    local sum = string.format("%02d", sum_str)
+    local sum  = string.format("%02d", sum_str)
     local file = string.format("%s/note%s.%s", note_path, sum, note_suffix)
     note_arg[#note_arg + 1] = file
 
@@ -338,15 +338,15 @@ for sum_str = 1, note_sum do
 
     if fs.access(file, 'w') then
         local note = "note" .. sum
-        s:tab(note, translate("Note %s") %sum)
+        s:tab(note, translatef("Note %s", sum))
 
-        enablenote = s:taboption(note, Flag, "enablenote" .. sum,
-            translate("Note %s Settings") %sum)
-        enablenote.enabled = 'true'
+        local enablenote = s:taboption(note, Flag, "enablenote" .. sum,
+            translatef("Note %s Settings", sum))
+        enablenote.enabled  = 'true'
         enablenote.disabled = 'false'
-        enablenote.default = enablenote.disabled
+        enablenote.default  = 'false'
 
-        path = s:taboption(note, ListValue, "model_note" .. sum,
+        local path = s:taboption(note, ListValue, "model_note" .. sum,
             translate("Type"))
         path:depends('enablenote' .. sum, 'true')
         path.remove_empty = true
@@ -355,12 +355,12 @@ for sum_str = 1, note_sum do
             path:value(k[1], k[2])
         end
 
-        note_only = s:taboption(note, Flag, "only_note" .. sum,
+        local note_only = s:taboption(note, Flag, "only_note" .. sum,
             translate("Read-only"))
         note_only:depends("enablenote" .. sum, 'true')
-        note_only.enabled = 'true'
+        note_only.enabled  = 'true'
         note_only.disabled = 'false'
-        note_only.default = note_only.disabled
+        note_only.default  = 'false'
 
         local a = s:taboption(note, TextValue, "note" .. sum)
         a.template = "cbi/tvalue"
@@ -393,8 +393,8 @@ for sum_str = 1, note_sum do
             end
         end
 
-        local clear_button = s:taboption(note, Button, "_clear_note" .. sum,
-            translate("Reset Notes %s") %sum)
+        local clear_button = s:taboption(note, Button,  sum .. "_clear_note",
+            translatef("Reset Notes %s", sum))
         clear_button.inputstyle = "reset"
         clear_button.template = "tinynote/clear_button"
         clear_button.write = function(self, section)
@@ -402,21 +402,18 @@ for sum_str = 1, note_sum do
             new_write_file(file, note_suffix)
         end
 
-        local run_button = s:taboption(note, Button, "_run_note" .. sum,
-            translate("Run Note %s") %sum)
-        run_button.template = "tinynote/run_button"
+        local run_button = s:taboption(note, Button, sum .. "_run_note",
+            translatef("Run Note %s", sum))
+        run_button.template   = "tinynote/run_button"
         run_button.inputstyle = "apply"
-        run_button.file_path = file
+        run_button.file_path  = file
     end
 end
 
 for file_name in fs.dir(note_path) do
-    note_files[#note_files + 1] = string.format("%s/%s", note_path, file_name)
-end
-
-for _, file_path in pairs(note_files) do
+    local file_path = string.format("%s/%s", note_path, file_name)
     if not util.contains(note_arg, file_path) then
-      fs.remove(file_path)
+        fs.remove(file_path)
     end
 end
 

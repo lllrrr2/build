@@ -17,7 +17,7 @@ url_h5ai="https://release.larsjung.de/h5ai/h5ai-0.30.0.zip"
 # (6) Lychee（一个很好看，易于使用的Web相册）
 url_Lychee="https://github.com/electerious/Lychee/archive/master.zip"
 # (7) Kodexplorer（可道云aka芒果云在线文档管理器）
-url_Kodexplorer="https://static.kodcloud.com/update/download/kodbox.1.41.zip"
+url_Kodexplorer="https://static.kodcloud.com/update/download/kodbox.1.42.zip"
 # (8) Typecho (流畅的轻量级开源博客程序)
 url_Typecho="https://github.com/typecho/typecho/releases/download/v1.2.1/typecho.zip"
 # (9) Z-Blog (体积小，速度快的PHP博客程序)

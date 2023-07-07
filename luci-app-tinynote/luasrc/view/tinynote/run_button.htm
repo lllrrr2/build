@@ -100,9 +100,9 @@
             const mouseY = e.clientY;   // 获取当前鼠标的Y坐标
             const deltaX = mouseX - mouseStartX;   // 计算鼠标移动的X距离
             const deltaY = mouseY - mouseStartY;   // 计算鼠标移动的Y距离
-            alert.style.position = 'absolute';   // 将弹框的定位设置为绝对定位
+            alert.style.position = 'absolute';     // 将弹框的定位设置为绝对定位
             alert.style.top = `${alertStartY + deltaY}px`;   // 计算弹框的top值
-            alert.style.left = `${alertStartX + deltaX}px`;   // 计算弹框的left值
+            alert.style.left = `${alertStartX + deltaX}px`;  // 计算弹框的left值
         });
 
         document.addEventListener('mouseup', () => {   // 鼠标抬起事件
@@ -184,7 +184,7 @@
     }
 
     async function jQRequest(command = '', file_path = '') {
-        const url = '<%=url("admin/nas/tinynote/action_run")%>';
+        const url  = '<%=url("admin/nas/tinynote/action_run")%>';
         const data = { command, file_path };
 
         $.post(url, data, function (jsonResponse, status, xhr) {
@@ -228,7 +228,7 @@
     }
 
     async function fetchRequest(command = '', file_path = '') {
-        const url = '<%=url("admin/nas/tinynote/action_run")%>';
+        const url  = '<%=url("admin/nas/tinynote/action_run")%>';
         const data = new URLSearchParams({ command, file_path });
         try {
             const response = await fetch(url, {
