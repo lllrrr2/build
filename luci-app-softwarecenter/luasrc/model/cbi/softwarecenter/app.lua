@@ -14,6 +14,11 @@ if fs.access("/etc/init.d/entware") then
         install = "/usr/bin/*/app_install.sh install "
     }
 
+    function set_con(config, section)
+        uci:set("softwarecenter", config, section)
+        uci:commit("softwarecenter")
+    end
+
     local function redirect_app()
         luci.http.redirect(luci.dispatcher.build_url("admin/services/softwarecenter/app"))
     end
@@ -52,7 +57,6 @@ if fs.access("/etc/init.d/entware") then
 
     local function executeCommand(action)
         local actionSuffix = (action:match("install") or action:match("remove")) and ""
-
         function p.write()
             if actionSuffix ~= "" then
                 util.exec(action)
@@ -65,27 +69,27 @@ if fs.access("/etc/init.d/entware") then
         end
     end
 
-    function createButtonOptions(binary, restartCommand, stopCommand, startCommand, deleteCommand)
+    function createButtonOptions(binary, Restart, Stop, Start, Delete)
         if running(binary):find("WebUI") then
             p = s:taboption(binary, Button, binary .. '_restart', translatef("Restart"))
             p.inputstyle = "reload"
             p.forcewrite = true
-            executeCommand(commands.init .. restartCommand)
+            executeCommand(commands.init .. Restart)
 
             p = s:taboption(binary, Button, binary .. '_stop', translatef("Stop"))
             p.inputstyle = "reset"
             p.forcewrite = true
-            executeCommand(commands.init .. stopCommand)
+            executeCommand(commands.init .. Stop)
         else
             p = s:taboption(binary, Button, binary .. '_start', translatef("Start"))
             p.inputstyle = "apply"
             p.forcewrite = true
-            executeCommand(commands.init .. startCommand)
+            executeCommand(commands.init .. Start)
 
             p = s:taboption(binary, Button, binary .. '_delete', translatef("Delete"))
             p.inputstyle = "reset"
             p.forcewrite = true
-            executeCommand(commands.remove .. deleteCommand)
+            executeCommand(commands.remove .. Delete)
         end
     end
 
@@ -141,6 +145,7 @@ if fs.access("/etc/init.d/entware") then
     o.datatype = "port"
     o.default = "4711"
 
+    set_con()
     if isExecutableFileExist("amuled") then
         createButtonOptions('amuled', "S57am* restart", "S57am* stop", "S57am* start", "amule")
     else
