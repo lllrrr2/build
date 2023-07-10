@@ -371,15 +371,15 @@ for sum_str = 1, note_sum do
             local file_handle = io.open(file, "r")
             if not file_handle then return "" end
 
-            local chunks = {}
+            local chunks = ""
             repeat
                 local chunk = file_handle:read(1024 * 512)
-                if chunk then chunks[#chunks + 1] = chunk end
+                if chunk then chunks = chunks .. chunk end
                 coroutine.yield()
             until not chunk
 
             file_handle:close()
-            return table.concat(chunks)
+            return chunks
         end
 
         function a.write(self, section, note_content)
