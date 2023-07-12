@@ -14,17 +14,13 @@ if fs.access("/etc/init.d/entware") then
         install = "/usr/bin/*/app_install.sh install "
     }
 
-    function set_con(config, section)
+    local function set_config(config, section)
         uci:set("softwarecenter", config, section)
         uci:commit("softwarecenter")
     end
 
-    local function redirect_app()
-        luci.http.redirect(luci.dispatcher.build_url("admin/services/softwarecenter/app"))
-    end
-
-    local function redirect_log()
-        luci.http.redirect(luci.dispatcher.build_url("admin/services/softwarecenter/log"))
+    local function redirect(value)
+        luci.http.redirect(luci.dispatcher.build_url("admin/services/softwarecenter/" .. value))
     end
 
     local function op_webui(elementText, port, url)
@@ -61,9 +57,10 @@ if fs.access("/etc/init.d/entware") then
             if actionSuffix ~= "" then
                 util.exec(action)
                 util.exec("sleep 2")
-                redirect_app()
+                redirect("app")
             else
-                redirect_log()
+                set_config()
+                redirect("log")
                 util.exec(action)
             end
         end
@@ -145,7 +142,6 @@ if fs.access("/etc/init.d/entware") then
     o.datatype = "port"
     o.default = "4711"
 
-    set_con()
     if isExecutableFileExist("amuled") then
         createButtonOptions('amuled', "S57am* restart", "S57am* stop", "S57am* start", "amule")
     else
