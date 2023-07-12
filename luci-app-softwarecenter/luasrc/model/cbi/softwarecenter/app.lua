@@ -10,11 +10,12 @@ local font_green = [[<b><font color="green">]]
 if fs.access("/etc/init.d/entware") then
     local commands = {
         init    = "/opt/etc/init.d/",
-        remove  = "/usr/bin/*/app_install.sh remove ",
-        install = "/usr/bin/*/app_install.sh install "
+        remove  = "/usr/bin/*/app*.sh remove ",
+        install = "/usr/bin/*/app*.sh install "
     }
 
     local function set_config(config, section)
+        if not section then return end
         uci:set("softwarecenter", config, section)
         uci:commit("softwarecenter")
     end
@@ -35,12 +36,12 @@ if fs.access("/etc/init.d/entware") then
         op_webui("Open AriNG Remote WebUI", nil, "ariang.mayswind.net/latest") ..
         op_webui("Open WebUI-Aria2 Remote WebUI", nil, "webui-aria2.1ge.fun")
 
-    local function isExecutableFileExist(binary)
+    local function ExecutableFile(binary)
         return fs.access(string.format("/opt/bin/%s", binary), "x")
     end
 
     local function running(binary, port)
-        if not isExecutableFileExist(binary) then
+        if not ExecutableFile(binary) then
             return translatef([[<br><br>Running status: %sis not installed%s]], font_red, font_off)
         end
 
@@ -51,17 +52,16 @@ if fs.access("/etc/init.d/entware") then
         return translatef([[<br><br>Running status: %s%s%s]], status, translate(webui), font_off)
     end
 
-    local function executeCommand(action)
-        local actionSuffix = (action:match("install") or action:match("remove")) and ""
+    local function execute(action)
         function p.write()
-            if actionSuffix ~= "" then
-                util.exec(action)
-                util.exec("sleep 2")
-                redirect("app")
-            else
+            if action:match("install") or action:match("remove") then
                 set_config()
                 redirect("log")
                 util.exec(action)
+            else
+                util.exec(action)
+                util.exec("sleep 2")
+                redirect("app")
             end
         end
     end
@@ -71,22 +71,22 @@ if fs.access("/etc/init.d/entware") then
             p = s:taboption(binary, Button, binary .. '_restart', translatef("Restart"))
             p.inputstyle = "reload"
             p.forcewrite = true
-            executeCommand(commands.init .. Restart)
+            execute(commands.init .. Restart)
 
             p = s:taboption(binary, Button, binary .. '_stop', translatef("Stop"))
             p.inputstyle = "reset"
             p.forcewrite = true
-            executeCommand(commands.init .. Stop)
+            execute(commands.init .. Stop)
         else
             p = s:taboption(binary, Button, binary .. '_start', translatef("Start"))
             p.inputstyle = "apply"
             p.forcewrite = true
-            executeCommand(commands.init .. Start)
+            execute(commands.init .. Start)
 
             p = s:taboption(binary, Button, binary .. '_delete', translatef("Delete"))
             p.inputstyle = "reset"
             p.forcewrite = true
-            executeCommand(commands.remove .. Delete)
+            execute(commands.remove .. Delete)
         end
     end
 
@@ -142,14 +142,14 @@ if fs.access("/etc/init.d/entware") then
     o.datatype = "port"
     o.default = "4711"
 
-    if isExecutableFileExist("amuled") then
+    if ExecutableFile("amuled") then
         createButtonOptions('amuled', "S57am* restart", "S57am* stop", "S57am* start", "amule")
     else
         p = s:taboption("amuled", Button, "aae", translate("Install"))
         p.inputtitle = translatef("Install %s", "aMule")
         p.inputstyle = "apply"
         p.forcewrite = true
-        executeCommand(commands.install .. "amule")
+        execute(commands.install .. "amule")
     end
 
     -- aria2
@@ -158,14 +158,14 @@ if fs.access("/etc/init.d/entware") then
     o.datatype = "port"
     o.default = "6800"
 
-    if isExecutableFileExist("aria2c") then
+    if ExecutableFile("aria2c") then
         createButtonOptions('aria2c', "S81ar* restart", "S81ar* stop", "S81ar* start", "aria2")
     else
         p = s:taboption("aria2c", Button, "abe", translate("Install"))
         p.inputtitle = translatef("Install %s", "Aria2")
         p.inputstyle = "apply"
         p.forcewrite = true
-        executeCommand(commands.install .. "aria2")
+        execute(commands.install .. "aria2")
     end
 
     -- Deluge
@@ -174,14 +174,14 @@ if fs.access("/etc/init.d/entware") then
     o.datatype = "port"
     o.default = "888"
 
-    if isExecutableFileExist("deluge") then
+    if ExecutableFile("deluge") then
         createButtonOptions('deluge', "S80de* restart", "S80de* stop", "S80de* start", "deluge-ui-web")
     else
         p = s:taboption("deluge", Button, "ace", translate("Install"))
         p.inputtitle = translatef("Install %s", "Deluge")
         p.inputstyle = "apply"
         p.forcewrite = true
-        executeCommand(commands.install .. "deluged")
+        execute(commands.install .. "deluged")
     end
 
     -- qbittorrent
@@ -190,14 +190,14 @@ if fs.access("/etc/init.d/entware") then
     o.datatype = "port"
     o.default = "8080"
 
-    if isExecutableFileExist("qbittorrent-nox") then
+    if ExecutableFile("qbittorrent-nox") then
         createButtonOptions('qbittorrent-nox', "S89qb* restart", "S89qb* stop", "S89qb* start", "qbittorrent")
     else
         p = s:taboption("qbittorrent-nox", Button, "ade", translate("Install"))
         p.inputtitle = translatef("Install %s", "qBittorrent")
         p.inputstyle = "apply"
         p.forcewrite = true
-        executeCommand(commands.install .. "qbittorrent")
+        execute(commands.install .. "qbittorrent")
     end
 
      -- rTorrent
@@ -206,14 +206,14 @@ if fs.access("/etc/init.d/entware") then
     o.datatype = "port"
     o.default = "1099"
 
-    if isExecutableFileExist("rtorrent") then
+    if ExecutableFile("rtorrent") then
         createButtonOptions('rtorrent', "S85rt* restart", "S85rt* stop", "S85rt* start", "rtorrent-easy-install")
     else
         p = s:taboption("rtorrent", Button, "aee", translate("Install"))
         p.inputtitle = translatef("Install %s", "rTorrent")
         p.inputstyle = "apply"
         p.forcewrite = true
-        executeCommand(commands.install .. "rtorrent")
+        execute(commands.install .. "rtorrent")
     end
 
     -- transmission
@@ -223,20 +223,20 @@ if fs.access("/etc/init.d/entware") then
     o.datatype = "port"
     o.default = "9091"
 
-    if isExecutableFileExist("transmission-daemon") then
+    if ExecutableFile("transmission-daemon") then
         createButtonOptions('transmission-daemon', "S88tr* restart", "S88tr* stop", "S88tr* start", "transmission-cfp-daemon transmission-cfp-cli transmission-cfp-remote transmission-daemon transmission-cli transmission-remote")
     else
         p = s:taboption("transmission-daemon", Button, "afe", translate("Install 4"))
         p.inputtitle = translatef("Install %s", "transmission 4")
         p.inputstyle = "apply"
         p.forcewrite = true
-        executeCommand(commands.install .. "transmission 1")
+        execute(commands.install .. "transmission 1")
 
         p = s:taboption("transmission-daemon", Button, "aff", translate("Install 2.77plus"))
         p.inputtitle = translatef("Install %s", "transmission 2.77plus")
         p.inputstyle = "apply"
         p.forcewrite = true
-        executeCommand(commands.install .. "transmission 2")
+        execute(commands.install .. "transmission 2")
     end
 else
     m = SimpleForm("softwarecenter")

@@ -207,6 +207,13 @@ local note_mode_array = {
     { "z80",              "z80"           },
 }
 
+local function addValues(option, ...)
+    local values = {...}
+    for _, value in ipairs(values) do
+        option:value(value, translate(value))
+    end
+end
+
 m = Map("luci", translate(""))
 
 f = m:section(TypedSection, "tinynote")
@@ -251,11 +258,7 @@ end
 local note_suffix = f:taboption("note", ListValue, "note_suffix",
     translate("Text Type"))
 note_suffix.default = "txt"
-note_suffix:value('txt', translate('txt'))
-note_suffix:value('sh', translate('sh'))
-note_suffix:value('lua', translate('lua'))
-note_suffix:value('py', translate('py'))
-note_suffix:value('js', translate('js'))
+addValues(note_suffix, 'txt', 'sh', 'lua', 'py', 'js')
 
 local enable = f:taboption("note", Flag, "enable",
     translate("Enable CodeMirror Support"))
@@ -272,37 +275,27 @@ theme:depends("enable", 1)
 local font_size = f:taboption("codemirror", Value, "font_size",
     translate("Font Size"))
 font_size.default = "14"
-font_size:value('12', translate('12'))
-font_size:value('14', translate('14'))
-font_size:value('16', translate('16'))
+addValues(font_size, 10, 12, 14, 16)
 font_size.datatype = "uinteger"
 font_size:depends("enable", 1)
 
 local line_spacing = f:taboption("codemirror", Value, "line_spacing",
     translate("Line Spacing"))
 line_spacing.default = "140"
-line_spacing:value('100', translate('100'))
-line_spacing:value('140', translate('140'))
-line_spacing:value('150', translate('150'))
+addValues(line_spacing, 100, 140, 150)
 line_spacing.datatype = "uinteger"
 line_spacing:depends("enable", 1)
 
 local height = f:taboption("codemirror", Value, "height",
     translate("Display Height"))
 height.default = "500"
-height:value('auto', translate('auto'))
-height:value('500', translate('500'))
-height:value('600', translate('600'))
-height:value('800', translate('800'))
+addValues(height, 'auto', 500, 600, 800)
 height:depends("enable", 1)
 
 local width = f:taboption("codemirror", Value, "width",
     translate("Display Width"))
 width.default = "1000"
-width:value('auto', translate('auto'))
-width:value('1000', translate('1000'))
-width:value('1300', translate('1300'))
-width:value('1500', translate('1500'))
+addValues(width, 'auto', 1000, 1300, 1500)
 width:depends("enable", 1)
 
 local only = f:taboption("codemirror", Flag, "only",

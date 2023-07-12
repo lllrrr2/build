@@ -4,12 +4,12 @@ local util = require "luci.util"
 local uci  = require "luci.model.uci".cursor()
 
 local disks, dev_map = {}, {}
-for disk in io.popen("df -h | awk '/dev.*mnt/{print $6,$2,$3,$5,$1}'"):lines() do
+for disk in util.execi("df -h | awk '/dev.*mnt/{print $6,$2,$3,$5,$1}'") do
     local fields = util.split(disk, " ")
     local dev = fields[5]
     if not dev_map[dev] then
         dev_map[dev] = true
-        table.insert(disks, fields)
+        disks[#disks + 1] = fields
     end
 end
 
