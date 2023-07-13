@@ -1,7 +1,7 @@
-require("luci.sys")
-require("luci.util")
+local sys  = require "luci.sys"
+local util = require "luci.util"
 require("luci.model.ipkg")
-local l = luci.util.trim(luci.sys.exec("transmission-daemon -h 2>/dev/null | awk '/https/{print $2}'"))
+local l = util.trim(sys.exec("transmission-daemon -h 2>/dev/null | awk '/https/{print $2}'"))
 
 m = Map("transmission", "Transmission", translate("Transmission daemon is a simple bittorrent client, here you can configure the settings."))
 m:section(SimpleSection).template = "transmission/transmission_status"
@@ -18,17 +18,14 @@ enable.rmempty = false
 config_dir = s:taboption("global", Value, "config_dir", translate("Config file directory"))
 download_dir = s:taboption("global", Value, "download_dir", translate("Download directory"),
     translate("The files are stored in the download directory automatically created under the selected mounted disk"))
-local disks, dev_map = {}, {}
-for disk in io.popen("df -h | awk '/dev.*mnt/{print $6,$2,$3,$5,$1}'"):lines() do
-    local fields = luci.util.split(disk, " ")
-    local dev = fields[5]
+local dev_map = {}
+for disk in util.execi("df -h | awk '/dev.*mnt/{print $6,$2,$3,$5,$1}'") do
+    local diskInfo = util.split(disk, " ")
+    local dev = diskInfo[5]
     if not dev_map[dev] then
         dev_map[dev] = true
-        table.insert(disks, fields)
+        download_dir:value(diskInfo[1] .. "/download", translatef(("%s/download (size: %s) (used: %s/%s)"), diskInfo[1], diskInfo[2], diskInfo[3], diskInfo[4]))
     end
-end
-for _, disk in ipairs(disks) do
-    download_dir:value(disk[1] .. "/download", translatef(("%s/download (size: %s) (used: %s/%s)"), disk[1], disk[2], disk[3], disk[4]))
 end
 
 incomplete_dir_enabled = s:taboption("global", Flag, "incomplete_dir_enabled", translate("Incomplete directory enabled"))
@@ -39,11 +36,11 @@ incomplete_dir:depends("incomplete_dir_enabled", "true")
 user = s:taboption("global", ListValue, "user", translate("Run daemon as user"))
 group = s:taboption("global", ListValue, "group", translate("Run daemon as group"))
 local p_user
-for _, p_user in luci.util.vspairs(luci.util.split(luci.sys.exec("cat /etc/passwd | cut -f 1 -d :"))) do
+for _, p_user in luci.util.vspairs(luci.util.split(sys.exec("cat /etc/passwd | cut -f 1 -d :"))) do
 	user:value(p_user)
 end
 local p_group
-for _, p_group in luci.util.vspairs(luci.util.split(luci.sys.exec("cat /etc/group | cut -f 1 -d :"))) do
+for _, p_group in luci.util.vspairs(luci.util.split(sys.exec("cat /etc/group | cut -f 1 -d :"))) do
 	group:value(p_group)
 end
 cache_size_mb = s:taboption("global", Value, "cache_size_mb", translate("Cache size in MB"))
