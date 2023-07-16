@@ -574,11 +574,11 @@ msgstr "本页是qBittorrent的配置文件内容。"
 msgid "This is the content of the configuration file under <code>%s</code>:"
 msgstr "这是<code>%s</code>下的配置文件内容："
 
-msgid "Last 50 lines of log file:"
-msgstr "日志文件最新的 50 行："
+msgid "Last 30 lines of log file:"
+msgstr "日志文件最新的 0 行："
 
-msgid "Last 50 lines of syslog:"
-msgstr "系统日志最新的 50 行："
+msgid "Last 0 lines of syslog:"
+msgstr "系统日志最新的 30 行："
 
 msgid "No log data."
 msgstr "无日志数据"
