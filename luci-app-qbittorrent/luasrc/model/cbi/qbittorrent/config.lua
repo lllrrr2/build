@@ -1,9 +1,8 @@
 local fs   = require "nixio.fs"
-local sys  = require "luci.sys"
 local util = require "luci.util"
-local uci  = require "luci.model.uci".cursor()
-local BinaryLocation = uci:get("qbittorrent", "main", "BinaryLocation") or "/usr/bin/qbittorrent-nox"
-local ver = sys.exec("export HOME=/var/run/qbittorrent; " .. BinaryLocation .. " -v 2>/dev/null | awk '{print $2}'")
+local con  = luci.model.uci.cursor():get_all("qbittorrent", "main")
+local BinaryLocation = con.BinaryLocation or "/usr/bin/qbittorrent-nox"
+local ver  = util.exec(string.format("export HOME=/var/run/qbittorrent; %s -v 2>/dev/null | awk '{print $2}'", BinaryLocation))
 
 function titlesplit(e)
     return "<p style = 'font-size:15px;font-weight:bold;color: DodgerBlue'>" .. translate(e) .. "</p>"
@@ -11,9 +10,7 @@ end
 
 a = Map("qbittorrent", translate("qBittorrent Downloader"),
     translate("A cross-platform open source BitTorrent client based on QT<br>") ..
-    translate("WebUI default username: admin password: adminadmin<br><b>") ..
-    translate('Current version: </b><b style=\"color:red\">') ..
-    translate(ver .. "</b>"))
+    translatef("Current version: </b><b style='color:red'>%s</b>", ver))
 a:section(SimpleSection).template = "qbittorrent/qbittorrent_status"
 
 t = a:section(NamedSection, "main", "qbittorrent")
@@ -60,14 +57,14 @@ local e = t:taboption("basic", Value, "Username", translate("Username"),
     translate("The login name for WebUI."))
 e.placeholder = "admin"
 
-local password = t:taboption("basic", Value, "Password", translate("Password"),
+local password = t:taboption("basic", Value, "password", translate("Password"),
     translate("The login password for WebUI."))
 password.password = true
 password.template = "qbittorrent/qbt_password"
 password.validate = function(self, value)
-    if value then
+    if value ~= con.password then
         self.Value = value
-        self.flag  = ver:match('%d+%.%d+%.%d+') >= '4.2.0'
+        self.flag  = ver:gsub("%D", "") >= '420'
     end
     return Value.validate(self, value)
 end
@@ -92,9 +89,6 @@ e.placeholder = "/usr/sbin/qbittorrent-nox"
 
 e = t:taboption("basic", Flag, "Overwrite", translate("Overwrite the settings"),
     translate("If this option is enabled, the configuration set in WebUI will be replaced by the one in the LuCI."))
-e.enabled = 'true'
-e.disabled = 'false'
-e.default = e.enabled
 
 e = t:taboption("connection", Flag, "UPnP", translate("Use UPnP for Connections"),
     translate("Using the UPnP / NAT-PMP port of the router for connecting to WebUI."))
@@ -110,12 +104,12 @@ e.disabled = "false"
 e.default = e.disabled
 
 o = t:taboption("connection", Value, "PortRangeMin",
-    translate("Connection Port"), translate(" "))
+    translate("Connection Port"))
 o:depends("UseRandomPort", false)
+o.btnclick = "randomToken();"
 o.datatype = "range(1024,65535)"
 o.template = "qbittorrent/qbt_value"
 o.btntext = translate("Generate Randomly")
-o.btnclick = "randomToken();"
 
 e = t:taboption("connection", Value, "GlobalDLLimit", translate("Global Download Speed"))
 e.datatype = "float"

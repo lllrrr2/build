@@ -135,7 +135,7 @@ init_instance() {
 				"GlobalDLLimit" "GlobalDLLimitAlt" "GlobalUPLimit"	"GlobalUPLimitAlt" \
 				"PortRangeMin" "InetAddress" "UPnP"
 	sed_options "Preferences" "Bittorrent" \
-				"DHT" "Encryption" "LSD" "MaxConnecs" "MaxConnecsPerTorrent" "GlobalMaxRatio" \
+				"DHT" "Encryption" "LSD" "MaxConnecs" "MaxConnecsPerTorrent" "MaxRatio" \
 				"MaxRatioAction" "MaxUploads" "MaxUploadsPerTorrent" "PeX" "uTP_rate_limited"
 	sed_options "Preferences" "Advanced" \
 				"AnnounceToAllTrackers" "AnonymousMode" "IgnoreLimitsLAN" "IncludeOverhead" "osCache" "OutgoingPortsMax" \
@@ -147,7 +147,7 @@ init_instance() {
 
 	procd_open_instance "$instance"
 	procd_set_param command "$PROG"
-	procd_append_param command --profile="$RootProfilePath"
+	procd_append_param command --profile="$RootProfilePath" --webui-port="$Port"
 
 	[ -z "$ConfigurationName" ] || procd_append_param command --configuration="$ConfigurationName"
 

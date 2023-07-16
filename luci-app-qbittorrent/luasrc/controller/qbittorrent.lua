@@ -17,8 +17,11 @@ end
 
 function encryptPassword()
     local password = http.formvalue('password')
-    uci:set("qbittorrent", "main", "Password", password)
-    uci:commit("qbittorrent")
+    if password then
+        sys.exec("uci set qbittorrent.main.Password=" .. password)
+        sys.exec("uci commit qbittorrent")
+        sys.init.restart("qbittorrent")
+    end
 end
 
 function act_status()
