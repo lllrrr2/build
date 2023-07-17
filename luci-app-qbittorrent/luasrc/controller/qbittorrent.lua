@@ -16,10 +16,14 @@ function index()
 end
 
 function encryptPassword()
+    local flag = http.formvalue('flag')
     local password = http.formvalue('password')
+
     if password then
-        sys.exec("uci set qbittorrent.main.Password=" .. password)
-        sys.exec("uci commit qbittorrent")
+        local password_key = flag and "PBKDF2" or "ha1"
+        local command = string.format("uci -q set qbittorrent.main.Password_%s='%s'", password_key, password)
+        sys.exec(command)
+        sys.exec("uci -q commit qbittorrent")
         sys.init.restart("qbittorrent")
     end
 end
@@ -27,19 +31,11 @@ end
 function act_status()
     local BinaryLocation = con.BinaryLocation or "/usr/bin/qbittorrent-nox"
     local status = {
-        pid = 0,
-        pat = "",
-        port = "",
-        https = "",
-        running = "";
+        port  = con.Port  or '8080',
+        https = con.https or 'false',
+        pid   = sys.exec("pidof " .. BinaryLocation) or "",
+        pat   = BinaryLocation ~= "/usr/bin/qbittorrent-nox" and BinaryLocation or nil
     }
-    status.port  = con.Port  or '8080'
-    status.https = con.https or 'false'
-    status.pid   = sys.exec("pidof " .. BinaryLocation) or ""
-    status.running = status.pid
-    if BinaryLocation ~= "/usr/bin/qbittorrent-nox" then
-        status.pat = BinaryLocation
-    end
     http.prepare_content("application/json")
     http.write_json(status)
 end
@@ -47,14 +43,12 @@ end
 function action_log_read()
     local file = {
         log    = "",
-        syslog = "";
+        syslog = sys.exec("/sbin/logread -e qbittorrent | tail -n 30")
     }
-    local log_dir  = con.RootProfilePath or "/tmp"
-    local log_file = log_dir .. "/qBittorrent/data/logs/qbittorrent.log"
+    local log_file = (con.RootProfilePath or "/tmp") .. "/qBittorrent/data/logs/qbittorrent.log"
     if nixio.fs.access(log_file) then
         file.log = sys.exec("tail -n 30 %s | sed 'x;1!H;$!d;x'" %log_file)
     end
-    file.syslog = sys.exec("/sbin/logread -e qbittorrent | tail -n 30")
     http.prepare_content("application/json")
     http.write_json(file)
 end

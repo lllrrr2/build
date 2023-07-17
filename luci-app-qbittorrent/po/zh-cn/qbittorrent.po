@@ -575,9 +575,9 @@ msgid "This is the content of the configuration file under <code>%s</code>:"
 msgstr "这是<code>%s</code>下的配置文件内容："
 
 msgid "Last 30 lines of log file:"
-msgstr "日志文件最新的 0 行："
+msgstr "日志文件最新的 30 行："
 
-msgid "Last 0 lines of syslog:"
+msgid "Last 30 lines of syslog:"
 msgstr "系统日志最新的 30 行："
 
 msgid "No log data."

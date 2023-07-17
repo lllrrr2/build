@@ -5,13 +5,13 @@ local BinaryLocation = con.BinaryLocation or "/usr/bin/qbittorrent-nox"
 local ver  = util.exec(string.format("export HOME=/var/run/qbittorrent; %s -v 2>/dev/null | awk '{print $2}'", BinaryLocation))
 
 function titlesplit(e)
-    return "<p style = 'font-size:15px;font-weight:bold;color: DodgerBlue'>" .. translate(e) .. "</p>"
+    return translatef("<p style='font-size:13px; font-weight:bold; color:DodgerBlue'>%s</p>", translate(e))
 end
 
 a = Map("qbittorrent", translate("qBittorrent Downloader"),
     translate("A cross-platform open source BitTorrent client based on QT<br>") ..
     translatef("Current version: </b><b style='color:red'>%s</b>", ver))
-a:section(SimpleSection).template = "qbittorrent/qbittorrent_status"
+a:section(SimpleSection).template = "qbittorrent/qb_status"
 
 t = a:section(NamedSection, "main", "qbittorrent")
 t:tab("basic", translate("Basic Settings"))
@@ -60,7 +60,7 @@ e.placeholder = "admin"
 local password = t:taboption("basic", Value, "password", translate("Password"),
     translate("The login password for WebUI."))
 password.password = true
-password.template = "qbittorrent/qbt_password"
+password.template = "qbittorrent/qb_password"
 password.validate = function(self, value)
     if value ~= con.password then
         self.Value = value
@@ -108,7 +108,7 @@ o = t:taboption("connection", Value, "PortRangeMin",
 o:depends("UseRandomPort", false)
 o.btnclick = "randomToken();"
 o.datatype = "range(1024,65535)"
-o.template = "qbittorrent/qbt_value"
+o.template = "qbittorrent/qb_value"
 o.btntext = translate("Generate Randomly")
 
 e = t:taboption("connection", Value, "GlobalDLLimit", translate("Global Download Speed"))

@@ -9,7 +9,7 @@
     XHR.poll(5, '<%=url("admin/nas/qbittorrent/status")%>', null, function(x, data) {
         var tb = document.getElementById('qbittorrent_status');
         if (data && tb) {
-            if (data.running) {
+            if (data.pid) {
                 var links = '<em><b><font color="green">qBittorrent <%:RUNNING%></font></b></em><input type="button" class="cbi-button cbi-button-apply mar-10" value="<%:Open Web Interface%>"/>';
                 if (data.pat) {
                     links += `<em><%:The current qBittorrent is at%><font color="red">${data.pat}</em>`;
@@ -29,9 +29,7 @@
     };
 
     function randomToken() {
-        var minPort = 1024;
-        var maxPort = 65535;
-        document.getElementById('cbid.qbittorrent.main.PortRangeMin').value = Math.floor(Math.random() * (maxPort - minPort + 1)) + minPort;
+        document.getElementById('cbid.qbittorrent.main.PortRangeMin').value = Math.floor(Math.random() * (65535 - 1024 + 1)) + 1024;
     };
 //]]>
 </script>
