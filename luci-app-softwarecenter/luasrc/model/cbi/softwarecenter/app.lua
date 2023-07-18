@@ -15,7 +15,6 @@ if fs.access("/etc/init.d/entware") then
     }
 
     local function set_config(config, section)
-        if not section then return end
         uci:set("softwarecenter", config, section)
         uci:commit("softwarecenter")
     end
@@ -55,7 +54,7 @@ if fs.access("/etc/init.d/entware") then
     local function execute(action)
         function p.write()
             if action:match("install") or action:match("remove") then
-                set_config()
+                set_config(self, value)
                 redirect("log")
                 util.exec(action)
             else

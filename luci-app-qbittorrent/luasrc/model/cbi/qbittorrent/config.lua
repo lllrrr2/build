@@ -1,4 +1,3 @@
-local fs   = require "nixio.fs"
 local util = require "luci.util"
 local con  = luci.model.uci.cursor():get_all("qbittorrent", "main")
 local BinaryLocation = con.BinaryLocation or "/usr/bin/qbittorrent-nox"
@@ -43,7 +42,8 @@ for disk in util.execi("df -h | awk '/dev.*mnt/{print $6,$2,$3,$5,$1}'") do
     local dev = diskInfo[5]
     if not dev_map[dev] then
         dev_map[dev] = true
-        download_location:value(diskInfo[1] .. "/download", translatef(("%s/download (size: %s) (used: %s/%s)"), diskInfo[1], diskInfo[2], diskInfo[3], diskInfo[4]))
+        download_location:value(diskInfo[1] .. "/download",
+            translatef(("%s/download (size: %s) (used: %s/%s)"), diskInfo[1], diskInfo[2], diskInfo[3], diskInfo[4]))
     end
 end
 
@@ -89,9 +89,12 @@ e.placeholder = "/usr/sbin/qbittorrent-nox"
 
 e = t:taboption("basic", Flag, "Overwrite", translate("Overwrite the settings"),
     translate("If this option is enabled, the configuration set in WebUI will be replaced by the one in the LuCI."))
+e.enabled = "true"
+e.disabled = "false"
+e.default = e.enabled
 
 e = t:taboption("connection", Flag, "UPnP", translate("Use UPnP for Connections"),
-    translate("Using the UPnP / NAT-PMP port of the router for connecting to WebUI."))
+    translate("Use UPnP/ NAT-PMP port forwarding from the router."))
 e.enabled = "true"
 e.disabled = "false"
 e.default = e.enabled
@@ -99,9 +102,9 @@ e.default = e.enabled
 e = t:taboption("connection", Flag, "UseRandomPort", translate("Use Random Port"),
     translate("Assign a different port randomly every time when qBittorrent starts up," ..
     ' which will invalidate the customized options.'))
-e.enabled = "true"
-e.disabled = "false"
-e.default = e.disabled
+e.enabled = 'true'
+e.disabled = 'false'
+e.default = e.enabled
 
 o = t:taboption("connection", Value, "PortRangeMin",
     translate("Connection Port"))
@@ -164,7 +167,7 @@ e = t:taboption("downloads", Flag, "PreAllocation", translate("Pre Allocation"),
     translate("Pre-allocate disk space for all files."))
 e.enabled = "true"
 e.disabled = "false"
- e.default = e.disabled
+ e.default = e.enabled
 
 e = t:taboption("downloads", Flag, "UseIncompleteExtension", translate("Use Incomplete Extension"),
     translate("The incomplete tasks will be added the extension of !qB."))
@@ -289,16 +292,15 @@ e = t:taboption("bittorrent", Value, "GlobalMaxSeedingMinutes",
 e.datatype = "integer"
 
 e = t:taboption("bittorrent", DummyValue, "Queueing Setting", titlesplit("Queueing Setting"))
-
 e = t:taboption("bittorrent", Flag, "QueueingEnabled", translate("Enable Torrent Queueing"))
 e.enabled = "true"
 e.disabled = "false"
-e.default = e.enabled
+e.default = e.disabled
 
 e = t:taboption("bittorrent", Value, "MaxActiveDownloads",
     translate("Maximum Active Downloads"))
 e.datatype = "integer"
-e.placeholder = "3"
+e.placeholder = ""
 
 e = t:taboption("bittorrent", Value, "MaxActiveUploads", translate("Max Active Uploads"))
 e.datatype = "integer"
@@ -423,12 +425,6 @@ e = t:taboption('logger', Value, 'SaveTime', translate('Log Keep Time'),
     translate('Give the ' .. 'time for keeping the old log, refer the setting "Delete Old Backup", eg. 1d' .. ' for one day, 1m for one month and 1y for one year.'))
 e:depends('Enabled', 'true')
 e.datatype = 'string'
-
-e = t:taboption('connection', Flag, 'UPnP', translate('Use UPnP for Connections'),
-    translate('Use UPnP/ NAT-PMP port forwarding from the router.'))
-e.enabled = 'true'
-e.disabled = 'false'
-e.default = e.enabled
 
 e = t:taboption("advanced", Flag, "IncludeOverhead", translate("Limit Overhead Usage"),
     translate("The overhead usage is been limitted."))

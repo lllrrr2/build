@@ -574,11 +574,17 @@ msgstr "本页是qBittorrent的配置文件内容。"
 msgid "This is the content of the configuration file under <code>%s</code>:"
 msgstr "这是<code>%s</code>下的配置文件内容："
 
-msgid "Last 30 lines of log file:"
-msgstr "日志文件最新的 30 行："
+msgid "Last %s lines of file:"
+msgstr "日志文件最新的 %s 行："
 
-msgid "Last 30 lines of syslog:"
-msgstr "系统日志最新的 30 行："
+msgid "Last %s lines of syslog:"
+msgstr "系统日志最新的 %s 行："
+
+msgid "Failed to load log data."
+msgstr "无法加载日志数据。"
+
+msgid "Number of lines to display:"
+msgstr "显示行数："
 
 msgid "No log data."
 msgstr "无日志数据"
@@ -621,9 +627,6 @@ msgstr "当前的qBittorrent在"
 
 msgid "qBittorrent Downloader"
 msgstr "qBittorrent 下载器"
-
-msgid "Failed to load log data."
-msgstr "无法加载日志数据。"
 
 msgid "%s/download (size: %s) (used: %s/%s)"
 msgstr "%s/download (大小: %s) (已用: %s/%s)"
