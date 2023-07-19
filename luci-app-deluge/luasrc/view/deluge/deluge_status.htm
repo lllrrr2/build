@@ -1,33 +1,22 @@
 <script type="text/javascript">//<![CDATA[
-XHR.poll(5, '<%=url("admin/nas/deluge/status")%>', null,
-	function(x, data) {
-		var tb = document.getElementById('deluge_status');
-		if (data) {
-			if (data.running) {
-				tb.innerHTML = '<em><b><font color=green>Deluge <%:RUNNING%></font></b></em><input class="cbi-button cbi-button-apply mar-10" type="button" value="<%:Open Web Interface%>";/>';
-				tb.onclick = function() {
-					openwebui(data.port, data.https)
-				}
-			} else {
-				tb.innerHTML = '<em><b><font color=red>Deluge <%:NOT RUNNING%></font></b></em>';
-			}
-		}
-	}
-);
+    XHR.poll(5, '<%=url("admin/nas/deluge/status")%>', null, function(x, data) {
+        const tb = document.getElementById('deluge_status');
+        if (data?.running) {
+            tb.innerHTML = `<em><b><font color="green">Deluge <%:RUNNING%></font></b></em><input class="cbi-button cbi-button-apply mar-10" type="button" value="<%:Open Web Interface%>" onclick="openWebUI('${data.port}', '${data.https}')"/>`;
+        } else {
+            tb.innerHTML = `<em><b><font color="red">Deluge <%:NOT RUNNING%></font></b></em>`;
+        }
+    });
 
-function openwebui(port, https){
-	var url = window.location.host + ':' + port;
-	if (https == 'false') {
-		window.open('http://' + url, 'deluge');
-	} else {
-		window.open('https://' + url, 'deluge');
-	}
-};
-//]]>
-</script>
-<style>.mar-10 {margin-left: 20px; margin-right: 10px;}</style>
+    function openWebUI(port, https) {
+        var protocol = (https === 'false') ? 'http://' : 'https://';
+        var url = window.location.host + ':' + port;
+        window.open(protocol + url, 'deluge');
+    }
+//]]></script>
+<style>.mar-10 { margin-left: 20px; margin-right: 10px; }</style>
 <fieldset class="cbi-section">
-	<p id="deluge_status">
-		<em><%:Collecting data...%></em>
-	</p>
+    <p id="deluge_status">
+        <em><%:Collecting data...%></em>
+    </p>
 </fieldset>
