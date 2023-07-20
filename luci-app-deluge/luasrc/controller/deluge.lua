@@ -24,9 +24,14 @@ function act_status()
  end
 
 function action_log_read()
+    local data = {
+        log = "",
+        syslog = sys.exec("logread -e deluge | tail -n 60");
+    }
+    local log_file = (con.log_dir or con.profile_dir or "") .. "/deluge.log"
+    if nixio.fs.access(log_file) then
+        data.log = sys.exec("tail -n 60 " .. log_file)
+    end
     http.prepare_content("application/json")
-    http.write_json({
-        log = sys.exec("tail -n 60 " .. (con.log_dir or con.profile_dir) .. "/deluge.log") or "",
-        syslog = sys.exec("logread -e deluge | tail -n 60")
-    })
+    http.write_json(data)
 end
