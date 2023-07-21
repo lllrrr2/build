@@ -8,14 +8,8 @@ STOP=10
 . /usr/bin/softwarecenter/web_install.sh
 
 SOFTWARECENTER() {
-    config_load softwarecenter
-    get_config="a_delaytime cpu_model delaytime deploy_entware deploy_mysql deploy_nginx disk_mount download_dir entware_enable mysql_enabled nginx_enabled partition_disk pass old_pass swap_enabled swap_path swap_size user"
 
-    for rt in $get_config; do
-        config_get_bool $rt main $rt
-        config_get $rt main $rt
-    done
-    # entware环境
+    get_config "a_delaytime" "cpu_model" "delaytime" "deploy_entware" "deploy_mysql" "deploy_nginx" "disk_mount" "download_dir" "entware_enable" "mysql_enabled" "nginx_enabled" "partition_disk" "pass" "old_pass" "swap_enabled" "swap_path" "swap_size" "user"
     source /etc/profile >/dev/null 2>&1
     if [ $entware_enable ]; then
         if [ ! -e /etc/init.d/entware ]; then

@@ -26,7 +26,7 @@ if fs.access("/etc/init.d/entware") then
     local function op_webui(elementText, port, url)
         local finalPort = port and tostring(port) or url
         local finalUrl  = port and [[' + window.location.host + ':]] .. finalPort or finalPort
-        return translatef([[&nbsp;&nbsp;&nbsp;<input class="cbi-button cbi-button-apply" type="button" value="%s" onclick="window.open('http://%s', '%s')"/>]], translate(elementText), finalUrl, tostring(math.random(10, 99)))
+        return translatef([[&nbsp;&nbsp;&nbsp;<input class="cbi-button cbi-button-apply" type="button" value="%s" onclick="window.open('http://%s', '%s')"/>]], translate(elementText), finalUrl, sys.uniqueid(3))
     end
 
     local aria2_webui = "<br>" ..

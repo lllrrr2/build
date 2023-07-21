@@ -3,74 +3,71 @@
 START=99
 
 get_set_conf() {
-	/usr/bin/python3 "$profile_dir/set_get.py" "$1" "$2" "$3"
+    /usr/bin/python3 "$profile_dir/set_get.py" "$1" "$2" "$3"
 }
 
 get_config() {
-	while [ $# != 0 ]; do
-		eval "${1}"="`uci get deluge.main.${1}`" 2>/dev/null
-		shift
-	done
+    while [ $# != 0 ]; do
+        eval "$1"="$(uci -q get deluge.main.$1)"
+        shift
+    done
 }
 
 set_conf() {
-	# $1文件，$2节点，$3值
-	file="$1" node="$2" value="$3"
-	deluge_conf=$(grep "\"$node\"" "$file" | sed 's/ //g; s/"//g; s/,/:/g;' | cut -d':' -f2)
-	if [ "$value" != "$deluge_conf" ]; then
-		if [ "$(grep "\"$node\"" "$file" | grep -o '"' | wc -l)" = 2 ]; then
-			sed -i "/\"$node\"/ {s|: .*,|: $value,|}" "$file"
-		else
-			sed -i "/\"$node\"/ {s|: \".*\"|: \"$value\"|}" "$file"
-		fi
-	fi
+    # $1文件，$2节点，$3值
+    file="$1" node="$2" value="$3"
+    deluge_conf=$(grep "\"$node\"" "$file" | sed 's/[ ,"]//g' | cut -d':' -f2)
+
+    if [ "$deluge_conf" != "$value" ]; then
+        sed -i "/\"$node\"/s|$deluge_conf|$value|" "$file"
+    fi
 }
 
 make_dir() {
-	while [ $# != 0 ]; do
-		[ -d "$1" ] || mkdir -m 755 -p "$1" 2>/dev/null
-		shift
-	done
+    while [ $# != 0 ]; do
+        [ -d "$1" ] || mkdir -m 755 -p "$1" 2>/dev/null
+        shift
+    done
 }
 
 deluge_boot() {
-	web_conf="$profile_dir/web.conf"
-	core_conf="$profile_dir/core.conf"
-	make_dir "$profile_dir" "$download_location"
+    web_conf="$profile_dir/web.conf"
+    core_conf="$profile_dir/core.conf"
+    make_dir "$profile_dir" "$download_location"
 
-	if [ x"$enable_logging" = x1 ]; then
-		[ -n "$log_dir" ] && {
-			make_dir "$log_dir"
-			log_file="-l $log_dir/deluge.log"
-		} || {
-			log_file="-l $profile_dir/deluge.log"
-		}
-		[ -n "$log_level" ] && log_level="-L $log_level"
-	else
-		log_file=""
-		log_level=""
-	fi
+    if [ x"$enable_logging" = x1 ]; then
+        [ -n "$log_dir" ] && {
+            make_dir "$log_dir"
+            log_file="-l $log_dir/deluge.log"
+        } || {
+            log_file="-l $profile_dir/deluge.log"
+        }
+        [ -n "$log_level" ] && log_level="-L $log_level"
+    else
+        log_file=""
+        log_level=""
+    fi
 
-	if [ -e "$core_conf" ]; then
-		set_conf "$core_conf" cache_size "$cache_size"
-		set_conf "$core_conf" download_location "$download_location"
+    if [ -e "$core_conf" ]; then
+        set_conf "$core_conf" cache_size "$cache_size"
+        set_conf "$core_conf" download_location "$download_location"
 
-		if [ x"$move_completed_enabled" = x1 ]; then
-			make_dir "$move_completed_path"
-			set_conf "$core_conf" move_completed 'true'
-			set_conf "$core_conf" move_completed_path "$move_completed_path"
-		else
-			set_conf "$core_conf" move_completed 'false'
-		fi
+        if [ x"$move_completed_enabled" = x1 ]; then
+            make_dir "$move_completed_path"
+            set_conf "$core_conf" move_completed 'true'
+            set_conf "$core_conf" move_completed_path "$move_completed_path"
+        else
+            set_conf "$core_conf" move_completed 'false'
+        fi
 
-		if [ x"$copy_torrent_file_enabled" = x1 ]; then
-			make_dir "$torrentfiles_location"
-			set_conf "$core_conf" copy_torrent_file 'true'
-			set_conf "$core_conf" torrentfiles_location "$torrentfiles_location"
-		else
-			set_conf "$core_conf" copy_torrent_file 'false'
-		fi
-	else
+        if [ x"$copy_torrent_file_enabled" = x1 ]; then
+            make_dir "$torrentfiles_location"
+            set_conf "$core_conf" copy_torrent_file 'true'
+            set_conf "$core_conf" torrentfiles_location "$torrentfiles_location"
+        else
+            set_conf "$core_conf" copy_torrent_file 'false'
+        fi
+    else
 		cat <<-EOF > "$core_conf"
 		{
 		    "random_port": false,
@@ -83,8 +80,8 @@ deluge_boot() {
 		    "torrentfiles_location": "$torrentfiles_location"
 		}
 		EOF
-	fi
-	if [ ! -e "$profile_dir/sha1.py" ]; then
+    fi
+    if [ ! -e "$profile_dir/sha1.py" ]; then
 		cat <<-EOF > "$profile_dir/sha1.py"
 		#!/usr/bin/env python
 		from sys import argv
@@ -129,60 +126,55 @@ deluge_boot() {
 		        else:
 		            write_conf(value)
 		EOF
-	fi
-	_pwd_salt=$(awk -F'"' '/pwd_salt/{print $4}' $profile_dir/web.conf 2>/dev/null)
-	[ -n "$_pwd_salt" ] && dwsalt=$_pwd_salt || \
-	dwsalt="$(head /dev/urandom | tr -dc 'a-e0-9' 2>&1 | head -c 40; echo)"
-	pwd_sha1="$(/usr/bin/python3 $profile_dir/sha1.py $password $dwsalt)"
-	if [ -e "$web_conf" ]; then
-		set_conf "$web_conf" port "$port"
-		set_conf "$web_conf" https "$https"
-		set_conf "$web_conf" language "$language"
-		set_conf "$web_conf" pwd_sha1 "$pwd_sha1"
-		# /usr/bin/python3 $profile_dir/set_get.py web port $port
-		# /usr/bin/python3 $profile_dir/set_get.py web https $https
-		# /usr/bin/python3 $profile_dir/set_get.py web language $language
-		# /usr/bin/python3 "$profile_dir/set_get.py" web pwd_sha1 "$password"
-	else
+    fi
+    _pwd_salt=$(awk -F'"' '/pwd_salt/{print $4}' $profile_dir/web.conf 2>/dev/null)
+    [ -n "$_pwd_salt" ] && dwsalt=$_pwd_salt || \
+    dwsalt="$(head /dev/urandom | tr -dc 'a-e0-9' 2>&1 | head -c 40; echo)"
+    pwd_sha1="$(/usr/bin/python3 $profile_dir/sha1.py $password $dwsalt)"
+    if [ -e "$web_conf" ]; then
+        set_conf "$web_conf" port "$port"
+        set_conf "$web_conf" https "$https"
+        set_conf "$web_conf" language "$language"
+        set_conf "$web_conf" pwd_sha1 "$pwd_sha1"
+        # /usr/bin/python3 $profile_dir/set_get.py web port $port
+        # /usr/bin/python3 $profile_dir/set_get.py web https $https
+        # /usr/bin/python3 $profile_dir/set_get.py web language $language
+        # /usr/bin/python3 "$profile_dir/set_get.py" web pwd_sha1 "$password"
+    else
 		cat <<-EOF > "$web_conf"
 		{
 		    "port": $port,
 		    "https": $https,
-		    "language": $language,
+		    "language": "$language",
 		    "show_session_speed": true,
 		    "geoip_db_location": "$geoip_db_location/GeoIP.dat",
 		    "pwd_salt": "$dwsalt",
 		    "pwd_sha1": "$pwd_sha1"
 		}
 		EOF
-	fi
-	if [ ! -f "$profile_dir/.configured" ]; then
-		logger -t "deluge" -p "Setting default deluge ui to console ... "
-		/usr/bin/deluge -s console -c "$profile_dir"
-		touch "$profile_dir/.configured"
-	fi
-	port="-p $port"; user="-U $user"; profile_dir="-c $profile_dir"
-	/usr/bin/python3 /usr/bin/deluged    $profile_dir $log_file $log_level $user
-	/usr/bin/python3 /usr/bin/deluge-web $profile_dir $log_file $log_level $user $port
+    fi
+    if [ ! -f "$profile_dir/.configured" ]; then
+        logger -t "deluge" -p "Setting default deluge ui to console ... "
+        /usr/bin/deluge -s console -c "$profile_dir"
+        touch "$profile_dir/.configured"
+    fi
+    port="-p $port"; user="-U $user"; profile_dir="-c $profile_dir"
+    /usr/bin/python3 /usr/bin/deluged    $profile_dir $log_file $log_level $user
+    /usr/bin/python3 /usr/bin/deluge-web $profile_dir $log_file $log_level $user $port
 }
 
 start() {
-	[ x$(uci get deluge.main.enabled) = x ] && return 1
-	get_config `awk '/option/{print $2}' /etc/config/deluge`
-	if [ -d "$profile_dir" ]; then
-		deluge_boot
-	else
-		deluge_boot
-		sleep 5
-		restart
-	fi
-	sleep 3
-	ps | grep deluge | awk '/usr/{print $1}' >/dev/null 2>&1 && logger -t 'deluge' -p 'daemon.info' 'Start deluge service'
-	ps | grep deluge | awk '/web/{print $1}' >/dev/null 2>&1 && logger -t 'deluge' -p 'daemon.info' 'Start deluge-web service'
+    [ x$(uci get deluge.main.enabled) = x ] && return 1
+    get_config "user" "profile_dir" "geoip_db_location" "cache_size" "enable_logging" "download_location" \
+    "language" "password" "port" "https" "log_dir" "move_completed_path" "torrentfiles_location" "log_level"
+    deluge_boot
+    sleep 3
+    ps | grep deluge | awk '/usr/{print $1}' >/dev/null 2>&1 && logger -t 'deluge' -p 'daemon.info' 'Start deluge service'
+    ps | grep deluge | awk '/web/{print $1}' >/dev/null 2>&1 && logger -t 'deluge' -p 'daemon.info' 'Start deluge-web service'
 }
 
 stop() {
-	kill "$(ps | grep deluge | awk '/usr/{print $1}')" >/dev/null 2>&1
-	kill "$(ps | grep deluge | awk '/web/{print $1}')" >/dev/null 2>&1
-	logger -t 'deluge' -p 'daemon.info' 'Stop deluge service'
+    kill "$(ps | grep deluge | awk '/usr/{print $1}')" >/dev/null 2>&1
+    kill "$(ps | grep deluge | awk '/web/{print $1}')" >/dev/null 2>&1
+    logger -t 'deluge' -p 'daemon.info' 'Stop deluge service'
 }

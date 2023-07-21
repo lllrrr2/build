@@ -14,7 +14,8 @@ function process_result(result_output, exit_code, command, file_path)
     if exit_code == 0 then
         if #result_output > 2 then
             return send_json_response({
-                result = "success", data = luci.util.pcdata(result_output)
+                result = "success",
+                data = luci.util.pcdata(result_output)
             })
         else
             return send_json_response({
@@ -32,11 +33,11 @@ function action_run()
     local command   = luci.http.formvalue('command')
     local file_path = luci.http.formvalue('file_path')
 
-    if command == '' and (file_path == '' or not nixio.fs.access(file_path)) then
+    if command == '' and file_path == '' then
         return send_json_response({
             result = luci.i18n.translate("No input for the command line yet. Don't click 'Execute Command'!")
         })
-    elseif command == '' and file_path ~= '' then
+    elseif file_path ~= '' then
         local uci = require "luci.model.uci".cursor()
         local con = uci:get_all("luci", "tinynote")
         local sum = 'model_note' .. file_path:match('%d+')
@@ -49,7 +50,7 @@ function action_run()
 
     local command_name = command ~= '' and luci.sys.exec("/usr/bin/which " .. command:match("^([^%s]+)")) or ''
 
-    if #command_name < 4 or command_name:find("no ") == 1 then
+    if #command_name < 4 or command_name:match("no") then
         return send_json_response({
             result = luci.i18n.translatef("The current system cannot find the command '%s' you entered!", command:match("^([^%s]+)"))
         })
