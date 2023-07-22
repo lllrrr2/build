@@ -11,6 +11,7 @@ a:section(SimpleSection).template = "deluge/deluge_status"
 
 t = a:section(NamedSection, "main", "deluge")
 t:tab("Settings", translate("Basic Settings"))
+t:tab("download", translate("下载设置"))
 t:tab("other_settings", translate("其他设置"))
 
 e = t:taboption("Settings", Flag, "enabled", translate("Enabled"))
@@ -56,13 +57,64 @@ e.enabled = "true"
 e.disabled = "false"
 e.default = e.disabled
 
-e = t:taboption("other_settings", Flag, "move_completed_enabled", translate("将已完成的任务移动到"))
-e = t:taboption("other_settings", Value, "move_completed_path", translate("路径"))
+e = t:taboption("download", Flag, "event_seed", translate("活动种子"))
+e = t:taboption("download", Value, "max_active_limit", translate("总数"))
+e.placeholder = "-1"
+e:depends("event_seed", 1)
+
+e = t:taboption("download", Value, "max_active_downloading", translate("正在下载"))
+e.placeholder = "-1"
+e:depends("event_seed", 1)
+
+e = t:taboption("download", Value, "max_active_seeding", translate("做种"))
+e.placeholder = "-1"
+e:depends("event_seed", 1)
+
+e = t:taboption("download", Flag, "speed", translate("全局带宽使用"))
+e = t:taboption("download", Value, "max_connections_global", translate("最大连接数"))
+e.placeholder = "-1"
+e:depends("speed", 1)
+
+e = t:taboption("download", Value, "max_download_speed", translate("最大下载速度"))
+e.placeholder = "-1"
+e:depends("speed", 1)
+
+e = t:taboption("download", Value, "max_upload_speed", translate("最大上传速度"))
+e.placeholder = "-1"
+e:depends("speed", 1)
+
+e = t:taboption("download", Value, "最大上传通道", translate("最大上传通道"))
+e.placeholder = "-1"
+e:depends("speed", 1)
+
+e = t:taboption("download", Flag, "per_torrent", translate("每个种子带宽使用"))
+e = t:taboption("download", Value, "max_connections_per_torrent", translate("最大连接数"))
+e.placeholder = "-1"
+e:depends("per_torrent", 1)
+
+e = t:taboption("download", Value, "max_upload_slots_per_torrent", translate("最大上传通道"))
+e.placeholder = "-1"
+e:depends("per_torrent", 1)
+
+e = t:taboption("download", Value, "max_download_speed_per_torrent", translate("最大下载速度"))
+e.placeholder = "-1"
+e:depends("per_torrent", 1)
+
+e = t:taboption("download", Value, "max_upload_speed_per_torrent", translate("最大上传速度"))
+e.placeholder = "-1"
+e:depends("per_torrent", 1)
+
+e = t:taboption("download", Flag, "sequential_download", translate("顺序下载"))
+
+e = t:taboption("download", Flag, "prioritize_first_last_pieces", translate("任务首尾块优先"))
+
+e = t:taboption("download", Flag, "move_completed_enabled", translate("将已完成的任务移动到"))
+e = t:taboption("download", Value, "move_completed_path", translate("路径"))
 e.placeholder = "/mnt/sda3/download"
 e:depends("move_completed_enabled", 1)
 
-e = t:taboption("other_settings", Flag, "copy_torrent_file_enabled", translate("将种子文件复制到"))
-e = t:taboption("other_settings", Value, "torrentfiles_location", translate("路径"))
+e = t:taboption("download", Flag, "copy_torrent_file_enabled", translate("将种子文件复制到"))
+e = t:taboption("download", Value, "torrentfiles_location", translate("路径"))
 e.placeholder = "/mnt/sda3/download"
 e:depends("copy_torrent_file_enabled", 1)
 
@@ -76,11 +128,11 @@ e = t:taboption("other_settings", Flag, "enable_logging", translate("Enable Log"
 e.rmempty = "false"
 
 e = t:taboption("other_settings", Value, "log_dir", translate("Log Path"), translate("默认保存在/var/log/"))
-e:depends("enable_logging", "1")
+e:depends("enable_logging", 1)
 e.placeholder = "/var/log"
 
 e = t:taboption("other_settings", ListValue, "log_level", translate("日志记录等级"))
-e:depends("enable_logging", "1")
+e:depends("enable_logging", 1)
 e:value("none", translate("none"))
 e:value("error", translate("Error"))
 e:value("warning", translate("Warning"))

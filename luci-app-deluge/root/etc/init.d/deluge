@@ -11,12 +11,23 @@ get_config() {
 
 set_conf() {
     file="$1" node="$2" value="$3"
-    conf=$(grep "\"$node\"" "$file" | sed 's/[ ,"]//g' | cut -d':' -f2)
+    conf="$(grep "\"$node\"" "$file" | sed 's/[ ,"]//g' | cut -d':' -f2)"
     [ -z $value ] && echo $conf && return 0
 
     if [ "$conf" != "$value" ]; then
         sed -i "/\"$node\"/s|$conf|$value|" "$file"
     fi
+    # file="$1"
+    # shift
+    # while [ $# != 0 ]; do
+    #     node="$1" value="\$$node"
+    #     conf="$(grep "\"$node\"" "$file" | sed 's/[ ,"]//g' | cut -d':' -f2)"
+    #     [ -z $value ] && echo $conf && return 0
+
+    #     if [ "$conf" != "$value" ]; then
+    #         sed -i "/\"$node\"/s|$conf|$value|" "$file"
+    #     fi
+    # done
 }
 
 make_dir() {
@@ -58,6 +69,11 @@ deluge_boot() {
         else
             set_conf "$core" copy_torrent_file 'false'
         fi
+    # set_conf "$core" "user" "profile_dir" "geoip_db_location" "cache_size" "enable_logging" "download_location" \
+    # "language" "password" "port" "https" "log_dir" "move_completed_path" "torrentfiles_location" "log_level" \
+    # "sequential_download" "prioritize_first_last_pieces" "max_active_limit" "max_active_downloading" "max_active_seeding" \
+    # "max_connections_global" "max_download_speed" "max_upload_speed" "max_connections_per_torrent" "max_upload_slots_per_torrent" \
+    # "max_download_speed_per_torrent" "max_upload_speed_per_torrent"
     else
 		cat <<-EOF > "$core"
 		{
@@ -66,6 +82,7 @@ deluge_boot() {
 		    "new_release_check": false,
 		    "listen_random_port": null,
 		    "pre_allocate_storage": true,
+		    "new_release_check": false,
 		    "download_location": "$download_location",
 		    "move_completed_path": "$move_completed_path",
 		    "torrentfiles_location": "$torrentfiles_location"
@@ -90,6 +107,11 @@ deluge_boot() {
         set_conf "$web" https "$https"
         set_conf "$web" language "$language"
         set_conf "$web" pwd_sha1 "$pwd_sha1"
+    # set_conf "$web" "user" "profile_dir" "geoip_db_location" "cache_size" "enable_logging" "download_location" \
+    # "language" "password" "port" "https" "log_dir" "move_completed_path" "torrentfiles_location" "log_level" \
+    # "sequential_download" "prioritize_first_last_pieces" "max_active_limit" "max_active_downloading" "max_active_seeding" \
+    # "max_connections_global" "max_download_speed" "max_upload_speed" "max_connections_per_torrent" "max_upload_slots_per_torrent" \
+    # "max_download_speed_per_torrent" "max_upload_speed_per_torrent"
     else
 		cat <<-EOF > "$web"
 		{
