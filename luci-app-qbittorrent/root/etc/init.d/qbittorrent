@@ -39,7 +39,6 @@ sed_options() {
 
 init_instance() {
     [ "$2" = 0 ] || return $2
-    [ x"$EnableService" = x1 ] || return 0
     local fullTempPath instance="${NAME}.$1"
     local confdir="qBittorrent${ConfigurationName:+_}${ConfigurationName}"
 
@@ -135,6 +134,7 @@ service_triggers() {
 }
 
 start_service() {
+    [ x"$(uci -q get qbittorrent.main.EnableService)" = x1 ] || return 0
     uci_load_validate "$NAME" "$NAME" "main" init_instance                  \
         'Address:ipaddr'                                                    \
         'AnnounceToAllTiers:or("true","false")'                             \
@@ -160,7 +160,6 @@ start_service() {
         'DisableAutoTMMByDefault:or("true","false"):true'                   \
         'DiskWriteCacheSize:integer'                                        \
         'DiskWriteCacheTTL:integer'                                         \
-        'EnableService:bool:0'                                              \
         'Enabled:or("true","false"):true'                                   \
         'Encryption:or("0","1","2"):0'                                      \
         'FinishedTorrentExportDir:string'                                   \
