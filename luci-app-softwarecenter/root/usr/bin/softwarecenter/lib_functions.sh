@@ -7,7 +7,6 @@ uci_get_type() {
     echo ${ret:-$2}
 }
 
-
 get_config() {
     while [ $# != 0 ]; do
         eval "${1}"=$(uci -q get softwarecenter.main.${1})
@@ -29,7 +28,7 @@ make_dir() {
 
 _pidof() {
     for g in $@; do
-        if ps | /opt/bin/grep $g | /opt/bin/grep -q opt; then
+        if ps | grep $g | grep -q opt; then
             echo_time "$g 已经运行"
             return 0
         fi
@@ -60,7 +59,7 @@ check_url() {
     local ping_file="/tmp/ping"
     local url="$1"
 
-    if wget -S --no-check-certificate --spider --tries=3 "$url" 2>&1 | /opt/bin/grep -q 'HTTP/1.1 200 OK'; then
+    if wget -S --no-check-certificate --spider --tries=3 "$url" 2>&1 | grep -q 'HTTP/1.1 200 OK'; then
         if [ ! -e "$ping_file" ]; then
             local response_time=$(ping -c 3 "$url" | awk -F'/' '/avg/{print $4}')
             if [ -n "$response_time" ]; then
@@ -109,7 +108,7 @@ modify_port() {
     fi
 
     if [ -x "/opt/bin/deluged" -a -n "$de_port" ]; then
-        old_de_port=$(/opt/bin/grep -oP '(?<=-p )\d+' /opt/etc/*/S81deluge-web)
+        old_de_port=$(grep -oP '(?<=-p )\d+' /opt/etc/*/S81deluge-web)
         if [ "$old_de_port" != "$de_port" ]; then
             check_port_usage "$de_port" de_port
             [ -n "$port" ] && {
@@ -120,7 +119,7 @@ modify_port() {
     fi
 
     if [ -x "/opt/bin/qbittorrent-nox" -a -n "$qb_port" ]; then
-        old_qb_port=$(/opt/bin/grep -oP '(?<=webui-port=)\d+' /opt/etc/*/S89qb*)
+        old_qb_port=$(grep -oP '(?<=webui-port=)\d+' /opt/etc/*/S89qb*)
         if [ "$old_qb_port" != "$qb_port" ]; then
             check_port_usage "$qb_port" qb_port
             [ -n "$port" ] && {
@@ -131,7 +130,7 @@ modify_port() {
     fi
 
     if [ -x "/opt/bin/rtorrent" -a -n "$rt_port" ]; then
-        old_rt_port=$(/opt/bin/grep -oP '^server.port=\s*\K\d+' /opt/etc/*/*/99-rtor*)
+        old_rt_port=$(grep -oP '^server.port=\s*\K\d+' /opt/etc/*/*/99-rtor*)
         if [ "$old_rt_port" != "$rt_port" ]; then
             check_port_usage "$rt_port" rt_port
             [ -n "$port" ] && {
@@ -142,7 +141,7 @@ modify_port() {
     fi
 
     if [ -x "/opt/bin/transmission-daemon" -a -n "$tr_port" ]; then
-        old_tr_port=$(/opt/bin/grep -oP "(?<=--port )\d+" /opt/etc/*/S88tran*)
+        old_tr_port=$(grep -oP "(?<=--port )\d+" /opt/etc/*/S88tran*)
         if [ "$old_tr_port" != "$tr_port" ]; then
             check_port_usage "$tr_port" tr_port
             [ -n "$port" ] && {
@@ -189,9 +188,9 @@ opkg_install() {
     }
 
     for ipk in $@; do
-        if [ "$(/opt/bin/opkg list 2>/dev/null | awk '{print $1}' | /opt/bin/grep -w $ipk)" ]; then
-            if which $ipk | /opt/bin/grep -q opt; then
-                echo_time "$ipk    已经安装 $(which $ipk | /opt/bin/grep -q opt)"
+        if [ "$(/opt/bin/opkg list 2>/dev/null | awk '{print $1}' | grep -w $ipk)" ]; then
+            if which $ipk | grep -q opt; then
+                echo_time "$ipk    已经安装 $(which $ipk | grep -q opt)"
             else
                 echo_time "正在安装  $ipk\c"
                 $time_out /opt/bin/opkg install $ipk --force-maintainer --force-reinstall >/dev/null 2>&1
@@ -271,34 +270,34 @@ entware_set() {
         exit 1
     }
 
-	cat <<-\ENTWARE >/etc/init.d/entware
-	#!/bin/sh /etc/rc.common
-	START=50
+    cat <<-\ENTWARE >/etc/init.d/entware
+    #!/bin/sh /etc/rc.common
+    START=50
 
-	get_entware_path() {
-	    for mount_point in $(mount | awk '/mnt/{print $3}'); do
-	        [ -e "$mount_point/opt/etc/init.d/rc.unslung" ] && echo "$mount_point" && return
-	    done
-	}
+    get_entware_path() {
+        for mount_point in $(mount | awk '/mnt/{print $3}'); do
+            [ -e "$mount_point/opt/etc/init.d/rc.unslung" ] && echo "$mount_point" && return
+        done
+    }
 
-	start() {
-	    [ -d opt ] || mkdir -p opt
-	    entware_path=$(get_entware_path)
-	    [ -z "$entware_path" ] && entware_path=$(uci get softwarecenter.main.disk_mount)
-	    mount -o bind "$entware_path/opt" /opt
-	}
+    start() {
+        [ -d opt ] || mkdir -p opt
+        entware_path=$(get_entware_path)
+        [ -z "$entware_path" ] && entware_path=$(uci get softwarecenter.main.disk_mount)
+        mount -o bind "$entware_path/opt" /opt
+    }
 
-	stop() {
-	    /opt/etc/init.d/rc.unslung stop
-	    umount -lf /opt
-	    rm -rf /opt
-	}
+    stop() {
+        /opt/etc/init.d/rc.unslung stop
+        umount -lf /opt
+        rm -rf /opt
+    }
 
-	restart() {
-	    stop
-	    start
-	}
-	ENTWARE
+    restart() {
+        stop
+        start
+    }
+    ENTWARE
 
     chmod +x /etc/init.d/entware
     /etc/init.d/entware enable
@@ -335,9 +334,9 @@ entware_unset() {
 # 磁盘分区挂载
 system_check() {
     partition_disk="$1"
-    /opt/bin/grep -q $partition_disk /proc/mounts && {
-        filesystem="$(/opt/bin/grep "${partition_disk} " /proc/mounts | awk '{print $3}')"
-        lo=`lsblk | /opt/bin/grep $partition_disk | awk '{print $4}' | sed 's/G//'`
+    grep -q $partition_disk /proc/mounts && {
+        filesystem="$(grep "${partition_disk} " /proc/mounts | awk '{print $3}')"
+        lo=`lsblk | grep $partition_disk | awk '{print $4}' | sed 's/G//'`
         if [ "$filesystem" = "ext4" ]; then
             [[ "${lo%%.*}" -gt 2 ]] && {
                 echo_time "磁盘 $1 符合安装要求"
@@ -369,7 +368,7 @@ system_check() {
 config_swap_init() {
     local size="$1" path="${2:-/opt}/.swap"
 
-    if /opt/bin/grep -q "$path" /proc/swaps; then
+    if grep -q "$path" /proc/swaps; then
         # echo_time "$path 交换分区已存在"
         return
     fi
@@ -396,6 +395,6 @@ config_swap_del() {
 # 获取通用环境变量
 get_env() {
     username=${USER:-$(id -un)}
-    localhost=$(ip addr show br-lan | /opt/bin/grep -oP '(?<=inet\s)\d+(\.\d+){3}')
+    localhost=$(ip addr show br-lan | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
     localhost=${localhost:-"你的路由器IP"}
 }

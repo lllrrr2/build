@@ -17,22 +17,11 @@ set_conf() {
     if [ "$conf" != "$value" ]; then
         sed -i "/\"$node\"/s|$conf|$value|" "$file"
     fi
-    # file="$1"
-    # shift
-    # while [ $# != 0 ]; do
-    #     node="$1" value="\$$node"
-    #     conf="$(grep "\"$node\"" "$file" | sed 's/[ ,"]//g' | cut -d':' -f2)"
-    #     [ -z $value ] && echo $conf && return 0
-
-    #     if [ "$conf" != "$value" ]; then
-    #         sed -i "/\"$node\"/s|$conf|$value|" "$file"
-    #     fi
-    # done
 }
 
 make_dir() {
     while [ $# != 0 ]; do
-        [ -n "$1" -a ! -d "$1" ] && mkdir -m 755 -p "$1" 2>/dev/null
+        [ -n "$1" -a ! -d "$1" ] && mkdir -m 755 -p "$1"
         shift
     done
 }
@@ -45,9 +34,13 @@ deluge_boot() {
     log_file=""
     log_level=""
     if [ x"$enable_logging" = x1 ]; then
-        make_dir "$log_dir"
+        [ -n "$log_dir" ] && {
+            make_dir "$log_dir"
+            log_file="-l $log_dir/deluge.log"
+        } || {
+            log_file="-l $profile_dir/deluge.log"
+        }
         log_level=${log_level:+"-L $log_level"}
-        log_file="-l ${log_dir:-$profile_dir}/deluge.log"
     fi
 
     if [ -e "$core" ]; then
@@ -69,11 +62,6 @@ deluge_boot() {
         else
             set_conf "$core" copy_torrent_file 'false'
         fi
-    # set_conf "$core" "user" "profile_dir" "geoip_db_location" "cache_size" "enable_logging" "download_location" \
-    # "language" "password" "port" "https" "log_dir" "move_completed_path" "torrentfiles_location" "log_level" \
-    # "sequential_download" "prioritize_first_last_pieces" "max_active_limit" "max_active_downloading" "max_active_seeding" \
-    # "max_connections_global" "max_download_speed" "max_upload_speed" "max_connections_per_torrent" "max_upload_slots_per_torrent" \
-    # "max_download_speed_per_torrent" "max_upload_speed_per_torrent"
     else
 		cat <<-EOF > "$core"
 		{
@@ -107,11 +95,6 @@ deluge_boot() {
         set_conf "$web" https "$https"
         set_conf "$web" language "$language"
         set_conf "$web" pwd_sha1 "$pwd_sha1"
-    # set_conf "$web" "user" "profile_dir" "geoip_db_location" "cache_size" "enable_logging" "download_location" \
-    # "language" "password" "port" "https" "log_dir" "move_completed_path" "torrentfiles_location" "log_level" \
-    # "sequential_download" "prioritize_first_last_pieces" "max_active_limit" "max_active_downloading" "max_active_seeding" \
-    # "max_connections_global" "max_download_speed" "max_upload_speed" "max_connections_per_torrent" "max_upload_slots_per_torrent" \
-    # "max_download_speed_per_torrent" "max_upload_speed_per_torrent"
     else
 		cat <<-EOF > "$web"
 		{
