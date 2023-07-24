@@ -2,8 +2,9 @@ local fs   = require "nixio.fs"
 local sys  = require "luci.sys"
 local util = require "luci.util"
 local uci  = require "luci.model.uci".cursor()
+
 function titlesplit(e)
-	return"<p style = \"font-size:15px;font-weight:bold;color: DodgerBlue\">" .. translate(e) .. "</p>"
+    return translatef("<p style='font-size:13px; font-weight:bold; color:DodgerBlue'>%s</p>", translate(e))
 end
 
 a = Map("deluge", translate("Deluge 下载器"), translate("Deluge是一个通过PyGTK建立图形界面的BitTorrent客户端<br>"))
@@ -20,11 +21,11 @@ e.default = "0"
 
 e = t:taboption("Settings", ListValue, "user", translate("Run daemon as user"))
 for t in util.execi("cut -d ':' -f1 /etc/passwd") do
-	e:value(t)
+    e:value(t)
 end
 
 e = t:taboption("Settings", Value, "profile_dir", translate("Root Path of the Profile"), translate("默认保存在/etc/deluge"))
-e.placeholder = '/etc/deluge'
+e.default = '/etc/deluge'
 
 local download_location = t:taboption("Settings", Value, "download_location", translate("下载文件路径"),
     translate("The files are stored in the download directory automatically created under the selected mounted disk"))
@@ -50,12 +51,10 @@ e.default = "8112"
 e = t:taboption("Settings", Value, "password", translate("WebUI密码"), translate("默认密码：deluge"))
 e.default = "deluge"
 
-e = t:taboption("Settings", Value, "https", translate("WebUI使用https"), translate("默认不使用"))
+e = t:taboption("Settings", ListValue, "https", translate("WebUI使用https"), translate("默认不使用"))
 e:value("false", translate("不使用"))
 e:value("true", translate("使用"))
-e.enabled = "true"
-e.disabled = "false"
-e.default = e.disabled
+e.default = "false"
 
 e = t:taboption("download", Flag, "event_seed", translate("活动种子"))
 e = t:taboption("download", Value, "max_active_limit", translate("总数"))
@@ -127,7 +126,7 @@ e.default = "32768"
 e = t:taboption("other_settings", Flag, "enable_logging", translate("Enable Log"))
 e.rmempty = "false"
 
-e = t:taboption("other_settings", Value, "log_dir", translate("Log Path"), translate("默认保存在/var/log/"))
+e = t:taboption("other_settings", Value, "log_dir", translate("Log Path"), translate("默认在配置目录下"))
 e:depends("enable_logging", 1)
 e.placeholder = "/var/log"
 
