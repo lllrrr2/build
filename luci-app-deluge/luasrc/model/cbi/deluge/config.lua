@@ -12,7 +12,7 @@ a:section(SimpleSection).template = "deluge/deluge_status"
 
 t = a:section(NamedSection, "main", "deluge")
 t:tab("Settings", translate("Basic Settings"))
-t:tab("download", translate("下载设置"))
+t:tab("download", translate("下载设置"), translate("下载设置中的速度和连接 <b>-1</b> 为 <b>无限制</b>"))
 t:tab("other_settings", translate("其他设置"))
 
 e = t:taboption("Settings", Flag, "enabled", translate("Enabled"))
@@ -74,15 +74,15 @@ e = t:taboption("download", Value, "max_connections_global", translate("最大�
 e.placeholder = "-1"
 e:depends("speed", 1)
 
-e = t:taboption("download", Value, "max_download_speed", translate("最大下载速度"))
+e = t:taboption("download", Value, "max_download_speed", translate("最大下载速度(KiB/s)"))
 e.placeholder = "-1"
 e:depends("speed", 1)
 
-e = t:taboption("download", Value, "max_upload_speed", translate("最大上传速度"))
+e = t:taboption("download", Value, "max_upload_speed", translate("最大上传速度(KiB/s)"))
 e.placeholder = "-1"
 e:depends("speed", 1)
 
-e = t:taboption("download", Value, "最大上传通道", translate("最大上传通道"))
+e = t:taboption("download", Value, "max_upload_slots_global", translate("最大上传通道"))
 e.placeholder = "-1"
 e:depends("speed", 1)
 
@@ -95,27 +95,37 @@ e = t:taboption("download", Value, "max_upload_slots_per_torrent", translate("�
 e.placeholder = "-1"
 e:depends("per_torrent", 1)
 
-e = t:taboption("download", Value, "max_download_speed_per_torrent", translate("最大下载速度"))
+e = t:taboption("download", Value, "max_download_speed_per_torrent", translate("最大下载速度(KiB/s)"))
 e.placeholder = "-1"
 e:depends("per_torrent", 1)
 
-e = t:taboption("download", Value, "max_upload_speed_per_torrent", translate("最大上传速度"))
+e = t:taboption("download", Value, "max_upload_speed_per_torrent", translate("最大上传速度(KiB/s)"))
 e.placeholder = "-1"
 e:depends("per_torrent", 1)
 
 e = t:taboption("download", Flag, "sequential_download", translate("顺序下载"))
+e.enabled = 'true'
+e.disabled = 'false'
 
 e = t:taboption("download", Flag, "prioritize_first_last_pieces", translate("任务首尾块优先"))
+e.enabled = 'true'
+e.disabled = 'false'
 
-e = t:taboption("download", Flag, "move_completed_enabled", translate("将已完成的任务移动到"))
+e = t:taboption("download", Flag, "move_completed", translate("将已完成的任务移动到"))
+e.enabled = 'true'
+e.disabled = 'false'
+
 e = t:taboption("download", Value, "move_completed_path", translate("路径"))
 e.placeholder = "/mnt/sda3/download"
-e:depends("move_completed_enabled", 1)
+e:depends("move_completed", 'true')
 
-e = t:taboption("download", Flag, "copy_torrent_file_enabled", translate("将种子文件复制到"))
+e = t:taboption("download", Flag, "copy_torrent_file", translate("将种子文件复制到"))
+e.enabled = 'true'
+e.disabled = 'false'
+
 e = t:taboption("download", Value, "torrentfiles_location", translate("路径"))
 e.placeholder = "/mnt/sda3/download"
-e:depends("copy_torrent_file_enabled", 1)
+e:depends("copy_torrent_file", 'true')
 
 e = t:taboption("other_settings", Value, "geoip_db_location", translate("GeoIP 数据库路径"))
 e.default = "/usr/share/GeoIP"
