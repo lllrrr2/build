@@ -3,45 +3,45 @@
 START=99
 
 get_config() {
-    while [ $# != 0 ]; do
-        eval "$1"="$(uci -q get deluge.main.$1)"
-        shift
-    done
+	while [ $# != 0 ]; do
+		eval "$1"="$(uci -q get deluge.main.$1)"
+		shift
+	done
 }
 
 set_conf() {
-    file="$1" node="$2" value="$3"
-    [ -e "$file" ] || return 1
-    conf="$(grep "\"$node\"" "$file" | sed 's/[ ,"]//g' | cut -d':' -f2)"
-    if [ -z $value ]; then
-        echo $conf
-        return 0
-    fi
+	file="$1" node="$2" value="$3"
+	[ -e "$file" ] || return 1
+	conf="$(grep "\"$node\"" "$file" | sed 's/[ ,"]//g' | cut -d':' -f2)"
+	if [ -z $value ]; then
+		echo $conf
+		return 0
+	fi
 
-    if [ "$conf" != "$value" ]; then
-        sed -i "/\"$node\"/s|$conf|$value|" "$file"
-    fi
+	if [ "$conf" != "$value" ]; then
+		sed -i "/\"$node\"/s|$conf|$value|" "$file"
+	fi
 }
 
 make_dir() {
-    while [ $# != 0 ]; do
-        [ -n "$1" -a ! -d "$1" ] && mkdir -m 755 -p "$1"
-        shift
-    done
+	while [ $# != 0 ]; do
+		[ -n "$1" -a ! -d "$1" ] && mkdir -m 755 -p "$1"
+		shift
+	done
 }
 
 deluge_boot() {
-    web="$profile_dir/web.conf"
-    core="$profile_dir/core.conf"
-    make_dir "$profile_dir" "$download_location"
+	web="$profile_dir/web.conf"
+	core="$profile_dir/core.conf"
+	make_dir "$profile_dir" "$download_location"
 
-    if [ x"$enable_logging" = x1 ]; then
-        make_dir "$log_dir"
-        log_level=${log_level:+"-L $log_level"}
-        log_file="-l ${log_dir:-$profile_dir}/deluge.log"
-    fi
+	if [ x"$enable_logging" = x1 ]; then
+		make_dir "$log_dir"
+		log_level=${log_level:+"-L $log_level"}
+		log_file="-l ${log_dir:-$profile_dir}/deluge.log"
+	fi
 
-    [ ! -e "$profile_dir/sha1.py" ] && cat <<-EOF > "$profile_dir/sha1.py"
+	[ ! -e "$profile_dir/sha1.py" ] && cat <<-EOF > "$profile_dir/sha1.py"
 	#!/usr/bin/env python
 	import sys
 	import hashlib
@@ -50,79 +50,79 @@ deluge_boot() {
 	print(hashed_password)
 	EOF
 
-    if [ -e "$core" ]; then
-        set_conf "$core" cache_size "$cache_size"
-        set_conf "$core" download_location "$download_location"
+	if [ -e "$core" ]; then
+		set_conf "$core" cache_size "$cache_size"
+		set_conf "$core" download_location "$download_location"
 
-        if [ x"$move_completed_enabled" = x1 ]; then
-            make_dir "$move_completed_path"
-            set_conf "$core" move_completed 'true'
-            set_conf "$core" move_completed_path "$move_completed_path"
-        else
-            set_conf "$core" move_completed 'false'
-        fi
+		if [ x"$move_completed_enabled" = x1 ]; then
+			make_dir "$move_completed_path"
+			set_conf "$core" move_completed 'true'
+			set_conf "$core" move_completed_path "$move_completed_path"
+		else
+			set_conf "$core" move_completed 'false'
+		fi
 
-        if [ x"$copy_torrent_file_enabled" = x1 ]; then
-            make_dir "$torrentfiles_location"
-            set_conf "$core" copy_torrent_file 'true'
-            set_conf "$core" torrentfiles_location "$torrentfiles_location"
-        else
-            set_conf "$core" copy_torrent_file 'false'
-        fi
-    else
+		if [ x"$copy_torrent_file_enabled" = x1 ]; then
+			make_dir "$torrentfiles_location"
+			set_conf "$core" copy_torrent_file 'true'
+			set_conf "$core" torrentfiles_location "$torrentfiles_location"
+		else
+			set_conf "$core" copy_torrent_file 'false'
+		fi
+	else
 		cat <<-EOF > "$core"
 		{
-		    "random_port": false,
-		    "queue_new_to_top": true,
-		    "new_release_check": false,
-		    "listen_random_port": null,
-		    "pre_allocate_storage": true,
-		    "new_release_check": false,
-		    "download_location": "$download_location",
-		    "move_completed_path": "$move_completed_path",
-		    "torrentfiles_location": "$torrentfiles_location"
+			"random_port": false,
+			"queue_new_to_top": true,
+			"new_release_check": false,
+			"listen_random_port": null,
+			"pre_allocate_storage": true,
+			"new_release_check": false,
+			"download_location": "$download_location",
+			"move_completed_path": "$move_completed_path",
+			"torrentfiles_location": "$torrentfiles_location"
 		}
 		EOF
-    fi
-    _pwd_salt=$(set_conf "$web" "pwd_salt")
-    dwsalt=${_pwd_salt:-$(tr -dc 'a-e0-9' < /dev/urandom | head -c 40)}
-    pwd_sha1="$(python $profile_dir/sha1.py $password $dwsalt)"
-    if [ -e "$web" ]; then
-        set_conf "$web" port "$port"
-        set_conf "$web" https "$https"
-        set_conf "$web" language "$language"
-        set_conf "$web" pwd_sha1 "$pwd_sha1"
-    else
+	fi
+	_pwd_salt=$(set_conf "$web" "pwd_salt")
+	dwsalt=${_pwd_salt:-$(tr -dc 'a-e0-9' < /dev/urandom | head -c 40)}
+	pwd_sha1="$(python $profile_dir/sha1.py $password $dwsalt)"
+	if [ -e "$web" ]; then
+		set_conf "$web" port "$port"
+		set_conf "$web" https "$https"
+		set_conf "$web" language "$language"
+		set_conf "$web" pwd_sha1 "$pwd_sha1"
+	else
 		cat <<-EOF > "$web"
 		{
-		    "https": $https,
-		    "pwd_salt": "$dwsalt",
-		    "pwd_sha1": "$pwd_sha1",
-		    "language": "$language",
-		    "show_session_speed": true,
-		    "geoip_db_location": "$geoip_db_location/GeoIP.dat"
+			"https": $https,
+			"pwd_salt": "$dwsalt",
+			"pwd_sha1": "$pwd_sha1",
+			"language": "$language",
+			"show_session_speed": true,
+			"geoip_db_location": "$geoip_db_location/GeoIP.dat"
 		}
 		EOF
-    fi
-    port=${port:+"-p $port"}
-    user=${user:+"-U $user"}
-    profile_dir=${profile_dir:+"-c $profile_dir"}
-    python /usr/bin/deluged    $profile_dir $log_file $log_level $user
-    python /usr/bin/deluge-web $profile_dir $log_file $log_level $user $port
+	fi
+	port=${port:+"-p $port"}
+	user=${user:+"-U $user"}
+	profile_dir=${profile_dir:+"-c $profile_dir"}
+	python /usr/bin/deluged    $profile_dir $log_file $log_level $user
+	python /usr/bin/deluge-web $profile_dir $log_file $log_level $user $port
 }
 
 start() {
-    [ x$(uci -q get deluge.main.enabled) = x ] && return 1
-    get_config "user" "profile_dir" "geoip_db_location" "cache_size" "enable_logging" "download_location" \
-    "language" "password" "port" "https" "log_dir" "move_completed_path" "torrentfiles_location" "log_level"
-    deluge_boot
-    sleep 3
-    ps | grep deluge | awk '/usr/{print $1}' >/dev/null 2>&1 && logger -t 'deluge' -p 'daemon.info' 'Start deluge service'
-    ps | grep deluge | awk '/web/{print $1}' >/dev/null 2>&1 && logger -t 'deluge' -p 'daemon.info' 'Start deluge-web service'
+	[ x$(uci -q get deluge.main.enabled) = x ] && return 1
+	get_config "user" "profile_dir" "geoip_db_location" "cache_size" "enable_logging" "download_location" \
+	"language" "password" "port" "https" "log_dir" "move_completed_path" "torrentfiles_location" "log_level"
+	deluge_boot
+	sleep 3
+	ps | grep deluge | awk '/usr/{print $1}' >/dev/null 2>&1 && logger -t 'deluge' -p 'daemon.info' 'Start deluge service'
+	ps | grep deluge | awk '/web/{print $1}' >/dev/null 2>&1 && logger -t 'deluge' -p 'daemon.info' 'Start deluge-web service'
 }
 
 stop() {
-    kill "$(ps | grep deluge | awk '/usr/{print $1}')" >/dev/null 2>&1
-    kill "$(ps | grep deluge | awk '/web/{print $1}')" >/dev/null 2>&1
-    logger -t 'deluge' -p 'daemon.info' 'Stop deluge service'
+	kill "$(ps | grep deluge | awk '/usr/{print $1}')" >/dev/null 2>&1
+	kill "$(ps | grep deluge | awk '/web/{print $1}')" >/dev/null 2>&1
+	logger -t 'deluge' -p 'daemon.info' 'Stop deluge service'
 }
