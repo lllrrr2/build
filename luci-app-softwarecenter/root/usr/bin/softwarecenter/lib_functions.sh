@@ -270,34 +270,34 @@ entware_set() {
         exit 1
     }
 
-    cat <<-\ENTWARE >/etc/init.d/entware
-    #!/bin/sh /etc/rc.common
-    START=50
+	cat <<-\ENTWARE >/etc/init.d/entware
+	#!/bin/sh /etc/rc.common
+	START=50
 
-    get_entware_path() {
-        for mount_point in $(mount | awk '/mnt/{print $3}'); do
-            [ -e "$mount_point/opt/etc/init.d/rc.unslung" ] && echo "$mount_point" && return
-        done
-    }
+	get_entware_path() {
+	    for mount_point in $(mount | awk '/mnt/{print $3}'); do
+	        [ -e "$mount_point/opt/etc/init.d/rc.unslung" ] && echo "$mount_point" && return
+	    done
+	}
 
-    start() {
-        [ -d opt ] || mkdir -p opt
-        entware_path=$(get_entware_path)
-        [ -z "$entware_path" ] && entware_path=$(uci get softwarecenter.main.disk_mount)
-        mount -o bind "$entware_path/opt" /opt
-    }
+	start() {
+	    [ -d opt ] || mkdir -p opt
+	    entware_path=$(get_entware_path)
+	    [ -z "$entware_path" ] && entware_path=$(uci get softwarecenter.main.disk_mount)
+	    mount -o bind "$entware_path/opt" /opt
+	}
 
-    stop() {
-        /opt/etc/init.d/rc.unslung stop
-        umount -lf /opt
-        rm -rf /opt
-    }
+	stop() {
+	    /opt/etc/init.d/rc.unslung stop
+	    umount -lf /opt
+	    rm -rf /opt
+	}
 
-    restart() {
-        stop
-        start
-    }
-    ENTWARE
+	restart() {
+	    stop
+	    start
+	}
+	ENTWARE
 
     chmod +x /etc/init.d/entware
     /etc/init.d/entware enable

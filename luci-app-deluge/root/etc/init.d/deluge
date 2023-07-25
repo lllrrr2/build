@@ -13,11 +13,12 @@ get_config() {
     done
 }
 
-set_conf() {
+set_config() {
     file="$1"
     shift
     while [ $# -gt 0 ]; do
         node="$1"
+        [ $node = "pwd_sha1" ] || get_config "$node"
         [ -e "$file" ] || return 1
         conf="$(grep "\"$node\"" "$file" | sed 's/[ ,"]//g' | cut -d':' -f2)"
         value=$(eval echo -E "\$$node")
@@ -41,6 +42,9 @@ make_dir() {
 }
 
 deluge_boot() {
+    get_config "download_location" "enable_logging" "geoip_db_location" "https" \
+    "language" "log_dir" "log_level" "password" "port" "profile_dir" "user"
+
     web="$profile_dir/web.conf"
     core="$profile_dir/core.conf"
     make_dir "$profile_dir" "$download_location"
@@ -61,12 +65,13 @@ deluge_boot() {
 	EOF
 
     if [ -e "$core" ]; then
-        make_dir "$move_completed_path" "$torrentfiles_location"
-        set_conf "$core" "cache_size" "copy_torrent_file" "download_location" "max_active_downloading" \
+        set_config "$core" "cache_size" "copy_torrent_file" "download_location" "max_active_downloading" \
         "max_active_limit" "max_active_seeding" "max_connections_global" "max_connections_per_torrent" \
-        "max_download_speed" "max_download_speed_per_torrent" "max_upload_slots_global" "max_upload_slots_per_torrent" \
-        "max_upload_speed" "max_upload_speed_per_torrent" "move_completed" "move_completed_path" \
-        "prioritize_first_last_pieces" "sequential_download" "torrentfiles_location"
+        "max_download_speed" "max_download_speed_per_torrent" "max_upload_slots_global" \
+        "max_upload_slots_per_torrent" "max_upload_speed" "max_upload_speed_per_torrent" \
+        "move_completed" "move_completed_path" "prioritize_first_last_pieces" "sequential_download" \
+        "torrentfiles_location"
+        make_dir "$move_completed_path" "$torrentfiles_location"
     else
 		cat <<-EOF > "$core"
 		{
@@ -78,17 +83,16 @@ deluge_boot() {
 		    "max_active_limit": -1,
 		    "max_active_seeding": -1,
 		    "max_upload_slots_global": -1,
-		    "download_location": "$download_location",
-		    "move_completed_path": "$move_completed_path",
-		    "torrentfiles_location": "$torrentfiles_location"
+		    "download_location": "$download_location"
 		}
 		EOF
     fi
+
     [ -e "$web" ] && _pwd_salt=$(grep "pwd_salt" "$web" | sed 's/[ ,"]//g' | cut -d':' -f2)
     dwsalt=${_pwd_salt:-$(tr -dc 'a-e0-9' < /dev/urandom | head -c 40)}
     pwd_sha1="$(python $profile_dir/sha1.py $password $dwsalt)"
     if [ -e "$web" ]; then
-        set_conf "$web" "port" "https" "language" "pwd_sha1" "geoip_db_location"
+        set_config "$web" "geoip_db_location" "https" "language" "port" "pwd_sha1"
     else
 		cat <<-EOF > "$web"
 		{
@@ -110,13 +114,6 @@ deluge_boot() {
 
 start() {
     [ x$(uci -q get deluge.main.enabled) = x ] && return 1
-    get_config "cache_size" "copy_torrent_file" "download_location" "enable_logging" \
-    "geoip_db_location" "https" "language" "log_dir" "log_level" "max_active_downloading" \
-    "max_active_limit" "max_active_seeding" "max_connections_global" "max_connections_per_torrent" \
-    "max_download_speed" "max_download_speed_per_torrent" "max_upload_slots_global" \
-    "max_upload_slots_per_torrent" "max_upload_speed" "max_upload_speed_per_torrent" \
-    "move_completed" "move_completed_path" "password" "port" "prioritize_first_last_pieces" \
-    "profile_dir" "sequential_download" "torrentfiles_location" "user"
     deluge_boot
     sleep 3
     ps | grep deluge | awk '/usr/{print $1}' >/dev/null 2>&1 && _info 'Start deluge service'

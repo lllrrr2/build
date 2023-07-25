@@ -236,8 +236,10 @@ clean_vhost_config() {
         webdir=$(vhost_config_list $conf | awk '{print $1}')
         delete_website $conf /opt/wwwroot/$webdir
     done
-    cat > /opt/wwwroot/website_list
-    [ -n "$(ls -A "/opt/etc/nginx/vhost")" ] && vhost_list | grep '[a-zA-Z]' >> /opt/wwwroot/website_list
+    [ -n "$(ls -A "/opt/etc/nginx/vhost")" ] && {
+        cat > /opt/wwwroot/website_list
+        vhost_list | grep '[a-zA-Z]' >> /opt/wwwroot/website_list
+    }
 }
 
 # 网站迭代处理，本函数迭代的配置网站（处理逻辑也许可以更好的优化？）
