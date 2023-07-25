@@ -1,4 +1,5 @@
 module("luci.controller.tinynote", package.seeall)
+local util = require "luci.util"
 
 function index()
     entry({"admin", "nas", "tinynote"}, cbi("tinynote"), _("TinyNote"), 2).dependent = true
@@ -10,12 +11,12 @@ function send_json_response(output)
     luci.http.write_json(output)
 end
 
-function process_result(result_output, exit_code, command, file_path)
+function process_result(exit_code, result_output, command, file_path)
     if exit_code == 0 then
         if #result_output > 2 then
             return send_json_response({
                 result = "success",
-                data = luci.util.pcdata(result_output)
+                data = util.pcdata(result_output)
             })
         else
             return send_json_response({
@@ -37,18 +38,17 @@ function action_run()
         return send_json_response({
             result = luci.i18n.translate("No input for the command line yet. Don't click 'Execute Command'!")
         })
-    elseif file_path ~= '' then
-        local uci = require "luci.model.uci".cursor()
-        local con = uci:get_all("luci", "tinynote")
+    elseif command == '' and file_path ~= '' then
         local sum = 'model_note' .. file_path:match('%d+')
+        local con = luci.model.uci.cursor():get_all("luci", "tinynote")
         if con[sum] == 'shell' or con[sum] == 'python' then
             command = con[sum] == 'shell' and "sh" or con[sum]
         else
-            command = con.note_suffix ~= '' and con.note_suffix or "lua"
+            command = (con.note_suffix ~= '' and con.note_suffix or "lua"):gsub("py", "python")
         end
     end
 
-    local command_name = command ~= '' and luci.sys.exec("/usr/bin/which " .. command:match("^([^%s]+)")) or ''
+    local command_name = command ~= '' and util.exec("/usr/bin/which " .. command:match("^([^%s]+)")) or ''
 
     if #command_name < 4 or command_name:match("no") then
         return send_json_response({
@@ -56,11 +56,8 @@ function action_run()
         })
     end
 
-    local handle = io.popen(string.format("%s %s 2>&1; echo $?", command, file_path))
-    local output = handle:read("*a")
-    handle:close()
-
+    local output    = util.exec(string.format("%s %s 2>&1; echo $?", command, file_path))
     local data      = output:sub(1, -3)
     local exit_code = tonumber(output:sub(-2))
-    process_result(data, exit_code, command, file_path)
+    process_result(exit_code, data, command, file_path)
 end

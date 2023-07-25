@@ -3,11 +3,11 @@
 START=99
 
 _info() {
-    logger -s -t "deluge" "$*"
+    logger -st 'deluge' -p 'daemon.info' "$*"
 }
 
 get_config() {
-    while [ $# != 0 ]; do
+    while [ $# -gt 0 ]; do
         eval "$1"="$(uci -q get deluge.main.$1)"
         shift
     done
@@ -16,23 +16,25 @@ get_config() {
 set_conf() {
     file="$1"
     shift
-    for node in "$@"; do
+    while [ $# -gt 0 ]; do
+        node="$1"
         [ -e "$file" ] || return 1
         conf="$(grep "\"$node\"" "$file" | sed 's/[ ,"]//g' | cut -d':' -f2)"
         value=$(eval echo -E "\$$node")
 
-        if [ "$conf" != "$value" ] && [ -n "$value" ]; then
+        if [ "$conf" != "$value" -a -n "$value" ]; then
             if [ -n "$conf" ]; then
                 sed -i "/\"$node\"/{s|$conf|$value|}" "$file"
             else
                 sed -i "/\"$node\"/{s|\"\"|\"$value\"|}" "$file"
             fi
         fi
+        shift
     done
 }
 
 make_dir() {
-    while [ $# != 0 ]; do
+    while [ $# -gt 0 ]; do
         [ -n "$1" -a ! -d "$1" ] && mkdir -m 755 -p "$1"
         shift
     done
@@ -60,11 +62,11 @@ deluge_boot() {
 
     if [ -e "$core" ]; then
         make_dir "$move_completed_path" "$torrentfiles_location"
-        set_conf "$core" "cache_size" "download_location" "move_completed" "move_completed_path" \
-        "copy_torrent_file" "torrentfiles_location" "prioritize_first_last_pieces" "sequential_download" \
-        "max_active_limit" "max_active_seeding" "max_upload_slots_global" "max_active_downloading" \
-        "max_connections_global" "max_download_speed" "max_upload_speed" "max_connections_per_torrent" \
-        "max_upload_slots_per_torrent" "max_download_speed_per_torrent" "max_upload_speed_per_torrent"
+        set_conf "$core" "cache_size" "copy_torrent_file" "download_location" "max_active_downloading" \
+        "max_active_limit" "max_active_seeding" "max_connections_global" "max_connections_per_torrent" \
+        "max_download_speed" "max_download_speed_per_torrent" "max_upload_slots_global" "max_upload_slots_per_torrent" \
+        "max_upload_speed" "max_upload_speed_per_torrent" "move_completed" "move_completed_path" \
+        "prioritize_first_last_pieces" "sequential_download" "torrentfiles_location"
     else
 		cat <<-EOF > "$core"
 		{
@@ -86,7 +88,7 @@ deluge_boot() {
     dwsalt=${_pwd_salt:-$(tr -dc 'a-e0-9' < /dev/urandom | head -c 40)}
     pwd_sha1="$(python $profile_dir/sha1.py $password $dwsalt)"
     if [ -e "$web" ]; then
-        set_conf "$web" "port" "https" "language" "pwd_sha1"
+        set_conf "$web" "port" "https" "language" "pwd_sha1" "geoip_db_location"
     else
 		cat <<-EOF > "$web"
 		{
@@ -108,20 +110,21 @@ deluge_boot() {
 
 start() {
     [ x$(uci -q get deluge.main.enabled) = x ] && return 1
-    get_config "user" "profile_dir" "geoip_db_location" "cache_size" "enable_logging" "download_location" "copy_torrent_file" \
-    "language" "password" "port" "https" "log_dir" "copy_torrent_file" "copy_torrent_file" "move_completed" "move_completed_path" \
-    "torrentfiles_location" "log_level" "max_upload_speed_per_torrent" "max_active_limit" "max_active_downloading" \
-    "max_active_seeding" "max_connections_global" "max_download_speed" "max_upload_speed" "max_upload_slots_global" \
-    "max_connections_per_torrent" "max_upload_slots_per_torrent" "max_download_speed_per_torrent" \
-    "sequential_download" "prioritize_first_last_pieces"
+    get_config "cache_size" "copy_torrent_file" "download_location" "enable_logging" \
+    "geoip_db_location" "https" "language" "log_dir" "log_level" "max_active_downloading" \
+    "max_active_limit" "max_active_seeding" "max_connections_global" "max_connections_per_torrent" \
+    "max_download_speed" "max_download_speed_per_torrent" "max_upload_slots_global" \
+    "max_upload_slots_per_torrent" "max_upload_speed" "max_upload_speed_per_torrent" \
+    "move_completed" "move_completed_path" "password" "port" "prioritize_first_last_pieces" \
+    "profile_dir" "sequential_download" "torrentfiles_location" "user"
     deluge_boot
     sleep 3
-    ps | grep deluge | awk '/usr/{print $1}' >/dev/null 2>&1 && logger -t 'deluge' -p 'daemon.info' 'Start deluge service'
-    ps | grep deluge | awk '/web/{print $1}' >/dev/null 2>&1 && logger -t 'deluge' -p 'daemon.info' 'Start deluge-web service'
+    ps | grep deluge | awk '/usr/{print $1}' >/dev/null 2>&1 && _info 'Start deluge service'
+    ps | grep deluge | awk '/web/{print $1}' >/dev/null 2>&1 && _info 'Start deluge-web service'
 }
 
 stop() {
     kill "$(ps | grep deluge | awk '/usr/{print $1}')" >/dev/null 2>&1
     kill "$(ps | grep deluge | awk '/web/{print $1}')" >/dev/null 2>&1
-    logger -t 'deluge' -p 'daemon.info' 'Stop deluge service'
+    _info 'Stop deluge service'
 }
