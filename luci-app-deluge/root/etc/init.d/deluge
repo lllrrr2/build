@@ -16,7 +16,7 @@ get_config() {
 set_config() {
     file="$1"
     shift
-    while [ $# -gt 0 ]; do
+    while [ -n "$1" ]; do
         node="$1"
         [ $node = "pwd_sha1" ] || get_config "$node"
         [ -e "$file" ] || return 1

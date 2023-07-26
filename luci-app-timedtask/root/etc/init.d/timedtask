@@ -5,34 +5,34 @@ START=95
 CRON_INI=/etc/init.d/cron
 CRON_FILE=/etc/crontabs/root
 
-uci_get_by_type() {
-	uci -q get timedtask.@crontab[$1].$2
+uci_get_type() {
+    uci_get "timedtask" "@crontab[$1]" "$2" "$3"
 }
 
 start() {
-	grep -q 'option enable .1.' /etc/config/timedtask && {
-		[ ! -s "$CRON_FILE" ] && mcronrst=1
-		sed -i '/timedtask$/d' $CRON_FILE
-		sum=$(grep -c 'config crontab' /etc/config/timedtask)
-		for x in $(seq 0 $((sum-1))); do
-			test "$(uci_get_by_type $x enable)" -eq 1 && {
-				day=`uci_get_by_type $x day || echo *`
-				week=`uci_get_by_type $x week || echo *`
-				hour=`uci_get_by_type $x hour || echo *`
-				month=`uci_get_by_type $x month || echo *`
-				minute=`uci_get_by_type $x minute || echo 0`
-				enable_lock=`uci_get_by_type $x enable_lock || echo 0`
-				command=`uci_get_by_type $x command || echo "echo 'Reboot schedule tested.'"`
-				[ -n "`echo $minute | grep '*$'`" ] && minute="0"
-				test "$enable_lock" -eq 1 && command="flock -xn /tmp/lock/timedtask${x}.lock -c '$(echo $command)'"
-				echo "$minute $hour $day $month $week $command #timedtask" >> $CRON_FILE
-			}
-		done
-		[ "$mcronrst" -eq 1 ] && /etc/init.d/cron restart
-	}
+    grep -q 'option enable .1.' /etc/config/timedtask && {
+        [ ! -s "$CRON_FILE" ] && mcronrst=1
+        sed -i '/timedtask$/d' $CRON_FILE
+        sum=$(grep -c 'config crontab' /etc/config/timedtask)
+        for x in $(seq 0 $((sum-1))); do
+            test "$(uci_get_type $x enable)" -eq 1 && {
+                day=`uci_get_type $x day *`
+                week=`uci_get_type $x week *`
+                hour=`uci_get_type $x hour *`
+                month=`uci_get_type $x month *`
+                minute=`uci_get_type $x minute 0`
+                # enable_lock=`uci_get_type $x enable_lock 0`
+                command=`uci_get_type $x command "echo 'Reboot schedule tested.'"`
+                echo $minute | grep -q '*$' && minute="0"
+                # test "$enable_lock" -eq 1 && command="flock -xn /tmp/lock/timedtask${x}.lock -c '$(echo $command)'"
+                echo "$minute $hour $day $month $week $command #timedtask" >> $CRON_FILE
+            }
+        done
+        [ "$mcronrst" -eq 1 ] && /etc/init.d/cron restart
+    }
 }
 
 stop() {
-	sed -i '/timedtask/d' $CRON_FILE
-	/etc/init.d/cron restart
+    sed -i '/timedtask/d' $CRON_FILE
+    /etc/init.d/cron restart
 }

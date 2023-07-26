@@ -9,7 +9,9 @@ end
 
 local function new_write_file(path, note_suffix, value)
     local note_suffix_array = {
-        sh  = "#!/bin/sh /etc/rc.common\n",
+        sh  = "#!/usr/bin/env sh\n" ..
+              ". /lib/functions.sh\n" ..
+              ". /lib/functions/service.sh\n",
         py  = "#!/usr/bin/env python\n" ..
               "import os   # 用于导入系统变量\n" ..
               "import sys  # 实现 sys.exit\n" ..
