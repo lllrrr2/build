@@ -3,13 +3,12 @@ export PATH="/opt/bin:/opt/sbin:/usr/sbin:/usr/bin:/sbin:/bin"
 log="/tmp/log/softwarecenter.log"
 
 uci_get_type() {
-    local ret=$(uci -q get softwarecenter.main."$1")
-    echo ${ret:-$2}
+    uci_get softwarecenter main "$1" $2
 }
 
 uci_set_type() {
-    uci -q set softwarecenter.main."$1"="$2" && \
-    uci -q commit softwarecenter
+    uci_set softwarecenter main "$1" "$2"
+    uci_commit softwarecenter
 }
 
 make_dir() {
@@ -31,7 +30,7 @@ _pidof() {
 }
 
 echo_time() {
-    echo -e "[ $(date +"%m月%d日 %H:%M:%S") ]  $@" | sed '/\\\033/d'
+    echo -e "[ $(date +"%m月%d日 %H:%M:%S") ] $@" | sed '/\\\033/d'
 }
 
 status() {
@@ -269,7 +268,10 @@ entware_set() {
 
 	get_entware_path() {
 	    for mount_point in $(mount | awk '/mnt/{print $3}'); do
-	        [ -e "$mount_point/opt/etc/init.d/rc.unslung" ] && echo "$mount_point" && return
+	        [ -e "$mount_point/opt/etc/init.d/rc.unslung" ] && {
+	            echo "$mount_point"
+	            break
+	        }
 	    done
 	}
 
@@ -284,11 +286,6 @@ entware_set() {
 	    /opt/etc/init.d/rc.unslung stop
 	    umount -lf /opt
 	    rm -rf /opt
-	}
-
-	restart() {
-	    stop
-	    start
 	}
 	ENTWARE
 
@@ -316,6 +313,7 @@ get_entware_path() {
 # entware环境解除 说明：此函数用于删除OPKG配置设定
 entware_unset() {
     /etc/init.d/entware stop >/dev/null 2>&1
+    sleep 5
     /etc/init.d/entware disable >/dev/null 2>&1
     rm /etc/init.d/entware
     sed -i "s|/opt/bin:/opt/sbin:||" /etc/profile
@@ -382,6 +380,105 @@ config_swap_del() {
         swapoff $path
         rm -f $path
         echo_time "$path 交换分区已删除！\n"
+    }
+}
+
+SOFTWARECENTER() {
+    config_load softwarecenter
+    get_config="a_delaytime cpu_model delaytime deploy_entware deploy_mysql deploy_nginx disk_mount download_dir entware_enable mysql_enabled nginx_enabled partition_disk pass old_pass swap_enabled swap_path swap_size user"
+
+    for rt in $get_config; do
+        config_get_bool $rt main $rt
+        config_get $rt main $rt
+    done
+    source /etc/profile >/dev/null 2>&1
+    if [ "$entware_enable" -eq 1 ]; then
+        if [ ! -e /etc/init.d/entware ]; then
+            echo_time "========= 开始部署entware环境 ========="
+            entware_set $disk_mount $cpu_model
+            source /etc/profile >/dev/null 2>&1
+        fi
+    else
+        if [ -x /etc/init.d/entware ]; then
+            entware_unset
+            echo_time "entware环境已删除！"
+        fi
+        return 1
+    fi
+
+    # Nginx
+    if [ "$deploy_nginx" -eq 1 ]; then
+        [ ! -x /opt/etc/init.d/S80nginx ] && echo_time "========= 开始安装Nginx =========" && init_nginx
+        if [ "$nginx_enabled" -eq 1 ]; then
+            [ "$(pidof nginx)" ] || nginx_manage start
+        else
+            nginx_manage stop
+        fi
+    else
+        [ -x /opt/etc/init.d/S80nginx ] && echo_time "========= 卸载Nginx相关的软件包 =========" && del_nginx
+    fi
+
+    # MySQL
+    if [ "$deploy_mysql" -eq 1 ]; then
+        [ ! -x /opt/etc/init.d/S70mysqld ] && echo_time "========= 开始安装MySQL =========" && init_mysql
+        if [ "$mysql_enabled" -eq 1 ]; then
+            if pidof mysqld &> /dev/null; then
+                pass=${pass:-123456}
+                [ -z $old_pass ] && uci_set_type old_pass "$pass"
+                if [[ $pass != $old_pass ]]; then
+                    uci_set_type old_pass "$pass"
+                    mysqladmin -u root password "$pass"
+                fi
+            else
+                /opt/etc/init.d/S70mysqld start >/dev/null 2>&1
+            fi
+        else
+            /opt/etc/init.d/S70mysqld stop >/dev/null 2>&1
+        fi
+    else
+        [ -x /opt/etc/init.d/S70mysqld ] && echo_time "========= 卸载MySQL相关的软件包 =========" && del_mysql
+    fi
+
+    [ "$(pidof nginx)" ] && {
+        config_foreach handle_website website test
+        clean_vhost_config
+    }
+    [ -d "/opt/etc/config" ] && modify_port
+
+    [ "$swap_enabled" -eq 1 ] && config_swap_init $swap_size $swap_path || config_swap_del $swap_path
+
+    grep -q "_boot" /etc/config/softwarecenter && [ -x /etc/init.d/entware ] && {
+        for package_name in $(awk '/_boot/ {sub(/_boot/, "", $2); print $2}' /etc/config/softwarecenter); do
+            if [ "$(uci_get_type ${package_name}_boot)" = 1 ]; then
+                init=$(find /opt/etc/init.d/ -perm '-u+x' -name "*$package_name*")
+
+                if [ -x "$init" ]; then
+                    if ! _pidof "$package_name" >/dev/null 2>&1; then
+                        # echo_time "$package_name 启动"
+                        [ $delaytime ] && sleep $delaytime
+                        if $init start >/dev/null 2>&1; then
+                            echo_time "$package_name 启动成功"
+                        else
+                            echo_time "$package_name 启动失败"
+                        fi
+                    # else
+                        # echo_time "$package_name 已在运行"
+                    fi
+                else
+                    echo_time "=========== 开始安装 $package_name ==========="
+                    case "$package_name" in
+                        amule) install_amule >> "$log" ;;
+                        aria2) install_aria2 >> "$log" ;;
+                        deluged) install_deluge >> "$log" ;;
+                        rtorrent) install_rtorrent >> "$log" ;;
+                        qbittorrent) install_qbittorrent >> "$log" ;;
+                        transmission) install_transmission >> "$log" ;;
+                        *) break ;;
+                    esac
+                    echo_time "=========== $package_name 安装完成 ===========\n"
+                fi
+            fi
+        done
     }
 }
 

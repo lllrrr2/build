@@ -15,24 +15,24 @@ _err() {
 }
 
 sed_options() {
-    local o v ol Anchor=$1 category="${2// /\\\\}"
+    local val node Anchor=$1 category="${2// /\\\\}"
     shift 2
 
     grep -q "^\[$Anchor\]$" "$QBT_CONF_FILE" || sed -i "\${/./G;s/\$/\n\[$Anchor\]/}" "$QBT_CONF_FILE"
 
     for o in "$@"; do
-        v="$(eval echo -E "\$$o" | sed 's/[\/\.]/\\&/g')"
-        ol="${category:+$category\\\\}$o"
-        ol="${ol//__/\\\\}"
+        val="$(eval echo -E "\$$o" | sed 's/[\/\.]/\\&/g')"
+        node="${category:+$category\\\\}$o"
+        node="${node//__/\\\\}"
 
-        if [ -n "$v" ]; then
-            if grep -q "^$ol=" "$QBT_CONF_FILE"; then
-                [ "$Overwrite" -eq 1 -a "$category" != "FileLogger" ] && sed -i "s/$ol=.*/$ol=$v/g" "$QBT_CONF_FILE"
+        if [ -n "$val" ]; then
+            if grep -q "^$node=" "$QBT_CONF_FILE"; then
+                [ "$Overwrite" -eq 1 -a "$category" != "FileLogger" ] && sed -i "s|$node=.*|$node=$val|" "$QBT_CONF_FILE"
             else
-                sed -i "/\[$Anchor\]/a $ol=$v" $QBT_CONF_FILE
+                sed -i "/\[$Anchor\]/a $node=$val" $QBT_CONF_FILE
             fi
         else
-            [ "$Overwrite" -eq 1 -a "$category" != "FileLogger" ] && sed -i "/$ol=.*/d" "$QBT_CONF_FILE"
+            [ "$Overwrite" -eq 1 -a "$category" != "FileLogger" ] && sed -i "/$node=.*/d" "$QBT_CONF_FILE"
         fi
     done
 }

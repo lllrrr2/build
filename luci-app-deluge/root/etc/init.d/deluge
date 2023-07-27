@@ -7,27 +7,25 @@ _info() {
 }
 
 get_config() {
-    while [ $# -gt 0 ]; do
-        eval "$1"="$(uci -q get deluge.main.$1)"
+    while [ -n "$1" ]; do
+        eval "$1=\"$(uci_get deluge main $1)\""
         shift
     done
 }
 
 set_config() {
-    file="$1"
-    shift
+    [ -e "$1" ] || return 1 && file="$1"; shift
     while [ -n "$1" ]; do
         node="$1"
-        [ $node = "pwd_sha1" ] || get_config "$node"
-        [ -e "$file" ] || return 1
+        [ "$node" = "pwd_sha1" ] || get_config "$node"
         conf="$(grep "\"$node\"" "$file" | sed 's/[ ,"]//g' | cut -d':' -f2)"
-        value=$(eval echo -E "\$$node")
+        eval "val=\"\${$node}\""
 
-        if [ "$conf" != "$value" -a -n "$value" ]; then
+        if [ "$conf" != "$val" -a -n "$val" ]; then
             if [ -n "$conf" ]; then
-                sed -i "/\"$node\"/{s|$conf|$value|}" "$file"
+                sed -i "/\"$node\"/{s|$conf|$val|}" "$file"
             else
-                sed -i "/\"$node\"/{s|\"\"|\"$value\"|}" "$file"
+                sed -i "/\"$node\"/{s|\"\"|\"$val\"|}" "$file"
             fi
         fi
         shift
@@ -75,10 +73,9 @@ deluge_boot() {
     else
 		cat <<-EOF > "$core"
 		{
-		    "random_port": false,
+		    "random_port": true,
 		    "queue_new_to_top": true,
 		    "new_release_check": false,
-		    "listen_random_port": null,
 		    "pre_allocate_storage": true,
 		    "max_active_limit": -1,
 		    "max_active_seeding": -1,
