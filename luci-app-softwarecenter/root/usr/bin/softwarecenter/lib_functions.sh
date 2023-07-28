@@ -1,4 +1,5 @@
 #!/bin/sh
+. /lib/functions.sh
 export PATH="/opt/bin:/opt/sbin:/usr/sbin:/usr/bin:/sbin:/bin"
 log="/tmp/log/softwarecenter.log"
 
@@ -7,7 +8,8 @@ uci_get_type() {
 }
 
 uci_set_type() {
-    uci_set softwarecenter main "$1" "$2"
+    local main=${3:-main}
+    uci_set softwarecenter "$main" "$1" "$2"
     uci_commit softwarecenter
 }
 
@@ -70,19 +72,24 @@ check_url() {
 }
 
 check_port_usage() {
-    local exists=false
-    local old_port=${1:-port}
-    local usage=$(/opt/bin/lsof -i:${old_port} 2>/dev/null | wc -l)
-    while [[ ${usage} -ne 0 ]]; do
-        new_port=$(head /dev/urandom | tr -dc '0-9' | fold -w 4 | head -n 1)
-        usage=$(/opt/bin/lsof -i:${new_port} 2>/dev/null | wc -l)
-        exists=true
+    local exists _old_port old_port
+    [ -n "$1" ] && eval "old_port=\"\${$1}\"" || old_port="$port"
+    local name=${1:-$website_name}
+
+    while [ -z "${old_port}" ] || lsof -i:"${old_port}" >/dev/null 2>&1; do
+        [ -z ${_old_port} ] && _old_port=${old_port}
+        old_port=$(($(tr -dc '0-9' < /dev/urandom | head -c 4) + 1024))
+        exists=1
     done
 
-    port=${new_port:-$old_port}
-    if [ "$exists" = true -a -n "$2" ]; then
-        uci_set_type $2 $port
-        echo_time "$2 设定的 $old_port 端口已在使用，查找到可用端口 $port"
+    port="$old_port"
+    if [ -n "$exists" -a -n "$_old_port" ]; then
+        echo_time "$name 设定的 $_old_port 端口已在使用，查找到可用端口 $port"
+        [ -n "$1" ] && {
+            uci_set_type "$name" "$port"
+        } || {
+            uci_set_type "port" "$port" "@website[$website_select]"
+        } 
     fi
 }
 
@@ -91,7 +98,7 @@ modify_port() {
     if [ -x "/opt/bin/amuled" -a -n "$am_port" ]; then
         old_am_port=$(awk -F "=" '/\[WebServer\]/{flag=1;next} flag && /Port/{print $2;flag=0}' /opt/var/amule/amule.conf)
         if [ "$old_am_port" != "$am_port" ]; then
-            check_port_usage "$am_port" am_port
+            check_port_usage am_port
             [ -n "$port" ] && {
                 sed -i "s/Port=$old_am_port/Port=$port/" /opt/var/amule/amule.conf
                 /opt/etc/*/S57am* restart >/dev/null 2>&1
@@ -102,7 +109,7 @@ modify_port() {
     if [ -x "/opt/bin/deluged" -a -n "$de_port" ]; then
         old_de_port=$(grep -oP '(?<=-p )\d+' /opt/etc/*/S81deluge-web)
         if [ "$old_de_port" != "$de_port" ]; then
-            check_port_usage "$de_port" de_port
+            check_port_usage de_port
             [ -n "$port" ] && {
                 sed -i "s/-p $old_de_port/-p $port/" /opt/etc/*/S81deluge-web
                 /opt/etc/*/S80de* restart >/dev/null 2>&1
@@ -113,7 +120,7 @@ modify_port() {
     if [ -x "/opt/bin/qbittorrent-nox" -a -n "$qb_port" ]; then
         old_qb_port=$(grep -oP '(?<=webui-port=)\d+' /opt/etc/*/S89qb*)
         if [ "$old_qb_port" != "$qb_port" ]; then
-            check_port_usage "$qb_port" qb_port
+            check_port_usage qb_port
             [ -n "$port" ] && {
                 sed -i "s/port=$old_qb_port/port=$port/" /opt/etc/*/S89qb*
                 /opt/etc/*/S89qb* restart >/dev/null 2>&1
@@ -124,7 +131,7 @@ modify_port() {
     if [ -x "/opt/bin/rtorrent" -a -n "$rt_port" ]; then
         old_rt_port=$(grep -oP '^server.port=\s*\K\d+' /opt/etc/*/*/99-rtor*)
         if [ "$old_rt_port" != "$rt_port" ]; then
-            check_port_usage "$rt_port" rt_port
+            check_port_usage rt_port
             [ -n "$port" ] && {
                 sed -i "s/port=$old_rt_port/port=$port/" /opt/etc/*/*/99-rtor*
                 /opt/etc/*/S80lig* restart >/dev/null 2>&1
@@ -135,38 +142,12 @@ modify_port() {
     if [ -x "/opt/bin/transmission-daemon" -a -n "$tr_port" ]; then
         old_tr_port=$(grep -oP "(?<=--port )\d+" /opt/etc/*/S88tran*)
         if [ "$old_tr_port" != "$tr_port" ]; then
-            check_port_usage "$tr_port" tr_port
+            check_port_usage tr_port
             [ -n "$port" ] && {
                 sed -i "s/\(--port \)[0-9]\+/\1$port/" /opt/etc/*/S88tran*
                 /opt/etc/*/S88tran* restart >/dev/null 2>&1
             }
         fi
-    fi
-}
-
-port_settings() {
-    local name=$website_name
-    find_port() {
-        for f in `seq 2100 2120`; do
-            /opt/bin/lsof -i:$f >/dev/null 2>&1 || {
-                port=$f
-                break
-            }
-        done
-    }
-
-    if [ -n "$port" ]; then
-        /opt/bin/lsof -i:$port >/dev/null 2>&1 && {
-            echo_time "$name 设置的端口 $port 已在用，查找可用端口。"
-            find_port
-            echo_time "$name 使用空闲 $port 的端口"
-        } || {
-            echo_time "$name 使用自定义 $port 的端口"
-        }
-    else
-        echo_time "$name 没有设置端口，查找可用端口。"
-        find_port
-        echo_time "$name 使用空闲 $port 的端口"
     fi
 }
 
@@ -403,14 +384,13 @@ SOFTWARECENTER() {
             entware_unset
             echo_time "entware环境已删除！"
         fi
-        return 1
+        return 0
     fi
 
-    # Nginx
     if [ "$deploy_nginx" -eq 1 ]; then
         [ ! -x /opt/etc/init.d/S80nginx ] && echo_time "========= 开始安装Nginx =========" && init_nginx
         if [ "$nginx_enabled" -eq 1 ]; then
-            [ "$(pidof nginx)" ] || nginx_manage start
+            pidof nginx &> /dev/null || nginx_manage start
         else
             nginx_manage stop
         fi
@@ -418,7 +398,6 @@ SOFTWARECENTER() {
         [ -x /opt/etc/init.d/S80nginx ] && echo_time "========= 卸载Nginx相关的软件包 =========" && del_nginx
     fi
 
-    # MySQL
     if [ "$deploy_mysql" -eq 1 ]; then
         [ ! -x /opt/etc/init.d/S70mysqld ] && echo_time "========= 开始安装MySQL =========" && init_mysql
         if [ "$mysql_enabled" -eq 1 ]; then
@@ -439,10 +418,10 @@ SOFTWARECENTER() {
         [ -x /opt/etc/init.d/S70mysqld ] && echo_time "========= 卸载MySQL相关的软件包 =========" && del_mysql
     fi
 
-    [ "$(pidof nginx)" ] && {
+    if [ -d /opt/etc/nginx/vhost ] && pidof nginx &> /dev/null; then
         config_foreach handle_website website test
         clean_vhost_config
-    }
+    fi
     [ -d "/opt/etc/config" ] && modify_port
 
     [ "$swap_enabled" -eq 1 ] && config_swap_init $swap_size $swap_path || config_swap_del $swap_path

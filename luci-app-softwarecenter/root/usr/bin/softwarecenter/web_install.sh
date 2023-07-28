@@ -85,7 +85,7 @@ web_installer() {
             echo_time "$name.$suffix 解压完成..."
             chmod -R 777 /opt/wwwroot/$name
             echo_time "正在配置 $name..."
-            port_settings
+            check_port_usage
         } || {
             echo_time "$name 安装失败，回滚操作"
             rm /opt/wwwroot/${name}*
@@ -135,7 +135,7 @@ add_vhost() {
 # 恢复网站查端口
 port_custom() {
     port=`grep -oP 'listen \K\d+' $1`
-    port_settings
+    check_port_usage
     sed -i "s|listen .*|listen $port;|" $1
     echo_time "$website_name 已启用\n"
 }
@@ -144,13 +144,9 @@ port_custom() {
 port_modification() {
     local name=$website_name
     for kj in "$@"; do
-        local pu=$(grep -oP 'listen \K\d+' "$kj")
-        if [ $port ] && [ $pu -ne $port ]; then
-            port_settings
-            sed -i "s|listen.*|listen $port;|" "$kj"
-            echo_time "$name 端口修改完成\n"
-        elif [ ! $port ] && ([ $pu -lt 2100 ] || [ $pu -gt 2120 ]); then
-            port_settings
+        local old_port=$(grep -oP 'listen \K\d+' "$kj")
+        if [ -z "$port" -o "$old_port" -ne "$port" ]; then
+            check_port_usage
             sed -i "s|listen.*|listen $port;|" "$kj"
             echo_time "$name 端口修改完成\n"
         fi
@@ -236,10 +232,8 @@ clean_vhost_config() {
         webdir=$(vhost_config_list $conf | awk '{print $1}')
         delete_website $conf /opt/wwwroot/$webdir
     done
-    [ -n "$(ls -A "/opt/etc/nginx/vhost")" ] && {
-        cat > /opt/wwwroot/website_list
-        vhost_list | grep '[a-zA-Z]' >> /opt/wwwroot/website_list
-    }
+    [ -e /opt/wwwroot/website_list ] && cat > /opt/wwwroot/website_list
+    [ -n "$(ls -A "/opt/etc/nginx/vhost")" ] && vhost_list | grep '[a-zA-Z]' >> /opt/wwwroot/website_list
 }
 
 # 网站迭代处理，本函数迭代的配置网站（处理逻辑也许可以更好的优化？）
@@ -495,7 +489,7 @@ delete_website_byauto() {
 # 自定义部署通用函数 参数：$1:文件目录 $2:端口号
 install_custom() {
     webdir=$1
-    port_settings
+    check_port_usage
     # 运行安装程序
     echo_time "正在配置$webdir..."
 

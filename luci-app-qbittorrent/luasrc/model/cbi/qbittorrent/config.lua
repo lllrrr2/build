@@ -1,7 +1,7 @@
 local util = require "luci.util"
 local con  = luci.model.uci.cursor():get_all("qbittorrent", "main")
 local BinaryLocation = con.BinaryLocation or "/usr/bin/qbittorrent-nox"
-local ver  = util.exec(string.format("HOME=/var/run/qbittorrent; %s -v 2>/dev/null | awk '{print $2}'", BinaryLocation))
+local ver  = util.exec(string.format("export HOME=/var/run/qbittorrent; %s -v 2>/dev/null | awk '{print $2}'", BinaryLocation))
 
 function titlesplit(e)
     return translatef("<p style='font-size:13px; font-weight:bold; color:DodgerBlue'>%s</p>", translate(e))

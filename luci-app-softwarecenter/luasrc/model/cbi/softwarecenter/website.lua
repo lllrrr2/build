@@ -3,7 +3,7 @@ if nixio.fs.access("/opt/etc/init.d/S80nginx") and nixio.fs.access("/opt/etc/ini
 		translate("Automatically deploy PHP probe, phpMyAdmin, KodCloud, Typecho, and more."))
 	m:section(SimpleSection).template = "softwarecenter/website_status"
 	s = m:section(TypedSection, "website", translate("Website Deployment"),
-		translate("Automatically and quickly deploy websites. Automatically finds an available port above 2100, custom ports recommended between 1024 and 5000."))
+		translate("Automatically and quickly deploy websites, and automatically obtain random ports."))
 	s.anonymous = true
 	s.addremove = true
 	s.sortable = true

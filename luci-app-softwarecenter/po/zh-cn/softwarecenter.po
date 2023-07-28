@@ -298,8 +298,8 @@ msgstr "可以自动部署PHP探针，phpMyAdmin，可道云，Typecho等。"
 msgid "Website Deployment"
 msgstr "网站部署"
 
-msgid "Automatically and quickly deploy websites. Automatically finds an available port above 2100, custom ports recommended between 1024 and 5000."
-msgstr "自动快速的部署网站。自动获取端口是在 2100 以上的空闲端口，自定义建议1024--5000之间。"
+msgid "Automatically and quickly deploy websites, and automatically obtain random ports."
+msgstr "自动快速的部署网站，自动获取随机端口。"
 
 msgid "Deploy / Remove"
 msgstr "部署 / 删除"
