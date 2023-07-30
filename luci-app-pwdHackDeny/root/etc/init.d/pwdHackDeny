@@ -16,7 +16,7 @@ start_instance() {
 }
 
 chk_logfile() {
-	echo "## 每行一条，可手动添加或删除，内网MAC或IPV4/IPV4段(如192.168.18.10-20)、外网IPV4/IPV6，或包含此内容的文本、日志。内网MAC外网IP行首加#将不拦截。Author: wulishui" >$tmp_dir/$1.log.bak
+	:>$tmp_dir/$1.log.bak
 	grep -v '^## ' /etc/$1.log | grep '^[#/!]' >>$tmp_dir/$1.log.bak && echo "----------- 以上客户端不拦截 -----------" >>$tmp_dir/$1.log.bak
 	sshlog=$(cat /etc/$1.log 2>/dev/null | sed '/^----/d' | sed '/^'[#!/]'/d' | sed 's/  */ /g' | sed 's/^ *//g' | sort -n | uniq -i | awk NF)
 	if [ -n "$sshlog" ]; then
@@ -28,7 +28,7 @@ chk_logfile() {
 			if [ -n "$MAC" ]; then
 				[ -z "$(grep -w "$MAC" $tmp_dir/$1.log.bak 2>/dev/null)" ] && {
 					echo "$MAC" >>$tmp_dir/$1.log.bak
-					iptables -w -A $2 -m mac --mac-source $MAC -j DROP 2>/dev/null
+					iptables  -w -A $2 -m mac --mac-source $MAC -j DROP 2>/dev/null
 					ip6tables -w -A $2 -m mac --mac-source $MAC -j DROP 2>/dev/null
 				}
 			elif [ -n "$IPR" ]; then
@@ -54,16 +54,16 @@ chk_logfile() {
 }
 
 start_service() {
-	kill -9 $(pgrep 'pwdHackDeny.sh') >/dev/null 2>&1
+	kill -9 $(pgrep -f 'pwdHackDeny.sh') >/dev/null 2>&1
 	sh /tmp/log/pwdHackDeny.ipt.cls 2>/dev/null
 	enabled=$(uci -q get pwdHackDeny.pwdHackDeny.enabled)
 	[ "$enabled" != 1 -a -d $deny_dir ] && touch $deny_dir/logclear
 	[ "$enabled" != 1 ] && return 1
 	if [ -e $deny_dir/logclear ]; then
 		[ -s $deny_dir/badip.log.web ] && grep -v '^----' $deny_dir/badip.log.web >>$deny_dir/bak.log.web && \
-		echo "--------"$(date +"%Y-%m-%d %H:%M:%S")" : 日志已移动到 $deny_dir/bak.log.web .--------" >$deny_dir/badip.log.web
+		echo "--------"$(date +"%Y-%m-%d %H:%M:%S")" : 日志已移动到 $deny_dir/bak.log.web--------" >$deny_dir/badip.log.web
 		[ -s $deny_dir/badip.log.ssh ] && grep -v '^----' $deny_dir/badip.log.ssh >>$deny_dir/bak.log.ssh && \
-		echo "--------"$(date +"%Y-%m-%d %H:%M:%S")" : 日志已移动到 $deny_dir/bak.log.ssh .--------" >$deny_dir/badip.log.ssh
+		echo "--------"$(date +"%Y-%m-%d %H:%M:%S")" : 日志已移动到 $deny_dir/bak.log.ssh--------" >$deny_dir/badip.log.ssh
 		rm -f $deny_dir/logclear 2>/dev/null
 	fi
 	mkdir $deny_dir $tmp_dir 2>/dev/null
@@ -76,22 +76,22 @@ start_service() {
 	#configip4=$(uci -q get network.lan.ipaddr)
 	#configip6=$(uci -q get network.globals.ula_prefix)
 
-	iptables -w -N pwdHackDenySSH 2>/dev/null || iptables -w -F pwdHackDenySSH 2>/dev/null
+	iptables  -w -N pwdHackDenySSH 2>/dev/null || iptables  -w -F pwdHackDenySSH 2>/dev/null
 	ip6tables -w -N pwdHackDenySSH 2>/dev/null || ip6tables -w -F pwdHackDenySSH 2>/dev/null
-	iptables -w -N pwdHackDenyWEB 2>/dev/null || iptables -w -F pwdHackDenyWEB 2>/dev/null
+	iptables  -w -N pwdHackDenyWEB 2>/dev/null || iptables  -w -F pwdHackDenyWEB 2>/dev/null
 	ip6tables -w -N pwdHackDenyWEB 2>/dev/null || ip6tables -w -F pwdHackDenyWEB 2>/dev/null
 
-	iptables -w -C INPUT -p tcp --dport "$port1" -j pwdHackDenySSH 2>/dev/null || iptables -w -I INPUT -p tcp --dport "$port1" -j pwdHackDenySSH 2>/dev/null
+	iptables  -w -C INPUT -p tcp --dport "$port1" -j pwdHackDenySSH 2>/dev/null || iptables  -w -I INPUT -p tcp --dport "$port1" -j pwdHackDenySSH 2>/dev/null
 	ip6tables -w -C INPUT -p tcp --dport "$port1" -j pwdHackDenySSH 2>/dev/null || ip6tables -w -I INPUT -p tcp --dport "$port1" -j pwdHackDenySSH 2>/dev/null
 
 	echo "$port2" | while read line; do
-		iptables -w -C INPUT -p tcp --dport "$line" -j pwdHackDenyWEB 2>/dev/null || iptables -w -I INPUT -p tcp --dport "$line" -j pwdHackDenyWEB 2>/dev/null
+		iptables  -w -C INPUT -p tcp --dport "$line" -j pwdHackDenyWEB 2>/dev/null || iptables  -w -I INPUT -p tcp --dport "$line" -j pwdHackDenyWEB 2>/dev/null
 		ip6tables -w -C INPUT -p tcp --dport "$line" -j pwdHackDenyWEB 2>/dev/null || ip6tables -w -I INPUT -p tcp --dport "$line" -j pwdHackDenyWEB 2>/dev/null
 	done
 
 	if [ "$redirect_https" == 1 ]; then
 		echo "$port2s" | while read line; do
-			iptables -w -C INPUT -p tcp --dport "$line" -j pwdHackDenyWEB 2>/dev/null || iptables -w -I INPUT -p tcp --dport "$line" -j pwdHackDenyWEB 2>/dev/null
+			iptables  -w -C INPUT -p tcp --dport "$line" -j pwdHackDenyWEB 2>/dev/null || iptables  -w -I INPUT -p tcp --dport "$line" -j pwdHackDenyWEB 2>/dev/null
 			ip6tables -w -C INPUT -p tcp --dport "$line" -j pwdHackDenyWEB 2>/dev/null || ip6tables -w -I INPUT -p tcp --dport "$line" -j pwdHackDenyWEB 2>/dev/null
 		done
 	fi
@@ -100,8 +100,8 @@ start_service() {
 	chk_logfile WEBbadip pwdHackDenyWEB
 
 	cat >/tmp/log/pwdHackDeny.ipt.cls <<-EOF
-	iptables  -w -D INPUT -p tcp --dport "$port1"  -j pwdHackDenySSH 2>/dev/null
-	ip6tables -w -D INPUT -p tcp --dport "$port1"  -j pwdHackDenySSH 2>/dev/null
+	iptables  -w -D INPUT -p tcp --dport "$port1" -j pwdHackDenySSH 2>/dev/null
+	ip6tables -w -D INPUT -p tcp --dport "$port1" -j pwdHackDenySSH 2>/dev/null
 	iptables  -w -D INPUT -p tcp --dport "$PTV4"  -j pwdHackDenyWEB 2>/dev/null
 	ip6tables -w -D INPUT -p tcp --dport "$PTV6"  -j pwdHackDenyWEB 2>/dev/null
 	iptables  -w -D INPUT -p tcp --dport "$PTSV4" -j pwdHackDenyWEB 2>/dev/null

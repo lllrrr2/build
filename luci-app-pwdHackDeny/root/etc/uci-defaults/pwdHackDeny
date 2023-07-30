@@ -16,7 +16,7 @@ cat <<-EOF>>/etc/sysupgrade.conf
 	/etc/WEBbadip.log
 	/etc/SSHbadip.log
 	/etc/pwdHackDeny/
-	EOF
+EOF
 
-rm -f /tmp/luci-indexcache
+rm -f /tmp/luci-*
 exit 0

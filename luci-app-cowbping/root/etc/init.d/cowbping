@@ -1,6 +1,5 @@
 #!/bin/sh /etc/rc.common
 #Copyright (C) 20190805 wulishui <wulishui@gmail.com>
-#20190805-202105025
 
 START=99
 USE_PROCD=1
@@ -8,39 +7,38 @@ enabled=$(uci -q get cowbping.cowbping.enabled)
 delaytime=$(uci -q get cowbping.cowbping.delaytime)
 
 start_instance() {
-	procd_open_instance
-	procd_set_param command /etc/cowbping.sh
-	procd_set_param respawn
-	procd_set_param stderr 1
-	procd_close_instance
+    procd_open_instance
+    procd_set_param command /etc/cowbping.sh
+    procd_set_param respawn
+    procd_set_param stderr 1
+    procd_close_instance
 }
 
 service_triggers() {
-	procd_add_reload_trigger 'cowbping'
+    procd_add_reload_trigger 'cowbping'
 }
 
 start_service() {
-	stop_service
-	[ "$enabled" = 1 ] || return 0
-	start_instance
-	:>/tmp/log/cowbping.log
+    stop_service
+    [ "$enabled" = 1 ] || return 1
+    start_instance
+    :>/tmp/log/cowbping.log
 }
 
 stop_service() {
-	kill -9 $(ps | awk '/\/etc\/cowbping.sh/{print $1}') >/dev/null 2>&1
-	kill -9 $(ps | awk '/etc\/config\/cbp_cmd/{print $1}') >/dev/null 2>&1
-	:>/tmp/log/cowbping.log
+    kill -9 $(pgrep -f '/etc/cowbping.sh') >/dev/null 2>&1
+    kill -9 $(pgrep -f '/etc/config/cbp_cmd') >/dev/null 2>&1
 }
 
 restart() {
-	stop_service
-	start
+    stop_service
+    start
 }
 
 boot() {
-	if [ "$enabled" = 1 ]; then
-		logger -t cowbping "延时 $delaytime 秒启动 cowbping"
-		sleep $delaytime
-		start
-	fi
+    if [ "$enabled" = 1 ]; then
+        logger -t cowbping "延时 $delaytime 秒启动 cowbping"
+        sleep $delaytime
+        start
+    fi
 }

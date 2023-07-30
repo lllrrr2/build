@@ -10,7 +10,7 @@ add_ipts() {
 	case "$type" in
 		MAC)
 			echo "$target" >>/etc/"$1"
-			iptables -w -A "$2" -m mac --mac-source "$target" -j DROP 2>/dev/null
+			iptables  -w -A "$2" -m mac --mac-source "$target" -j DROP 2>/dev/null
 			ip6tables -w -A "$2" -m mac --mac-source "$target" -j DROP 2>/dev/null
 		;;
 		IP4)
@@ -36,7 +36,7 @@ add_badhostsbnew() {
 			sed -i '/'"$target"'/d' $deny_dir/"$3"
 			echo "$((sumtarget + 1)) $target " >>$deny_dir/"$3"
 		else
-			echo "1 $target " >> $deny_dir/"$3"
+			echo "1 $target " >>$deny_dir/"$3"
 		fi
 		unset -v MAC IP4 IP6 target
 	done
@@ -55,7 +55,7 @@ chk_log() {
 	#--------------------------chklogsize-----------------------
 	for x in "web ssh"; do
 		logsize=$(du $deny_dir/badip.log.$x 2>/dev/null | awk '{print $1}') && [ "$logsize" -gt 80 ] && {
-			cat $deny_dir/badip.log.$x >> $deny_dir/bak.log.$x
+			cat $deny_dir/badip.log.$x >>$deny_dir/bak.log.$x
 			echo "--------"$(date +"%Y-%m-%d %H:%M:%S")" ：日志文件过大，旧的记录已转移到 $deny_dir/bak.log.$x 。--------" > $deny_dir/badip.log.$x 2>/dev/null
 		}
 	done
@@ -104,7 +104,7 @@ chk_ipts() {
 }
 
 time=$(uci -q get pwdHackDeny.pwdHackDeny.time) || time=5
-while :; do
+while true; do
 	chk_ipts
 	chk_log
 	sleep "$time"
