@@ -1,6 +1,7 @@
 local fs  = require "nixio.fs"
 local sys = require "luci.sys"
 local uci = require "luci.model.uci".cursor()
+local con = uci:get_all("wizard", "default")
 
 m = Map('wizard', translate('Inital Router Setup'),
     translate('If you are using this router for the first time, please configure it here.'))
@@ -61,38 +62,34 @@ ipaddr.datatype="ip4addr"
 ipaddr.anonymous = false
 ipaddr:depends('enable_siderouter', false)
 
+local _hostname = sys.hostname() or ""
 hostname = s:taboption("wansetup", Value, "hostname", translate("Hostname"))
-hostname.default = sys.hostname() or ""
+hostname.default = _hostname
 hostname:depends('enable_siderouter', true)
 
-local ip_t = {}
-sys.net.ipv4_hints(function(ip, name)
-    ip_t[#ip_t + 1] = {
-        ip = ip,
-        mac = name
-    }
-end)
+if con.hostname and con.hostname ~= _hostname then
+    sys.hostname(con.hostname)
+end
 
-table.sort(ip_t, function(a,b)
-    if #a.ip < #b.ip then
-        return true
-    elseif #a.ip == #b.ip then
-        if a.ip < b.ip then
-            return true
-        else
-            return #a.ip < #b.ip
-        end
+local ip_mac = {}
+sys.net.ipv4_hints(
+    function(ip, name)
+        ip_mac[#ip_mac + 1] = {ip = ip, mac = name}
+    end, function(a, b)
+    if #a.ip ~= #b.ip then
+        return #a.ip < #b.ip
     end
-    return false
+    return a.ip < b.ip
 end)
 
 ipaddr = s:taboption("wansetup", Value, "siderouter_lan_ipaddr", translate("IPv4 address"))
-local descr = translate([[设置主路由同网段未冲突的IP地址<font color="red">(即是该路由web访问的IP)</font><br>当前的内网主机列表:<ol>]])
-for _, key in pairs(ip_t) do
-    descr = descr .. "<li>" .. translate("%s (%s)" % {key.ip, key.mac}) .. "</li>"
+local descr = {[[设置主路由同网段未冲突的IP地址<font color=red>(即是该路由web访问的IP)</font><br>当前的内网主机列表：<ol>]]}
+for _, key in pairs(ip_mac) do
+    descr[#descr + 1] = translatef([[<li>%s (%s)</li>]], key.ip, key.mac)
 end
-ipaddr.description = descr .. "</ol>"
-ipaddr:value(lan_ipaddr, translate(lan_ipaddr .. " --当前LAN的IP--"))
+ipaddr.description = table.concat(descr) .. "</ol>"
+
+ipaddr:value(lan_ipaddr, translatef("%s --当前LAN的IP--", lan_ipaddr))
 ipaddr.default = lan_ipaddr
 ipaddr.datatype="ip4addr"
 ipaddr.anonymous = false
@@ -203,13 +200,8 @@ ip_tables.default = "iptables -t nat -I POSTROUTING -o eth0 -j MASQUERADE"
 ip_tables.anonymous = false
 ip_tables:depends("omasq", true)
 
-local con = uci:get_all("wizard", "default")
 -- local network_lan = uci:get_all("network", "lan")
 -- local network_wan = uci:get_all("network", "wan")
-
-if con.hostname and con.hostname ~= sys.hostname() then
-    sys.hostname(con.hostname)
-end
 
 -- if con.wan_proto ~= pppoe then
 --     if con.pppoe_user ~= network_wan.username or con.pppoe_pass ~= network_wan.password then
@@ -241,7 +233,7 @@ end
 
 -- s:tab("lansetup", translate("Lan Settings"))
 
-if sys.call("[ -s '/etc/config/wireless' ]") ==0 then
+if sys.call("[ -s '/etc/config/wireless' ]") == 0 then
     s:tab('wifisetup', translate('Wireless Settings'), translate('Set the router\'s wireless name and password. For more advanced settings, please go to the Network-Wireless page.'))
     o = s:taboption('wifisetup', Value, 'wifi_ssid', translate('<abbr title\"Extended Service Set Identifier\">ESSID</abbr>'))
     o.datatype = 'maxlength(32)'

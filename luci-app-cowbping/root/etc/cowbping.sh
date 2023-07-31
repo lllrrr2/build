@@ -47,7 +47,7 @@ execute_command() {
         5)  :
             ;;
         6)  old_run_sum=$(($(cat $run_sum_file | wc -l) + 1))
-            test "$old_run_sum" -eq "$run_sum" -a "$stop_run" -eq 1 && unset old_stop_run
+            test "$old_run_sum" -eq "$run_sum" -a "$stop_run" -eq 1 && export old_stop_run=""
             test "$old_run_sum" -le "$run_sum" && {
                 echo_log "检查到 $st，执行第 $old_run_sum 次重启系统"
                 echo "$(date "+%m月%d日 %H:%M:%S")" >>$run_sum_file
@@ -85,19 +85,19 @@ cycle_ping() {
     [ -z "$fail" ] && return 0
     clean_log
     get_run_name
+    test -z "$old_run_sum" -a -s "$run_sum_file" && :> $run_sum_file
     test "$work_mode" -ne 6 -o "$work_mode" -ne 7 && {
         if [ "$run_sum" -eq 0 ]; then
             echo_log "检查到 $st 执行 $run_name"
         else
             old_run_sum=$((${old_run_sum:=0} + 1))
-            test -s "$run_sum_file" -a $old_run_sum -eq 1 && :> $run_sum_file
             if [ "$old_run_sum" -le "$run_sum" ]; then
                 echo_log "检查到 $st 准备执行第 $old_run_sum 次 $run_name"
                 echo "$(date "+%m月%d日 %H:%M:%S")" >>$run_sum_file
             fi
             test "$old_run_sum" -eq "$run_sum" && {
                 test "$stop_run" -eq 1 && {
-                    unset old_stop_run
+                    export old_stop_run=""
                     echo_log "准备执行 $old_run_sum 次，本次执行后停止执行网络检测"
                 } || {
                     xc=1
@@ -105,8 +105,6 @@ cycle_ping() {
                 }
             }
         fi
-    } || {
-        test -s "$run_sum_file" || :> $run_sum_file
     }
     execute_command
 }

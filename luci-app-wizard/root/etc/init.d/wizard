@@ -48,54 +48,50 @@ add_wizard() {
 
     case $wan_proto in
         dhcp)
-            uci_remove "network" "wan"
+            uci_remove network wan
             uci_add network interface wan
             uci_set_network wan proto dhcp
             uci_set_network wan ifname "$wan_ifname"
             uci_set_network wan device "$wan_device"
-            # uci_set_network wan metric '40'
         ;;
         pppoe)
             [ "$pppoe_user" != "$(uci_get network wan username)" -o "$pppoe_pass" != "$(uci_get network wan password)" ] && {
-                uci_remove "network" "wan"
+                uci_remove network wan
                 uci_add network interface wan
+                uci_set_network wan proto pppoe
+                uci_set_network wan ipv6 "$ipv6"
                 uci_set_network wan ifname "$wan_ifname"
                 uci_set_network wan device "$wan_device"
-                uci_set_network wan proto pppoe
                 uci_set_network wan username "$pppoe_user"
                 uci_set_network wan password "$pppoe_pass"
-                uci_set_network wan ipv6 "$ipv6"
-                # uci_set_network wan keepalive '0'
-                # uci_set_network wan mtu '1492'
-                # uci_set_network wan metric '40'
             }
         ;;
         siderouter)
             [ "$enable_siderouter" -eq 1 ] || return 0
             if [ "$lan_gateway" != "$(uci_get network lan gateway)" -o "$dhcp" != "$(uci_get dhcp lan ignore)" ]; then
-                uci_remove "network" "lan"
-                uci -q set network.lan=interface
-                uci_set_network lan type 'bridge'
-                uci_set_network lan proto 'static'
+                uci_remove network lan
+                uci_add network interface lan
+                uci_set_network lan type bridge
+                uci_set_network lan proto static
                 uci_set_network lan ipaddr "$lan_ipaddr"
                 uci_set_network lan ifname "$lan_ifname"
                 uci_set_network lan device "$lan_device"
                 uci_set_network lan gateway "$lan_gateway"
                 uci_set_network lan netmask "$lan_netmask"
                 uci_set_network lan ip6assign "$lan_ip6assign"
-                uci -q set dhcp.lan.ignore="$dhcp"
+                uci_set dhcp lan ignore "$dhcp"
             fi
             if [ "$firewall" -eq 1 -a "$firewall" != "$old_firewall" ]; then
                 # [ "$wan" -eq "1" ] && uci -q delete firewall.@zone[1]
                 [ "$masq" -eq 1 ] && \
-                    uci -q set firewall.@zone[0].masq='1' || \
-                    uci -q delete firewall.@zone[0].masq
+                    uci_set "firewall" "@defaults[0]" "masq" "1" || \
+                    uci_remove "firewall" "@defaults[0]" "masq"
                 [ "$fullcone" -eq 1 ] && \
-                    uci -q delete firewall.@defaults[0].fullcone || \
-                    uci -q set firewall.@defaults[0].fullcone='1'
+                    uci_remove "firewall" "@defaults[0]" "fullcone" || \
+                    uci_set "firewall" "@defaults[0]" "fullcone" "1"
                 [ "$syn_flood" -eq 1 ] && \
-                    uci -q set firewall.@defaults[0].syn_flood='1' || \
-                    uci -q delete firewall.@defaults[0].syn_flood
+                    uci_set "firewall" "@defaults[0]" "syn_flood" "1" || \
+                    uci_remove "firewall" "@defaults[0]" "syn_flood"
                 [ "$omasq" -eq 1 -a -n "$lan_ipaddr" ] && \
                     echo "$lan_ipaddr" >>/etc/firewall.user || \
                     sed -i "/$ip_tables/d" /etc/firewall.user
@@ -179,12 +175,12 @@ add_wizard() {
     #     test uci_get network lan gateway || uci_set_network lan ifname "$eth"
     # fi
     uci_commit wizard
-    /etc/init.d/dnsmasq reload &
-    [ "$(uci -q changes network | wc -l)" -gt 0 ] && {
+    [ "$(uci -q changes network | wc -l)" -ge 1 ] && {
         uci_commit network
-        service network restart &
-        ifup wan
-        # /etc/init.d/network reload &
+        # service network restart &
+        # ifup wan
+        /etc/init.d/dnsmasq restart &
+        /etc/init.d/network restart &
     }
 }
 
@@ -198,7 +194,7 @@ reconfig() {
         uci_set_wizard lan_gateway "$(uci_get network lan gateway)"
         uci_set_wizard pppoe_user  "$(uci_get network wan username)"
         uci_set_wizard pppoe_pass  "$(uci_get network wan password)"
-        [ -n "$(uci_get dhcp lan ignore)" ] && uci_set_wizard dhcp "0" || uci_remove "wizard" "default" "dhcp"
+        [ -n "$(uci_get dhcp lan ignore)" ] && uci_set_wizard dhcp "0" || uci_remove wizard default dhcp
         uci_commit wizard
     }
 
