@@ -1,9 +1,8 @@
 local fs  = require "nixio.fs"
 local sys = require "luci.sys"
-local state_msg1,state_msg2 = translate(""),translate("")
 
 local function checkKeywordInFile(file_path, keyword)
-    local content = fs.readfile(file_path)
+    local content = file_path and fs.readfile(file_path) or ""
     if not keyword and content ~= "" then
         return true
     elseif keyword and content ~= "" then
@@ -12,21 +11,22 @@ local function checkKeywordInFile(file_path, keyword)
     return false
 end
 
-local state_msg  = [['red'>没有运行]]
-if sys.call("pidof pwdHackDeny.sh >/dev/null") == 0 then
-    state_msg = [['green'>正在运行]]
+local state_msg  = [[color='red'>没有运行]]
+if sys.call("pgrep -f pwdHackDeny.sh >/dev/null") == 0 then
+    state_msg = [[color='green'>正在运行]]
 end
 
+local state_msg1, state_msg2 = "", ""
 if checkKeywordInFile("/etc/pwdHackDeny/badip.log.ssh", "Bad password attempt") then
-    state_msg1 = translate([[<b><font color='red'>有SSH异常登录！</font></b>]])
+    state_msg1 = [[<b><font color='red'>有SSH异常登录！</font></b>]]
 end
 
 if checkKeywordInFile("/etc/pwdHackDeny/badip.log.web", "failed login on") then
-    state_msg2 = translate([[<b><font color='red'>有WEB异常登录！</font></b>]])
+    state_msg2 = [[<b><font color='red'>有WEB异常登录！</font></b>]]
 end
 
 m = Map("pwdHackDeny", translate("登录管制"),
-    translatef("监控SSH及WEB异常登录，密码错误累计达到 5 次的内外网客户端都禁止连接SSH以及WEB登录端口，<br>直到手动删除相应的IP或MAC名单为止。也可以在名单中添加排除项目，被排除的客户端将不会被禁止。<br><br>运行状态 : <b><font color=%s</font></b><br/>", state_msg))
+    translatef("监控SSH及WEB异常登录，密码错误累计达到 5 次的内外网客户端都禁止连接SSH以及WEB登录端口，<br>直到手动删除相应的IP或MAC名单为止。也可以在名单中添加排除项目，被排除的客户端将不会被禁止。<br><br>运行状态 : <b><font %s</font></b><br/>", state_msg))
 
 s = m:section(TypedSection, "pwdHackDeny")
 s.anonymous=true
@@ -43,22 +43,22 @@ setport =s:option(Value,"sum", translate("失败次数（次）"))
 setport.default=5
 setport.datatype="uinteger"
 
-if checkKeywordInFile("/etc/pwdHackDeny/badip.log.ssh") then
+if checkKeywordInFile("/etc/pwdHackDeny/badip.log.ssh", "Login Host") then
     clearsshlog = s:option(Button, "clearsshlog", translate("清除SSH登录日志"))
     clearsshlog.inputtitle = translate("清除")
     clearsshlog.inputstyle = "remove"
     function clearsshlog.write(self, section)
-       sys.exec(":> /etc/pwdHackDeny/badip.log.ssh &")
+       sys.exec("sed -i '/Login Host/d' /etc/pwdHackDeny/badip.log.ssh &")
        luci.http.redirect(luci.dispatcher.build_url("admin/control/pwdHackDeny"))
     end
 end
 
-if checkKeywordInFile("/etc/pwdHackDeny/badip.log.web") then
+if checkKeywordInFile("/etc/pwdHackDeny/badip.log.web", "Login Host") then
     clearlwebog = s:option(Button, "clearlwebog", translate("清除WEB登录日志"))
     clearlwebog.inputtitle = translate("清除")
     clearlwebog.inputstyle = "remove"
     function clearlwebog.write(self, section)
-       sys.exec(":> /etc/pwdHackDeny/badip.log.web &")
+       sys.exec("sed -i '/Login Host/d' /etc/pwdHackDeny/badip.log.web &")
        luci.http.redirect(luci.dispatcher.build_url("admin/control/pwdHackDeny"))
     end
 end
@@ -66,22 +66,22 @@ end
 s = m:section(TypedSection, "pwdHackDeny")
 s.anonymous=true
 
-s:tab("config1", translate("SSH最近登录日志"), state_msg1)
+s:tab("config1", translate("SSH最近登录日志"), translate(state_msg1))
 conf = s:taboption("config1", Value, "editconf1", nil,
     translate("<font style='color:red'>新的信息需要刷新页面才会显示。如原为启用状态，禁用后又再启用会清除日志显示，但不会清除累积计数。</font>"))
 conf.template = "cbi/tvalue"
-conf.rows = 20
+conf.rows = 10
 conf.wrap = "off"
 conf.readonly="readonly"
 function conf.cfgvalue()
     return fs.readfile("/etc/pwdHackDeny/badip.log.ssh", value) or ""
 end
 
-s:tab("config2", translate("WEB最近登录日志"), state_msg2)
+s:tab("config2", translate("WEB最近登录日志"), translate(state_msg2))
 conf = s:taboption("config2", Value, "editconf2", nil,
     translate("<font style='color:red'>新的信息需要刷新页面才会显示。如原为启用状态，禁用后又再启用会清除日志显示，但不会清除累积计数。</font>"))
 conf.template = "cbi/tvalue"
-conf.rows = 20
+conf.rows = 10
 conf.wrap = "off"
 conf.readonly="readonly"
 function conf.cfgvalue()
@@ -93,7 +93,7 @@ if checkKeywordInFile("/etc/pwdHackDeny/badhosts.web") then
     conf = s:taboption("config3", Value, "editconf3", nil,
         translate("<font style='color:red'>新的信息需要刷新页面才会显示。如记录中有自己的MAC，可复制到相应的黑名单中，在前面加#可避免被屏蔽。</font>"))
     conf.template = "cbi/tvalue"
-    conf.rows = 20
+    conf.rows = 10
     conf.wrap = "off"
     conf.readonly="readonly"
     function conf.cfgvalue()
@@ -106,7 +106,7 @@ if checkKeywordInFile("/etc/pwdHackDeny/badhosts.ssh") then
     conf = s:taboption("config4", Value, "editconf4", nil,
         translate("<font style='color:red'>新的信息需要刷新页面才会显示。如记录中有自己的MAC，可复制到相应的黑名单中，在前面加#可避免被屏蔽。</font>"))
     conf.template = "cbi/tvalue"
-    conf.rows = 20
+    conf.rows = 10
     conf.wrap = "off"
     conf.readonly="readonly"
     function conf.cfgvalue()
@@ -119,7 +119,7 @@ s:tab("config5", translate("SSH禁止名单"),
 conf = s:taboption("config5", Value, "editconf5", nil,
     translate("<font style='color:red'>预设名单内外网都可以添加IP或MAC地址，IP4段格式为192.168.18.10-20，不能为192.168.1.1/24或192.168.18.10-192.168.18.20。<br>自动拦截的内网名单仅自动添加MAC地址。</font>"))
 conf.template = "cbi/tvalue"
-conf.rows = 20
+conf.rows = 10
 conf.wrap = "off"
 function conf.cfgvalue(self, section)
     return fs.readfile("/etc/SSHbadip.log") or ""
@@ -139,7 +139,7 @@ s:tab("config6", translate("WEB禁止名单"),
 conf = s:taboption("config6", Value, "editconf6", nil,
     translate("<font style='color:red'>预设名单内外网都可以添加IP或MAC地址，IP4段格式为192.168.18.10-20，不能为192.168.1.1/24或192.168.18.10-192.168.18.20。<br>自动拦截的内网名单仅自动添加MAC地址。</font>"))
 conf.template = "cbi/tvalue"
-conf.rows = 20
+conf.rows = 10
 conf.wrap = "off"
 function conf.cfgvalue(self, section)
     return fs.readfile("/etc/WEBbadip.log") or ""
