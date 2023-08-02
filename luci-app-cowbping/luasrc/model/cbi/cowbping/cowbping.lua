@@ -3,13 +3,12 @@ local sys = require "luci.sys"
 local state_msg1,state_msg2 = translate(""),translate("")
 
 local function checkKeywordInFile(file_path, keyword)
-    local content = file_path and fs.readfile(file_path) or ""
-    if content ~= "" and not keyword then
-        return true
-    elseif content ~= "" and keyword then
+    local content = fs.readfile(file_path) or ""
+    if keyword then
         return content:find(keyword)
+    else
+        return content ~= ""
     end
-    return false
 end
 
 local state_msg  = [['red'>没有运行]]

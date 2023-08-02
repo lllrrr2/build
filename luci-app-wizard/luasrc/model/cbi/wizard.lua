@@ -1,7 +1,32 @@
 local fs  = require "nixio.fs"
 local sys = require "luci.sys"
 local uci = require "luci.model.uci".cursor()
-local con = uci:get_all("wizard", "default")
+local wizard = uci:get_all("wizard", "default")
+
+local ip_mac = {}
+sys.net.ipv4_hints(
+    function(ip, name)
+        ip_mac[#ip_mac + 1] = {ip = ip, mac = name}
+    end, function(a, b)
+    if #a.ip ~= #b.ip then
+        return #a.ip < #b.ip
+    end
+    return a.ip < b.ip
+end)
+
+local function isFileNotEmpty(file)
+    local content = fs.readfile(file) or ""
+    return content ~= ""
+end
+
+local function txt(x)
+    return translatef([[本页是%s的配置文件内容，编辑后点击<code>保存&应用</code>按钮后重启生效<br><font color="Red">配置文件是直接编辑的！除非你知道自己在干什么，否则请不要轻易修改这些配置文件。配置不正确可能会导致不能联网等错误。</font>]], x)
+end
+
+local file_dhcp     = '/etc/config/dhcp'
+local file_network  = '/etc/config/network'
+local file_firewall = '/etc/config/firewall'
+local file_wireless = '/etc/config/wireless'
 
 m = Map('wizard', translate('Inital Router Setup'),
     translate('If you are using this router for the first time, please configure it here.'))
@@ -62,25 +87,14 @@ ipaddr.datatype="ip4addr"
 ipaddr.anonymous = false
 ipaddr:depends('enable_siderouter', false)
 
-local _hostname = sys.hostname() or ""
+local sys_hostname = sys.hostname() or ""
 hostname = s:taboption("wansetup", Value, "hostname", translate("Hostname"))
-hostname.default = _hostname
+hostname.default = sys_hostname
 hostname:depends('enable_siderouter', true)
 
-if con.hostname and con.hostname ~= _hostname then
-    sys.hostname(con.hostname)
+if wizard.hostname and wizard.hostname ~= sys_hostname then
+    sys.hostname(wizard.hostname)
 end
-
-local ip_mac = {}
-sys.net.ipv4_hints(
-    function(ip, name)
-        ip_mac[#ip_mac + 1] = {ip = ip, mac = name}
-    end, function(a, b)
-    if #a.ip ~= #b.ip then
-        return #a.ip < #b.ip
-    end
-    return a.ip < b.ip
-end)
 
 ipaddr = s:taboption("wansetup", Value, "siderouter_lan_ipaddr", translate("IPv4 address"))
 local descr = {[[设置主路由同网段未冲突的IP地址<font color=red>(即是该路由web访问的IP)</font><br>当前的内网主机列表：<ol>]]}
@@ -113,7 +127,8 @@ netmask.default = "255.255.255.0"
 netmask.datatype='ip4addr'
 netmask.anonymous = false
 
-dns = s:taboption('wansetup', DynamicList, 'lan_dns', translate('LAN DNS 服务器'), translate("可以设置主路由的IP，或可到<a href='https://dnsdaquan.com' target='_blank'> DNS大全 </a>获取更多"))
+dns = s:taboption('wansetup', DynamicList, 'lan_dns', translate('LAN DNS 服务器'),
+    translate("可以设置主路由的IP，或可到<a href='https://dnsdaquan.com' target='_blank'> DNS大全 </a>获取更多"))
 dns:value("223.5.5.5", translate("阿里DNS：223.5.5.5"))
 dns:value("223.6.6.6", translate("阿里DNS：223.6.6.6"))
 dns:value("101.226.4.6", translate("DNS派：101.226.4.6"))
@@ -126,10 +141,10 @@ dns.anonymous = false
 dns.datatype = "ip4addr"
 -- dns.cast = "string"
 
-dhcp = s:taboption('wansetup', Flag, 'dhcp', translate('DHCP Server'), translate('开启此DHCP则需要关闭主路由的DHCP<br><b><font color="red">关闭主路由DHCP则需要手动将所有上网设备的网关和DNS改为此旁路由的IP</font></b>'))
+dhcp = s:taboption('wansetup', Flag, 'dhcp', translate('DHCP Server'),
+    translate('开启此DHCP则需要关闭主路由的DHCP<br><b><font color="red">关闭主路由DHCP则需要手动将所有上网设备的网关和DNS改为此旁路由的IP</font></b>'))
 dhcp.datatype = 'ip4addr'
 dhcp:depends('enable_siderouter', true)
--- dhcp.default = o.enable_siderouterd
 
 wan = s:taboption("wansetup", Flag, "wan_lan", translate("修改WAN口"),
     translate("修改WAN口变成LAN口"))
@@ -200,62 +215,23 @@ ip_tables.default = "iptables -t nat -I POSTROUTING -o eth0 -j MASQUERADE"
 ip_tables.anonymous = false
 ip_tables:depends("omasq", true)
 
--- local network_lan = uci:get_all("network", "lan")
--- local network_wan = uci:get_all("network", "wan")
-
--- if con.wan_proto ~= pppoe then
---     if con.pppoe_user ~= network_wan.username or con.pppoe_pass ~= network_wan.password then
---         uci:set("network", "wan", "username", con.pppoe_user)
---         uci:set("network", "wan", "password", con.pppoe_pass)
---         uci:commit("network")
---     end
--- end
-
--- if con.ipv6 ~= network_wan.ipv6 and con.ipv6 then
---     uci:set("network", "wan", "ipv6", con.ipv6)
---     uci:commit("network")
--- end
-
--- if con.lan_dns ~= network_lan.dns and con.lan_dns then
---     uci:set("network", "lan", "dns", con.lan_dns)
---     uci:commit("network")
--- end
-
--- if con.lan_ipaddr ~= network_lan.ipaddr then
---     uci:set("network", "lan", "ipaddr",  con.lan_ipaddr)
---     uci:commit("network")
--- end
-
--- if con.lan_netmask ~= network_lan.netmask then
---     uci:set("network", "lan", "netmask", con.lan_netmask)
---     uci:commit("network")
--- end
-
--- s:tab("lansetup", translate("Lan Settings"))
-
-if sys.call("[ -s '/etc/config/wireless' ]") == 0 then
-    s:tab('wifisetup', translate('Wireless Settings'), translate('Set the router\'s wireless name and password. For more advanced settings, please go to the Network-Wireless page.'))
-    o = s:taboption('wifisetup', Value, 'wifi_ssid', translate('<abbr title\"Extended Service Set Identifier\">ESSID</abbr>'))
+if isFileNotEmpty(file_wireless) then
+    s:tab('wifisetup', translate('Wireless Settings'),
+        translate('Set the router\'s wireless name and password. For more advanced settings, please go to the Network-Wireless page.'))
+    o = s:taboption('wifisetup', Value, 'wifi_ssid', translate('<abbr title=\"Extended Service Set Identifier\">ESSID</abbr>'))
     o.datatype = 'maxlength(32)'
     o = s:taboption("wifisetup", Value, "wifi_key", translate("Key"))
     o.datatype = 'wpakey'
     o.password = true
 end
 
-local x = [[<br><font color="Red">配置文件是直接编辑的！除非你知道自己在干什么，否则请不要轻易修改这些配置文件。配置不正确可能会导致不能联网等错误。</font>]]
-local file_dhcp = '/etc/config/dhcp'
-local file_network = '/etc/config/network'
-local file_firewall = '/etc/config/firewall'
-
-if fs.access(file_network) then
-    s:tab("netwrokconf", translate("修改network"),
-        translate("本页是/etc/config/network的配置文件内容，编辑后点击<code>保存&应用</code>按钮后重启生效") ..
-        translate(x))
+if isFileNotEmpty(file_network) then
+    s:tab("netwrokconf", translate("修改network"), txt(file_network))
     local o = s:taboption("netwrokconf", Button, "_network")
     o.inputtitle = translate("重启network")
     o.inputstyle = "reset"
     function o.write(self, section)
-        sys.exec("/etc/init.d/network restart >/dev/null &")
+        sys.call("/etc/init.d/network restart >/dev/null &")
     end
 
     local conf = s:taboption("netwrokconf", Value, "netwrokconf", nil)
@@ -263,21 +239,13 @@ if fs.access(file_network) then
     conf.rows = 25
     conf.wrap = "off"
     function conf.cfgvalue(self, section)
-        local file_handle = io.open(file_network, "r")
-        local chunks = {}
-        repeat
-            local chunk = file_handle:read(1024 * 512)
-            if chunk then chunks[#chunks + 1] = chunk end
-            coroutine.yield()
-        until not chunk
-        file_handle:close()
-        return table.concat(chunks)
+        return fs.readfile(file_network) or ""
     end
 
     function conf.write(self, section, value)
-        if value and value ~= nil and value ~= "" then
+        if value then
             value = value:gsub("\r\n?", "\n")
-            local old_value = fs.readfile(value)
+            local old_value = fs.readfile(value) or ""
             if value ~= old_value then
                 fs.writefile(file_network, value)
                 sys.call("/etc/init.d/network restart >/dev/null &")
@@ -286,14 +254,13 @@ if fs.access(file_network) then
     end
 end
 
-if fs.access(file_dhcp) then
-    s:tab("dhcpconf", translate("修改DHCP"),
-        translate("本页是/etc/config/dhcp的配置文件内容，编辑后点击<code>保存&应用</code>按钮后重启生效") .. x)
+if isFileNotEmpty(file_dhcp) then
+    s:tab("dhcpconf", translate("修改DHCP"), txt(file_dhcp))
     local o = s:taboption("dhcpconf", Button, "_dhcp")
     o.inputtitle = translate("重启dnsmasq")
     o.inputstyle = "reset"
     function o.write(self, section)
-        sys.exec("/etc/init.d/dnsmasq reload >/dev/null &")
+        sys.call("/etc/init.d/dnsmasq reload >/dev/null &")
     end
 
     local conf = s:taboption("dhcpconf", Value, "dhcpconf", nil)
@@ -301,21 +268,13 @@ if fs.access(file_dhcp) then
     conf.rows = 25
     conf.wrap = "off"
     function conf.cfgvalue(self, section)
-        local file_handle = io.open(file_dhcp, "r")
-        local chunks = {}
-        repeat
-            local chunk = file_handle:read(1024 * 512)
-            if chunk then chunks[#chunks + 1] = chunk end
-            coroutine.yield()
-        until not chunk
-        file_handle:close()
-        return table.concat(chunks)
+        return fs.readfile(file_dhcp) or ""
     end
 
     function conf.write(self, section, value)
-        if value and value ~= nil and value ~= "" then
+        if value then
             value = value:gsub("\r\n?", "\n")
-            local old_value = fs.readfile(value)
+            local old_value = fs.readfile(value) or ""
             if value ~= old_value then
                 fs.writefile(file_dhcp, value)
                 sys.call("/etc/init.d/dnsmasq reload >/dev/null &")
@@ -324,14 +283,13 @@ if fs.access(file_dhcp) then
     end
 end
 
-if fs.access(file_firewall) then
-    s:tab("firewallconf", translate("修改firewall"),
-        translate("本页是/etc/config/firewall的配置文件内容，编辑后点击<code>保存&应用</code>按钮后重启生效") .. x)
+if isFileNotEmpty(file_firewall) then
+    s:tab("firewallconf", translate("修改firewall"), txt(file_firewall))
     local o = s:taboption("firewallconf", Button, "_firewall")
     o.inputtitle = translate("重启firewall")
     o.inputstyle = "reset"
     function o.write(self, section)
-        sys.exec("/etc/init.d/firewall reload >/dev/null &")
+        sys.call("/etc/init.d/firewall reload >/dev/null &")
     end
 
     local conf = s:taboption("firewallconf", Value, "firewallconf", nil)
@@ -339,21 +297,13 @@ if fs.access(file_firewall) then
     conf.rows = 25
     conf.wrap = "off"
     function conf.cfgvalue(self, section)
-        local file_handle = io.open(file_firewall, "r")
-        local chunks = {}
-        repeat
-            local chunk = file_handle:read(1024 * 512)
-            if chunk then chunks[#chunks + 1] = chunk end
-            coroutine.yield()
-        until not chunk
-        file_handle:close()
-        return table.concat(chunks)
+        return fs.readfile(file_firewall) or ""
     end
 
     function conf.write(self, section, value)
-        if value and value ~= nil and value ~= "" then
+        if value then
             value = value:gsub("\r\n?", "\n")
-            local old_value = fs.readfile(value)
+            local old_value = fs.readfile(file_firewall) or ""
             if value ~= old_value then
                 fs.writefile(file_firewall, value)
                 sys.call("/etc/init.d/firewall reload >/dev/null &")
