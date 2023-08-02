@@ -245,7 +245,7 @@ if isFileNotEmpty(file_network) then
     function conf.write(self, section, value)
         if value then
             value = value:gsub("\r\n?", "\n")
-            local old_value = fs.readfile(value) or ""
+            local old_value = fs.readfile(file_network) or ""
             if value ~= old_value then
                 fs.writefile(file_network, value)
                 sys.call("/etc/init.d/network restart >/dev/null &")
@@ -274,7 +274,7 @@ if isFileNotEmpty(file_dhcp) then
     function conf.write(self, section, value)
         if value then
             value = value:gsub("\r\n?", "\n")
-            local old_value = fs.readfile(value) or ""
+            local old_value = fs.readfile(file_dhcp) or ""
             if value ~= old_value then
                 fs.writefile(file_dhcp, value)
                 sys.call("/etc/init.d/dnsmasq reload >/dev/null &")
