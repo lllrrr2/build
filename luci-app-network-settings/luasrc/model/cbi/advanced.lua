@@ -1,279 +1,238 @@
-m = Map("advanced", translate("快捷设置"), translate("<br><font color=\"Red\"><strong>配置文件是直接编辑保存的！除非你知道在干什么，否则请不要修改这些配置文件。配置不正确可能会导致不能开机，联网等错误。</strong></font><br/><b><font color=\"green\">注释行在行首添加 ＃ 。修改行前建议先备份行再修改。</font></b><br>"))
-m.apply_on_parse = true
+local fs  = require "nixio.fs"
+local sys = require "luci.sys"
+
+local function description(value)
+    return translatef([[本页是<code>%s</code>的配置文件内容，编辑后点击<code>保存&应用</code>按钮后重启生效]], value)
+end
+
+local function isFileEmpty(path)
+    local content = fs.readfile(path) or ""
+    return content ~= ""
+end
+
+local function _writefile(value, path)
+    value = value:gsub("\r\n?", "\n")
+    local old_value = fs.readfile(path) or ""
+    if value ~= old_value then
+        return fs.writefile(path, value)
+    else
+        return false
+    end
+end
+
+local hosts         = '/etc/hosts'
+local rc_local      = '/etc/rc.local'
+local file_dhcp     = '/etc/config/dhcp'
+local file_uhttpd   = '/etc/config/uhttpd'
+local dnsmasq_conf  = '/etc/dnsmasq.conf'
+local file_network  = '/etc/config/network'
+local file_firewall = '/etc/firewall.user'
+local file_wireless = '/etc/config/wireless'
+
+m = Map("advanced", translate("快捷设置"),
+    translate([[<br><font color='red'><strong>配置文件是直接编辑保存的！除非你知道在干什么，否则请不要修改这些配置文件。配置不正确可能会导致不能开机，联网等错误。</strong></font><br/><b><font color='green'>修改行前建议先备份行再修改，注释行在行首添加 ＃。</font></b><br>]]))
 s = m:section(TypedSection,"advanced")
 s.anonymous = true
 
-if nixio.fs.access("/etc/config/network") then
-	s:tab("netwrokconf", translate("网络"), translate("本页是/etc/config/network的配置文件内容，编辑后点击<code>保存&应用</code>按钮后生效<br>"))
-	o = s:taboption("netwrokconf", Button, "_network")
-	o.inputtitle = translate("重启网络")
-	o.inputstyle = "apply"
-	function o.write(self, section)
-		luci.sys.exec("/etc/init.d/network restart >/dev/null &")
-	end
+if isFileEmpty(file_network) then
+    s:tab("netwrokconf", translate("网络"), description(file_network))
+    o = s:taboption("netwrokconf", Button, "_network")
+    o.inputtitle = translate("重启网络")
+    o.inputstyle = "reset"
+    function o.write(self, section)
+        sys.init.restart("network")
+    end
 
-	conf = s:taboption("netwrokconf", Value, "netwrokconf", nil)
-	conf.template = "cbi/tvalue"
-	conf.rows = 22
-	conf.wrap = "off"
-	function conf.cfgvalue(self, section)
-		return nixio.fs.readfile("/etc/config/network") or ""
-	end
-	function conf.write(self, section, value)
-		if value then
-			value = value:gsub("\r\n?", "\n")
-			nixio.fs.writefile("/tmp/network", value)
-				if (luci.sys.call("cmp -s /tmp/network /etc/config/network") == 1) then
-					nixio.fs.writefile("/etc/config/network", value)
-					luci.sys.call("/etc/init.d/network restart >/dev/null &")
-				end
-			nixio.fs.remove("/tmp/network")
-		end
-	end
+    conf = s:taboption("netwrokconf", Value, "netwrokconf", nil)
+    conf.template = "cbi/tvalue"
+    conf.rows = 20
+    conf.wrap = "off"
+
+    function conf.cfgvalue(self, section)
+        return fs.readfile(file_network) or ""
+    end
+
+    function conf.write(self, section, value)
+        if not value then return end
+        if _writefile(value, file_network) then
+            sys.init.restart("network")
+        end
+    end
 end
 
-if (luci.sys.call("[ `sed -n '$=' /etc/config/wireless 2>/dev/null` -gt 0 ]") == 0) then
-	s:tab("wirelessconf", translate("无线"), translate("本页是/etc/config/wireless的配置文件内容，编辑后点击<code>保存&应用</code>按钮后生效<br>"))
-	o = s:taboption("wirelessconf", Button, "_wifi")
-	o.inputtitle = translate("重启wifi")
-	o.inputstyle = "apply"
-	function o.write(self, section)
-		luci.sys.exec("wifi reload >/dev/null &")
-	end
+if isFileEmpty(file_wireless) then
+    s:tab("wirelessconf", translate("无线"), description(file_wireless))
+    o = s:taboption("wirelessconf", Button, "_wifi")
+    o.inputtitle = translate("重启wifi")
+    o.inputstyle = "reset"
+    function o.write(self, section)
+        sys.exec("wifi reload >/dev/null &")
+    end
 
-	conf = s:taboption("wirelessconf", Value, "wirelessconf", nil)
-	conf.template = "cbi/tvalue"
-	conf.rows = 22
-	conf.wrap = "off"
-	function conf.cfgvalue(self, section)
-		return nixio.fs.readfile("/etc/config/wireless") or ""
-	end
+    conf = s:taboption("wirelessconf", Value, "wirelessconf", nil)
+    conf.template = "cbi/tvalue"
+    conf.rows = 20
+    conf.wrap = "off"
+    function conf.cfgvalue(self, section)
+        return fs.readfile(file_wireless) or ""
+    end
 
-	function conf.write(self, section, value)
-		if value then
-			value = value:gsub("\r\n?", "\n")
-			nixio.fs.writefile("/tmp/wireless", value)
-				if (luci.sys.call("cmp -s /tmp/wireless /etc/config/wireless") == 1) then
-					nixio.fs.writefile("/etc/config/wireless", value)
-					luci.sys.call("wifi reload >/dev/null &")
-				end
-			nixio.fs.remove("/tmp/wireless")
-		end
-	end
+    function conf.write(self, section, value)
+        if not value then return end
+        value = value:gsub("\r\n?", "\n")
+        local old_value = fs.readfile(file_wireless) or ""
+        if value ~= old_value then
+            fs.writefile(file_wireless, value)
+            sys.exec("wifi reload >/dev/null &")
+        end
+    end
 end
 
-if nixio.fs.access("/etc/config/dhcp") then
-	s:tab("dhcpconf", translate("DHCP"), translate("本页是/etc/config/dhcp的配置文件内容，编辑后点击<code>保存&应用</code>按钮后生效<br>"))
-	o = s:taboption("dhcpconf", Button, "_dhcp")
-	o.inputtitle = translate("重启dhcp")
-	o.inputstyle = "apply"
-	function o.write(self, section)
-		luci.sys.exec("/etc/init.d/dnsmasq reload >/dev/null &")
-	end
+if isFileEmpty(file_dhcp) then
+    s:tab("dhcpconf", translate("DHCP"), description(file_dhcp))
+    o = s:taboption("dhcpconf", Button, "_dhcp")
+    o.inputtitle = translate("重启dhcp")
+    o.inputstyle = "reset"
+    function o.write(self, section)
+        sys.init.restart("dnsmasq")
+    end
 
-	conf = s:taboption("dhcpconf", Value, "dhcpconf", nil)
-	conf.template = "cbi/tvalue"
-	conf.rows = 22
-	conf.wrap = "off"
-	function conf.cfgvalue(self, section)
-		return nixio.fs.readfile("/etc/config/dhcp") or ""
-	end
-	function conf.write(self, section, value)
-		if value then
-			value = value:gsub("\r\n?", "\n")
-			nixio.fs.writefile("/tmp/dhcp", value)
-				if (luci.sys.call("cmp -s /tmp/dhcp /etc/config/dhcp") == 1) then
-					nixio.fs.writefile("/etc/config/dhcp", value)
-					luci.sys.call("/etc/init.d/dnsmasq reload >/dev/null &")
-				end
-			nixio.fs.remove("/tmp/dhcp")
-		end
-	end
+    conf = s:taboption("dhcpconf", Value, "dhcpconf", nil)
+    conf.template = "cbi/tvalue"
+    conf.rows = 20
+    conf.wrap = "off"
+
+    function conf.cfgvalue(self, section)
+        return fs.readfile(file_dhcp) or ""
+    end
+
+    function conf.write(self, section, value)
+        if not value then return end
+        if _writefile(value, file_dhcp) then
+            sys.init.restart("dnsmasq")
+        end
+    end
 end
 
-if nixio.fs.access("/etc/firewall.user") then
-	s:tab("firewallconf", translate("防火墙"), translate("本页是/etc/firewall.user的自定义规则，编辑后点击<code>保存&应用</code>按钮后生效<br>"))
-	o = s:taboption("firewallconf", Button, "_firewall")
-	o.inputtitle = translate("重启防火墙")
-	o.inputstyle = "apply"
-	function o.write(self, section)
-		luci.sys.exec("/etc/init.d/firewall reload >/dev/null &")
-	end
+if isFileEmpty(file_firewall) then
+    s:tab("firewallconf", translate("防火墙-规则"), description(file_firewall))
+    o = s:taboption("firewallconf", Button, "_firewall")
+    o.inputtitle = translate("重启防火墙")
+    o.inputstyle = "reset"
+    function o.write(self, section)
+        sys.init.restart("firewall")
+    end
 
-	conf = s:taboption("firewallconf", Value, "firewallconf", nil)
-	conf.template = "cbi/tvalue"
-	conf.rows = 22
-	conf.wrap = "off"
-	function conf.cfgvalue(self, section)
-		return nixio.fs.readfile("/etc/firewall.user") or ""
-	end
-	function conf.write(self, section, value)
-		if value then
-		value = value:gsub("\r\n?", "\n")
-		nixio.fs.writefile("/tmp/firewall", value)
-			if (luci.sys.call("cmp -s /tmp/firewall /etc/firewall.user") == 1) then
-				nixio.fs.writefile("/etc/firewall.user", value)
-				luci.sys.call("/etc/init.d/firewall reload >/dev/null &")
-			end
-		nixio.fs.remove("/tmp/firewall")
-		end
-	end
+    conf = s:taboption("firewallconf", Value, "firewallconf", nil)
+    conf.template = "cbi/tvalue"
+    conf.rows = 20
+    conf.wrap = "off"
+    function conf.cfgvalue(self, section)
+        return fs.readfile(file_firewall) or ""
+    end
+
+    function conf.write(self, section, value)
+        if not value then return end
+        if _writefile(value, file_firewall) then
+            sys.init.restart("firewall")
+        end
+    end
 end
 
-if nixio.fs.access("/etc/config/uhttpd") then
-	s:tab("uhttpdconf", translate("uhttpd服务器"),translate("本页是/etc/config/uhttpd的配置文件内容，编辑后点击<code>保存&应用</code>按钮后生效<br>"))
-	o = s:taboption("uhttpdconf", Button, "_uhttpd")
-	o.inputtitle = translate("重启uhttpd")
-	o.inputstyle = "apply"
-	function o.write(self, section)
-		luci.sys.exec("/etc/init.d/uhttpd restart >/dev/null &")
-	end
+if isFileEmpty(file_uhttpd) then
+    s:tab("uhttpdconf", translate("uhttpd服务器"), description(file_uhttpd))
+    o = s:taboption("uhttpdconf", Button, "_uhttpd")
+    o.inputtitle = translate("重启uhttpd")
+    o.inputstyle = "reset"
+    function o.write(self, section)
+        sys.init.restart("uhttpd")
+    end
 
-	conf = s:taboption("uhttpdconf", Value, "uhttpdconf", nil)
-	conf.template = "cbi/tvalue"
-	conf.rows = 22
-	conf.wrap = "off"
-	function conf.cfgvalue(self, section)
-		return nixio.fs.readfile("/etc/config/uhttpd") or ""
-	end
-	function conf.write(self, section, value)
-		if value then
-			value = value:gsub("\r\n?", "\n")
-			nixio.fs.writefile("/tmp/uhttpd", value)
-				if (luci.sys.call("cmp -s /tmp/uhttpd /etc/config/uhttpd") == 1) then
-					nixio.fs.writefile("/etc/config/uhttpd", value)
-					luci.sys.call("/etc/init.d/uhttpd restart >/dev/null &")
-				end
-			nixio.fs.remove("/tmp/uhttpd")
-		end
-	end
+    conf = s:taboption("uhttpdconf", Value, "uhttpdconf", nil)
+    conf.template = "cbi/tvalue"
+    conf.rows = 20
+    conf.wrap = "off"
+
+    function conf.cfgvalue(self, section)
+        return fs.readfile(file_uhttpd) or ""
+    end
+
+    function conf.write(self, section, value)
+        if not value then return end
+        if _writefile(value, file_uhttpd) then
+            sys.init.restart("uhttpd")
+        end
+    end
 end
 
-if nixio.fs.access("/etc/config/mwan3") then
-	s:tab("mwan3conf", translate("mwan3"), translate("本页是/etc/config/mwan3的配置文件内容，编辑后点击<code>保存&应用</code>按钮后生效<br>"))
-	o = s:taboption("mwan3conf", Button, "_mwan3")
-	o.inputtitle = translate("重启mwan3")
-	o.inputstyle = "apply"
-	function o.write(self, section)
-		luci.sys.exec("/etc/init.d/mwan3 restart >/dev/null &")
-	end
+if isFileEmpty(hosts) then
+    s:tab("hostsconf", translate("hosts"), description(hosts))
+    o = s:taboption("hostsconf", Button, "_hosts")
+    o.inputtitle = translate("重启dnsmasq")
+    o.inputstyle = "reset"
+    function o.write(self, section)
+        sys.init.restart("dnsmasq")
+    end
 
-	conf = s:taboption("mwan3conf", Value, "mwan3conf", nil)
-	conf.template = "cbi/tvalue"
-	conf.rows = 22
-	conf.wrap = "off"
-	function conf.cfgvalue(self, section)
-		return nixio.fs.readfile("/etc/config/mwan3") or ""
-	end
-	function conf.write(self, section, value)
-		if value then
-		value = value:gsub("\r\n?", "\n")
-		nixio.fs.writefile("/tmp/mwan3", value)
-			if (luci.sys.call("cmp -s /tmp/mwan3 /etc/config/mwan3") == 1) then
-				nixio.fs.writefile("/etc/config/mwan3", value)
-			end
-		nixio.fs.remove("/tmp/mwan3")
-		end
-	end
+    conf = s:taboption("hostsconf", Value, "hostsconf", nil)
+    conf.template = "cbi/tvalue"
+    conf.rows = 20
+    conf.wrap = "off"
+
+    function conf.cfgvalue(self, section)
+        return fs.readfile(hosts) or ""
+    end
+
+    function conf.write(self, section, value)
+        if not value then return end
+        if _writefile(value, hosts) then
+            sys.init.restart("dnsmasq")
+        end
+    end
 end
 
-if nixio.fs.access("/etc/hosts") then
-	s:tab("hostsconf", translate("hosts"), translate("本页是/etc/hosts的配置文件内容，编辑后点击<code>保存&应用</code>按钮后生效<br>"))
-	o = s:taboption("hostsconf", Button, "_hosts")
-	o.inputtitle = translate("重启dnsmasq")
-	o.inputstyle = "apply"
-	function o.write(self, section)
-		luci.sys.exec("/etc/init.d/dnsmasq reload >/dev/null &")
-	end
+if isFileEmpty(dnsmasq_conf) then
+    s:tab("dnsmasqconf", translate("dnsmasq"), description(dnsmasq_conf))
+    o = s:taboption("dnsmasqconf", Button, "_dnsmasq")
+    o.inputtitle = translate("重启dnsmasq")
+    o.inputstyle = "reset"
+    function o.write(self, section)
+        sys.init.restart("dnsmasq")
+    end
 
-	conf = s:taboption("hostsconf", Value, "hostsconf", nil)
-	conf.template = "cbi/tvalue"
-	conf.rows = 22
-	conf.wrap = "off"
-	function conf.cfgvalue(self, section)
-		return nixio.fs.readfile("/etc/hosts") or ""
-	end
-	function conf.write(self, section, value)
-		if value then
-		value = value:gsub("\r\n?", "\n")
-		nixio.fs.writefile("/tmp/hosts.tmp", value)
-			if (luci.sys.call("cmp -s /tmp/hosts.tmp /etc/hosts") == 1) then
-				nixio.fs.writefile("/etc/hosts", value)
-				luci.sys.call("/etc/init.d/dnsmasq reload >/dev/null &")
-			end
-		nixio.fs.remove("/tmp/hosts.tmp")
-		end
-	end
+    conf = s:taboption("dnsmasqconf", Value, "dnsmasqconf", nil)
+    conf.template = "cbi/tvalue"
+    conf.rows = 20
+    conf.wrap = "off"
+
+    function conf.cfgvalue(self, section)
+        return fs.readfile(dnsmasq_conf) or ""
+    end
+
+    function conf.write(self, section, value)
+        if not value then return end
+        if _writefile(value, dnsmasq_conf) then
+            sys.init.restart("dnsmasq")
+        end
+    end
 end
 
-if nixio.fs.access("/etc/dnsmasq.conf") then
-	s:tab("dnsmasqconf", translate("dnsmasq"), translate("本页是/etc/dnsmasq.conf的配置文件内容，编辑后点击<code>保存&应用</code>按钮后生效<br>"))
-	o = s:taboption("dnsmasqconf", Button, "_dnsmasq")
-	o.inputtitle = translate("重启dnsmasq")
-	o.inputstyle = "apply"
-	function o.write(self, section)
-		luci.sys.exec("/etc/init.d/dnsmasq restart >/dev/null &")
-	end
+if isFileEmpty(rc_local) then
+    s:tab("rc_localconf", translate("本地启动脚本"),
+        translatef("本页是<code>%s</code>的配置文件内容，编辑后点击<code>保存&应用</code>按钮后生效。<br>启动脚本插入到 'exit 0' 之前即可随系统启动运行。<br>", rc_local))
+    conf = s:taboption("rc_localconf", Value, "rc_localconf", nil)
+    conf.template = "cbi/tvalue"
+    conf.rows = 20
+    conf.wrap = "off"
 
-	conf = s:taboption("dnsmasqconf", Value, "dnsmasqconf", nil)
-	conf.template = "cbi/tvalue"
-	conf.rows = 22
-	conf.wrap = "off"
-	function conf.cfgvalue(self, section)
-		return nixio.fs.readfile("/etc/dnsmasq.conf") or ""
-	end
-	function conf.write(self, section, value)
-		if value then
-		value = value:gsub("\r\n?", "\n")
-		nixio.fs.writefile("/tmp/dnsmasq.conf", value)
-			if (luci.sys.call("cmp -s /tmp/dnsmasq.conf /etc/dnsmasq.conf") == 1) then
-				nixio.fs.writefile("/etc/dnsmasq.conf", value)
-				luci.sys.exec("/etc/init.d/dnsmasq reload >/dev/null &")
-			end
-		nixio.fs.remove("/tmp/dnsmasq.conf")
-		end
-	end
+    function conf.cfgvalue(self, section)
+        return fs.readfile(rc_local) or ""
+    end
+
+    function conf.write(self, section, value)
+        if not value then return end
+        _writefile(value, rc_local)
+    end
 end
-
---rc.local
-if nixio.fs.access("/etc/rc.local") then
-	s:tab("rc_localconf", translate("本地启动脚本"),translate("本页是/etc/rc.local的配置文件内容，编辑后点击<code>保存&应用</code>按钮后生效。<br>启动脚本插入到 'exit 0' 之前即可随系统启动运行。<br>"))
-	conf = s:taboption("rc_localconf", Value, "rc_localconf", nil)
-	conf.template = "cbi/tvalue"
-	conf.rows = 22
-	conf.wrap = "off"
-	function conf.cfgvalue(self, section)
-		return nixio.fs.readfile("/etc/rc.local") or ""
-	end
-	function conf.write(self, section, value)
-		if value then
-			value = value:gsub("\r\n?", "\n")
-			nixio.fs.writefile("/tmp/rc.local", value)
-			if (luci.sys.call("cmp -s /tmp/rc.local /etc/rc.local") == 1) then
-				nixio.fs.writefile("/etc/rc.local", value)
-			end
-			nixio.fs.remove("/tmp/rc.local")
-		end
-	end
-end
-
--- if nixio.fs.access("/bin/nuc") then
-	-- s:tab("mode", translate("模式切换(适用软路由）"), translate("<br />可以在这里切换NUC和正常模式，重置你的网络设置。<br /><font color=\"Red\"><strong>点击后会立即重启设备，没有确认过程，请谨慎操作！</strong></font><br/>"))
-	-- o = s:taboption("mode", Button, "nucmode", translate("切换为NUC模式"), translate("<font color=\"green\"><strong>本模式适合于单网口主机，如NUC、单网口电脑，需要配合VLAN交换机使用！<br />默认gateway是：192.168.2.1，ipaddr是192.168.2.150。用本机接口LAN接上级LAN当NAS。</strong></font><br/>"))
-	-- o.inputtitle = translate("NUC模式")
-	-- o.inputstyle="reload"
-
-	-- o.write=function()
-		-- luci.sys.call("/bin/nuc")
-	-- end
-
-	-- o = s:taboption("mode", Button, "normalmode", translate("切换成正常模式"), translate("<font color=\"green\"><strong>本模式适合于有两个网口或以上的设备使用，如多网口软路由或者虚拟了两个以上网口的虚拟机使用！</strong></font><br/>"))
-	-- o.inputtitle = translate("正常模式")
-	-- o.inputstyle="reload"
-
-	-- o.write = function()
-		-- luci.sys.call("/bin/normalmode")
-	-- end
--- end
 
 return m

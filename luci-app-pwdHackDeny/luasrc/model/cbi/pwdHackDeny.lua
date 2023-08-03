@@ -1,14 +1,13 @@
 local fs  = require "nixio.fs"
 local sys = require "luci.sys"
 
-local function checkKeywordInFile(file_path, keyword)
-    local content = file_path and fs.readfile(file_path) or ""
-    if not keyword and content ~= "" then
-        return true
-    elseif keyword and content ~= "" then
-        return content:find(keyword)
+local function checkKeywordInFile(file, keyword)
+    local content = fs.readfile(file) or ""
+    if not keyword then
+        return content ~= ""
+    else
+        return content:find(keyword) ~= nil
     end
-    return false
 end
 
 local state_msg  = [[color='red'>没有运行]]
@@ -74,7 +73,7 @@ conf.rows = 10
 conf.wrap = "off"
 conf.readonly="readonly"
 function conf.cfgvalue()
-    return fs.readfile("/etc/pwdHackDeny/badip.log.ssh", value) or ""
+    return fs.readfile("/etc/pwdHackDeny/badip.log.ssh") or ""
 end
 
 s:tab("config2", translate("WEB最近登录日志"), translate(state_msg2))
@@ -85,7 +84,7 @@ conf.rows = 10
 conf.wrap = "off"
 conf.readonly="readonly"
 function conf.cfgvalue()
-    return fs.readfile("/etc/pwdHackDeny/badip.log.web", value) or ""
+    return fs.readfile("/etc/pwdHackDeny/badip.log.web") or ""
 end
 
 if checkKeywordInFile("/etc/pwdHackDeny/badhosts.web") then
@@ -97,7 +96,7 @@ if checkKeywordInFile("/etc/pwdHackDeny/badhosts.web") then
     conf.wrap = "off"
     conf.readonly="readonly"
     function conf.cfgvalue()
-        return fs.readfile("/etc/pwdHackDeny/badhosts.web", value) or ""
+        return fs.readfile("/etc/pwdHackDeny/badhosts.web") or ""
     end
 end
 
@@ -110,7 +109,7 @@ if checkKeywordInFile("/etc/pwdHackDeny/badhosts.ssh") then
     conf.wrap = "off"
     conf.readonly="readonly"
     function conf.cfgvalue()
-        return fs.readfile("/etc/pwdHackDeny/badhosts.ssh", value) or ""
+        return fs.readfile("/etc/pwdHackDeny/badhosts.ssh") or ""
     end
 end
 
@@ -125,12 +124,11 @@ function conf.cfgvalue(self, section)
     return fs.readfile("/etc/SSHbadip.log") or ""
 end
 function conf.write(self, section, value)
-    if value then
-        value = value:gsub("\r\n?", "\n")
-        local old_value = fs.readfile("/etc/SSHbadip.log") or ""
-        if value ~= old_value then
-            fs.writefile("/etc/SSHbadip.log", value)
-        end
+    if not value then return end
+    value = value:gsub("\r\n?", "\n")
+    local old_value = fs.readfile("/etc/SSHbadip.log") or ""
+    if value ~= old_value then
+        fs.writefile("/etc/SSHbadip.log", value)
     end
 end
 
@@ -145,12 +143,11 @@ function conf.cfgvalue(self, section)
     return fs.readfile("/etc/WEBbadip.log") or ""
 end
 function conf.write(self, section, value)
-    if value then
-        value = value:gsub("\r\n?", "\n")
-        local old_value = fs.readfile("/etc/WEBbadip.log") or ""
-        if value ~= old_value then
-            fs.writefile("/etc/WEBbadip.log", value)
-        end
+    if not value then return end
+    value = value:gsub("\r\n?", "\n")
+    local old_value = fs.readfile("/etc/WEBbadip.log") or ""
+    if value ~= old_value then
+        fs.writefile("/etc/WEBbadip.log", value)
     end
 end
 

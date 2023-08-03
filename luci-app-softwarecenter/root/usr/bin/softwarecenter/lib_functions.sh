@@ -8,8 +8,7 @@ uci_get_type() {
 }
 
 uci_set_type() {
-    local main=${3:-main}
-    uci_set softwarecenter "$main" "$1" "$2"
+    uci_set softwarecenter "${3:-main}" "$1" "$2"
     uci_commit softwarecenter
 }
 
@@ -21,7 +20,7 @@ make_dir() {
 }
 
 _pidof() {
-    for g in $@; do
+    for g in "$@"; do
         if ps | grep $g | grep -q opt; then
             echo_time "$g 已经运行"
             return 0
@@ -36,22 +35,18 @@ echo_time() {
 }
 
 status() {
-    local pf=$?
-    # echo -en "\\033[40G[ "
-    if [ "$pf" = "0" ]; then
-        # echo -e "\\033[1;33m成功\\033[0;39m ]"
+    if [ $? = "0" ]; then
         echo "   成功"
         return 0
     else
-        # echo -e "\\033[1;31m失败\\033[0;39m ]"
         echo "   失败"
         return 1
     fi
 }
 
 check_url() {
-    local ping_file="/tmp/ping"
     local url="$1"
+    local ping_file="/tmp/ping"
 
     if wget -S --no-check-certificate --spider --tries=3 "$url" 2>&1 | grep -q 'HTTP/1.1 200 OK'; then
         if [ ! -e "$ping_file" ]; then
@@ -77,7 +72,7 @@ check_port_usage() {
     local name=${1:-$website_name}
 
     while [ -z "${old_port}" ] || lsof -i:"${old_port}" >/dev/null 2>&1; do
-        [ -z ${_old_port} ] && _old_port=${old_port}
+        _old_port=${_old_port:-$old_port}
         old_port=$(($(tr -dc '0-9' < /dev/urandom | head -c 4) + 1024))
         exists=1
     done
@@ -85,11 +80,11 @@ check_port_usage() {
     port="$old_port"
     if [ -n "$exists" -a -n "$_old_port" ]; then
         echo_time "$name 设定的 $_old_port 端口已在使用，查找到可用端口 $port"
-        [ -n "$1" ] && {
+        if [ -n "$1" ]; then
             uci_set_type "$name" "$port"
-        } || {
+        else
             uci_set_type "port" "$port" "@website[$website_select]"
-        } 
+        fi
     fi
 }
 
@@ -97,7 +92,7 @@ modify_port() {
 
     if [ -x "/opt/bin/amuled" -a -n "$am_port" ]; then
         old_am_port=$(awk -F "=" '/\[WebServer\]/{flag=1;next} flag && /Port/{print $2;flag=0}' /opt/var/amule/amule.conf)
-        if [ "$old_am_port" != "$am_port" ]; then
+        if [ "$old_am_port" -ne "$am_port" ]; then
             check_port_usage am_port
             [ -n "$port" ] && {
                 sed -i "s/Port=$old_am_port/Port=$port/" /opt/var/amule/amule.conf
@@ -108,7 +103,7 @@ modify_port() {
 
     if [ -x "/opt/bin/deluged" -a -n "$de_port" ]; then
         old_de_port=$(grep -oP '(?<=-p )\d+' /opt/etc/*/S81deluge-web)
-        if [ "$old_de_port" != "$de_port" ]; then
+        if [ "$old_de_port" -ne "$de_port" ]; then
             check_port_usage de_port
             [ -n "$port" ] && {
                 sed -i "s/-p $old_de_port/-p $port/" /opt/etc/*/S81deluge-web
@@ -119,7 +114,7 @@ modify_port() {
 
     if [ -x "/opt/bin/qbittorrent-nox" -a -n "$qb_port" ]; then
         old_qb_port=$(grep -oP '(?<=webui-port=)\d+' /opt/etc/*/S89qb*)
-        if [ "$old_qb_port" != "$qb_port" ]; then
+        if [ "$old_qb_port" -ne "$qb_port" ]; then
             check_port_usage qb_port
             [ -n "$port" ] && {
                 sed -i "s/port=$old_qb_port/port=$port/" /opt/etc/*/S89qb*
@@ -130,7 +125,7 @@ modify_port() {
 
     if [ -x "/opt/bin/rtorrent" -a -n "$rt_port" ]; then
         old_rt_port=$(grep -oP '^server.port=\s*\K\d+' /opt/etc/*/*/99-rtor*)
-        if [ "$old_rt_port" != "$rt_port" ]; then
+        if [ "$old_rt_port" -ne "$rt_port" ]; then
             check_port_usage rt_port
             [ -n "$port" ] && {
                 sed -i "s/port=$old_rt_port/port=$port/" /opt/etc/*/*/99-rtor*
@@ -141,7 +136,7 @@ modify_port() {
 
     if [ -x "/opt/bin/transmission-daemon" -a -n "$tr_port" ]; then
         old_tr_port=$(grep -oP "(?<=--port )\d+" /opt/etc/*/S88tran*)
-        if [ "$old_tr_port" != "$tr_port" ]; then
+        if [ "$old_tr_port" -ne "$tr_port" ]; then
             check_port_usage tr_port
             [ -n "$port" ] && {
                 sed -i "s/\(--port \)[0-9]\+/\1$port/" /opt/etc/*/S88tran*
@@ -160,10 +155,10 @@ opkg_install() {
         /opt/bin/opkg update >/dev/null 2>&1
     }
 
-    for ipk in $@; do
+    for ipk in "$@"; do
         if [ "$(/opt/bin/opkg list 2>/dev/null | awk '{print $1}' | grep -w $ipk)" ]; then
             if which $ipk | grep -q opt; then
-                echo_time "$ipk    已经安装 $(which $ipk | grep -q opt)"
+                echo_time "$ipk 已经安装  $(which $ipk | grep -q opt)"
             else
                 echo_time "正在安装  $ipk\c"
                 $time_out /opt/bin/opkg install $ipk --force-maintainer --force-reinstall >/dev/null 2>&1
@@ -217,7 +212,7 @@ entware_set() {
         echo_time "未选择安装路径！"
         exit 1
     fi
-    disk_mount="$1"
+    local disk_mount="$1"
     system_check "$disk_mount"
     make_dir "$disk_mount/opt" /opt
     mount -o bind "$disk_mount/opt" /opt
@@ -305,7 +300,7 @@ entware_unset() {
 
 # 磁盘分区挂载
 system_check() {
-    partition_disk="$1"
+    local partition_disk="$1"
     grep -q $partition_disk /proc/mounts && {
         filesystem="$(grep "${partition_disk} " /proc/mounts | awk '{print $3}')"
         lo=`lsblk | grep $partition_disk | awk '{print $4}' | sed 's/G//'`
