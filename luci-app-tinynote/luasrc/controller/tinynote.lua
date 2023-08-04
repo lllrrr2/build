@@ -16,11 +16,12 @@ function process_result(exit_code, result_output, command, file_path)
         if #result_output > 2 then
             return send_json_response({
                 result = "success",
-                data = util.pcdata(result_output)
+                data   = util.pcdata(result_output)
             })
         else
             return send_json_response({
-                result = luci.i18n.translatef("Execution '%s %s' has no output!", command, file_path)
+                result = "success",
+                data   = luci.i18n.translatef("Executing '%s %s' did not return data!\n\n", command, file_path)
             })
         end
     else

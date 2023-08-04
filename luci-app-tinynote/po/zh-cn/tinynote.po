@@ -112,8 +112,8 @@ msgstr "还没有命令行的输入不要点击 '执行命令' ！"
 msgid "The current system cannot find the command '%s' you entered!"
 msgstr "当前系统找不到你输入的 '%s' 命令！"
 
-msgid "Execution '%s %s' has no output!"
-msgstr "执行 '%s %s' 没有输出！"
+msgid "Executing '%s %s' did not return data!\n\n"
+msgstr "执行 '%s %s' 没有返回数据！\n\n"
 
 msgid "Failed to execute <div style='color: #f92672;'>%s %s</div><div style='text-align: left;'>Exit code: %d<br>Error message: <div style='color: #e6db74;'>%s</div>"
 msgstr "无法执行 <div style='color: #f92672;'>%s %s</div><div style='text-align: left;'>退出代码：%d<br>错误信息：<div style='color: #e6db74;'>%s</div>"

@@ -13,10 +13,10 @@ local function new_write_file(path, note_suffix, value)
               ". /lib/functions.sh\n" ..
               ". /lib/functions/service.sh\n",
         py  = "#!/usr/bin/env python\n" ..
-              "import os   # 用于导入系统变量\n" ..
-              "import sys  # 实现 sys.exit\n" ..
-              "import time # 时间\n" ..
-              "import re   # 正则过滤\n",
+              "import os\n" ..
+              "import re\n" ..
+              "import sys\n" ..
+              "import time\n",
         lua = "#!/usr/bin/env lua\n" ..
               "local fs   = require \"nixio.fs\"\n" ..
               "local sys  = require \"luci.sys\"\n" ..
@@ -28,190 +28,189 @@ local function new_write_file(path, note_suffix, value)
 end
 
 local note_theme_array = {
-    { "3024-day",         "3024 Day"         },
-    { "3024-night",       "3024 Night"       },
-    { "abcdef",           "Abcdef"           },
-    { "ambiance-mobile",  "Ambiance Mobile"  },
-    { "ambiance",         "Ambiance"         },
-    { "base16-dark",      "Base16 (dark)"    },
-    { "bespin",           "Bespin"           },
-    { "blackboard",       "Blackboard"       },
-    { "cobalt",           "Cobalt"           },
-    { "colorforth",       "Colorforth"       },
-    { "darcula",          "Darcula"          },
-    { "dracula",          "Dracula"          },
-    { "duotone-dark",     "Duotone (dark)"   },
-    { "duotone-light",    "Duotone (light)"  },
-    { "eclipse",          "Eclipse"          },
-    { "elegant",          "Elegant"          },
-    { "erlang-dark",      "Erlang (dark)"    },
-    { "gruvbox-dark",     "Gruvbox (dark)"   },
-    { "hopscotch",        "Hopscotch"        },
-    { "icecoder",         "Icecoder"         },
-    { "idea",             "Idea"             },
-    { "isotope",          "Isotope"          },
-    { "lesser-dark",      "Lesser Dark"      },
-    { "liquibyte",        "Liquibyte"        },
-    { "lucario",          "Lucario"          },
-    { "material",         "Material"         },
-    { "mbo",              "MBO"              },
-    { "mdn-like",         "MDN-like"         },
-    { "midnight",         "Midnight"         },
-    { "monokai",          "Monokai"          },
-    { "neat",             "Neat"             },
-    { "neo",              "Neo"              },
-    { "night",            "Night"            },
-    { "nord",             "Nord"             },
-    { "oceanic-next",     "Oceanic Next"     },
-    { "panda-syntax",     "Panda"            },
-    { "paraiso-dark",     "Paraiso (dark)"   },
-    { "paraiso-light",    "Paraiso (light)"  },
-    { "pastel-on-dark",   "Pastel on dark"   },
-    { "railscasts",       "Railscasts"       },
-    { "rubyblue",         "Rubyblue"         },
-    { "seti",             "Seti"             },
-    { "shadowfox",        "Shadowfox"        },
-    { "solarized",        "Solarized"        },
-    { "ssms",             "SSMS"             },
-    { "the-matrix",       "Matrix"           },
-    { "tomorrow-night-bright", "Tomorrow Night Bright"},
+    { "3024-day",                "3024 Day"               },
+    { "3024-night",              "3024 Night"             },
+    { "abcdef",                  "Abcdef"                 },
+    { "ambiance-mobile",         "Ambiance Mobile"        },
+    { "ambiance",                "Ambiance"               },
+    { "base16-dark",             "Base16 (dark)"          },
+    { "bespin",                  "Bespin"                 },
+    { "blackboard",              "Blackboard"             },
+    { "cobalt",                  "Cobalt"                 },
+    { "colorforth",              "Colorforth"             },
+    { "darcula",                 "Darcula"                },
+    { "dracula",                 "Dracula"                },
+    { "duotone-dark",            "Duotone (dark)"         },
+    { "duotone-light",           "Duotone (light)"        },
+    { "eclipse",                 "Eclipse"                },
+    { "elegant",                 "Elegant"                },
+    { "erlang-dark",             "Erlang (dark)"          },
+    { "gruvbox-dark",            "Gruvbox (dark)"         },
+    { "hopscotch",               "Hopscotch"              },
+    { "icecoder",                "Icecoder"               },
+    { "idea",                    "Idea"                   },
+    { "isotope",                 "Isotope"                },
+    { "lesser-dark",             "Lesser Dark"            },
+    { "liquibyte",               "Liquibyte"              },
+    { "lucario",                 "Lucario"                },
+    { "material",                "Material"               },
+    { "mbo",                     "MBO"                    },
+    { "mdn-like",                "MDN-like"               },
+    { "midnight",                "Midnight"               },
+    { "monokai",                 "Monokai"                },
+    { "neat",                    "Neat"                   },
+    { "neo",                     "Neo"                    },
+    { "night",                   "Night"                  },
+    { "nord",                    "Nord"                   },
+    { "oceanic-next",            "Oceanic Next"           },
+    { "panda-syntax",            "Panda"                  },
+    { "paraiso-dark",            "Paraiso (dark)"         },
+    { "paraiso-light",           "Paraiso (light)"        },
+    { "pastel-on-dark",          "Pastel on dark"         },
+    { "railscasts",              "Railscasts"             },
+    { "rubyblue",                "Rubyblue"               },
+    { "seti",                    "Seti"                   },
+    { "shadowfox",               "Shadowfox"              },
+    { "solarized",               "Solarized"              },
+    { "ssms",                    "SSMS"                   },
+    { "the-matrix",              "Matrix"                 },
+    { "tomorrow-night-bright",   "Tomorrow Night Bright"  },
     { "tomorrow-night-eighties", "Tomorrow Night Eighties"},
-    { "ttcn",             "TTCN"             },
-    { "twilight",         "Twilight"         },
-    { "vibrant-ink",      "Vibrant Ink"      },
-    { "xq-dark",          "XQ (dark)"        },
-    { "xq-light",         "XQ (light)"       },
-    { "yeti",             "Yeti"             },
-    { "yonce",            "Yonce"            },
-    { "zenburn",          "Zenburn"          }
+    { "ttcn",                    "TTCN"                   },
+    { "twilight",                "Twilight"               },
+    { "vibrant-ink",             "Vibrant Ink"            },
+    { "xq-dark",                 "XQ (dark)"              },
+    { "xq-light",                "XQ (light)"             },
+    { "yeti",                    "Yeti"                   },
+    { "yonce",                   "Yonce"                  },
+    { "zenburn",                 "Zenburn"                }
 }
 
 local note_mode_array = {
-    { "shell",            "sh"            },
-    { "javascript",       "js"            },
-    { "lua",              "lua"           },
-    { "python",           "py"            },
-    { "htmlmixed",        "html"          },
-    { "cmake",            "cmake"         },
-    { "yaml",             "yaml"          },
-    { "diff",             "patch(diff)"   },
-    { "css",              "css"           },
-    { "xml",              "xml"           },
-    { "ttcn-cfg",         "cfg"           },
-    { "http",             "http"          },
-    { "perl",             "pl"            },
-    { "php",              "php"           },
-    { "sql",              "sql"           },
-    { "vb",               "vb"            },
-    { "vbscript",         "vbs"           },
-    { "velocity",         "vm"            },
-    { "apl",              "apl"           },
-    { "asciiarmor",       "asc"           },
-    { "asn.1",            "asn1"          },
-    { "asterisk",         "asterisk"      },
-    { "brainfuck",        "bf"            },
-    { "clike",            "c"             },
-    { "clojure",          "clj"           },
-    { "cobol",            "cobol"         },
-    { "coffeescript",     "coffee"        },
-    { "commonlisp",       "lisp"          },
-    { "crystal",          "cr"            },
-    { "cypher",           "cypher"        },
-    { "d",                "d"             },
-    { "dart",             "dart"          },
-    { "django",           "django"        },
-    { "dockerfile",       "dockerfile"    },
-    { "dtd",              "dtd"           },
-    { "dylan",            "dylan"         },
-    { "ebnf",             "ebnf"          },
-    { "ecl",              "ecl"           },
-    { "eiffel",           "eiffel"        },
-    { "elm",              "elm"           },
-    { "erlang",           "erl"           },
-    { "factor",           "factor"        },
-    { "fcl",              "fcl"           },
-    { "forth",            "forth"         },
-    { "fortran",          "f90"           },
-    { "gas",              "gas"           },
-    { "gfm",              "gfm"           },
-    { "gherkin",          "gherkin"       },
-    { "go",               "go"            },
-    { "groovy",           "groovy"        },
-    { "haml",             "haml"          },
-    { "handlebars",       "hbs"           },
-    { "haskell",          "hs"            },
-    { "haskell-literate", "lhs"           },
-    { "haxe",             "hx"            },
-    { "idl",              "idl"           },
-    { "jinja2",           "jinja2"        },
-    { "jsx",              "jsx"           },
-    { "julia",            "jl"            },
-    { "livescript",       "ls"            },
-    { "markdown",         "md"            },
-    { "mathematica",      "m"             },
-    { "mbox",             "mbox"          },
-    { "mirc",             "mirc"          },
-    { "mllike",           "sml"           },
-    { "modelica",         "mo"            },
-    { "mscgen",           "mscgen"        },
-    { "mumps",            "mumps"         },
-    { "nginx",            "nginx"         },
-    { "nsis",             "nsi"           },
-    { "ntriples",         "ntriples"      },
-    { "octave",           "octave"        },
-    { "oz",               "oz"            },
-    { "pascal",           "pascal"        },
-    { "pegjs",            "pegjs"         },
-    { "pig",              "pig"           },
-    { "powershell",       "ps1"           },
-    { "properties",       "properties"    },
-    { "protobuf",         "protobuf"      },
-    { "pug",              "pug"           },
-    { "puppet",           "pp"            },
-    { "q",                "q"             },
-    { "r",                "r"             },
-    { "rpm",              "rpm"           },
-    { "rst",              "rst"           },
-    { "ruby",             "rb"            },
-    { "rust",             "rs"            },
-    { "sas",              "sas"           },
-    { "sass",             "sass"          },
-    { "scheme",           "scheme"        },
-    { "sieve",            "sieve"         },
-    { "slim",             "slim"          },
-    { "smalltalk",        "st"            },
-    { "smarty",           "smarty"        },
-    { "solr",             "solr"          },
-    { "soy",              "soy"           },
-    { "sparql",           "sparql"        },
-    { "spreadsheet",      "spreadsheet"   },
-    { "stex",             "latex"         },
-    { "stylus",           "styl"          },
-    { "swift",            "swift"         },
-    { "tcl",              "tcl"           },
-    { "textile",          "textile"       },
-    { "tiddlywiki",       "tiddlywiki"    },
-    { "tiki",             "tiki"          },
-    { "toml",             "toml"          },
-    { "tornado",          "tornado"       },
-    { "troff",            "troff"         },
-    { "ttcn",             "ttcn"          },
-    { "turtle",           "turtle"        },
-    { "twig",             "twig"          },
-    { "verilog",          "v"             },
-    { "vhdl",             "vhdl"          },
-    { "vue",              "vue"           },
-    { "wast",             "wast"          },
-    { "webidl",           "webidl"        },
-    { "xquery",           "xq"            },
-    { "yacas",            "ys"            },
-    { "yaml-frontmatter", "yfm"           },
-    { "z80",              "z80"           },
+    { "shell",            "sh"         },
+    { "javascript",       "js"         },
+    { "lua",              "lua"        },
+    { "python",           "py"         },
+    { "htmlmixed",        "html"       },
+    { "cmake",            "cmake"      },
+    { "yaml",             "yaml"       },
+    { "diff",             "patch(diff)"},
+    { "css",              "css"        },
+    { "xml",              "xml"        },
+    { "ttcn-cfg",         "cfg"        },
+    { "http",             "http"       },
+    { "perl",             "pl"         },
+    { "php",              "php"        },
+    { "sql",              "sql"        },
+    { "vb",               "vb"         },
+    { "vbscript",         "vbs"        },
+    { "velocity",         "vm"         },
+    { "apl",              "apl"        },
+    { "asciiarmor",       "asc"        },
+    { "asn.1",            "asn1"       },
+    { "asterisk",         "asterisk"   },
+    { "brainfuck",        "bf"         },
+    { "clike",            "c"          },
+    { "clojure",          "clj"        },
+    { "cobol",            "cobol"      },
+    { "coffeescript",     "coffee"     },
+    { "commonlisp",       "lisp"       },
+    { "crystal",          "cr"         },
+    { "cypher",           "cypher"     },
+    { "d",                "d"          },
+    { "dart",             "dart"       },
+    { "django",           "django"     },
+    { "dockerfile",       "dockerfile" },
+    { "dtd",              "dtd"        },
+    { "dylan",            "dylan"      },
+    { "ebnf",             "ebnf"       },
+    { "ecl",              "ecl"        },
+    { "eiffel",           "eiffel"     },
+    { "elm",              "elm"        },
+    { "erlang",           "erl"        },
+    { "factor",           "factor"     },
+    { "fcl",              "fcl"        },
+    { "forth",            "forth"      },
+    { "fortran",          "f90"        },
+    { "gas",              "gas"        },
+    { "gfm",              "gfm"        },
+    { "gherkin",          "gherkin"    },
+    { "go",               "go"         },
+    { "groovy",           "groovy"     },
+    { "haml",             "haml"       },
+    { "handlebars",       "hbs"        },
+    { "haskell",          "hs"         },
+    { "haskell-literate", "lhs"        },
+    { "haxe",             "hx"         },
+    { "idl",              "idl"        },
+    { "jinja2",           "jinja2"     },
+    { "jsx",              "jsx"        },
+    { "julia",            "jl"         },
+    { "livescript",       "ls"         },
+    { "markdown",         "md"         },
+    { "mathematica",      "m"          },
+    { "mbox",             "mbox"       },
+    { "mirc",             "mirc"       },
+    { "mllike",           "sml"        },
+    { "modelica",         "mo"         },
+    { "mscgen",           "mscgen"     },
+    { "mumps",            "mumps"      },
+    { "nginx",            "nginx"      },
+    { "nsis",             "nsi"        },
+    { "ntriples",         "ntriples"   },
+    { "octave",           "octave"     },
+    { "oz",               "oz"         },
+    { "pascal",           "pascal"     },
+    { "pegjs",            "pegjs"      },
+    { "pig",              "pig"        },
+    { "powershell",       "ps1"        },
+    { "properties",       "properties" },
+    { "protobuf",         "protobuf"   },
+    { "pug",              "pug"        },
+    { "puppet",           "pp"         },
+    { "q",                "q"          },
+    { "r",                "r"          },
+    { "rpm",              "rpm"        },
+    { "rst",              "rst"        },
+    { "ruby",             "rb"         },
+    { "rust",             "rs"         },
+    { "sas",              "sas"        },
+    { "sass",             "sass"       },
+    { "scheme",           "scheme"     },
+    { "sieve",            "sieve"      },
+    { "slim",             "slim"       },
+    { "smalltalk",        "st"         },
+    { "smarty",           "smarty"     },
+    { "solr",             "solr"       },
+    { "soy",              "soy"        },
+    { "sparql",           "sparql"     },
+    { "spreadsheet",      "spreadsheet"},
+    { "stex",             "latex"      },
+    { "stylus",           "styl"       },
+    { "swift",            "swift"      },
+    { "tcl",              "tcl"        },
+    { "textile",          "textile"    },
+    { "tiddlywiki",       "tiddlywiki" },
+    { "tiki",             "tiki"       },
+    { "toml",             "toml"       },
+    { "tornado",          "tornado"    },
+    { "troff",            "troff"      },
+    { "ttcn",             "ttcn"       },
+    { "turtle",           "turtle"     },
+    { "twig",             "twig"       },
+    { "verilog",          "v"          },
+    { "vhdl",             "vhdl"       },
+    { "vue",              "vue"        },
+    { "wast",             "wast"       },
+    { "webidl",           "webidl"     },
+    { "xquery",           "xq"         },
+    { "yacas",            "ys"         },
+    { "yaml-frontmatter", "yfm"        },
+    { "z80",              "z80"        }
 }
 
 local function addValues(option, ...)
-    local values = {...}
-    for _, value in ipairs(values) do
+    for _, value in ipairs({...}) do
         option:value(value, translate(value))
     end
 end
@@ -233,10 +232,10 @@ end
 f:tab("note", translate("Note Settings"))
 
 f:tab("codemirror", translate("CodeMirror Support"),
-    translate("CodeMirror supports syntax highlighting, line number display, automatic indentation, etc.<br><b>") ..
-    translate("<a href='https://www.staticfile.org/?ln=zh' target='_blank'> Staticfile Resources </a>&nbsp;&nbsp;&nbsp;") ..
-    translate("<a href='https://www.tun6.com/projects/code_mirror/' target='_blank'> User Manual </a>&nbsp;&nbsp;&nbsp;") ..
-    translate("<a href='https://www.tun6.com/projects/code_mirror/demo/demos/theme.html' target='_blank'> Theme Preview </a></b>")
+       translate("CodeMirror supports syntax highlighting, line number display, automatic indentation, etc.<br><b>")
+    .. translate("<a href='https://www.staticfile.org/?ln=zh' target='_blank'> Staticfile Resources </a>&nbsp;&nbsp;&nbsp;")
+    .. translate("<a href='https://www.tun6.com/projects/code_mirror/' target='_blank'> User Manual </a>&nbsp;&nbsp;&nbsp;")
+    .. translate("<a href='https://www.tun6.com/projects/code_mirror/demo/demos/theme.html' target='_blank'> Theme Preview </a></b>")
 )
 
 local note_path = f:taboption("note", Value, "note_path",
@@ -323,8 +322,8 @@ end
 
 local note_arg = {}
 for sum_str = 1, note_sum do
-    local sum  = string.format("%02d", sum_str)
-    local file = string.format("%s/note%s.%s", note_path, sum, note_suffix)
+    local sum  = "%02d" % sum_str
+    local file = "%s/note%s.%s" % {note_path, sum, note_suffix}
     note_arg[#note_arg + 1] = file
 
     if not fs.access(file) then
@@ -377,36 +376,35 @@ for sum_str = 1, note_sum do
             return chunks
         end
 
-        function a.write(self, section, note_content)
-            if not note_content or note_content == "" then
+        function a.write(self, section, value)
+            if not value or value == "" then
                 return
             end
-            note_content = note_content:gsub("\r\n?", "\n")
-            local old_note_content = fs.readfile(file) or ""
-            if note_content ~= old_note_content then
-                new_write_file(file, nil, note_content)
+            value = value:gsub("\r\n?", "\n")
+            local old_value = fs.readfile(file) or ""
+            if value ~= old_value then
+                new_write_file(file, nil, value)
             end
         end
 
-        local clear_button = s:taboption(note, Button,  sum .. "_clear_note",
-            translatef("Reset Notes %s", sum))
+        local clear_button = s:taboption(note, Button,  sum .. "_clear_note")
         clear_button.inputstyle = "reset"
-        clear_button.template = "tinynote/clear_button"
+        clear_button.template   = "tinynote/clear_button"
+        clear_button.inputtitle = translatef("Reset Notes %s", sum)
         clear_button.write = function(self, section)
-            a.value = ""
             new_write_file(file, note_suffix)
         end
 
         local run_button = s:taboption(note, Button, sum .. "_run_note",
             translatef("Run Note %s", sum))
-        run_button.template   = "tinynote/run_button"
-        run_button.inputstyle = "apply"
         run_button.file_path  = file
+        run_button.inputstyle = "apply"
+        run_button.template   = "tinynote/run_button"
     end
 end
 
 for file_name in fs.dir(note_path) do
-    local file_path = string.format("%s/%s", note_path, file_name)
+    local file_path = "%s/%s" % {note_path, file_name}
     if not util.contains(note_arg, file_path) then
         fs.remove(file_path)
     end
