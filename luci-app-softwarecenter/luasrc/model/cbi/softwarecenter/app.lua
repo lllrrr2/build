@@ -3,7 +3,6 @@ local sys  = require "luci.sys"
 local util = require "luci.util"
 local uci  = require "luci.model.uci".cursor()
 local con  = uci:get_all("softwarecenter", "main")
-local font_off   = [[</font></b>]]
 local font_red   = [[<b><font color="red">]]
 local font_green = [[<b><font color="green">]]
 
@@ -14,8 +13,8 @@ if fs.access("/etc/init.d/entware") then
         install = "/usr/bin/*/app*.sh install "
     }
 
-    local function set_config(config, section)
-        uci:set("softwarecenter", config, section)
+    local function set_config(config, value)
+        uci:set("softwarecenter", config, value)
         uci:commit("softwarecenter")
     end
 
@@ -36,19 +35,19 @@ if fs.access("/etc/init.d/entware") then
         op_webui("Open WebUI-Aria2 Remote WebUI", nil, "webui-aria2.1ge.fun")
 
     local function ExecutableFile(binary)
-        return fs.access(string.format("/opt/bin/%s", binary), "x")
+        return fs.access(("/opt/bin/%s" % binary), "x")
     end
 
     local function running(binary, port)
         if not ExecutableFile(binary) then
-            return translatef([[<br><br>Running status: %sis not installed%s]], font_red, font_off)
+            return translatef([[<br><br>Running status: %sis not installed%s]], font_red, [[</font></b>]])
         end
 
-        local isRunning = sys.call(string.format("ps 2>/dev/null | grep %s 2>/dev/null | grep opt >/dev/null", binary)) == 0
+        local isRunning = sys.call(("ps 2>/dev/null | grep %s 2>/dev/null | grep opt >/dev/null" % binary)) == 0
         local status    = isRunning and (font_green .. translate("Running")) or (font_red .. translate("Not Running"))
         local webui     = isRunning and (port and op_webui("Open Web Interface", port) or aria2_webui) or ""
         
-        return translatef([[<br><br>Running status: %s%s%s]], status, translate(webui), font_off)
+        return translatef([[<br><br>Running status: %s%s%s]], status, translate(webui), [[</font></b>]])
     end
 
     local function execute(action)
@@ -66,27 +65,18 @@ if fs.access("/etc/init.d/entware") then
     end
 
     function createButtonOptions(binary, Restart, Stop, Start, Delete)
-        if running(binary):find("WebUI") then
-            p = s:taboption(binary, Button, binary .. '_restart', translatef("Restart"))
-            p.inputstyle = "reload"
-            p.forcewrite = true
-            execute(commands.init .. Restart)
+        local webUIRunning = running(binary):find("WebUI") ~= nil
+        local startAction = webUIRunning and "Restart" or "Start"
+        p = s:taboption(binary, Button, binary .. "_" .. startAction, translatef(startAction))
+        p.inputstyle = webUIRunning and "reload" or "apply"
+        p.forcewrite = true
+        execute(commands.init .. (webUIRunning and Restart or Start))
 
-            p = s:taboption(binary, Button, binary .. '_stop', translatef("Stop"))
-            p.inputstyle = "reset"
-            p.forcewrite = true
-            execute(commands.init .. Stop)
-        else
-            p = s:taboption(binary, Button, binary .. '_start', translatef("Start"))
-            p.inputstyle = "apply"
-            p.forcewrite = true
-            execute(commands.init .. Start)
-
-            p = s:taboption(binary, Button, binary .. '_delete', translatef("Delete"))
-            p.inputstyle = "reset"
-            p.forcewrite = true
-            execute(commands.remove .. Delete)
-        end
+        local stopAction = webUIRunning and "Stop" or "Delete"
+        p = s:taboption(binary, Button, binary .. "_" .. stopAction, translatef(stopAction))
+        p.inputstyle = "reset"
+        p.forcewrite = true
+        execute(commands.init .. (webUIRunning and Stop or Delete))
     end
 
     m = Map("softwarecenter", translate(" "))
@@ -217,7 +207,6 @@ if fs.access("/etc/init.d/entware") then
 
     -- transmission
     o = s:taboption("transmission-daemon", Flag, "transmission_boot", translate("Start on Boot"))
-
     o = s:taboption("transmission-daemon", Value, "tr_port", translate("WebUI Login Port"))
     o.datatype = "port"
     o.default = "9091"

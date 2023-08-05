@@ -13,14 +13,14 @@ msgstr "CodeMirror 支持"
 msgid "CodeMirror supports syntax highlighting, line number display, automatic indentation, etc.<br><b>"
 msgstr "CodeMirror 支持语法高亮，行号显示，自动缩进等等<br><b>"
 
-msgid "<a href='https://www.staticfile.org/?ln=zh' target='_blank'> Staticfile Resources </a>&nbsp;&nbsp;&nbsp;"
-msgstr "<a href='https://www.staticfile.org/?ln=zh' target='_blank'> staticfile资源 </a>&nbsp;&nbsp;&nbsp;"
+msgid "BootCDN Resources"
+msgstr "BootCDN 资源"
 
-msgid "<a href='https://www.tun6.com/projects/code_mirror/' target='_blank'> User Manual </a>&nbsp;&nbsp;&nbsp;"
-msgstr "<a href='https://www.tun6.com/projects/code_mirror/' target='_blank'> 中文用户手册 </a>&nbsp;&nbsp;&nbsp;"
+msgid "User manual in Chinese"
+msgstr "中文用户手册"
 
-msgid "<a href='https://www.tun6.com/projects/code_mirror/demo/demos/theme.html' target='_blank'> Theme Preview </a></b>"
-msgstr "<a href='https://www.tun6.com/projects/code_mirror/demo/demos/theme.html' target='_blank'> 主题预览 </a></b>"
+msgid "Theme Demo"
+msgstr "主题预览"
 
 msgid "Save Path"
 msgstr "保存路径"
@@ -112,8 +112,8 @@ msgstr "还没有命令行的输入不要点击 '执行命令' ！"
 msgid "The current system cannot find the command '%s' you entered!"
 msgstr "当前系统找不到你输入的 '%s' 命令！"
 
-msgid "Executing '%s %s' did not return data!\n\n"
-msgstr "执行 '%s %s' 没有返回数据！\n\n"
+msgid "Executing '%s %s' did not return data!"
+msgstr "执行 '%s %s' 没有返回数据！"
 
 msgid "Failed to execute <div style='color: #f92672;'>%s %s</div><div style='text-align: left;'>Exit code: %d<br>Error message: <div style='color: #e6db74;'>%s</div>"
 msgstr "无法执行 <div style='color: #f92672;'>%s %s</div><div style='text-align: left;'>退出代码：%d<br>错误信息：<div style='color: #e6db74;'>%s</div>"

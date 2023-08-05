@@ -232,10 +232,13 @@ end
 f:tab("note", translate("Note Settings"))
 
 f:tab("codemirror", translate("CodeMirror Support"),
-       translate("CodeMirror supports syntax highlighting, line number display, automatic indentation, etc.<br><b>")
-    .. translate("<a href='https://www.staticfile.org/?ln=zh' target='_blank'> Staticfile Resources </a>&nbsp;&nbsp;&nbsp;")
-    .. translate("<a href='https://www.tun6.com/projects/code_mirror/' target='_blank'> User Manual </a>&nbsp;&nbsp;&nbsp;")
-    .. translate("<a href='https://www.tun6.com/projects/code_mirror/demo/demos/theme.html' target='_blank'> Theme Preview </a></b>")
+    translate("CodeMirror supports syntax highlighting, line number display, automatic indentation, etc.<br><b>") ..
+    [[<a href='https://www.bootcdn.cn/codemirror/' target='_blank'>]] ..
+    translate("BootCDN Resources") ..
+    [[</a><span style="white-space: pre;">     </span><a href='https://discuss.codemirror.net/t/user-manual-in-chinese/1436/' target='_blank'>]] ..
+    translate("User manual in Chinese") ..
+    [[</a><span style="white-space: pre;">     </span><a href='https://codemirror.net/5/demo/theme.html' target='_blank'>]] ..
+    translate("Theme Demo") .. [[</a></b>]]
 )
 
 local note_path = f:taboption("note", Value, "note_path",

@@ -13,14 +13,14 @@ uci_set_type() {
 }
 
 make_dir() {
-    for p in "$@"; do
+    for p in $@; do
         [ -d "$p" ] || mkdir -m 777 -p $p
     done
     return 0
 }
 
 _pidof() {
-    for g in "$@"; do
+    for g in $@; do
         if ps | grep $g | grep -q opt; then
             echo_time "$g 已经运行"
             return 0
@@ -155,7 +155,7 @@ opkg_install() {
         /opt/bin/opkg update >/dev/null 2>&1
     }
 
-    for ipk in "$@"; do
+    for ipk in $@; do
         if [ "$(/opt/bin/opkg list 2>/dev/null | awk '{print $1}' | grep -w $ipk)" ]; then
             if which $ipk | grep -q opt; then
                 echo_time "$ipk 已经安装  $(which $ipk | grep -q opt)"
@@ -172,6 +172,7 @@ opkg_install() {
             fi
         else
             echo_time "$ipk 不在 Entware 软件源，跳过安装！"
+            return 1
         fi
     done
 }

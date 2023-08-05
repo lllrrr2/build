@@ -49,6 +49,7 @@ del_mysql() {
 init_php() {
     # 安装php
     opkg_install $pkglist_php8 $phpmod
+    [ $? = 1 ] && return 1
     make_dir /opt/usr/php/session/
 
     sed -i "{
@@ -91,6 +92,7 @@ init_nginx() {
     get_env
     echo_time "开始安装 php 环境\n"
     opkg_install "$pkglist_nginx"
+    [ $? = 1 ] && return 1
     init_php
     make_dir /opt/etc/nginx/vhost /opt/etc/nginx/no_use /opt/etc/nginx/conf
 
@@ -143,6 +145,7 @@ init_nginx() {
 init_mysql() {
     get_env
     opkg_install "$dblist"
+    [ $? = 1 ] && return 1
 	cat >"/opt/etc/mysql/my.cnf" <<-EOF
 	[client-server]
 	port               = 3306

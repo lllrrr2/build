@@ -143,7 +143,7 @@ port_custom() {
 # 端口修改
 port_modification() {
     local name=$website_name
-    for kj in "$@"; do
+    for kj in $@; do
         local old_port=$(grep -oP 'listen \K\d+' "$kj")
         if [ -z "$port" -o "$old_port" -ne "$port" ]; then
             check_port_usage

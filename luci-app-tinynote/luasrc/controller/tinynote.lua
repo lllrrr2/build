@@ -21,7 +21,7 @@ function process_result(exit_code, result_output, command, file_path)
         else
             return send_json_response({
                 result = "success",
-                data   = luci.i18n.translatef("Executing '%s %s' did not return data!\n\n", command, file_path)
+                data   = luci.i18n.translatef("Executing '%s %s' did not return data!", command, file_path)
             })
         end
     else
