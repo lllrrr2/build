@@ -42,11 +42,9 @@ if fs.access("/etc/init.d/entware") then
         if not ExecutableFile(binary) then
             return translatef([[<br><br>Running status: %sis not installed%s]], font_red, [[</font></b>]])
         end
-
         local isRunning = sys.call(("ps 2>/dev/null | grep %s 2>/dev/null | grep opt >/dev/null" % binary)) == 0
         local status    = isRunning and (font_green .. translate("Running")) or (font_red .. translate("Not Running"))
         local webui     = isRunning and (port and op_webui("Open Web Interface", port) or aria2_webui) or ""
-        
         return translatef([[<br><br>Running status: %s%s%s]], status, translate(webui), [[</font></b>]])
     end
 
@@ -64,8 +62,8 @@ if fs.access("/etc/init.d/entware") then
         end
     end
 
-    function createButtonOptions(binary, Restart, Stop, Start, Delete)
-        local webUIRunning = running(binary):find("WebUI") ~= nil
+    local function createButtonOptions(binary, Restart, Stop, Start, Delete)
+        local webUIRunning = running(binary):match("http") ~= nil
         local startAction = webUIRunning and "Restart" or "Start"
         p = s:taboption(binary, Button, binary .. "_" .. startAction, translatef(startAction))
         p.inputstyle = webUIRunning and "reload" or "apply"
@@ -76,7 +74,7 @@ if fs.access("/etc/init.d/entware") then
         p = s:taboption(binary, Button, binary .. "_" .. stopAction, translatef(stopAction))
         p.inputstyle = "reset"
         p.forcewrite = true
-        execute(commands.init .. (webUIRunning and Stop or Delete))
+        execute(webUIRunning and commands.init .. Stop or commands.remove .. Delete)
     end
 
     m = Map("softwarecenter", translate(" "))
@@ -125,7 +123,6 @@ if fs.access("/etc/init.d/entware") then
         translate("Delay in starting the above application in seconds"))
     p.default = 20
 
-    -- aMule
     o = s:taboption("amuled", Flag, "amule_boot", translate("Start on Boot"))
     o = s:taboption("amuled", Value, "am_port", translate("WebUI Login Port"))
     o.datatype = "port"
@@ -141,7 +138,6 @@ if fs.access("/etc/init.d/entware") then
         execute(commands.install .. "amule")
     end
 
-    -- aria2
     o = s:taboption("aria2c", Flag, "aria2_boot", translate("Start on Boot"))
     o = s:taboption("aria2c", Value, "ar_port", translate("WebUI Login Port"))
     o.datatype = "port"
@@ -157,7 +153,6 @@ if fs.access("/etc/init.d/entware") then
         execute(commands.install .. "aria2")
     end
 
-    -- Deluge
     o = s:taboption("deluge", Flag, "deluged_boot", translate("Start on Boot"))
     o = s:taboption("deluge", Value, "de_port", translate("WebUI Login Port"))
     o.datatype = "port"
@@ -173,7 +168,6 @@ if fs.access("/etc/init.d/entware") then
         execute(commands.install .. "deluged")
     end
 
-    -- qbittorrent
     o = s:taboption("qbittorrent-nox", Flag, "qbittorrent_boot", translate("Start on Boot"))
     o = s:taboption("qbittorrent-nox", Value, "qb_port", translate("WebUI Login Port"))
     o.datatype = "port"
@@ -189,7 +183,6 @@ if fs.access("/etc/init.d/entware") then
         execute(commands.install .. "qbittorrent")
     end
 
-     -- rTorrent
     o = s:taboption("rtorrent", Flag, "rtorrent_boot", translate("Start on Boot"))
     o = s:taboption("rtorrent", Value, "rt_port", translate("WebUI Login Port"))
     o.datatype = "port"
@@ -205,7 +198,6 @@ if fs.access("/etc/init.d/entware") then
         execute(commands.install .. "rtorrent")
     end
 
-    -- transmission
     o = s:taboption("transmission-daemon", Flag, "transmission_boot", translate("Start on Boot"))
     o = s:taboption("transmission-daemon", Value, "tr_port", translate("WebUI Login Port"))
     o.datatype = "port"

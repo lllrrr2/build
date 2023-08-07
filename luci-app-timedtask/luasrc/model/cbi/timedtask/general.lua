@@ -1,3 +1,4 @@
+local sys  = require "luci.sys"
 uci = require "luci.model.uci".cursor()
 m = Map("timedtask", translate("TimedTask Plus+"),
 translate("<font color='green'><b>The plug-in that makes scheduled tasks easier to use is modified with the original version by wulishhui@gmail.com. </font></b><br>") ..
@@ -23,7 +24,7 @@ f.default = "9"
 
 local sy_level = uci:get("system", "@system[0]", "cronloglevel")
 local ti_level = uci:get("timedtask", "@cronloglevel[0]", "cronloglevel") or ""
-if (ti_level ~= sy_level) then
+if ti_level ~= sy_level then
     uci:set("system", "@system[0]", "cronloglevel", ti_level)
     uci:commit("system")
 end
@@ -82,32 +83,22 @@ command:value('wifi down', translate("Turn off WIFI"))
 command:value('wifi up', translate("Turn on WIFI"))
 command:value('sync && echo 3 > /proc/sys/vm/drop_caches', translate("Free up memory"))
 command:value('poweroff', translate("Turn off the power"))
-command:value('logread | egrep -v "miniupnpd|uhttpd" | tail -20 > /etc/syslog.log', translate("save log"))
 command.rmempty = false
 command.size = 25
 
 btn = s:option(Button, "Button", translate("Executed immediately"))
 btn.inputtitle = translate("Execute")
 btn.inputstyle = "apply"
-btn.disabled = false
-btn.template = "timedtask/action_run"
-
-function random_cfg()
-    local cfg = ''
-    math.randomseed(os.time())
-    for i = 1, 6 do
-        cfg = cfg .. string.char(math.random(97, 122))
-    end
-    return cfg
-end
+btn.disabled   = false
+btn.template   = "timedtask/action_run"
 
 function s.create(e, t)
-    t = "cfg" .. random_cfg()
+    local t = "cfg" .. sys.uniqueid(4)
     TypedSection.create(e, t)
 end
 
 if luci.http.formvalue("cbi.apply") then
-  io.popen("sleep 3 && /etc/init.d/timedtask restart &")
+    sys.exec("sleep 3 && /etc/init.d/timedtask restart &")
 end
 
 return m

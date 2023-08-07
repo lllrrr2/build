@@ -249,15 +249,7 @@ local note_sum = f:taboption("note", Value, "note_sum",
     translate("Number of Texts"))
 note_sum.default = 1
 note_sum.rmempty = false
-note_sum.datatype = "uinteger"
-note_sum.validate = function(self, value)
-    local count = tonumber(value) or 0
-    if count < 1 or count > 20 then
-        return nil,
-        translate("Please enter a number between 1 and 20.")
-    end
-    return Value.validate(self, value)
-end
+note_sum.datatype = "range(1,20)"
 
 local note_suffix = f:taboption("note", ListValue, "note_suffix",
     translate("Text Type"))
