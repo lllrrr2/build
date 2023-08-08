@@ -10,8 +10,8 @@ msgstr "进程名称"
 msgid "Upload has been cancelled"
 msgstr "上传已取消"
 
-msgid "name of the executable program file or path name"
-msgstr "可执行文件名称。不能是应用程序路径！"
+msgid "Executable program filename or pathname"
+msgstr "可执行程序文件名或路径名"
 
 msgid "limit"
 msgstr "占用率限制"

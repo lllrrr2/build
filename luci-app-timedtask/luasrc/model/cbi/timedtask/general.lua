@@ -40,10 +40,6 @@ enable = s:option(Flag, "enable", translate("enable"))
 enable.rmempty = false
 enable.default = 0
 
--- enable = s:option(Flag, "enable_lock", translate("task lock"))
--- enable.rmempty = false
--- enable.default = 0
-
 minute = s:option(Value, "minute", translate("minute"))
 minute.default = '0'
 minute.size = 4

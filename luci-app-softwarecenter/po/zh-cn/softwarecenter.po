@@ -191,16 +191,16 @@ msgid "Install"
 msgstr "安装"
 
 msgid "Restart"
-msgstr "重新启动"
+msgstr "重启"
 
 msgid "Stop"
-msgstr "停止运行"
+msgstr "停止"
 
 msgid "Start"
-msgstr "启动应用"
+msgstr "启动"
 
 msgid "Delete"
-msgstr "删除应用"
+msgstr "删除"
 
 msgid "Install %s"
 msgstr "安装 %s"

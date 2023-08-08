@@ -11,7 +11,7 @@ uci_get_type() {
 
 start() {
     grep -q 'option enable .1.' /etc/config/timedtask && {
-        [ ! -s "$CRON_FILE" ] && mcronrst=1
+        [ -s "$CRON_FILE" ] && mcronrst=0 || mcronrst=1
         sed -i '/timedtask$/d' $CRON_FILE
         sum=$(grep -c 'config crontab' /etc/config/timedtask)
         for x in $(seq 0 $((sum-1))); do
@@ -21,18 +21,16 @@ start() {
                 hour=`uci_get_type $x hour *`
                 month=`uci_get_type $x month *`
                 minute=`uci_get_type $x minute 0`
-                # enable_lock=`uci_get_type $x enable_lock 0`
                 command=`uci_get_type $x command "echo 'Reboot schedule tested.'"`
                 echo $minute | grep -q '*$' && minute="0"
-                # test "$enable_lock" -eq 1 && command="flock -xn /tmp/lock/timedtask${x}.lock -c '$(echo $command)'"
                 echo "$minute $hour $day $month $week $command #timedtask" >> $CRON_FILE
             }
         done
-        [ "$mcronrst" -eq 1 ] && /etc/init.d/cron restart
+        [ "$mcronrst" -eq 1 ] && $CRON_INI restart
     }
 }
 
 stop() {
     sed -i '/timedtask/d' $CRON_FILE
-    /etc/init.d/cron restart
+    $CRON_INI restart
 }
