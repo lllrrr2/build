@@ -4,13 +4,13 @@ START=99
 STOP=16
 
 cpulimit_get() {
-    local enabled limit exename exeid
+    local enabled limit exename pid
     config_get enabled "$1" enabled
     config_get limit "$1" limit
     config_get exename "$1" exename
-    if [ "$enabled" -eq 1 -a "$limit" -a "$exename" ]; then
-        exeid="$(pgrep -f $exename | head -n 1)"
-        /usr/bin/cpulimit -l "$limit" -p "$exeid" >/dev/null &
+    if [ "$enabled" -eq 1 ]; then
+        pid="$(pgrep -f $exename | head -n 1)"
+        /usr/bin/cpulimit -l "$limit" -p "$pid" >/dev/null &
     fi
 }
 
