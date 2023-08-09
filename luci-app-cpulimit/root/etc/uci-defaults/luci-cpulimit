@@ -1,0 +1,11 @@
+#!/bin/sh
+
+uci -q batch <<-EOF >/dev/null
+	delete ucitrack.@cpulimit[-1]
+	add ucitrack cpulimit
+	set ucitrack.@cpulimit[-1].init=cpulimit
+	commit ucitrack
+EOF
+
+rm -rf /tmp/luci-*
+exit 0

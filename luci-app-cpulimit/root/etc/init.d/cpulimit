@@ -1,25 +1,23 @@
 #!/bin/sh /etc/rc.common
 
 START=99
+STOP=16
 
 cpulimit_get() {
-    config_get enabled "$1" 'enabled'
-    [ "$enabled" -eq 1 ] || return 1
-    config_get limit "$1" 'limit'
-    config_get exename "$1" 'exename'
-    exeid="$(pgrep -f $exename | head -n 1)" || return 1
-    /usr/bin/cpulimit -l "$limit" -p "$exeid" >/dev/null &
-}
-
-restart() {
-    stop
-    start
+    local enabled limit exename exeid
+    config_get enabled "$1" enabled
+    config_get limit "$1" limit
+    config_get exename "$1" exename
+    if [ "$enabled" -eq 1 -a "$limit" -a "$exename" ]; then
+        exeid="$(pgrep -f $exename | head -n 1)"
+        /usr/bin/cpulimit -l "$limit" -p "$exeid" >/dev/null &
+    fi
 }
 
 start() {
     killall -9 cpulimit >/dev/null 2>&1
-    config_load 'cpulimit'
-    config_foreach cpulimit_get 'list'
+    config_load cpulimit
+    config_foreach cpulimit_get list
 }
 
 stop() {

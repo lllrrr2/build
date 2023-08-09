@@ -1,21 +1,20 @@
 m = Map("cpulimit", translate("cpulimit"),
-    translate("Use cpulimit to restrict app's cpu usage."))
-
-s = m:section(TypedSection, "list", "")
+    translate("Use cpulimit to restrict app's cpu usage.")
+    .. translate("<a href='%s'> " % luci.dispatcher.build_url("admin/status/processes"))
+    .. translate("Processes") .. "</a>"
+    )
+s = m:section(TypedSection, "list")
 s.template = "cbi/tblsection"
 s.anonymous = true
 s.addremove = true
 
-local enable  = s:option(Flag, "enabled", translate("Enable"))
+local enable = s:option(Flag, "enabled", translate("Enable"))
 enable.optional = false
-enable.rmempty  = false
+enable.rmempty = false
 
-local exename = s:option(Value, "exename", translate("Executable program filename or pathname")
-    .. translate([[<a href='%s'>]] % luci.dispatcher.build_url("admin/status/processes"))
-    .. translate("Processes") .. [[</a>]]
-    )
+local exename = s:option(Value, "exename", translate("Executable program filename or pathname"))
 exename.optional = false
-exename.rmempty  = false
+exename.rmempty = false
 
 for _, info in pairs(luci.sys.process.list()) do
     local command = info.COMMAND
@@ -27,19 +26,16 @@ end
 
 local limit = s:option(Value, "limit", translate("limit"))
 limit.optional = false
-limit.rmempty  = false
+limit.rmempty = false
 limit.default = "20"
-local values  = {
-    {"100", "100%"}, {"90", "90%"}, {"80", "80%"}, {"70", "70%"}, {"60", "60%"},
-      {"50", "50%"}, {"40", "40%"}, {"30", "30%"}, {"20", "20%"}, {"10", "10%"}
+local values = {
+    {"90", "90%"}, {"80", "80%"}, {"70", "70%"},
+    {"60", "60%"}, {"50", "50%"}, {"40", "40%"},
+    {"30", "30%"}, {"20", "20%"}, {"10", "10%"}
 }
 
 for _, k in ipairs(values) do
     limit:value(k[1], k[2])
-end
-
-if luci.http.formvalue("cbi.apply") then
-    luci.sys.exec("sleep 3 && /etc/init.d/cpulimit restart &")
 end
 
 return m
