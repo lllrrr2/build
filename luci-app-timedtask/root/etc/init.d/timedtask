@@ -1,36 +1,32 @@
 #!/bin/sh /etc/rc.common
-# Author=wulishui , 20200908-0915 ; <wulishui@gmail.com>
 
 START=95
-CRON_INI=/etc/init.d/cron
-CRON_FILE=/etc/crontabs/root
+cron_ini=/etc/init.d/cron
+cron_file=/etc/crontabs/root
 
-uci_get_type() {
-    uci_get "timedtask" "@crontab[$1]" "$2" "$3"
+timedtask_get() {
+    local command day enable month minute hour week
+    config_get enable "$1" enable "0"
+    config_get day "$1" day "*"
+    config_get week "$1" week "*"
+    config_get hour "$1" hour "*"
+    config_get month "$1" month "*"
+    config_get minute "$1" minute "0"
+    config_get command "$1" command "echo 'Reboot schedule tested.'"
+    [ -s "$cron_file" ] || mcronrst=1
+    if [ "$enable" -eq 1 ]; then
+        echo "$minute" | grep -Eq '\*$' && minute="0"
+        echo "$minute $hour $day $month $week $command #timedtask" >> $cron_file
+    fi
+    [ -n "$mcronrst" ] && $cron_ini restart
 }
 
 start() {
-    grep -q 'option enable .1.' /etc/config/timedtask && {
-        [ -s "$CRON_FILE" ] && mcronrst=0 || mcronrst=1
-        sed -i '/timedtask$/d' $CRON_FILE
-        sum=$(grep -c 'config crontab' /etc/config/timedtask)
-        for x in $(seq 0 $((sum-1))); do
-            test "$(uci_get_type $x enable)" -eq 1 && {
-                day=`uci_get_type $x day *`
-                week=`uci_get_type $x week *`
-                hour=`uci_get_type $x hour *`
-                month=`uci_get_type $x month *`
-                minute=`uci_get_type $x minute 0`
-                command=`uci_get_type $x command "echo 'Reboot schedule tested.'"`
-                echo $minute | grep -q '*$' && minute="0"
-                echo "$minute $hour $day $month $week $command #timedtask" >> $CRON_FILE
-            }
-        done
-        [ "$mcronrst" -eq 1 ] && $CRON_INI restart
-    }
+    config_load timedtask
+    config_foreach timedtask_get "crontab"
 }
 
 stop() {
-    sed -i '/timedtask/d' $CRON_FILE
-    $CRON_INI restart
+    sed -i '/timedtask/d' $cron_file
+    $cron_ini restart
 }
