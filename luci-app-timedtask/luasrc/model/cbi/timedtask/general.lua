@@ -88,13 +88,4 @@ btn.inputstyle = "apply"
 btn.disabled   = false
 btn.template   = "timedtask/action_run"
 
-function s.create(e, t)
-    local t = "cfg" .. sys.uniqueid(4)
-    TypedSection.create(e, t)
-end
-
-if luci.http.formvalue("cbi.apply") then
-    sys.exec("sleep 3 && /etc/init.d/timedtask restart &")
-end
-
 return m

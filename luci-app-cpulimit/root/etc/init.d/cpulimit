@@ -8,7 +8,7 @@ cpulimit_get() {
     config_get enabled "$1" enabled
     config_get limit "$1" limit
     config_get exename "$1" exename
-    if [ "$enabled" -eq 1 ]; then
+    if [ "$enabled" -eq 1 -a $limit -a $exename ]; then
         pid="$(pgrep -f $exename | head -n 1)"
         /usr/bin/cpulimit -l "$limit" -p "$pid" >/dev/null &
     fi

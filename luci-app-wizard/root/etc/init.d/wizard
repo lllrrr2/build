@@ -16,13 +16,12 @@ uci_res_type() {
 }
 
 add_wizard() {
-    [ "$XBOOT" = 1 ] && return 0
+    [ "$XBOOT" -eq 1 ] && return 0
     wan_device=$(uci_get bk_network wan device "")
     wan_ifname=$(uci_get bk_network wan ifname "")
     lan_device=$(uci_get bk_network lan device "")
     lan_ifname=$(uci_get bk_network lan ifname "")
     lan_ip6assign=$(uci_get bk_network lan ip6assign "")
-    config_load "$1"
     get_config="dhcp enable_siderouter firewall fullcone ip_tables ipv6 lan_dns lan_gateway lan_ipaddr lan_netmask lan_sum masq old_firewall old_lan_gateway old_siderouter old_wifi_key old_wifi_ssid omasq pppoe_pass pppoe_user syn_flood wan wan_dns_1 wan_gateway wan_gateway_1 wan_ipaddr wan_ipaddr_1 wan_lan wan_netmask wan_netmask_1 wan_proto wifi_key wifi_ssid"
     for x in $get_config; do
         config_get_bool "$x" "$1" "$x"
@@ -177,10 +176,10 @@ add_wizard() {
     uci_commit wizard
     [ "$(uci -q changes network | wc -l)" -ge 1 ] && {
         uci_commit network
-        # service network restart &
-        # ifup wan
+        service network restart &
+        ifup wan
         /etc/init.d/dnsmasq restart &
-        /etc/init.d/network restart &
+        # /etc/init.d/network restart &
     }
 }
 
@@ -197,7 +196,6 @@ reconfig() {
         [ -n "$(uci_get dhcp lan ignore)" ] && uci_set_wizard dhcp "0" || uci_remove wizard default dhcp
         uci_commit wizard
     }
-
 }
 
 start() {

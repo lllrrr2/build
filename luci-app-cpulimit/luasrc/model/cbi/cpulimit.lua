@@ -1,3 +1,21 @@
+local util = require "luci.util"
+local processList = {}
+for _, info in pairs(luci.sys.process.list()) do
+    local command = info.COMMAND
+    if command:match("^([%a/])") and not (command:match("cpulimit") or command:match("sleep")) then
+        command = command:match("^/bin/sh%s(.*)$") or command
+        processList[#processList + 1] = {
+            cpu  = info['%CPU'],
+            mem  = info['%MEM'],
+            name = command:match("^([^%s]+)")
+        }
+    end
+end
+
+table.sort(processList, function(a, b)
+    return a.cpu:gsub("%%", "") > b.cpu:gsub("%%", "")
+end)
+
 m = Map("cpulimit", translate("cpulimit"),
     translate("Use cpulimit to restrict app's cpu usage.")
     .. translate("<a href='%s'> " % luci.dispatcher.build_url("admin/status/processes"))
@@ -15,13 +33,8 @@ enable.rmempty = false
 local exename = s:option(Value, "exename", translate("Executable program filename or pathname"))
 exename.optional = false
 exename.rmempty = false
-
-for _, info in pairs(luci.sys.process.list()) do
-    local command = info.COMMAND
-    if command:match("^([%a/])") and not (command:match("cpulimit") or command:match("sleep")) then
-        command = command:match("^/bin/sh%s(.*)$") or command
-        exename:value(command:match("^([^%s]+)"))
-    end
+for _, process in ipairs(processList) do
+    exename:value(process.name, translatef('%s [CPU usage %s] [Memory Useage %s]', process.name, process.cpu, process.mem))
 end
 
 local limit = s:option(Value, "limit", translate("limit"))

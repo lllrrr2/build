@@ -9,13 +9,8 @@ function index()
 end
 
 function action_run(sections)
-    local uci    = require "luci.model.uci".cursor()
-    local handle = io.popen(uci:get("timedtask", sections, "command") .. " 2>&1")
-    local result = handle:read("*a")
-    handle:close()
-    local output = {
-    	data = result
-    }
     luci.http.prepare_content("application/json")
-    luci.http.write_json(output)
+    luci.http.write_json({
+        data = luci.util.exec(luci.model.uci:get("timedtask", sections, "command") .. " 2>&1")
+    })
 end
