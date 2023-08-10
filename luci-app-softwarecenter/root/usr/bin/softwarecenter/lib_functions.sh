@@ -45,9 +45,7 @@ status() {
 }
 
 check_url() {
-    local url="$1"
-    local ping_file="/tmp/ping"
-
+    local url="$1" ping_file="/tmp/ping"
     if wget -S --no-check-certificate --spider --tries=3 "$url" 2>&1 | grep -q 'HTTP/1.1 200 OK'; then
         if [ ! -e "$ping_file" ]; then
             local response_time=$(ping -c 3 "$url" | awk -F'/' '/avg/{print $4}')
@@ -89,7 +87,6 @@ check_port_usage() {
 }
 
 modify_port() {
-
     if [ -x "/opt/bin/amuled" -a -n "$am_port" ]; then
         old_am_port=$(awk -F "=" '/\[WebServer\]/{flag=1;next} flag && /Port/{print $2;flag=0}' /opt/var/amule/amule.conf)
         if [ "$old_am_port" -ne "$am_port" ]; then
@@ -205,14 +202,9 @@ remove_soft() {
     done
 }
 
-# entware环境设定 参数：$1:安装位置 $2:设备底层架构 说明：此函数用于写入新配置
 entware_set() {
     entware_unset
-
-    if [ -z "$1" ]; then
-        echo_time "未选择安装路径！"
-        exit 1
-    fi
+    [ -n "$1" ] || { echo_time "未选择安装路径！"; exit 1; }
     local disk_mount="$1"
     system_check "$disk_mount"
     make_dir "$disk_mount/opt" /opt
@@ -332,14 +324,9 @@ system_check() {
     }
 }
 
-# 配置交换分区文件 参数: $1:交换空间大小(M) $2:交换分区挂载点
 config_swap_init() {
     local size="$1" path="${2:-/opt}/.swap"
-
-    if grep -q "$path" /proc/swaps; then
-        # echo_time "$path 交换分区已存在"
-        return
-    fi
+    grep -q "$path" /proc/swaps && return 0
 
     echo_time "正在$path生成 $size MB 的交换分区，请耐心等待..."
     install_soft fallocate >/dev/null 2>&1
@@ -350,7 +337,6 @@ config_swap_init() {
     swapon "$path" && echo_time "$path 交换分区已启用\n"
 }
 
-# 删除交换分区文件 参数: $1:交换分区挂载点
 config_swap_del() {
     path="${1:-/opt}/.swap"
     [ -e $path ] && {
@@ -361,12 +347,11 @@ config_swap_del() {
 }
 
 SOFTWARECENTER() {
-    config_load softwarecenter
     get_config="a_delaytime cpu_model delaytime deploy_entware deploy_mysql deploy_nginx disk_mount download_dir entware_enable mysql_enabled nginx_enabled partition_disk pass old_pass swap_enabled swap_path swap_size user"
-
+    config_load softwarecenter
     for rt in $get_config; do
-        config_get_bool $rt main $rt
         config_get $rt main $rt
+        config_get_bool $rt main $rt
     done
     source /etc/profile >/dev/null 2>&1
     if [ "$entware_enable" -eq 1 ]; then
@@ -418,8 +403,7 @@ SOFTWARECENTER() {
         config_foreach handle_website website test
         clean_vhost_config
     fi
-    [ -d "/opt/etc/config" ] && modify_port
-
+    [ -e "/opt/etc/init.d/rc.func" ] && modify_port
     [ "$swap_enabled" -eq 1 ] && config_swap_init $swap_size $swap_path || config_swap_del $swap_path
 
     grep -q "_boot" /etc/config/softwarecenter && [ -x /etc/init.d/entware ] && {
@@ -457,7 +441,6 @@ SOFTWARECENTER() {
     }
 }
 
-# 获取通用环境变量
 get_env() {
     username=${USER:-$(id -un)}
     localhost=$(ip addr show br-lan | grep -oP '(?<=inet\s)\d+(\.\d+){3}')

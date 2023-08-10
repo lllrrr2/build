@@ -214,11 +214,11 @@ msgstr "安装 2.77plus"
 msgid "Entware has not been deployed yet"
 msgstr "尚未部署 Entware"
 
-msgid "<br><br>Running status: %sis not installed%s"
-msgstr "<br><br>运行状态：%s没有安装%s"
+msgid "<br><br>Running status: <b><font color='red'>is not installed</font></b>"
+msgstr "<br><br>运行状态：<b><font color='red'>没有安装</font></b>"
 
-msgid "<br><br>Running status: %s%s%s"
-msgstr "<br><br>运行状态：%s%s%s"
+msgid "<br><br>Running status: %s%s</font></b>"
+msgstr "<br><br>运行状态：%s%s</font></b>"
 
 msgid "&nbsp;&nbsp;&nbsp;%sOpen Web Interface%s%s')\"/>"
 msgstr "&nbsp;&nbsp;&nbsp;%s打开WebUI管理%s%s')\"/>"

@@ -119,7 +119,7 @@ website_name_mapping() {
 
 # 写入nginx配置文件
 add_vhost() {
-    [ "$website_enabled" ] && uu="vhost" || uu="no_use"
+    [ "$website_enabled" -eq 1 ] && uu="vhost" || uu="no_use"
 	cat >"/opt/etc/nginx/$uu/$2.conf"<<-EOF
 	server {
 	    listen $1;
@@ -244,11 +244,11 @@ handle_website() {
         config_get $pl $1 $pl
     done
 
-    if [ "$autodeploy_enable" ]; then
+    if [ "$autodeploy_enable" -eq 1 ]; then
         local website_name=$(website_name_mapping $website_select) # 获取网站名称
         if [ ! -f /opt/etc/*/*/$website_name.conf ]; then
             install_website $website_select $port
-            if [ "$website_enabled" ]; then
+            if [ "$website_enabled" -eq 1 ]; then
                 echo_time " $name 安装完成"
                 echo_time "浏览器地址栏输入：$localhost:$port 即可访问"
             else
@@ -259,15 +259,15 @@ handle_website() {
         return 1
     fi
 
-    if [ "$website_enabled" ]; then
+    if [ "$website_enabled" -eq 1 ]; then
         if [ -f /opt/etc/nginx/no_use/$website_name.conf ]; then
             echo_time "准备启用 $website_name "
             mv /opt/etc/nginx/no_use/$website_name.conf /opt/etc/nginx/vhost/$website_name.conf
             port_custom "/opt/etc/nginx/vhost/$website_name.conf"
         fi
 
-        if [ "$autodeploy_enable" ] && [ "$website_name" = "Nextcloud" ] || [ "$website_name" = "Owncloud" ]; then
-            if [ "$redis_enabled" ]; then
+        if [ "$autodeploy_enable" -eq 1 ] && [ "$website_name" = "Nextcloud" ] || [ "$website_name" = "Owncloud" ]; then
+            if [ "$redis_enabled" -eq 1 ]; then
                 if [ -d /opt/wwwroot/$website_name ] && [ ! -f /opt/wwwroot/$website_name/redis_enabled ]; then
                     touch /opt/wwwroot/$website_name/redis_enabled
                     redis "/opt/wwwroot/$website_name"
