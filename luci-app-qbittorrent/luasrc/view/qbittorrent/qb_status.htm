@@ -4,8 +4,7 @@
         margin-right: 10px;
     }
 </style>
-<script>
-//<![CDATA[
+<script>//<![CDATA[
     XHR.poll(5, '<%=url("admin/nas/qbittorrent/status")%>', null, function(x, data) {
         var tb = document.getElementById('qbittorrent_status');
         if (data && tb) {
@@ -27,12 +26,7 @@
         var url = `${protocol}${window.location.host}:${port}`;
         window.open(url, 'qbittorrent');
     };
-
-    function randomToken() {
-        document.getElementById('cbid.qbittorrent.main.PortRangeMin').value = Math.floor(Math.random() * (65535 - 1024 + 1)) + 1024;
-    };
-//]]>
-</script>
+//]]></script>
 <fieldset class="cbi-section">
     <p id="qbittorrent_status">
         <em><%:Collecting data...%></em>

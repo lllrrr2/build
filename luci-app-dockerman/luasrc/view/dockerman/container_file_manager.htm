@@ -8,7 +8,7 @@
 	</div>
 	<div id="list-content"></div>
 </fieldset>
-<script type="text/javascript" src="<%=resource%>/dockerman/tar.min.js"></script>
+<script type="text/javascript" src="<%=resource%>/dockerman/tar.min.js?v=v0.5.26"></script>
 <script>
 	String.prototype.replaceAll = function (search, replacement) {
 		var target = this;
@@ -46,7 +46,7 @@
 		}
 
 		function renamePath(filename) {
-			var newname = prompt('%:Please input new filename%>: ', filename);
+			var newname = prompt('<%:Please input new filename%>: ', filename);
 			if (newname) {
 				newname = newname.trim();
 				if (newname != filename) {
@@ -209,7 +209,7 @@
 					var fileReader = new FileReader();
 					fileReader.onerror = () => {
 						fileReader.abort();
-						reject(new DOMException("Problem parsing input file."));
+						reject(new DOMException("<%:Problem parsing input file.%>"));
 					};
 					fileReader.onload = (fileLoadedEvent) => {
 						resolve(ByteHelper.stringUTF8ToBytes(fileLoadedEvent.target.result));

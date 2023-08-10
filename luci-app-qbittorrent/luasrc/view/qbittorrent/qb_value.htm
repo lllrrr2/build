@@ -1,8 +1,13 @@
+<script>
+    function RandomPort() {
+        document.getElementById('cbid.qbittorrent.main.PortRangeMin').value = Math.floor(Math.random() * (65535 - 1024 + 1)) + 1024;
+    };
+</script>
 <%+cbi/valueheader%>
 <div><input
 <%= attr("id", cbid) ..                                                           -- ID 属性，格式为 cbi-配置名-配置项名
     attr("name", cbid) ..                                                         -- name 属性，格式同 ID 属性
-    attr("type", self.password and "password" or "text") ..                       -- 输入框类型
+    attr("type", self.password and "password") ..                                 -- 输入框类型
     attr("value", self:cfgvalue(section) or self.default) ..                      -- 输入框的默认值
     attr("class", self.password and "cbi-input-password" or "cbi-input-text") ..  -- 样式类名
     ifattr(self.size, "size") ..                                                  -- 输入框的尺寸

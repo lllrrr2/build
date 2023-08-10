@@ -1119,3 +1119,18 @@ msgstr "没有镜像标识"
 
 msgid "No container name or id"
 msgstr "没有容器名称或 ID"
+
+msgid "Problem parsing input file."
+msgstr "解析输入文件时出现问题。"
+
+msgid "Loading.."
+msgstr "加载中.."
+
+msgid "Docker daemon: starting"
+msgstr "Docker 守护进程：启动中"
+
+msgid "Docker daemon: stopping"
+msgstr "Docker 守护进程：停止"
+
+msgid "Docker daemon: restarting"
+msgstr "Docker 守护进程：重新启动中"

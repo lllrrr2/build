@@ -13,14 +13,9 @@ if dk:_ping().code ~= 200 then
 	lost_state = true
 end
 
-m = SimpleForm("dockerd",
-	translate("Docker - Overview"),
-	translate("An overview with the relevant data is displayed here with which the LuCI docker client is connected.")
-..
-	" " ..
-	[[<a href="https://github.com/lisaac/luci-app-dockerman" target="_blank">]] ..
-	translate("Github") ..
-	[[</a>]])
+m = SimpleForm("dockerd", translate("Docker - Overview"),
+	translate("An overview with the relevant data is displayed here with which the LuCI docker client is connected.") ..
+	[[<a href="https://github.com/lisaac/luci-app-dockerman" target="_blank"> Github</a>]])
 m.submit=false
 m.reset=false
 
@@ -58,13 +53,13 @@ if nixio.fs.access("/usr/bin/dockerd") and not uci:get_bool("dockerd", "dockerma
 		docker:clear_status()
 
 		if lost_state then
-			docker:append_status("Docker daemon: starting")
+			docker:append_status(translate("Docker daemon: starting"))
 			luci.util.exec("/etc/init.d/dockerd start")
 			luci.util.exec("sleep 5")
 			luci.util.exec("/etc/init.d/dockerman start")
 
 		else
-			docker:append_status("Docker daemon: stopping")
+			docker:append_status(translate("Docker daemon: stopping"))
 			luci.util.exec("/etc/init.d/dockerd stop")
 		end
 		docker:clear_status()
@@ -78,7 +73,7 @@ if nixio.fs.access("/usr/bin/dockerd") and not uci:get_bool("dockerd", "dockerma
 	o.forcewrite = true
 	o.write = function(self, section)
 		docker:clear_status()
-		docker:append_status("Docker daemon: restarting")
+		docker:append_status(translate("Docker daemon: restarting"))
 		luci.util.exec("/etc/init.d/dockerd restart")
 		luci.util.exec("sleep 5")
 		luci.util.exec("/etc/init.d/dockerman start")

@@ -18,7 +18,7 @@ t:tab("connection", translate("Connection Settings"))
 t:tab("downloads", translate("Downloads Settings"))
 t:tab("bittorrent", translate("Bittorrent Settings"))
 t:tab("webgui", translate("WebUI Settings"))
--- t:tab("logger", translate("Log Settings"))
+t:tab("logger", translate("Log Settings"))
 t:tab("advanced", translate("Advance Settings"))
 
 e = t:taboption("basic", Flag, "EnableService", translate("Enabled"))
@@ -109,9 +109,9 @@ e.default = e.disabled
 o = t:taboption("connection", Value, "PortRangeMin",
     translate("Connection Port"))
 o:depends("UseRandomPort", false)
-o.btnclick = "randomToken();"
-o.datatype = "range(1024,65535)"
 o.template = "qbittorrent/qb_value"
+o.datatype = "port"
+o.btnclick = "randomToken();"
 o.btntext = translate("Generate Randomly")
 
 e = t:taboption("connection", Value, "GlobalDLLimit", translate("Global Download Speed"))
@@ -392,39 +392,39 @@ e.enabled = "true"
 e.disabled = "false"
 e.default = e.enabled
 
--- e = t:taboption('logger', Flag, 'Enabled', translate('Enable Log'),
---     translate('Enable logger to log file.'))
--- e.enabled = 'true'
--- e.disabled = 'false'
--- e.default = e.disabled
+e = t:taboption('logger', Flag, 'Enabled', translate('Enable Log'),
+    translate('Enable logger to log file.'))
+e.enabled = 'true'
+e.disabled = 'false'
+e.default = e.disabled
 
--- e = t:taboption('logger', Value, 'Path', translate('Log Path'))
--- e:depends('Enabled', 'true')
--- e.placeholder = translate('The path for qBittorrent log.')
+e = t:taboption('logger', Value, 'Path', translate('Log Path'))
+e:depends('Enabled', 'true')
+e.placeholder = translate('The path for qBittorrent log.')
 
--- e = t:taboption('logger', Flag, 'Backup', translate('Enable Backup'),
---     translate('Backup log file when oversize the given size.'))
--- e:depends('Enabled', 'true')
--- e.enabled = 'true'
--- e.disabled = 'false'
--- e.default = e.enabled
+e = t:taboption('logger', Flag, 'Backup', translate('Enable Backup'),
+    translate('Backup log file when oversize the given size.'))
+e:depends('Enabled', 'true')
+e.enabled = 'true'
+e.disabled = 'false'
+e.default = e.enabled
 
--- e = t:taboption('logger', Flag, 'DeleteOld', translate('Delete Old Backup'),
---     translate('When enabled, the overdue log files will be deleted after given keep time.'))
--- e:depends('Enabled', 'true')
--- e.enabled = 'true'
--- e.disabled = 'false'
--- e.default = e.enabled
+e = t:taboption('logger', Flag, 'DeleteOld', translate('Delete Old Backup'),
+    translate('When enabled, the overdue log files will be deleted after given keep time.'))
+e:depends('Enabled', 'true')
+e.enabled = 'true'
+e.disabled = 'false'
+e.default = e.enabled
 
--- e = t:taboption('logger', Value, 'MaxSizeBytes', translate('Log Max Size'),
---     translate('The max size for qBittorrent log (Unit: Bytes).'))
--- e:depends('Enabled', 'true')
--- e.placeholder = '66560'
+e = t:taboption('logger', Value, 'MaxSizeBytes', translate('Log Max Size'),
+    translate('The max size for qBittorrent log (Unit: Bytes).'))
+e:depends('Enabled', 'true')
+e.placeholder = '66560'
 
--- e = t:taboption('logger', Value, 'SaveTime', translate('Log Keep Time'),
---     translate('Give the ' .. 'time for keeping the old log, refer the setting "Delete Old Backup", eg. 1d' .. ' for one day, 1m for one month and 1y for one year.'))
--- e:depends('Enabled', 'true')
--- e.datatype = 'string'
+e = t:taboption('logger', Value, 'SaveTime', translate('Log Keep Time'),
+    translate('Give the ' .. 'time for keeping the old log, refer the setting "Delete Old Backup", eg. 1d' .. ' for one day, 1m for one month and 1y for one year.'))
+e:depends('Enabled', 'true')
+e.datatype = 'string'
 
 e = t:taboption("advanced", Flag, "IncludeOverhead", translate("Limit Overhead Usage"),
     translate("The overhead usage is been limitted."))
