@@ -1,14 +1,12 @@
 <fieldset class="cbi-section">
-    <legend><%:已部署的网站%></legend>
+    <h2 style="font-size: 17px;">已运行的网站</h2>
     <table width="100%" cellspacing="10" id="website_list">
         <tr><td width="33%" style="text-align:center;"><%:网站名称%></td><td id="php_run_state"><%:访问地址%></td></tr>
     </table>
 </fieldset>
-
-<script type="text/javascript">
-//<![CDATA[
+<script>//<![CDATA[
 const websiteList = document.getElementById('website_list');
-XHR.poll(5, '<%=luci.dispatcher.build_url("admin", "services", "softwarecenter", "status")%>', null, (x, status) => {
+XHR.poll(2, '<%=luci.dispatcher.build_url("admin/services/softwarecenter/status")%>', null, (x, status) => {
     if (x && x.status === 200) { // 判断是否成功获取数据
         const tbodyDelete = websiteList.getElementsByTagName('tbody'); // 获取现有表格所有 tbody 元素
         const tbodySizeDelete = tbodyDelete.length; // 记录现有 tbody 数量
@@ -49,5 +47,4 @@ XHR.poll(5, '<%=luci.dispatcher.build_url("admin", "services", "softwarecenter",
         websiteList.innerHTML += tbodyHTML; // 将所有 tr 元素的 HTML 字符串添加到 tbody 元素中
     }
 });
-//]]>
-</script>
+//]]></script>

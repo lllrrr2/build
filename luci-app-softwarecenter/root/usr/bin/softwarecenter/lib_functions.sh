@@ -2,6 +2,9 @@
 . /lib/functions.sh
 export PATH="/opt/bin:/opt/sbin:/usr/sbin:/usr/bin:/sbin:/bin"
 log="/tmp/log/softwarecenter.log"
+username=${USER:-$(id -un)}
+localhost=$(ip addr show br-lan | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
+localhost=${localhost:-"你的路由器IP"}
 
 uci_get_type() {
     uci_get softwarecenter main "$1" $2
@@ -65,9 +68,9 @@ check_url() {
 }
 
 check_port_usage() {
-    local exists _old_port old_port
-    [ -n "$1" ] && eval "old_port=\"\${$1}\"" || old_port="$port"
-    local name=${1:-$website_name}
+    local exists _old_port
+    [ -n "$1" ] && eval "old_port=\"\${$1}\"" || old_port=$port
+    local website_name=${1:-$website_name}
 
     while [ -z "${old_port}" ] || lsof -i:"${old_port}" >/dev/null 2>&1; do
         _old_port=${_old_port:-$old_port}
@@ -77,9 +80,9 @@ check_port_usage() {
 
     port="$old_port"
     if [ -n "$exists" -a -n "$_old_port" ]; then
-        echo_time "$name 设定的 $_old_port 端口已在使用，查找到可用端口 $port"
+        echo_time "$website_name 设定的 $_old_port 端口已在使用，查找到可用端口 $port"
         if [ -n "$1" ]; then
-            uci_set_type "$name" "$port"
+            uci_set_type "$website_name" "$port"
         else
             uci_set_type "port" "$port" "@website[$website_select]"
         fi
@@ -350,8 +353,8 @@ SOFTWARECENTER() {
     get_config="a_delaytime cpu_model delaytime deploy_entware deploy_mysql deploy_nginx disk_mount download_dir entware_enable mysql_enabled nginx_enabled partition_disk pass old_pass swap_enabled swap_path swap_size user"
     config_load softwarecenter
     for rt in $get_config; do
-        config_get $rt main $rt
         config_get_bool $rt main $rt
+        config_get $rt main $rt
     done
     source /etc/profile >/dev/null 2>&1
     if [ "$entware_enable" -eq 1 ]; then
@@ -399,10 +402,11 @@ SOFTWARECENTER() {
         [ -x /opt/etc/init.d/S70mysqld ] && echo_time "========= 卸载MySQL相关的软件包 =========" && del_mysql
     fi
 
-    if [ -d /opt/etc/nginx/vhost ] && pidof nginx &> /dev/null; then
-        config_foreach handle_website website test
+    ls -A /opt/etc/nginx/vhost/ &> /dev/null && pidof nginx &> /dev/null && {
+        config_foreach handle_website website
         clean_vhost_config
-    fi
+    }
+
     [ -e "/opt/etc/init.d/rc.func" ] && modify_port
     [ "$swap_enabled" -eq 1 ] && config_swap_init $swap_size $swap_path || config_swap_del $swap_path
 
@@ -439,10 +443,4 @@ SOFTWARECENTER() {
             fi
         done
     }
-}
-
-get_env() {
-    username=${USER:-$(id -un)}
-    localhost=$(ip addr show br-lan | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
-    localhost=${localhost:-"你的路由器IP"}
 }
