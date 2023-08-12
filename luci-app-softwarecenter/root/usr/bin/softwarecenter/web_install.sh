@@ -117,9 +117,9 @@ web_installer() {
 }
 
 add_vhost() {
-    conf="no_use"
-    [ "$website_enabled" -eq 1 ] && conf="vhost" && echo "$name $localhost:$port " >> $website_list
-	cat >"/opt/etc/nginx/$conf/$name.conf"<<-EOF
+    vhost_type="no_use"
+    [ "$website_enabled" = 1 ] && vhost_type="vhost" && echo "$name $localhost:$port " >> $website_list
+	cat >"/opt/etc/nginx/$vhost_type/$name.conf"<<-EOF
 	server {
 	    listen $port;
 	    server_name localhost;
@@ -133,32 +133,25 @@ add_vhost() {
 
 # 恢复网站查端口
 port_custom() {
-    port=$(grep -oP 'listen \K\d+' $1)
-    website_name_old_port="$port"
+    port=$(grep -oP 'listen \K\d+' "$1")
+    name_old_port="$port"
     check_port_usage
-    [ "$website_name_old_port" -ne "$port" ] && sed -i "s|listen .*|listen $port;|" "$1"
+    [ "$name_old_port" != "$port" ] && sed -i "s|listen .*|listen $port;|" "$1"
     echo "$website_name $localhost:$port " >> $website_list 
     echo_time "$website_name 已启用\n"
     /opt/etc/init.d/S80nginx reload >/dev/null 2>&1
 }
 
 # 端口修改
-port_modification() {
-    old_port=$(grep -oP 'listen \K\d+' "$1")
-    if [ -z "$port" -o "$old_port" -ne "$port" ]; then
+update_port() {
+    old_port=$(grep -oP 'listen \K\d+' "$1") 2>/dev/null
+    if [ -n "$port" -a "$old_port" != "$port" ]; then
         check_port_usage
         sed -i "s|listen.*|listen $port;|" "$1"
         sed -i "/$website_name/s/:.*/:$port /" $website_list
         echo_time "$website_name 端口修改完成\n"
         /opt/etc/init.d/S80nginx reload >/dev/null 2>&1
     fi
-}
-
-vhost_config_list() {
-    [ -n "$1" ] || return 1
-    path=`grep -oP '/opt/wwwroot/\K[^;]+' $1`
-    port=`grep -oP 'listen \K\d+' $1`
-    echo -e "$path $localhost:$port "
 }
 
 redis() {
@@ -177,61 +170,45 @@ redis() {
 }
 
 delete_website() {
-    for site in $1; do
-        echo_time "$site 已删除"
-        rm -rf /opt/etc/nginx/*/"$site".conf /opt/wwwroot/"$site"*
-        sed -i "/$site /d" $website_list
+    for site in $delete_config_list; do
+        if [ -e "/opt/etc/nginx/no_use/$site.conf" -o -e "/opt/etc/nginx/vhost/$site.conf" ]; then
+            echo_time "$site 已删除"
+            rm -rf /opt/etc/nginx/*/"$site".conf /opt/wwwroot/"$site"*
+            sed -i "/$site /d" $website_list
+        fi
     done
     /opt/etc/init.d/S80nginx reload > /dev/null 2>&1
 }
 
-#本函数负责清理未写入配置的网站
-clean_vhost_config() {
-    for i in $(awk '{print $1}' $website_list); do
-        if ! echo "$website_config_list" | grep -qw "$i"; then
-            delete_config_list="$delete_config_list $i"
-        fi
-    done
-
-    for i in $(ls /opt/etc/nginx/no_use); do
-        if ! echo "$website_config_list" | grep -qw "${i%%.*}"; then
-            delete_config_list="$delete_config_list ${i%%.*}"
-        fi
-    done
-    [ -n "$delete_config_list" ] && delete_website "$delete_config_list"
-}
-
 # 网站迭代处理，本函数迭代的配置网站（处理逻辑也许可以更好的优化？）
 handle_website() {
-    website_config="autodeploy_enable customdeploy_enabled port redis_enabled website_dir website_enabled website_select"
-    for website in $website_config; do
-        config_get_bool $website $1 $website
-        config_get $website $1 $website
-    done
+    config_get port $1 port
+    config_get redis_enabled $1 redis_enabled
+    config_get website_select $1 website_select
+    website_name=$(website_name_mapping $website_select)
+    website_enabled=$(uci -q get "softwarecenter.@website[$website_select].website_enabled")
+    autodeploy_enable=$(uci -q get "softwarecenter.@website[$website_select].autodeploy_enable")
 
-    if [ "$autodeploy_enable" -eq 1 ]; then
-        website_name=$(website_name_mapping $website_select)
-        if [ ! -f /opt/etc/*/*/$website_name.conf ]; then
-            install_website $website_select $port
-            if [ "$website_enabled" -eq 1 ]; then
-                echo_time " $name 安装完成"
-                echo_time "浏览器地址栏输入：$localhost:$port 即可访问"
-            else
-                echo_time " $name 安装完成，但没有开启！\n"
-            fi
+    if [ "$autodeploy_enable" = 1 -a -z "$(find /opt/etc/nginx -name "$website_name.conf")" ]; then
+        install_website $website_select $port
+        if [ "$website_enabled" = 1 ]; then
+            echo_time " $name 安装完成"
+            echo_time "浏览器地址栏输入：$localhost:$port 即可访问"
+        else
+            echo_time " $name 安装完成，但没有开启！\n"
         fi
     fi
 
-    if [ "$website_enabled" -eq 1 ]; then
-        port_modification "/opt/etc/nginx/vhost/$website_name.conf"
+    if [ "$website_enabled" = 1 ]; then
+        update_port "/opt/etc/nginx/vhost/$website_name.conf"
         if [ -f /opt/etc/nginx/no_use/$website_name.conf ]; then
             echo_time "准备启用 $website_name "
             mv /opt/etc/nginx/no_use/$website_name.conf /opt/etc/nginx/vhost/$website_name.conf
             port_custom "/opt/etc/nginx/vhost/$website_name.conf"
         fi
 
-        if [ "$autodeploy_enable" -eq 1 ] && [ "$website_name" = "Nextcloud" -o "$website_name" = "Owncloud" ]; then
-            if [ "$redis_enabled" -eq 1 ]; then
+        if [ "$autodeploy_enable" = 1 ] && [ "$website_name" = "Nextcloud" -o "$website_name" = "Owncloud" ]; then
+            if [ "$redis_enabled" = 1 ]; then
                 if [ -d /opt/wwwroot/$website_name ] && [ ! -f /opt/wwwroot/$website_name/redis_enabled ]; then
                     touch /opt/wwwroot/$website_name/redis_enabled
                     redis "/opt/wwwroot/$website_name"
@@ -249,7 +226,8 @@ handle_website() {
             echo_time " 已关闭 $website_name\n"
         fi
     fi
-    website_config_list="$website_config_list $website_name"
+    [ "$autodeploy_enable" = 1 ] || delete_config_list="$delete_config_list $website_name"
+    [ -n "$delete_config_list" ] && delete_website
 }
 
 install_x_prober() {

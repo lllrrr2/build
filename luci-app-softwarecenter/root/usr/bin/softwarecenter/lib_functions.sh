@@ -6,8 +6,12 @@ username=${USER:-$(id -un)}
 localhost=$(ip addr show br-lan | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
 localhost=${localhost:-"你的路由器IP"}
 
+_info() {
+    logger -st 'softwarecenter' -p 'daemon.info' "$*"
+}
+
 uci_get_type() {
-    uci_get softwarecenter main "$1" $2
+    uci_get softwarecenter "main" "$1" "$2"
 }
 
 uci_set_type() {
@@ -402,10 +406,9 @@ SOFTWARECENTER() {
         [ -x /opt/etc/init.d/S70mysqld ] && echo_time "========= 卸载MySQL相关的软件包 =========" && del_mysql
     fi
 
-    ls -A /opt/etc/nginx/vhost/ &> /dev/null && pidof nginx &> /dev/null && {
-        config_foreach handle_website website
-        clean_vhost_config
-    }
+    if ls -A /opt/etc/nginx/vhost/*conf &> /dev/null || ls -A /opt/etc/nginx/no_use/*conf &> /dev/null; then
+        pidof nginx &> /dev/null && config_foreach handle_website website
+    fi
 
     [ -e "/opt/etc/init.d/rc.func" ] && modify_port
     [ "$swap_enabled" -eq 1 ] && config_swap_init $swap_size $swap_path || config_swap_del $swap_path
