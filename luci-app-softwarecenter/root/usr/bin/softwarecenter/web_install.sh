@@ -2,7 +2,6 @@
 . /usr/bin/softwarecenter/lib_functions.sh
 website_list=/opt/wwwroot/website_list
 
-# Web程序
 # (0) tz（雅黑PHP探针）
 url_tz="https://raw.githubusercontent.com/WuSiYu/PHP-Probe/master/tz.php"
 # (1) phpMyAdmin（数据库管理工具）
@@ -171,7 +170,7 @@ redis() {
 
 delete_website() {
     for site in $delete_config_list; do
-        if [ -e "/opt/etc/nginx/no_use/$site.conf" -o -e "/opt/etc/nginx/vhost/$site.conf" ]; then
+        if [ -n "$(find /opt/etc/nginx/vhost /opt/etc/nginx/no_use -name "$site.conf")" ]; then
             echo_time "$site 已删除"
             rm -rf /opt/etc/nginx/*/"$site".conf /opt/wwwroot/"$site"*
             sed -i "/$site /d" $website_list
@@ -182,14 +181,16 @@ delete_website() {
 
 # 网站迭代处理，本函数迭代的配置网站（处理逻辑也许可以更好的优化？）
 handle_website() {
-    config_get port $1 port
-    config_get redis_enabled $1 redis_enabled
-    config_get website_select $1 website_select
+    config_get port "$1" port
+    config_get redis_enabled "$1" redis_enabled
+    config_get website_select "$1" website_select
+    config_get website_enabled "$1" website_enabled
+    config_get autodeploy_enable "$1" autodeploy_enable
     website_name=$(website_name_mapping $website_select)
-    website_enabled=$(uci -q get "softwarecenter.@website[$website_select].website_enabled")
-    autodeploy_enable=$(uci -q get "softwarecenter.@website[$website_select].autodeploy_enable")
+    # website_enabled=$(uci -q get "softwarecenter.@website[$website_select].website_enabled")
+    # autodeploy_enable=$(uci -q get "softwarecenter.@website[$website_select].autodeploy_enable")
 
-    if [ "$autodeploy_enable" = 1 -a -z "$(find /opt/etc/nginx -name "$website_name.conf")" ]; then
+    if [ "$autodeploy_enable" = 1 -a -z "$(find /opt/etc/nginx/vhost /opt/etc/nginx/no_use -name "$website_name.conf")" ]; then
         install_website $website_select $port
         if [ "$website_enabled" = 1 ]; then
             echo_time " $name 安装完成"
@@ -236,8 +237,8 @@ install_x_prober() {
     istar="php"
     dirname="x-prober"
     hookdir=$dirname
-
     web_installer
+    [ "$?" = 0 ] || return 1
     add_vhost
     sed -i "{
         s|index.php;|index.php x.php;|
@@ -251,8 +252,8 @@ install_tz() {
     istar="php"
     dirname="tz"
     hookdir=$dirname
-
     web_installer
+    [ "$?" = 0 ] || return 1
     add_vhost
     sed -i "{
         s|index.php;|index.php tz.php;|
@@ -266,6 +267,7 @@ install_phpmyadmin() {
     name="phpMyAdmin"
     dirname=phpMyAdmin-*-languages
     web_installer
+    [ "$?" = 0 ] || return 1
     cp /opt/wwwroot/$name/config.sample.inc.php /opt/wwwroot/$name/config.inc.php
     chmod 644 /opt/wwwroot/$name/config.inc.php
     # 取消-p参数，必须要求webdir创建才可创建文件夹，为部署检测做准备
@@ -282,6 +284,7 @@ install_wordpress() {
     name="WordPress"
     dirname="wordpress"
     web_installer
+    [ "$?" = 0 ] || return 1
     add_vhost
     # WordPress的配置文件中有php-fpm了, 不需要外部引入
     sed -i "s|#otherconf|include /opt/etc/nginx/conf/wordpress.conf;|" /opt/etc/nginx/*/$name.conf
@@ -294,12 +297,9 @@ install_h5ai() {
     name="h5ai"
     dirname="_h5ai"
     hookdir=$dirname
-
-    # 运行安装程序
     web_installer
+    [ "$?" = 0 ] || return 1
     cp /opt/wwwroot/$name/_h5ai/README.md /opt/wwwroot/$name/
-
-    # 添加到虚拟主机
     add_vhost
     sed -i "{
         s|#php-fpm|include /opt/etc/nginx/conf/php-fpm.conf;|
@@ -324,6 +324,7 @@ install_lychee() {
     name="Lychee"
     dirname="Lychee-master"
     web_installer
+    [ "$?" = 0 ] || return 1
     add_vhost
     sed -i "s|#php-fpm|include /opt/etc/nginx/conf/php-fpm.conf;|" /opt/etc/nginx/*/$name.conf
     echo_time "首次打开会要配置数据库信息"
@@ -338,6 +339,7 @@ install_kodexplorer() {
     dirname="kodexplorer"
     hookdir=$dirname
     web_installer
+    [ "$?" = 0 ] || return 1
     add_vhost
     sed -i "s|#php-fpm|include /opt/etc/nginx/conf/php-fpm.conf;|" /opt/etc/nginx/*/$name.conf
 }
@@ -350,6 +352,7 @@ install_typecho() {
     hookdir=$dirname
     # istar=true
     web_installer
+    [ "$?" = 0 ] || return 1
     add_vhost
     sed -i "{
         s|#php-fpm|include /opt/etc/nginx/conf/php-fpm.conf;|
@@ -365,6 +368,7 @@ install_zblog() {
     dirname="Z-BlogPHP_1_5_1_1740_Zero"
     hookdir=$dirname
     web_installer
+    [ "$?" = 0 ] || return 1
     add_vhost
     sed -i "s|#php-fpm|include /opt/etc/nginx/conf/php-fpm.conf;|" /opt/etc/nginx/*/$name.conf
 }
@@ -375,6 +379,7 @@ install_dzzoffice() {
     name="DzzOffice"
     dirname="dzzoffice-master"
     web_installer
+    [ "$?" = 0 ] || return 1
     add_vhost
     sed -i "s|#php-fpm|include /opt/etc/nginx/conf/php-fpm.conf;|" /opt/etc/nginx/*/$name.conf # 添加php-fpm支持
     echo_time "DzzOffice应用市场中，某些应用无法自动安装的，请自行参看官网给的手动安装教程"
@@ -386,6 +391,7 @@ install_owncloud() {
     name="Owncloud"
     dirname="owncloud"
     web_installer
+    [ "$?" = 0 ] || return 1
     add_vhost
     # Owncloud的配置文件中有php-fpm了, 不需要外部引入
     sed -i "s|#otherconf|include /opt/etc/nginx/conf/owncloud.conf;|" /opt/etc/nginx/*/$name.conf
@@ -401,6 +407,7 @@ install_nextcloud() {
     name="Nextcloud"
     dirname="nextcloud"
     web_installer
+    [ "$?" = 0 ] || return 1
     add_vhost
     # nextcloud的配置文件中有php-fpm了, 不需要外部引入
     sed -i "s|#otherconf|include /opt/etc/nginx/conf/nextcloud.conf;|" /opt/etc/nginx/*/$name.conf
