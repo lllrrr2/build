@@ -23,12 +23,10 @@ make_dir() {
 }
 
 _pidof() {
-    for g in $@; do
-        if ps | grep $g | grep -q opt; then
-            echo_time "$g 已经运行"
-            return 0
-        fi
-    done
+    if ps | grep "$1" | grep -q "opt"; then
+        echo_time "$1 已经运行"
+        return 0
+    fi
     echo_time "$1 没有运行"
     return 1
 }
@@ -38,7 +36,8 @@ echo_time() {
 }
 
 status() {
-    if [ $? = "0" ]; then
+    exit_code="$?"
+    if [ "$exit_code" = "0" ]; then
         echo "   成功"
         return 0
     else
@@ -75,12 +74,13 @@ check_port_usage() {
     while [ -z "${old_port}" ] || lsof -i:"${old_port}" >/dev/null 2>&1; do
         _old_port=${_old_port:-$old_port}
         old_port=$(($(tr -dc '0-9' < /dev/urandom | head -c 4) + 1024))
+        available_name=$(lsof -i:"$_old_port" | awk 'NR==2 {print $1}')
         exists=1
     done
 
     port="$old_port"
     if [ -n "$exists" -a -n "$_old_port" ]; then
-        echo_time "$website_name 设定的 $_old_port 端口已在使用，查找到可用端口 $port"
+        echo_time "$website_name 设定的 $_old_port 端口已在 $available_name 中使用，使用没有占用的端口 $port"
         if [ -n "$1" ]; then
             uci_set_type "$website_name" "$port"
         else
@@ -92,7 +92,7 @@ check_port_usage() {
 modify_port() {
     if [ -x "/opt/bin/amuled" -a -n "$am_port" ]; then
         old_am_port=$(awk -F "=" '/\[WebServer\]/{flag=1;next} flag && /Port/{print $2;flag=0}' /opt/var/amule/amule.conf)
-        if [ "$old_am_port" -ne "$am_port" ]; then
+        if [ "$old_am_port" != "$am_port" ]; then
             check_port_usage am_port
             [ -n "$port" ] && {
                 sed -i "s/Port=$old_am_port/Port=$port/" /opt/var/amule/amule.conf
@@ -103,7 +103,7 @@ modify_port() {
 
     if [ -x "/opt/bin/deluged" -a -n "$de_port" ]; then
         old_de_port=$(grep -oP '(?<=-p )\d+' /opt/etc/*/S81deluge-web)
-        if [ "$old_de_port" -ne "$de_port" ]; then
+        if [ "$old_de_port" != "$de_port" ]; then
             check_port_usage de_port
             [ -n "$port" ] && {
                 sed -i "s/-p $old_de_port/-p $port/" /opt/etc/*/S81deluge-web
@@ -114,7 +114,7 @@ modify_port() {
 
     if [ -x "/opt/bin/qbittorrent-nox" -a -n "$qb_port" ]; then
         old_qb_port=$(grep -oP '(?<=webui-port=)\d+' /opt/etc/*/S89qb*)
-        if [ "$old_qb_port" -ne "$qb_port" ]; then
+        if [ "$old_qb_port" != "$qb_port" ]; then
             check_port_usage qb_port
             [ -n "$port" ] && {
                 sed -i "s/port=$old_qb_port/port=$port/" /opt/etc/*/S89qb*
@@ -125,7 +125,7 @@ modify_port() {
 
     if [ -x "/opt/bin/rtorrent" -a -n "$rt_port" ]; then
         old_rt_port=$(grep -oP '^server.port=\s*\K\d+' /opt/etc/*/*/99-rtor*)
-        if [ "$old_rt_port" -ne "$rt_port" ]; then
+        if [ "$old_rt_port" != "$rt_port" ]; then
             check_port_usage rt_port
             [ -n "$port" ] && {
                 sed -i "s/port=$old_rt_port/port=$port/" /opt/etc/*/*/99-rtor*
@@ -136,7 +136,7 @@ modify_port() {
 
     if [ -x "/opt/bin/transmission-daemon" -a -n "$tr_port" ]; then
         old_tr_port=$(grep -oP "(?<=--port )\d+" /opt/etc/*/S88tran*)
-        if [ "$old_tr_port" -ne "$tr_port" ]; then
+        if [ "$old_tr_port" != "$tr_port" ]; then
             check_port_usage tr_port
             [ -n "$port" ] && {
                 sed -i "s/\(--port \)[0-9]\+/\1$port/" /opt/etc/*/S88tran*
@@ -157,13 +157,13 @@ opkg_install() {
 
     for ipk in $@; do
         if [ "$(/opt/bin/opkg list 2>/dev/null | awk '{print $1}' | grep -w $ipk)" ]; then
-            if which $ipk | grep -q opt; then
+            if which "$ipk" | grep -q opt; then
                 echo_time "$ipk 已经安装  $(which $ipk | grep -q opt)"
             else
                 echo_time "正在安装  $ipk\c"
                 $time_out /opt/bin/opkg install $ipk --force-maintainer --force-reinstall >/dev/null 2>&1
                 status || {
-                    [ "x$time_out" = "x" ] && {
+                    [ x"$time_out" = "x" ] && {
                         echo_time "强制安装  $ipk\c"
                         /opt/bin/opkg install $ipk --force-depends --force-overwrite >/dev/null 2>&1
                         status
@@ -182,7 +182,7 @@ install_soft() {
     check_url "bin.entware.net"
     /opt/bin/opkg update >/dev/null 2>&1
     for ipk in $@; do
-        which $ipk >/dev/null 2>&1 && {
+        which "$ipk" >/dev/null 2>&1 && {
             echo_time "$ipk    已经安装 $(which $ipk)"
         } || {
             echo_time "正在安装  $ipk\c"
@@ -206,7 +206,7 @@ remove_soft() {
 }
 
 entware_set() {
-    entware_unset
+    [ -x /etc/init.d/entware ] && entware_unset
     [ -n "$1" ] || { echo_time "未选择安装路径！"; exit 1; }
     local disk_mount="$1"
     system_check "$disk_mount"
@@ -357,7 +357,7 @@ SOFTWARECENTER() {
         config_get $rt main $rt
     done
     source /etc/profile >/dev/null 2>&1
-    if [ "$entware_enable" -eq 1 ]; then
+    if [ "$entware_enable" = 1 ]; then
         if [ ! -e /etc/init.d/entware ]; then
             echo_time "========= 开始部署entware环境 ========="
             entware_set $disk_mount $cpu_model
@@ -371,9 +371,9 @@ SOFTWARECENTER() {
         return 0
     fi
 
-    if [ "$deploy_nginx" -eq 1 ]; then
+    if [ "$deploy_nginx" = 1 ]; then
         [ ! -x /opt/etc/init.d/S80nginx ] && echo_time "========= 开始安装Nginx =========" && init_nginx
-        if [ "$nginx_enabled" -eq 1 ]; then
+        if [ "$nginx_enabled" = 1 ]; then
             pidof nginx &> /dev/null || nginx_manage start
         else
             nginx_manage stop
@@ -382,13 +382,13 @@ SOFTWARECENTER() {
         [ -x /opt/etc/init.d/S80nginx ] && echo_time "========= 卸载Nginx相关的软件包 =========" && del_nginx
     fi
 
-    if [ "$deploy_mysql" -eq 1 ]; then
+    if [ "$deploy_mysql" = 1 ]; then
         [ ! -x /opt/etc/init.d/S70mysqld ] && echo_time "========= 开始安装MySQL =========" && init_mysql
-        if [ "$mysql_enabled" -eq 1 ]; then
+        if [ "$mysql_enabled" = 1 ]; then
             if pidof mysqld &> /dev/null; then
                 pass=${pass:-123456}
-                [ -z $old_pass ] && uci_set_type old_pass "$pass"
-                if [[ $pass != $old_pass ]]; then
+                [ -z "$old_pass" ] && uci_set_type old_pass "$pass"
+                if [ "$pass" != "$old_pass" ]; then
                     uci_set_type old_pass "$pass"
                     mysqladmin -u root password "$pass"
                 fi
@@ -407,41 +407,34 @@ SOFTWARECENTER() {
     fi
 
     [ -e "/opt/etc/init.d/rc.func" ] && modify_port
-    [ "$swap_enabled" -eq 1 ] && config_swap_init $swap_size $swap_path || config_swap_del $swap_path
+    [ "$swap_enabled" = 1 ] && config_swap_init $swap_size $swap_path || config_swap_del $swap_path
 
-    grep -q "_boot" /etc/config/softwarecenter && [ -x /etc/init.d/entware ] && {
-        for package_name in $(awk '/_boot/ {sub(/_boot/, "", $2); print $2}' /etc/config/softwarecenter); do
-            if [ "$(uci_get_type ${package_name}_boot)" = 1 ]; then
-                init=$(find /opt/etc/init.d/ -perm '-u+x' -name "*$package_name*")
-
-                if [ -x "$init" ]; then
-                    if ! _pidof "$package_name" >/dev/null 2>&1; then
-                        # echo_time "$package_name 启动"
-                        [ $delaytime ] && sleep $delaytime
-                        if $init start >/dev/null 2>&1; then
-                            echo_time "$package_name 启动成功"
-                        else
-                            echo_time "$package_name 启动失败"
-                        fi
-                    # else
-                        # echo_time "$package_name 已在运行"
-                    fi
+    [ -x /etc/init.d/entware ] || return 0
+    for package_name in $(grep -Po "(?<=option )\w+(?=_boot)" /etc/config/softwarecenter); do
+        if [ "$(uci_get_type ${package_name}_boot)" = 1 ]; then
+            init=$(find /opt/etc/init.d/ -name "*$package_name*")
+            if [ ! -x "$init" ]; then
+                echo_time "=========== 开始安装 $package_name ==========="
+                case "$package_name" in
+                    amule) install_amule >> "$log" ;;
+                    aria2) install_aria2 >> "$log" ;;
+                    deluged) install_deluge >> "$log" ;;
+                    rtorrent) install_rtorrent >> "$log" ;;
+                    qbittorrent) install_qbittorrent >> "$log" ;;
+                    transmission) install_transmission >> "$log" ;;
+                    *) break ;;
+                esac
+                echo_time "=========== $package_name 安装完成 ===========\n"
+            elif ! _pidof "$package_name" >/dev/null 2>&1; then
+                if $init start >/dev/null 2>&1; then
+                    echo_time "$package_name 启动成功"
                 else
-                    echo_time "=========== 开始安装 $package_name ==========="
-                    case "$package_name" in
-                        amule) install_amule >> "$log" ;;
-                        aria2) install_aria2 >> "$log" ;;
-                        deluged) install_deluge >> "$log" ;;
-                        rtorrent) install_rtorrent >> "$log" ;;
-                        qbittorrent) install_qbittorrent >> "$log" ;;
-                        transmission) install_transmission >> "$log" ;;
-                        *) break ;;
-                    esac
-                    echo_time "=========== $package_name 安装完成 ===========\n"
+                    echo_time "$package_name 启动失败"
                 fi
+                [ $delaytime ] && sleep $delaytime
             fi
-        done
-    }
+        fi
+    done
 }
 
 get_env() {

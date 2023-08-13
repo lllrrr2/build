@@ -135,7 +135,7 @@ port_custom() {
     check_port_usage
     [ "$name_old_port" != "$port" ] && sed -i "s|listen .*|listen $port;|" "$1"
     echo "$website_name $localhost:$port " >> $website_list 
-    echo_time "$website_name 已启用\n"
+    echo_time "$website_name 已启用"
     /opt/etc/init.d/S80nginx reload >/dev/null 2>&1
 }
 
@@ -146,7 +146,6 @@ update_port() {
         check_port_usage
         sed -i "s|listen.*|listen $port;|" "$1"
         sed -i "/$website_name/s/:.*/:$port /" $website_list
-        echo_time "$website_name 端口修改完成\n"
         /opt/etc/init.d/S80nginx reload >/dev/null 2>&1
     fi
 }
@@ -169,9 +168,9 @@ redis() {
 delete_website() {
     for site in $delete_config_list; do
         if [ -n "$(find /opt/etc/nginx/vhost /opt/etc/nginx/no_use -name "$site.conf")" ]; then
-            echo_time "$site 已删除"
             rm -rf /opt/etc/nginx/*/"$site".conf /opt/wwwroot/"$site"*
             sed -i "/$site /d" $website_list
+            echo_time "$site 已删除"
         fi
     done
     /opt/etc/init.d/S80nginx reload > /dev/null 2>&1
@@ -179,6 +178,7 @@ delete_website() {
 
 # 网站迭代处理，本函数迭代的配置网站（处理逻辑也许可以更好的优化？）
 handle_website() {
+    get_env
     config_get port "$1" port
     config_get redis_enabled "$1" redis_enabled
     config_get website_select "$1" website_select
@@ -187,7 +187,8 @@ handle_website() {
     website_name=$(website_name_mapping $website_select)
     # website_enabled=$(uci -q get "softwarecenter.@website[$website_select].website_enabled")
     # autodeploy_enable=$(uci -q get "softwarecenter.@website[$website_select].autodeploy_enable")
-    get_env
+    [ "$autodeploy_enable" = 1 ] || delete_config_list="$delete_config_list $website_name"
+    [ -n "$delete_config_list" ] && delete_website
     if [ "$autodeploy_enable" = 1 -a -z "$(find /opt/etc/nginx/vhost /opt/etc/nginx/no_use -name "$website_name.conf")" ]; then
         install_website $website_select $port
         if [ "$website_enabled" = 1 ]; then
@@ -225,8 +226,6 @@ handle_website() {
             echo_time " 已关闭 $website_name\n"
         fi
     fi
-    [ "$autodeploy_enable" = 1 ] || delete_config_list="$delete_config_list $website_name"
-    [ -n "$delete_config_list" ] && delete_website
 }
 
 install_x_prober() {

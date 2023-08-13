@@ -3,9 +3,11 @@
 START=52
 STOP=10
 include "/usr/bin/softwarecenter"
+a_delaytime="$(uci -q get "softwarecenter.main.a_delaytime")"
+a_delaytime="${a_delaytime:=0}m"
 
 start() {
-    SOFTWARECENTER >> "$log"
+    type SOFTWARECENTER >/dev/null 2>&1 && SOFTWARECENTER >> "$log"
 }
 
 stop() {
@@ -18,6 +20,6 @@ restart() {
 }
 
 boot() {
-    sleep ${a_delaytime}m
+    sleep "$a_delaytime"
     start
 }
