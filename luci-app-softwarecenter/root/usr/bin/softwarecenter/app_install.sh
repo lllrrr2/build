@@ -1,17 +1,20 @@
 #!/bin/sh
 . /usr/bin/softwarecenter/lib_functions.sh
 
-am_port=$(uci_get_type "am_port" "4711")
-ar_port=$(uci_get_type "ar_port" "6800")
-de_port=$(uci_get_type "de_port" "888")
-rt_port=$(uci_get_type "rt_port" "1099")
-qb_port=$(uci_get_type "qb_port" "9080")
-tr_port=$(uci_get_type "tr_port" "9091")
-cpu_model=$(uci_get_type "cpu_model")
-webui_name=$(uci_get_type "webui_name")
-webui_pass=$(uci_get_type "webui_pass")
-download_dir=$(uci_get_type "download_dir")
 pp=$(echo -n $webui_pass | md5sum | awk '{print $1}')
+type uci_get_type >/dev/null 2>&1 && {
+	am_port=$(uci_get_type "am_port" "4711")
+	ar_port=$(uci_get_type "ar_port" "6800")
+	de_port=$(uci_get_type "de_port" "888")
+	rt_port=$(uci_get_type "rt_port" "1099")
+	qb_port=$(uci_get_type "qb_port" "9080")
+	tr_port=$(uci_get_type "tr_port" "9091")
+	cpu_model=$(uci_get_type "cpu_model")
+	webui_name=$(uci_get_type "webui_name")
+	webui_pass=$(uci_get_type "webui_pass")
+	download_dir=$(uci_get_type "download_dir")
+}
+type make_dir >/dev/null 2>&1 && \
 make_dir /opt/share/www /opt/etc/config $download_dir
 
 install_amule() {
@@ -44,12 +47,12 @@ install_amule() {
 		_pidof amuled
 	else
 		echo_time "amule 安装失败，再重试安装！"
-		exit 1
+		return 1
 	fi
 }
 
 install_aria2() {
-	time_out="timeout 1m"
+	time_out="timeout 2m"
 	pro="/opt/etc/aria2"
 	make_dir $pro
 	if opkg_install aria2; then
@@ -59,7 +62,7 @@ install_aria2() {
 			wget -qN -t2 -T3 raw.githubusercontent.com/P3TERX/aria2.conf/master/$i || \
 			wget -qN -t2 -T3 cdn.jsdelivr.net/gh/P3TERX/aria2.conf/$i || \
 			curl -fsSLO p3terx.github.io/aria2.conf/$i
-			[ -s $i ] || echo_time " $i 下载失败 !"
+			[ -s "$i" ] || echo_time " $i 下载失败 !"
 		done
 
 		if [ -s aria2.conf ]; then
@@ -93,7 +96,7 @@ install_aria2() {
 		_pidof aria2c
 	else
 		echo_time "aria2 安装失败，再重试安装！"
-		exit 1
+		return 1
 	fi
 }
 
@@ -101,52 +104,48 @@ install_deluge() {
 	local time_out="timeout 3m"
 	if opkg_install deluge-ui-web; then
 		sed -i '/^exit 0/i. /opt/etc/init.d/S81deluge-web $1 >/dev/null 2>&1' /opt/etc/*/S80deluged
-		cat <<-EOF >/opt/share/python_sha1.py # Deluge Password Calculatation
+		cat <<-EOF >/opt/share/python_sha1.py
 		#!/opt/bin/env python
-		import hashlib
 		import sys
-		password = sys.argv[1]
-		salt = sys.argv[2]
-		s = hashlib.sha1()
-		s.update(salt.encode('utf-8'))
-		s.update(password.encode('utf-8'))
-		print (s.hexdigest())
+		import hashlib
+		password, pwd_sha1 = sys.argv[1:3]
+		hashed_password = hashlib.sha1(pwd_sha1.encode("utf-8") + password.encode("utf-8")).hexdigest()
+		print(hashed_password)
 		EOF
-		dwsalt="$(cat /dev/urandom | tr -dc 'a-eA-Z0-9' | head -c 40 | xargs)"
+		dwsalt="$(tr -dc 'a-e0-9' < /dev/urandom | head -c 40)"
 		dwsha1="$(/opt/bin/python /opt/share/python_sha1.py ${webui_pass} ${dwsalt})"
 		cat <<-EOF >/opt/etc/deluge/web.conf
 		{
-			"language": "zh_CN",
-			"pwd_salt": "$dwsalt",
-			"pwd_sha1": "$dwsha1"
+		    "language": "zh_CN",
+		    "pwd_salt": "$dwsalt",
+		    "pwd_sha1": "$dwsha1"
 		}
 		EOF
 		cat <<-EOF >/opt/etc/deluge/core.conf
 		{
-			"cache_size": 32768,
-			"queue_new_to_top": true,
-			"new_release_check": false,
-			"listen_random_port": null,
-			"pre_allocate_storage": true,
-			"download_location": "$download_dir",
-			"move_completed_path": "$download_dir",
-			"torrentfiles_location": "$download_dir"
+		    "cache_size": 32768,
+		    "queue_new_to_top": true,
+		    "new_release_check": false,
+		    "listen_random_port": null,
+		    "pre_allocate_storage": true,
+		    "download_location": "$download_dir",
+		    "move_completed_path": "$download_dir",
+		    "torrentfiles_location": "$download_dir"
 		}
 		EOF
 		sed -i "s/error -p.*/error -p $de_port/" /opt/etc/*/S81deluge-web
 		ln -sf /opt/etc/deluge/core.conf /opt/etc/config/deluge.conf
-		/opt/etc/*/S80deluged start >/dev/null 2>&1 && sleep 4
-		/opt/etc/*/S80deluged restart >/dev/null 2>&1
+		/opt/etc/*/S80deluged start >/dev/null 2>&1 && sleep 3
 		echo_time "登录WebUI的用户名 $webui_name 密码 $webui_pass"
 		_pidof deluged
 	else
 		echo_time "deluge 安装失败，再重试安装！"
-		exit 1
+		return 1
 	fi
 }
 
 install_qbittorrent() {
-	local time_out="timeout 1m"
+	local time_out="timeout 2m"
 	if opkg_install qbittorrent; then
 		/opt/etc/*/S89qbittorrent start >/dev/null 2>&1 && sleep 5
 		/opt/etc/*/S89qbittorrent stop >/dev/null 2>&1
@@ -176,7 +175,7 @@ install_qbittorrent() {
 		Downloads\PreAllocation=true
 		EOF
 		sed -i "s/--webui-port=[0-9]*/--webui-port=$qb_port/" /opt/etc/*/S89qbittorrent
-		[ $cpu_model == x86_64 ] && {
+		[ "$cpu_model" = x86_64 ] && {
 			if [ -z $(command -v qbpass) ]; then
 				wget -qO /opt/bin/qbpass github.com/KozakaiAya/libqbpasswd/releases/download/v0.2/qb_password_gen_static && \
 				chmod +x /opt/bin/qbpass && {
@@ -204,12 +203,12 @@ install_qbittorrent() {
 		}
 		ln -sf /opt/etc/qBittorrent_entware/config/qBittorrent.conf /opt/etc/config/qBittorrent.conf
 		/opt/etc/*/S89qbittorrent restart >/dev/null 2>&1
-		[ $cpu_model == x86_64 ] && echo_time "登录WebUI的用户名 $webui_name 密码 $webui_pass" || \
+		[ "$cpu_model" = x86_64 ] && echo_time "登录WebUI的用户名 $webui_name 密码 $webui_pass" || \
 		echo_time "登录WebUI的用户名 admin 密码 adminadmin"
 		_pidof qbittorrent-nox
 	else
 		echo_time "qBittorrent 安装失败，再重试安装！"
-		exit 1
+		return 1
 	fi
 }
 
@@ -431,13 +430,13 @@ install_rtorrent() {
 		_pidof rtorrent
 	else
 		echo_time "rtorrent 安装失败，再重试安装！"
-		exit 1
+		return 1
 	fi
 }
 
 install_transmission() {
 	local time_out="timeout 2m"
-	[ $1 = '277' ] && tr="transmission-cfp-daemon transmission-cfp-cli transmission-cfp-remote" || tr="transmission-daemon transmission-cli transmission-remote"
+	[ "$1" = '277' ] && tr="transmission-cfp-daemon transmission-cfp-cli transmission-cfp-remote" || tr="transmission-daemon transmission-cli transmission-remote"
 	version=$(curl -sL "api.github.com/repos/ronggang/transmission-web-control/releases" | jq -r '.[0].tag_name')
 	if opkg_install $tr; then
 		sed -i "s/on\"/on --port $tr_port\"/" /opt/etc/*/S88tr*
@@ -465,7 +464,7 @@ install_transmission() {
 		_pidof transmission
 	else
 		echo_time "transmission 安装失败，再重试安装！"
-		exit 1
+		return 1
 	fi
 }
 

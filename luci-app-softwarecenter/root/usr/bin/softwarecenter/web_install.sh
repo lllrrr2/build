@@ -77,8 +77,7 @@ web_installer() {
     suffix=${istar:-zip}
     echo_time "开始安装 $name"
     [ -d "/opt/wwwroot/$name" ] && {
-        rm -rf /opt/wwwroot/$name /opt/tmp/$name.$suffix
-        /opt/etc/nginx/vhost/$name.conf
+        rm -rf /opt/wwwroot/${name}* /opt/tmp/${name}* /opt/etc/nginx/*/$name.conf
         echo_time "已删除以前的 $name 文件"
     }
 
@@ -97,7 +96,6 @@ web_installer() {
             unzip -oq /opt/wwwroot/$name.$suffix -d /opt/wwwroot/$hookdir
         fi
         mv /opt/wwwroot/$dirname /opt/wwwroot/$name
-
         ls -A /opt/wwwroot/$name >/dev/null 2>&1 && {
             echo_time "$name.$suffix 解压完成..."
             chmod -R 777 /opt/wwwroot/$name
@@ -189,7 +187,7 @@ handle_website() {
     website_name=$(website_name_mapping $website_select)
     # website_enabled=$(uci -q get "softwarecenter.@website[$website_select].website_enabled")
     # autodeploy_enable=$(uci -q get "softwarecenter.@website[$website_select].autodeploy_enable")
-
+    get_env
     if [ "$autodeploy_enable" = 1 -a -z "$(find /opt/etc/nginx/vhost /opt/etc/nginx/no_use -name "$website_name.conf")" ]; then
         install_website $website_select $port
         if [ "$website_enabled" = 1 ]; then
