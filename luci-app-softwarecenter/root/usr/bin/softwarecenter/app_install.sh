@@ -1,20 +1,7 @@
 #!/bin/sh
 . /usr/bin/softwarecenter/lib_functions.sh
 
-pp=$(echo -n $webui_pass | md5sum | awk '{print $1}')
-type uci_get_type >/dev/null 2>&1 && {
-	am_port=$(uci_get_type "am_port" "4711")
-	ar_port=$(uci_get_type "ar_port" "6800")
-	de_port=$(uci_get_type "de_port" "888")
-	rt_port=$(uci_get_type "rt_port" "1099")
-	qb_port=$(uci_get_type "qb_port" "9080")
-	tr_port=$(uci_get_type "tr_port" "9091")
-	cpu_model=$(uci_get_type "cpu_model")
-	webui_name=$(uci_get_type "webui_name")
-	webui_pass=$(uci_get_type "webui_pass")
-	download_dir=$(uci_get_type "download_dir")
-}
-type make_dir >/dev/null 2>&1 && \
+md5_pass=$(echo -n $webui_pass | md5sum | awk '{print $1}')
 make_dir /opt/share/www /opt/etc/config $download_dir
 
 install_amule() {
@@ -32,9 +19,9 @@ install_amule() {
 		fi
 		sed -i "{
 			s/^Enabled=.*/Enabled=1/
-			s/^ECPas.*/ECPassword=$pp/
+			s/^ECPas.*/ECPassword=$md5_pass/
 			s/^UPnPEn.*/UPnPEnabled=1/
-			s/^Password=.*/Password=$pp/
+			s/^Password=.*/Password=$md5_pass/
 			s/^UPnPECE.*/UPnPECEnabled=1/
 			s/^Template=.*/Template=AmuleWebUI-Reloaded/
 			s/^AcceptExternal.*/AcceptExternalConnections=1/
@@ -47,6 +34,7 @@ install_amule() {
 		_pidof amuled
 	else
 		echo_time "amule 安装失败，再重试安装！"
+		[ -n "$exit_code" -a "$exit_code" = 124 ] && echo_time "安装超时"
 		return 1
 	fi
 }
@@ -96,6 +84,7 @@ install_aria2() {
 		_pidof aria2c
 	else
 		echo_time "aria2 安装失败，再重试安装！"
+		[ -n "$exit_code" -a "$exit_code" = 124 ] && echo_time "安装超时"
 		return 1
 	fi
 }
@@ -140,6 +129,7 @@ install_deluge() {
 		_pidof deluged
 	else
 		echo_time "deluge 安装失败，再重试安装！"
+		[ -n "$exit_code" -a "$exit_code" = 124 ] && echo_time "安装超时"
 		return 1
 	fi
 }
@@ -181,7 +171,7 @@ install_qbittorrent() {
 				chmod +x /opt/bin/qbpass && {
 					cat >>/opt/etc/qBittorrent_entware/config/qBittorrent.conf <<-EOF
 					WebUI\Username=$webui_name
-					WebUI\Password_ha1=@ByteArray($pp)
+					WebUI\Password_ha1=@ByteArray($md5_pass)
 					WebUI\Password_PBKDF2="@ByteArray($(/opt/bin/qbpass $webui_pass))"
 					EOF
 				}
@@ -208,6 +198,7 @@ install_qbittorrent() {
 		_pidof qbittorrent-nox
 	else
 		echo_time "qBittorrent 安装失败，再重试安装！"
+		[ -n "$exit_code" -a "$exit_code" = 124 ] && echo_time "安装超时"
 		return 1
 	fi
 }
@@ -430,6 +421,7 @@ install_rtorrent() {
 		_pidof rtorrent
 	else
 		echo_time "rtorrent 安装失败，再重试安装！"
+		[ -n "$exit_code" -a "$exit_code" = 124 ] && echo_time "安装超时"
 		return 1
 	fi
 }
@@ -464,6 +456,7 @@ install_transmission() {
 		_pidof transmission
 	else
 		echo_time "transmission 安装失败，再重试安装！"
+		[ -n "$exit_code" -a "$exit_code" = 124 ] && echo_time "安装超时"
 		return 1
 	fi
 }

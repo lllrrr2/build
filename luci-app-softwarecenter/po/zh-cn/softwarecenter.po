@@ -286,6 +286,9 @@ msgstr "rTorrent 是一个基于命令行的Linux BT客户端。<br>ruTorrent �
 msgid "qBittorrent is a cross-platform free BitTorrent client."
 msgstr "qBittorrent 是一个跨平台的免费BitTorrent客户端。"
 
+msgid "RPC listening port"
+msgstr "RPC 监听端口"
+
 msgid "Transmission is a fast and lightweight BitTorrent client."
 msgstr "Transmission 是一个快速且轻量级的BitTorrent客户端。"
 

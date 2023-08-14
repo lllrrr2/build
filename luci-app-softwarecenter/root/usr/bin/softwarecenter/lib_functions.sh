@@ -1,6 +1,16 @@
 #!/bin/sh
+. /lib/functions.sh
 export PATH="/opt/bin:/opt/sbin:/usr/sbin:/usr/bin:/sbin:/bin"
 log="/tmp/log/softwarecenter.log"
+
+load_config() {
+    get_config="delaytime cpu_model deploy_mysql deploy_nginx disk_mount download_dir entware_enable mysql_enabled nginx_enabled partition_disk pass old_pass swap_enabled swap_path swap_size webui_name webui_pass am_port ar_port de_port rt_port qb_port tr_port old_ar_port old_am_port old_de_port old_qb_port old_rt_port old_tr_port"
+    config_load softwarecenter
+    for rt in $get_config; do
+        config_get_bool $rt main $rt
+        config_get $rt main $rt
+    done
+}
 
 _info() {
     logger -st 'softwarecenter' -p 'daemon.info' "$*"
@@ -17,7 +27,7 @@ uci_set_type() {
 
 make_dir() {
     for p in $@; do
-        [ -d "$p" ] || mkdir -m 777 -p $p
+        [ -n "$p" -a ! -d "$p" ] && mkdir -m 777 -p "$p"
     done
     return 0
 }
@@ -74,12 +84,12 @@ check_port_usage() {
     while [ -z "${old_port}" ] || lsof -i:"${old_port}" >/dev/null 2>&1; do
         _old_port=${_old_port:-$old_port}
         old_port=$(($(tr -dc '0-9' < /dev/urandom | head -c 4) + 1024))
-        available_name=$(lsof -i:"$_old_port" | awk 'NR==2 {print $1}')
         exists=1
     done
 
     port="$old_port"
     if [ -n "$exists" -a -n "$_old_port" ]; then
+        available_name=$(lsof -i:"$_old_port" | awk 'NR==2 {print $1}')
         echo_time "$website_name 设定的 $_old_port 端口已在 $available_name 中使用，使用没有占用的端口 $port"
         if [ -n "$1" ]; then
             uci_set_type "$website_name" "$port"
@@ -91,21 +101,35 @@ check_port_usage() {
 
 modify_port() {
     if [ -x "/opt/bin/amuled" -a -n "$am_port" ]; then
-        old_am_port=$(awk -F "=" '/\[WebServer\]/{flag=1;next} flag && /Port/{print $2;flag=0}' /opt/var/amule/amule.conf)
+        old_am_port=${old_am_port:-$(awk -F "=" '/\[WebServer\]/{flag=1;next} flag && /Port/{print $2;flag=0}' /opt/var/amule/amule.conf)}
         if [ "$old_am_port" != "$am_port" ]; then
             check_port_usage am_port
             [ -n "$port" ] && {
+                uci_set_type old_am_port "$port"
                 sed -i "s/Port=$old_am_port/Port=$port/" /opt/var/amule/amule.conf
                 /opt/etc/*/S57am* restart >/dev/null 2>&1
             }
         fi
     fi
 
+    if [ -x "/opt/bin/aria2c" -a -n "$ar_port" ]; then
+        old_ar_port=${old_ar_port:-$(grep -oP 'rpc-listen-port=\K\d+' /opt/etc/aria2/aria2.conf)}
+        if [ "$old_ar_port" != "$ar_port" ]; then
+            check_port_usage ar_port
+            [ -n "$port" ] && {
+                uci_set_type old_ar_port "$port"
+                sed -i "/rpc-listen-port=/s/=.*/=$port/" /opt/etc/aria2/aria2.conf
+                /opt/etc/*/S81aria2 restart >/dev/null 2>&1
+            }
+        fi
+    fi
+
     if [ -x "/opt/bin/deluged" -a -n "$de_port" ]; then
-        old_de_port=$(grep -oP '(?<=-p )\d+' /opt/etc/*/S81deluge-web)
+        old_de_port=${old_de_port:-$(grep -oP '(?<=-p )\d+' /opt/etc/*/S81deluge-web)}
         if [ "$old_de_port" != "$de_port" ]; then
             check_port_usage de_port
             [ -n "$port" ] && {
+                uci_set_type old_de_port "$port"
                 sed -i "s/-p $old_de_port/-p $port/" /opt/etc/*/S81deluge-web
                 /opt/etc/*/S80de* restart >/dev/null 2>&1
             }
@@ -113,10 +137,11 @@ modify_port() {
     fi
 
     if [ -x "/opt/bin/qbittorrent-nox" -a -n "$qb_port" ]; then
-        old_qb_port=$(grep -oP '(?<=webui-port=)\d+' /opt/etc/*/S89qb*)
+        old_qb_port=${old_qb_port:-$(grep -oP '(?<=webui-port=)\d+' /opt/etc/*/S89qb*)}
         if [ "$old_qb_port" != "$qb_port" ]; then
             check_port_usage qb_port
             [ -n "$port" ] && {
+                uci_set_type old_qb_port "$port"
                 sed -i "s/port=$old_qb_port/port=$port/" /opt/etc/*/S89qb*
                 /opt/etc/*/S89qb* restart >/dev/null 2>&1
             }
@@ -124,10 +149,11 @@ modify_port() {
     fi
 
     if [ -x "/opt/bin/rtorrent" -a -n "$rt_port" ]; then
-        old_rt_port=$(grep -oP '^server.port=\s*\K\d+' /opt/etc/*/*/99-rtor*)
+        old_rt_port=${old_rt_port:-$(grep -oP '^server.port=\s*\K\d+' /opt/etc/*/*/99-rtor*)}
         if [ "$old_rt_port" != "$rt_port" ]; then
             check_port_usage rt_port
             [ -n "$port" ] && {
+                uci_set_type old_rt_port "$port"
                 sed -i "s/port=$old_rt_port/port=$port/" /opt/etc/*/*/99-rtor*
                 /opt/etc/*/S80lig* restart >/dev/null 2>&1
             }
@@ -135,10 +161,11 @@ modify_port() {
     fi
 
     if [ -x "/opt/bin/transmission-daemon" -a -n "$tr_port" ]; then
-        old_tr_port=$(grep -oP "(?<=--port )\d+" /opt/etc/*/S88tran*)
+        old_tr_port=${old_tr_port:-$(grep -oP "(?<=--port )\d+" /opt/etc/*/S88tran*)}
         if [ "$old_tr_port" != "$tr_port" ]; then
             check_port_usage tr_port
             [ -n "$port" ] && {
+                uci_set_type old_tr_port "$port"
                 sed -i "s/\(--port \)[0-9]\+/\1$port/" /opt/etc/*/S88tran*
                 /opt/etc/*/S88tran* restart >/dev/null 2>&1
             }
@@ -207,22 +234,21 @@ remove_soft() {
 
 entware_set() {
     [ -x /etc/init.d/entware ] && entware_unset
-    [ -n "$1" ] || { echo_time "未选择安装路径！"; exit 1; }
-    local disk_mount="$1"
-    system_check "$disk_mount"
-    make_dir "$disk_mount/opt" /opt
-    mount -o bind "$disk_mount/opt" /opt
+    [ -n "$2" ] || { echo_time "未选择安装路径！"; exit 1; }
+    [ -n "$1" ] || { echo_time "未选择CPU架构！"; exit 1; }
+    system_check "$2"
+    make_dir "$2/opt" /opt
+    mount -o bind "$2/opt" /opt
 
-    case $2 in
-        x86_64)  arch="x64-k3.2" ;;
+    case $1 in
         x86)     arch="x86-k2.6" ;;
-        armv5)   arch="armv5sf-k3.2" ;;
-        mipsel)  arch="mipselsf-k3.4" ;;
+        x86_64)  arch="x64-k3.2" ;;
         mips)    arch="mipssf-k3.4" ;;
-        aarch64) arch="aarch64-k3.10" ;;
+        armv5)   arch="armv5sf-k3.2" ;;
         armv7)   arch="armv7sf-k3.2" ;;
-        *)
-            echo_time "抱歉，不支持您的设备！"
+        mipsel)  arch="mipselsf-k3.4" ;;
+        aarch64) arch="aarch64-k3.10" ;;
+        *)  echo_time "抱歉，不支持您的设备！"
             exit 1
             ;;
     esac
@@ -265,11 +291,11 @@ entware_set() {
     /etc/init.d/entware enable
     sed -i 's|PATH="/|PATH="/opt/bin:/opt/sbin:/|' /etc/profile
 
-    if wget -qcNO- -t5 "https://bin.entware.net/other/i18n_glib231.tar.gz" | tar xz -C /opt/share/; then
-        /opt/bin/localedef.new -c -f UTF-8 -i zh_CN zh_CN.UTF-8
-        sed -i 's/en_US.UTF-8/zh_CN.UTF-8/g' /opt/etc/profile
-        ln -sf /opt/share/zoneinfo/Asia/Shanghai /opt/etc/localtime
-    fi
+    # if wget -qcNO- -t5 "https://bin.entware.net/other/i18n_glib231.tar.gz" | tar xz -C /opt/share/; then
+    #     /opt/bin/localedef.new -c -f UTF-8 -i zh_CN zh_CN.UTF-8
+    #     sed -i 's/en_US.UTF-8/zh_CN.UTF-8/g' /opt/etc/profile
+    #     ln -sf /opt/share/zoneinfo/Asia/Shanghai /opt/etc/localtime
+    # fi
 
     sed -i '/^ansi/d' /opt/etc/init.d/rc.func
     /opt/bin/opkg install e2fsprogs lsof coreutils-timeout jq >/dev/null 2>&1
@@ -301,7 +327,7 @@ system_check() {
         filesystem="$(grep "${partition_disk} " /proc/mounts | awk '{print $3}')"
         lo=`lsblk | grep $partition_disk | awk '{print $4}' | sed 's/G//'`
         if [ "$filesystem" = "ext4" ]; then
-            [[ "${lo%%.*}" -gt 2 ]] && {
+            [ "${lo%%.*}" -gt 2 ] && {
                 echo_time "磁盘 $1 符合安装要求"
             } || {
                 echo_time "磁盘 $1 小于2G"
@@ -314,7 +340,7 @@ system_check() {
             mount ${partition_disk/mnt/dev} "$partition_disk"
         fi
     } || {
-        partition_disk=`uci get softwarecenter.main.partition_disk`
+        # partition_disk=`uci get softwarecenter.main.partition_disk`
         echo_time "磁盘$partition_disk没有分区，进行分区并格式化ext4。"
         parted -s "$partition_disk" mklabel msdos
         parted -s "$partition_disk" mklabel gpt \
@@ -327,40 +353,30 @@ system_check() {
     }
 }
 
-config_swap_init() {
-    local size="$1" path="${2:-/opt}/.swap"
-    grep -q "$path" /proc/swaps && return 0
-
-    echo_time "正在$path生成 $size MB 的交换分区，请耐心等待..."
-    install_soft fallocate >/dev/null 2>&1
-    fallocate -l ${size}M $path >/dev/null 2>&1
-    # dd if=/dev/zero of=$path bs=1M count=$size >/dev/null 2>&1
-    mkswap "$path"
-    chmod 0600 "$path"
-    swapon "$path" && echo_time "$path 交换分区已启用\n"
-}
-
-config_swap_del() {
-    path="${1:-/opt}/.swap"
-    [ -e $path ] && {
+config_swap() {
+    local path="${1:-/opt}/.swap" size="$2"
+    if [ "$#" -eq 2 ]; then
+        grep -q "$path" /proc/swaps && return 0
+        echo_time "正在$path生成 $size MB 的交换分区，请耐心等待..."
+        install_soft fallocate >/dev/null 2>&1
+        fallocate -l ${size}M $path >/dev/null 2>&1
+        # dd if=/dev/zero of=$path bs=1M count=$size >/dev/null 2>&1
+        mkswap "$path"
+        chmod 0600 "$path"
+        swapon "$path" && echo_time "$path 交换分区已启用\n"
+    elif [ "$#" -eq 1 ]; then
         swapoff $path
         rm -f $path
         echo_time "$path 交换分区已删除！\n"
-    }
+    fi
 }
 
 SOFTWARECENTER() {
-    get_config="a_delaytime cpu_model delaytime deploy_entware deploy_mysql deploy_nginx disk_mount download_dir entware_enable mysql_enabled nginx_enabled partition_disk pass old_pass swap_enabled swap_path swap_size user"
-    config_load softwarecenter
-    for rt in $get_config; do
-        config_get_bool $rt main $rt
-        config_get $rt main $rt
-    done
     source /etc/profile >/dev/null 2>&1
     if [ "$entware_enable" = 1 ]; then
         if [ ! -e /etc/init.d/entware ]; then
             echo_time "========= 开始部署entware环境 ========="
-            entware_set $disk_mount $cpu_model
+            entware_set $cpu_model $disk_mount
             source /etc/profile >/dev/null 2>&1
         fi
     else
@@ -402,12 +418,12 @@ SOFTWARECENTER() {
         [ -x /opt/etc/init.d/S70mysqld ] && echo_time "========= 卸载MySQL相关的软件包 =========" && del_mysql
     fi
 
-    if ls -A /opt/etc/nginx/vhost/ &> /dev/null || ls -A /opt/etc/nginx/no_use/ &> /dev/null; then
+    if ls /opt/etc/nginx/vhost/* &> /dev/null || ls /opt/etc/nginx/no_use/* &> /dev/null; then
         pidof nginx &> /dev/null && config_foreach handle_website website
     fi
 
-    [ -e "/opt/etc/init.d/rc.func" ] && modify_port
-    [ "$swap_enabled" = 1 ] && config_swap_init $swap_size $swap_path || config_swap_del $swap_path
+    ls /opt/etc/config/* &> /dev/null && modify_port
+    [ "$swap_enabled" = 1 ] && config_swap $swap_path $swap_size || config_swap $swap_path
 
     [ -x /etc/init.d/entware ] || return 0
     for package_name in $(grep -Po "(?<=option )\w+(?=_boot)" /etc/config/softwarecenter); do
@@ -421,7 +437,7 @@ SOFTWARECENTER() {
                     deluged) install_deluge >> "$log" ;;
                     rtorrent) install_rtorrent >> "$log" ;;
                     qbittorrent) install_qbittorrent >> "$log" ;;
-                    transmission) install_transmission >> "$log" ;;
+                    transmission) install_transmission 4 >> "$log" ;;
                     *) break ;;
                 esac
                 echo_time "=========== $package_name 安装完成 ===========\n"
@@ -442,3 +458,4 @@ get_env() {
     localhost=$(ip addr show br-lan | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
     localhost=${localhost:-"你的路由器IP"}
 }
+load_config

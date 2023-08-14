@@ -7,8 +7,8 @@ msgstr "利用cpulimit限制应用程序的CPU使用率"
 msgid "exename"
 msgstr "进程名称"
 
-msgid "%s [CPU usage %s] [Memory Useage %s]"
-msgstr "%s [CPU 使用率 %s] [内存使用率 %s]"
+msgid "%s Useage[CPU %s] [Memory %s]"
+msgstr "%s 使用率[CPU %s] [内存 %s]"
 
 msgid "Upload has been cancelled"
 msgstr "上传已取消"

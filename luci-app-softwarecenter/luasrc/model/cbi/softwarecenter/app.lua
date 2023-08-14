@@ -129,7 +129,7 @@ if fs.access("/etc/init.d/entware") then
         translate("Aria2 is an open-source, lightweight command-line download tool that supports multiple protocols like HTTP/HTTPS, FTP, SFTP, BitTorrent, and Metalink. <br>It has been enhanced and extended by <a href='https://github.com/P3TERX/aria2.conf'target='_blank'>P3TERX</a>.") ..
         running("aria2c"))
     o = s:taboption("aria2c", Flag, "aria2_boot", translate("Start on Boot"))
-    o = s:taboption("aria2c", Value, "ar_port", translate("WebUI Login Port"))
+    o = s:taboption("aria2c", Value, "ar_port", translate("RPC listening port"))
     o.datatype = "port"
     o.default  = "6800"
     if ExecutableFile("aria2c") then

@@ -34,7 +34,7 @@ local exename = s:option(Value, "exename", translate("Executable program filenam
 exename.optional = false
 exename.rmempty = false
 for _, process in ipairs(processList) do
-    exename:value(process.name, translatef('%s [CPU usage %s] [Memory Useage %s]', process.name, process.cpu, process.mem))
+    exename:value(process.name, translatef('%s Useage[CPU %s] [Memory %s]', process.name, process.cpu, process.mem))
 end
 
 local limit = s:option(Value, "limit", translate("limit"))
