@@ -20,7 +20,7 @@ del_nginx() {
     del_php
     remove_soft "$pkglist_nginx"
     rm -rf /opt/etc/nginx
-    /usr/bin/find -name "*nginx*" -exec rm -rf {} \;
+    /usr/bin/find /opt -name "*nginx*" -exec rm -rf {} \;
     rm /opt/etc/redis.conf
     echo_time "========= 卸载Nginx完成 =========\n"
 }
@@ -40,7 +40,7 @@ del_mysql() {
     sleep 10
 
     # 卸载相关的软件包，文件与目录
-    remove_soft "`opkg list-installed | awk '/mariadb/{print $1}' | xargs echo`"
+    remove_soft "$(opkg list-installed | awk '/mariadb/{print $1}' | xargs echo)"
     rm -rf /opt/etc/mysql /opt/var/mariadb/ /opt/var/mysql
     echo_time "========= 卸载MySQ完成 =========\n"
 }
@@ -94,7 +94,7 @@ init_nginx() {
     opkg_install "$pkglist_nginx"
     [ $? = 1 ] && return 1
     init_php
-    make_dir /opt/etc/nginx/vhost /opt/etc/nginx/no_use /opt/etc/nginx/conf
+    make_dir $dir_vhost /opt/etc/nginx/conf
 
     # 初始化nginx配置文件
 	cat >"/opt/etc/nginx/nginx.conf" <<-EOF
@@ -128,7 +128,7 @@ init_nginx() {
 	    gzip_comp_level 2;
 	    gzip_disable "msie6";
 	    gzip_types text/plain text/css application/json application/x-javascript text/xml application/xml application/xml+rss text/javascript application/javascript image/svg+xml;
-	    include /opt/etc/nginx/vhost/*.conf;
+	    include $dir_vhost/*.conf;
 	    include /opt/etc/nginx/conf.d/*.conf;
 	}
 	EOF

@@ -2,6 +2,7 @@
 . /lib/functions.sh
 export PATH="/opt/bin:/opt/sbin:/usr/sbin:/usr/bin:/sbin:/bin"
 log="/tmp/log/softwarecenter.log"
+dir_vhost="/opt/etc/nginx/vhost"
 
 load_config() {
     get_config="delaytime cpu_model deploy_mysql deploy_nginx disk_mount download_dir entware_enable mysql_enabled nginx_enabled partition_disk pass old_pass swap_enabled swap_path swap_size webui_name webui_pass am_port ar_port de_port rt_port qb_port tr_port old_ar_port old_am_port old_de_port old_qb_port old_rt_port old_tr_port"
@@ -59,7 +60,7 @@ status() {
 check_url() {
     local url="$1" ping_file="/tmp/ping"
     if wget -S --no-check-certificate --spider --tries=3 "$url" 2>&1 | grep -q 'HTTP/1.1 200 OK'; then
-        if [ ! -e "$ping_file" ]; then
+        if [ ! -f "$ping_file" ]; then
             local response_time=$(ping -c 3 "$url" | awk -F'/' '/avg/{print $4}')
             if [ -n "$response_time" ]; then
                 echo_time "$url 网络平均响应时间 ${response_time}毫秒"
@@ -71,15 +72,15 @@ check_url() {
         return 0
     else
         echo_time "$url 连接失败！"
-        [ -e "$ping_file" ] && rm "$ping_file"
+        [ -f "$ping_file" ] && rm "$ping_file"
         exit 1
     fi
 }
 
 check_port_usage() {
     local exists _old_port
-    [ -n "$1" ] && eval "old_port=\"\${$1}\"" || old_port=$port
-    local website_name=${1:-$website_name}
+    [ -n "$1" ] && eval "old_port=\"\${$1}\"" || old_port="$port"
+    local name=${1:-$name}
 
     while [ -z "${old_port}" ] || lsof -i:"${old_port}" >/dev/null 2>&1; do
         _old_port=${_old_port:-$old_port}
@@ -90,9 +91,9 @@ check_port_usage() {
     port="$old_port"
     if [ -n "$exists" -a -n "$_old_port" ]; then
         available_name=$(lsof -i:"$_old_port" | awk 'NR==2 {print $1}')
-        echo_time "$website_name 设定的 $_old_port 端口已在 $available_name 中使用，使用没有占用的端口 $port"
+        echo_time "$name 设定的 $_old_port 端口已在 $available_name 中使用，使用没有占用的端口 $port"
         if [ -n "$1" ]; then
-            uci_set_type "$website_name" "$port"
+            uci_set_type "$name" "$port"
         else
             uci_set_type "port" "$port" "@website[$website_select]"
         fi
@@ -118,7 +119,7 @@ modify_port() {
             check_port_usage ar_port
             [ -n "$port" ] && {
                 uci_set_type old_ar_port "$port"
-                sed -i "/rpc-listen-port=/s/=.*/=$port/" /opt/etc/aria2/aria2.conf
+                sed -i "s/port=$old_ar_port/port=$port/" /opt/etc/aria2/aria2.conf
                 /opt/etc/*/S81aria2 restart >/dev/null 2>&1
             }
         fi
@@ -176,7 +177,7 @@ modify_port() {
 # 应用安装 参数: $@:安装列表
 opkg_install() {
     check_url "bin.entware.net"
-    [ -e /opt/var/opkg-lists/entware ] || {
+    [ -f /opt/var/opkg-lists/entware ] || {
         echo_time "更新软件源中"
         source /etc/profile >/dev/null 2>&1 && \
         /opt/bin/opkg update >/dev/null 2>&1
@@ -263,7 +264,6 @@ entware_set() {
 	cat <<-\ENTWARE >/etc/init.d/entware
 	#!/bin/sh /etc/rc.common
 	START=51
-
 	get_entware_path() {
 	    for mount_point in $(mount | awk '/mnt/{print $3}'); do
 	        [ -e "$mount_point/opt/etc/init.d/rc.unslung" ] && {
@@ -298,18 +298,19 @@ entware_set() {
     # fi
 
     sed -i '/^ansi/d' /opt/etc/init.d/rc.func
-    /opt/bin/opkg install e2fsprogs lsof coreutils-timeout jq >/dev/null 2>&1
+    /opt/bin/opkg install parted e2fsprogs lsof coreutils-timeout jq >/dev/null 2>&1
     echo_time "Entware 安装成功！\n"
 }
 
 get_entware_path() {
     for mount_point in $(mount | awk '/mnt/{print $3}'); do
-        [ -e "$mount_point/opt/etc/init.d/rc.unslung" ] && echo "$mount_point" && return
+        [ -f "$mount_point/opt/etc/init.d/rc.unslung" ] && echo "$mount_point" && return
     done
 }
 
 # entware环境解除 说明：此函数用于删除OPKG配置设定
 entware_unset() {
+    config_swap "del" "${swap_path:-/opt}/.swap"
     /etc/init.d/entware stop >/dev/null 2>&1
     sleep 5
     /etc/init.d/entware disable >/dev/null 2>&1
@@ -354,27 +355,26 @@ system_check() {
 }
 
 config_swap() {
-    local path="${1:-/opt}/.swap" size="$2"
-    if [ "$#" -eq 2 ]; then
-        grep -q "$path" /proc/swaps && return 0
-        echo_time "正在$path生成 $size MB 的交换分区，请耐心等待..."
+    local path="$2" size="$3"
+    if [ "$1" = "new" ] && ! grep -q "$path" /proc/swaps; then
+        echo_time "正在 $path 生成 $size MB 的交换分区，请耐心等待..."
         install_soft fallocate >/dev/null 2>&1
         fallocate -l ${size}M $path >/dev/null 2>&1
         # dd if=/dev/zero of=$path bs=1M count=$size >/dev/null 2>&1
-        mkswap "$path"
+        mkswap "$path" >/dev/null 2>&1
         chmod 0600 "$path"
-        swapon "$path" && echo_time "$path 交换分区已启用\n"
-    elif [ "$#" -eq 1 ]; then
+        swapon "$path" && echo_time "$path 交换分区已启用"
+    elif [ "$1" = "del" ] && grep -q "$path" /proc/swaps; then
         swapoff $path
         rm -f $path
-        echo_time "$path 交换分区已删除！\n"
+        echo_time "$path 交换分区已删除！"
     fi
 }
 
 SOFTWARECENTER() {
     source /etc/profile >/dev/null 2>&1
     if [ "$entware_enable" = 1 ]; then
-        if [ ! -e /etc/init.d/entware ]; then
+        if [ ! -f /etc/init.d/entware ]; then
             echo_time "========= 开始部署entware环境 ========="
             entware_set $cpu_model $disk_mount
             source /etc/profile >/dev/null 2>&1
@@ -418,12 +418,15 @@ SOFTWARECENTER() {
         [ -x /opt/etc/init.d/S70mysqld ] && echo_time "========= 卸载MySQL相关的软件包 =========" && del_mysql
     fi
 
-    if ls /opt/etc/nginx/vhost/* &> /dev/null || ls /opt/etc/nginx/no_use/* &> /dev/null; then
+    if [ -d "$dir_vhost" ]; then
         pidof nginx &> /dev/null && config_foreach handle_website website
     fi
 
     ls /opt/etc/config/* &> /dev/null && modify_port
-    [ "$swap_enabled" = 1 ] && config_swap $swap_path $swap_size || config_swap $swap_path
+
+    [ "$swap_enabled" = 1 ] && \
+            config_swap "new" "${swap_path:-/opt}/.swap" "$swap_size" || \
+            config_swap "del" "${swap_path:-/opt}/.swap"
 
     [ -x /etc/init.d/entware ] || return 0
     for package_name in $(grep -Po "(?<=option )\w+(?=_boot)" /etc/config/softwarecenter); do
