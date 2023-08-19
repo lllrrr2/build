@@ -78,9 +78,8 @@ check_url() {
 }
 
 check_port_usage() {
-    local exists _old_port
+    local name=${1:-$name} exists _old_port
     [ -n "$1" ] && eval "old_port=\"\${$1}\"" || old_port="$port"
-    local name=${1:-$name}
 
     while [ -z "${old_port}" ] || lsof -i:"${old_port}" >/dev/null 2>&1; do
         _old_port=${_old_port:-$old_port}
@@ -373,17 +372,13 @@ config_swap() {
 
 SOFTWARECENTER() {
     source /etc/profile >/dev/null 2>&1
-    if [ "$entware_enable" = 1 ]; then
-        if [ ! -f /etc/init.d/entware ]; then
-            echo_time "========= 开始部署entware环境 ========="
-            entware_set $cpu_model $disk_mount
-            source /etc/profile >/dev/null 2>&1
-        fi
-    else
-        if [ -x /etc/init.d/entware ]; then
-            entware_unset
-            echo_time "entware环境已删除！"
-        fi
+    if [ x"$entware_enable" = "x1" -a ! -x /etc/init.d/entware ]; then
+        echo_time "========= 开始部署entware环境 ========="
+        entware_set $cpu_model $disk_mount
+        source /etc/profile >/dev/null 2>&1
+    elif [ ! x"$entware_enable" != "x" -a -x /etc/init.d/entware ]; then
+        entware_unset
+        echo_time "entware环境已删除！"
         return 0
     fi
 
