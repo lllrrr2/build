@@ -47,16 +47,12 @@ web_installer() {
 
 handle_website() {
     get_env
-    config_get port "$1" port
-    config_get website_name "$1" website_name
-    config_get redis_enabled "$1" redis_enabled
-    config_get website_select "$1" website_select
-    config_get website_enabled "$1" website_enabled
-    config_get autodeploy_enable "$1" autodeploy_enable
+    local get_config="autodeploy_enable port redis_enabled website_enabled website_name website_select"
+    for rt in $get_config; do config_get $rt $1 $rt; done
     local name="${website_name%% *}"
     [ "$autodeploy_enable" = 1 ] || append delete_list "$name"
     [ -n "$delete_list" -a "$website_select" = 11 ] && delete_website
-    if [ "$autodeploy_enable" = 1 ] && ! ls "$dir_vhost" | grep -q "^${name}\.conf"; then
+    if [ "$autodeploy_enable" = 1 ] && ! ls "$dir_vhost" | grep -q "$name"; then
         install_${name//-/_} "$website_select" "$port"
         if [ -f "$dir_vhost/$name.conf" ]; then
             echo_time "$name 安装完成"
@@ -69,11 +65,11 @@ handle_website() {
         fi
     fi
 
+    [ -n "$port" ] && update_port "$dir_vhost/$name*"
     if [ "$website_enabled" = 1 ]; then
-        update_port "$dir_vhost/$name.conf"
         if [ -f "$dir_vhost/$name.conf.bak" ] && ! list_contains delete_list "$name"; then
             echo_time "准备启用 $name"
-            mv "$dir_vhost/$name.conf.bak" "$dir_vhost/$name.conf"
+            mv "$dir_vhost/$name.conf.bak" "$dir_vhost/$name.conf" && \
             port_custom "$dir_vhost/$name.conf"
         fi
 
@@ -119,21 +115,20 @@ add_vhost() {
 
 # 恢复网站查端口
 port_custom() {
-    port=$(grep -oP 'listen \K\d+' "$1" 2>/dev/null)
+    port=$(grep -oP 'listen \K\d+' $1 2>/dev/null)
     name_old_port="$port"
     check_port_usage
-    [ "$name_old_port" != "$port" ] && sed -i "s|$name_old_port|$port|" "$1"
+    [ "$name_old_port" != "$port" ] && sed -i "s|$name_old_port|$port|" $1
     echo "$name $localhost:$port " >> $website_list 
     echo_time "$name 已启用"
     /opt/etc/init.d/S80nginx reload >/dev/null 2>&1
 }
 
-# 端口修改
 update_port() {
-    old_port=$(grep -oP 'listen \K\d+' "$1" 2>/dev/null)
-    if [ -n "$port" -a "$old_port" != "$port" ]; then
+    local old_port=$(grep -oP 'listen \K\d+' $1 2>/dev/null)
+    if [ "$old_port" != "$port" ]; then
         check_port_usage
-        sed -i "s|listen.*|listen $port;|" "$1"
+        sed -i "s|listen.*|listen $port;|" $1
         sed -i "/$name/s/:.*/:$port /" $website_list
         /opt/etc/init.d/S80nginx reload >/dev/null 2>&1
     fi
@@ -141,7 +136,7 @@ update_port() {
 
 delete_website() {
     for site in $delete_list; do
-        if ls "$dir_vhost" | grep -q "^${site}\.conf"; then
+        if ls "$dir_vhost" | grep -q "$site"; then
             rm -rf $dir_vhost/"$site"* /opt/wwwroot/"$site"*
             sed -i "/$site/d" "$website_list"
             echo_time "$site 已删除"

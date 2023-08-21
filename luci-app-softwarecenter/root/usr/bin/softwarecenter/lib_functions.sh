@@ -5,7 +5,7 @@ log="/tmp/log/softwarecenter.log"
 dir_vhost="/opt/etc/nginx/vhost"
 
 load_config() {
-    get_config="delaytime cpu_model deploy_mysql deploy_nginx disk_mount download_dir entware_enable mysql_enabled nginx_enabled partition_disk pass old_pass swap_enabled swap_path swap_size webui_name webui_pass am_port ar_port de_port rt_port qb_port tr_port old_ar_port old_am_port old_de_port old_qb_port old_rt_port old_tr_port"
+    local get_config="delaytime cpu_model deploy_mysql deploy_nginx disk_mount download_dir entware_enable mysql_enabled nginx_enabled partition_disk pass old_pass swap_enabled swap_path swap_size webui_name webui_pass am_port ar_port de_port rt_port qb_port tr_port old_ar_port old_am_port old_de_port old_qb_port old_rt_port old_tr_port"
     config_load softwarecenter
     for rt in $get_config; do
         config_get_bool $rt main $rt
@@ -79,9 +79,9 @@ check_url() {
 
 check_port_usage() {
     local name=${1:-$name} exists _old_port
-    [ -n "$1" ] && eval "old_port=\"\${$1}\"" || old_port="$port"
+    [ -n "$1" ] && eval "old_port=\"\$$1\"" || old_port="$port"
 
-    while [ -z "${old_port}" ] || lsof -i:"${old_port}" >/dev/null 2>&1; do
+    while [ -z "$old_port" ] || lsof -i:"$old_port" >/dev/null 2>&1; do
         _old_port=${_old_port:-$old_port}
         old_port=$(($(tr -dc '0-9' < /dev/urandom | head -c 4) + 1024))
         exists=1
@@ -100,74 +100,74 @@ check_port_usage() {
 }
 
 modify_port() {
-    if [ -x "/opt/bin/amuled" -a -n "$am_port" ]; then
-        old_am_port=${old_am_port:-$(awk -F "=" '/\[WebServer\]/{flag=1;next} flag && /Port/{print $2;flag=0}' /opt/var/amule/amule.conf)}
-        if [ "$old_am_port" != "$am_port" ]; then
+    if [ -x "/opt/bin/amuled" ]; then
+        _old_am_port=${old_am_port:-$(awk -F "=" '/\[WebServer\]/{flag=1;next} flag && /Port/{print $2;flag=0}' /opt/var/amule/amule.conf)}
+        if [ "$_old_am_port" != "$am_port" ]; then
             check_port_usage am_port
             [ -n "$port" ] && {
                 uci_set_type old_am_port "$port"
-                sed -i "s/Port=$old_am_port/Port=$port/" /opt/var/amule/amule.conf
-                /opt/etc/*/S57am* restart >/dev/null 2>&1
+                sed -i "s/Port=$_old_am_port/Port=$port/" /opt/var/amule/amule.conf
+                _pidof amule >/dev/null 2>&1 && /opt/etc/*/S57am* restart >/dev/null 2>&1
             }
         fi
     fi
 
-    if [ -x "/opt/bin/aria2c" -a -n "$ar_port" ]; then
-        old_ar_port=${old_ar_port:-$(grep -oP 'rpc-listen-port=\K\d+' /opt/etc/aria2/aria2.conf)}
-        if [ "$old_ar_port" != "$ar_port" ]; then
+    if [ -x "/opt/bin/aria2c" ]; then
+        _old_ar_port=${old_ar_port:-$(grep -oP 'rpc-listen-port=\K\d+' /opt/etc/aria2/aria2.conf)}
+        if [ "$_old_ar_port" != "$ar_port" ]; then
             check_port_usage ar_port
             [ -n "$port" ] && {
                 uci_set_type old_ar_port "$port"
-                sed -i "s/port=$old_ar_port/port=$port/" /opt/etc/aria2/aria2.conf
-                /opt/etc/*/S81aria2 restart >/dev/null 2>&1
+                sed -i "s/port=$_old_ar_port/port=$port/" /opt/etc/aria2/aria2.conf
+                _pidof aria2 >/dev/null 2>&1 && /opt/etc/*/S81aria2 restart >/dev/null 2>&1
             }
         fi
     fi
 
-    if [ -x "/opt/bin/deluged" -a -n "$de_port" ]; then
-        old_de_port=${old_de_port:-$(grep -oP '(?<=-p )\d+' /opt/etc/*/S81deluge-web)}
-        if [ "$old_de_port" != "$de_port" ]; then
+    if [ -x "/opt/bin/deluged" ]; then
+        _old_de_port=${old_de_port:-$(grep -oP '(?<=-p )\d+' /opt/etc/*/S81deluge-web)}
+        if [ "$_old_de_port" != "$de_port" ]; then
             check_port_usage de_port
             [ -n "$port" ] && {
                 uci_set_type old_de_port "$port"
-                sed -i "s/-p $old_de_port/-p $port/" /opt/etc/*/S81deluge-web
-                /opt/etc/*/S80de* restart >/dev/null 2>&1
+                sed -i "s/-p $_old_de_port/-p $port/" /opt/etc/*/S81deluge-web
+                _pidof deluged >/dev/null 2>&1 && /opt/etc/*/S80de* restart >/dev/null 2>&1
             }
         fi
     fi
 
-    if [ -x "/opt/bin/qbittorrent-nox" -a -n "$qb_port" ]; then
-        old_qb_port=${old_qb_port:-$(grep -oP '(?<=webui-port=)\d+' /opt/etc/*/S89qb*)}
-        if [ "$old_qb_port" != "$qb_port" ]; then
+    if [ -x "/opt/bin/qbittorrent-nox" ]; then
+        _old_qb_port=${old_qb_port:-$(grep -oP '(?<=webui-port=)\d+' /opt/etc/*/S89qb*)}
+        if [ "$_old_qb_port" != "$qb_port" ]; then
             check_port_usage qb_port
             [ -n "$port" ] && {
                 uci_set_type old_qb_port "$port"
-                sed -i "s/port=$old_qb_port/port=$port/" /opt/etc/*/S89qb*
-                /opt/etc/*/S89qb* restart >/dev/null 2>&1
+                sed -i "s/port=$_old_qb_port/port=$port/" /opt/etc/*/S89qb*
+                _pidof qbittorrent >/dev/null 2>&1 && /opt/etc/*/S89qb* restart >/dev/null 2>&1
             }
         fi
     fi
 
-    if [ -x "/opt/bin/rtorrent" -a -n "$rt_port" ]; then
-        old_rt_port=${old_rt_port:-$(grep -oP '^server.port=\s*\K\d+' /opt/etc/*/*/99-rtor*)}
-        if [ "$old_rt_port" != "$rt_port" ]; then
+    if [ -x "/opt/bin/rtorrent" ]; then
+        _old_rt_port=${old_rt_port:-$(grep -oP '^server.port=\s*\K\d+' /opt/etc/*/*/99-rtor*)}
+        if [ "$_old_rt_port" != "$rt_port" ]; then
             check_port_usage rt_port
             [ -n "$port" ] && {
                 uci_set_type old_rt_port "$port"
-                sed -i "s/port=$old_rt_port/port=$port/" /opt/etc/*/*/99-rtor*
-                /opt/etc/*/S80lig* restart >/dev/null 2>&1
+                sed -i "s/port=$_old_rt_port/port=$port/" /opt/etc/*/*/99-rtor*
+                _pidof rtorrent >/dev/null 2>&1 && /opt/etc/*/S80lig* restart >/dev/null 2>&1
             }
         fi
     fi
 
-    if [ -x "/opt/bin/transmission-daemon" -a -n "$tr_port" ]; then
-        old_tr_port=${old_tr_port:-$(grep -oP "(?<=--port )\d+" /opt/etc/*/S88tran*)}
-        if [ "$old_tr_port" != "$tr_port" ]; then
+    if [ -x "/opt/bin/transmission-daemon" ]; then
+        _old_tr_port=${old_tr_port:-$(grep -oP "(?<=--port )\d+" /opt/etc/*/S88tran*)}
+        if [ "$_old_tr_port" != "$tr_port" ]; then
             check_port_usage tr_port
             [ -n "$port" ] && {
                 uci_set_type old_tr_port "$port"
                 sed -i "s/\(--port \)[0-9]\+/\1$port/" /opt/etc/*/S88tran*
-                /opt/etc/*/S88tran* restart >/dev/null 2>&1
+                _pidof transmission >/dev/null 2>&1 && /opt/etc/*/S88tran* restart >/dev/null 2>&1
             }
         fi
     fi
