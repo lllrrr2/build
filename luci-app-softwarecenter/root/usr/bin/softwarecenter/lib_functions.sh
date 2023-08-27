@@ -59,7 +59,7 @@ status() {
 
 check_url() {
     local url="$1" ping_file="/tmp/ping"
-    if wget -S --no-check-certificate --spider --tries=3 "$url" 2>&1 | grep -q 'HTTP/1.1 200 OK'; then
+    if curl --head --silent --fail --insecure --output /dev/null "$url"; then
         if [ ! -f "$ping_file" ]; then
             local response_time=$(ping -c 3 "$url" | awk -F'/' '/avg/{print $4}')
             if [ -n "$response_time" ]; then
@@ -78,7 +78,7 @@ check_url() {
 }
 
 check_port_usage() {
-    local name=${1:-$name} exists _old_port
+    local name=${1:-$name}
     [ -n "$1" ] && eval "old_port=\"\$$1\"" || old_port="$port"
 
     while [ -z "$old_port" ] || lsof -i:"$old_port" >/dev/null 2>&1; do
@@ -97,6 +97,7 @@ check_port_usage() {
             uci_set_type "port" "$port" "@website[$website_select]"
         fi
     fi
+    unset _old_port exists
 }
 
 modify_port() {

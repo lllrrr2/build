@@ -34,14 +34,14 @@ install_amule() {
 		_pidof amuled
 	else
 		echo_time "amule 安装失败，再重试安装！"
-		[ -n "$exit_code" -a "$exit_code" = 124 ] && echo_time "安装超时"
+		[ "$exit_code" = 124 ] && echo_time "安装超时"
 		return 1
 	fi
 }
 
 install_aria2() {
-	time_out="timeout 2m"
-	pro="/opt/etc/aria2"
+	local time_out="timeout 2m"
+	local pro="/opt/etc/aria2"
 	make_dir $pro
 	if opkg_install aria2; then
 		cd $pro
@@ -84,7 +84,7 @@ install_aria2() {
 		_pidof aria2c
 	else
 		echo_time "aria2 安装失败，再重试安装！"
-		[ -n "$exit_code" -a "$exit_code" = 124 ] && echo_time "安装超时"
+		[ "$exit_code" = 124 ] && echo_time "安装超时"
 		return 1
 	fi
 }
@@ -129,7 +129,7 @@ install_deluge() {
 		_pidof deluged
 	else
 		echo_time "deluge 安装失败，再重试安装！"
-		[ -n "$exit_code" -a "$exit_code" = 124 ] && echo_time "安装超时"
+		[ "$exit_code" = 124 ] && echo_time "安装超时"
 		return 1
 	fi
 }
@@ -193,12 +193,12 @@ install_qbittorrent() {
 		}
 		ln -sf /opt/etc/qBittorrent_entware/config/qBittorrent.conf /opt/etc/config/qBittorrent.conf
 		/opt/etc/*/S89qbittorrent restart >/dev/null 2>&1
-		[ "$cpu_model" = x86_64 ] && echo_time "登录WebUI的用户名 $webui_name 密码 $webui_pass" || \
+		command -v qbpass >/dev/null 2>&1 && echo_time "登录WebUI的用户名 $webui_name 密码 $webui_pass" || \
 		echo_time "登录WebUI的用户名 admin 密码 adminadmin"
 		_pidof qbittorrent-nox
 	else
 		echo_time "qBittorrent 安装失败，再重试安装！"
-		[ -n "$exit_code" -a "$exit_code" = 124 ] && echo_time "安装超时"
+		[ "$exit_code" = 124 ] && echo_time "安装超时"
 		return 1
 	fi
 }
@@ -207,9 +207,7 @@ install_rtorrent() {
 	local time_out="timeout 2m"
 	if opkg_install rtorrent-easy-install; then
 		sed -i "s/\(server.port\).*/\1=$rt_port/" /opt/etc/*/*/99*.conf
-		/opt/etc/*/S85rtorrent start >/dev/null 2>&1
 		opkg_install ffmpeg mediainfo unrar
-		/opt/etc/*/S85rtorrent stop >/dev/null 2>&1
 
 		version=$(curl -sL "api.github.com/repos/Novik/ruTorrent/releases" | jq -r '.[0].tag_name')
 		if wget -qO /tmp/rutorrent.zip "https://github.com/Novik/ruTorrent/archive/refs/tags/${version}.zip"; then
@@ -421,7 +419,7 @@ install_rtorrent() {
 		_pidof rtorrent
 	else
 		echo_time "rtorrent 安装失败，再重试安装！"
-		[ -n "$exit_code" -a "$exit_code" = 124 ] && echo_time "安装超时"
+		[ "$exit_code" = 124 ] && echo_time "安装超时"
 		return 1
 	fi
 }
@@ -456,7 +454,7 @@ install_transmission() {
 		_pidof transmission
 	else
 		echo_time "transmission 安装失败，再重试安装！"
-		[ -n "$exit_code" -a "$exit_code" = 124 ] && echo_time "安装超时"
+		[ "$exit_code" = 124 ] && echo_time "安装超时"
 		return 1
 	fi
 }
@@ -478,6 +476,7 @@ if [ "$1" = "install" ]; then
 			;;
 		*) break ;;
 	esac
+	unset time_out
 elif [ "$1" = "remove" ]; then
 	shift
 	remove_soft "$@" >> "$log"
