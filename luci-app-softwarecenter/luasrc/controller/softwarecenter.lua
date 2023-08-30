@@ -89,11 +89,11 @@ function connection_status()
     http.prepare_content("application/json")
     http.write_json({
         php_state=php_status_report(),
+        website_list=get_website_list(),
         nginx_state=nginx_status_report(),
         mysql_state=mysql_status_report(),
         php_installed=php_install_report(),
         nginx_installed=nginx_installed_report(),
-        mysql_installed=mysql_installed_report(),
-        website_list=get_website_list()
+        mysql_installed=mysql_installed_report()
     })
 end

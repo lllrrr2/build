@@ -13,7 +13,7 @@ end
 
 function process_result(exit_code, result_output, command, file_path)
     if exit_code == 0 then
-        if #result_output > 2 then
+        if #result_output > 0 then
             return send_json_response({
                 result = "success",
                 data   = util.pcdata(result_output)
@@ -42,15 +42,11 @@ function action_run()
     elseif command == '' and file_path ~= '' then
         local sum = 'model_note' .. file_path:match('%d+')
         local con = luci.model.uci.cursor():get_all("luci", "tinynote")
-        if con[sum] == 'shell' or con[sum] == 'python' then
-            command = con[sum] == 'shell' and "sh" or con[sum]
-        else
-            command = (con.note_suffix ~= '' and con.note_suffix or "lua"):gsub("py", "python")
-        end
+        local allowed_commands = { shell = 'sh', python = 'python' }
+        command = allowed_commands[con[sum]] or (con.note_suffix ~= '' and con.note_suffix or "lua"):gsub("py", "python")
     end
 
-    local command_name = command ~= '' and util.exec("/usr/bin/which " .. command:match("^([^%s]+)")) or ''
-
+    local command_name = util.trim(util.exec("/usr/bin/which " .. command:match("^([^%s]+)"))) or ''
     if #command_name < 4 or command_name:match("no") then
         return send_json_response({
             result = luci.i18n.translatef("The current system cannot find the command '%s' you entered!", command:match("^([^%s]+)"))

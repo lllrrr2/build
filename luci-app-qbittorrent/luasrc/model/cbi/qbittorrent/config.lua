@@ -111,7 +111,7 @@ o = t:taboption("connection", Value, "PortRangeMin",
 o:depends("UseRandomPort", false)
 o.template = "qbittorrent/qb_value"
 o.datatype = "port"
-o.btnclick = "randomToken();"
+o.btnclick = "RandomPort();"
 o.btntext = translate("Generate Randomly")
 
 e = t:taboption("connection", Value, "GlobalDLLimit", translate("Global Download Speed"))
@@ -396,7 +396,7 @@ e = t:taboption('logger', Flag, 'Enabled', translate('Enable Log'),
     translate('Enable logger to log file.'))
 e.enabled = 'true'
 e.disabled = 'false'
-e.default = e.disabled
+e.default = e.enabled
 
 e = t:taboption('logger', Value, 'Path', translate('Log Path'))
 e:depends('Enabled', 'true')
