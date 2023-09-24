@@ -1,20 +1,343 @@
 <%+header%>
+<style>
+    /* 容器样式 */
+    .fb-container {
+        margin: 0; /* 居中显示 */
+        max-width: 800px; /* 容器最大宽度 */
+        margin-top: 1rem; /* 顶部边距 */
+    }
 
-<link rel="stylesheet" href="/luci-static/resources/fb/fb.css?v=@ver">
-<h2 name="content">文件管理</h2>
+    /* 表格样式 */
+    .fb-container table {
+        margin: 0; /* 边距 */
+        width: 100%; /* 宽度自适应 */
+        border-collapse: collapse; /* 去掉表格边框 */
+    }
+
+    .fb-container td {
+        padding: 10px; /* 内边距 */
+        text-align: center; /* 文字居中 */
+    }
+
+    .fb-container tr {
+        border-bottom: 1px solid #ddd; /* 底部边框为1像素实线，颜色为#ddd */
+    }
+
+    .cbi-section-table-row:nth-child(odd) {
+        color: #000000; /* 奇数行文本颜色 */
+        background-color: #f2f2f2; /* 奇数行背景色 */
+    }
+
+    .cbi-section-table-row:nth-child(even) {
+        color: #333333; /* 偶数行文本颜色 */
+        background-color: #ffffff; /* 偶数行背景色 */
+    }
+
+    .fb-container .cbi-input-text {
+        width: 100%; /* 宽度自适应 */
+        margin-bottom: 1rem; /* 底部边距 */
+    }
+
+    .fb-container .panel-title {
+        width: 50%; /* 标题所占容器宽度的一半 */
+        padding-bottom: 0; /* 底部内边距设为0 */
+        border-bottom: none; /* 去掉底部边框 */
+    }
+
+    .fb-container .panel-container {
+        display: flex; /* 使用flex布局 */
+        align-items: center; /* 垂直居中 */
+        justify-content: space-around; /* 空间均分 */
+        padding-bottom: 1rem; /* 底部边距 */
+        border-bottom: 1px solid #eee; /* 底部边框 */
+    }
+
+    .fb-container .upload-container {
+        display: none; /* 隐藏上传文件容器 */
+        margin: 1rem 0; /* 上下间距 */
+    }
+
+    .fb-container .upload-file {
+        margin-right: 2rem; /* 右侧间距 */
+    }
+
+    .fb-container .cbi-value-field {
+        text-align: left; /* 文字左对齐 */
+    }
+
+    .fb-container .parent-icon strong {
+        margin-left: 1rem; /* 左侧间距 */
+    }
+
+    .fb-container td[class$="-icon"] {
+        cursor: pointer; /* 鼠标样式 */
+    }
+
+    .fb-container .file-icon,
+    .fb-container .folder-icon,
+    .fb-container .link-icon {
+        position: relative; /* 相对定位 */
+    }
+
+    .fb-container .file-icon:before,
+    .fb-container .link-icon:before,
+    .fb-container .folder-icon:before {
+        content: ''; /* 伪元素的内容为空 */
+        width: 1.5rem; /* 宽度 */
+        height: 1.5rem; /* 高度 */
+        display: inline-block; /* 行内块元素 */
+        vertical-align: middle; /* 垂直居中 */
+        margin: 0 0.5rem 0 1rem; /* 内部间距 */
+        background-size: contain; /* 背景图自适应 */
+    }
+
+    .input-container {
+        display: flex; /* 使用flexbox布局 */
+        align-items: center; /* 垂直居中对齐 */
+    }
+
+    .input-container label {
+        white-space: nowrap; /* 防止标签字符串换行 */
+        margin-right: 15px; /* 调整标签与输入框之间的间距 */
+    }
+
+    .fb-container .file-icon:before {
+        background-image: url(/luci-static/resources/fb/file-icon.png); /* 文件图标 */
+    }
+
+    .fb-container .folder-icon:before {
+        background-image: url(/luci-static/resources/fb/folder-icon.png); /* 文件夹图标 */
+    }
+
+    .fb-container .link-icon:before {
+        background-image: url(/luci-static/resources/fb/link-icon.png); /* 链接图标 */
+    }
+
+    @media screen and (max-width: 480px) {
+        .fb-container .upload-file {
+            width: 14.6rem; /* 根据屏幕宽度调整上传文件容器的宽度 */
+        }
+        .fb-container .cbi-value-owner,
+        .fb-container .cbi-value-perm {
+            display: none; /* 在480px以下的屏幕上隐藏权限信息 */
+        }
+    }
+</style>
+
+<h2 name="content"><%:File management%></h2>
 <fieldset class="cbi-section fb-container">
-  <input id="current-path" type="text" class="current-path cbi-input-text" value="/"/>
-  <div class="panel-container">
-    <div class="panel-title">文件列表:</div>
-    <button id="upload-toggle" class="upload-toggle cbi-button cbi-button-edit">上传</button>
-  </div>
-  <div class="upload-container" id="upload-container">
-    <input id="upload-file" name="upload-file" class="upload-file" type="file">
-    <button type="button" class="cbi-button cbi-input-apply">开始</button>
-  </div>
-  <div id="list-content"></div>
+    <div class="input-container">
+        <label for="current-path" class="label-text"><%:Current directory%></label>
+        <input id="current-path" type="text" class="current-path cbi-input-text" value="/" />
+    </div>
+    <div class="panel-container">
+        <button id="upload-toggle" class="upload-toggle cbi-button cbi-button-apply"><%:Upload to current directory%></button>
+    </div>
+    <div class="upload-container" id="upload-container">
+        <input id="upload-file" name="upload-file" class="upload-file" type="file" />
+        <button type="button" id="upload-toggle" class="cbi-button cbi-input-apply"><%:upload%></button>
+    </div>
+    <div id="list-content"></div>
 </fieldset>
 
-<script src="/luci-static/resources/fb/fb.js?v=@ver"></script>
+<script>
+String.prototype.replaceAll = function (search, replacement) {
+    var target = this;
+    return target.replace(new RegExp(search, 'g'), replacement);
+};
 
+(function () {
+    var iwxhr = new XHR();
+    var listElem = document.getElementById("list-content");
+    listElem.onclick = handleClick;
+
+    var currentPath;
+    var pathElem = document.getElementById("current-path");
+
+    pathElem.onblur = function () {
+        update_list(this.value.trim());
+    };
+
+    pathElem.onkeyup = function (evt) {
+        if (evt.keyCode === 13) { // 按下的键盘码是否是13（Enter键）
+            this.blur(); // 调用blur方法将文件路径输入框失焦
+        }
+    };
+
+    function removePath(filename, isdir) {
+        var c = confirm('<%:confirm deletion%> "' + filename + '" ?');
+        if (c) {
+            iwxhr.get('/cgi-bin/luci/admin/system/filebrowser_delete', {
+                isdir: isdir,
+                path: concatPath(currentPath, filename)
+            }, function (x, res) {
+                if (res.ec === 0) {
+                    refresh_list(res.data, currentPath);
+                    alert(filename + ' <%:successfully deleted!%>');
+                }
+            });
+        }
+    }
+
+    function renamePath(filename) {
+        var newname = prompt('<%:Enter new name%> ', filename);
+        if (newname && newname.trim() !== filename) {
+            var newpath = concatPath(currentPath, newname);
+            iwxhr.get('/cgi-bin/luci/admin/system/filebrowser_rename', {
+                filepath: concatPath(currentPath, filename),
+                newpath: newpath
+            }, function (x, res) {
+                if (res.ec === 0) {
+                    refresh_list(res.data, currentPath);
+                    alert(filename + ' <%:Renaming successful!%>');
+                }
+            });
+        }
+    }
+
+    function openpath(filename, dirname) {
+        dirname = dirname || currentPath;
+        window.open('/cgi-bin/luci/admin/system/filebrowser_open?path=' +
+            encodeURIComponent(dirname) + '&filename=' +
+            encodeURIComponent(filename));
+    }
+
+    function getFileElem(elem) {
+        if (elem.className.includes('-icon')) {
+            return elem;
+        } else if (elem.parentNode.className.includes('-icon')) {
+            return elem.parentNode;
+        } else {
+            return '';
+        }
+    }
+
+    function concatPath(path, filename) {
+        return path === "/" ? `/${filename}` : `${path.replace(/\/$/, "")}/${filename}`;
+    }
+
+    function handleClick(evt) {
+        var targetElem = evt.target;
+        var infoElem;
+        if (targetElem.className.indexOf('cbi-button-remove') > -1) {
+            infoElem = targetElem.parentNode.parentNode;
+            removePath(infoElem.dataset['filename'], infoElem.dataset['isdir']);
+        } else if (targetElem.className.indexOf('cbi-button-apply') > -1) {
+            renamePath(targetElem.parentNode.parentNode.dataset['filename']);
+        } else if (targetElem = getFileElem(targetElem)) {
+            ((targetElem.className.indexOf('parent-icon') > -1) && update_list(currentPath.replace(/\/[^/]+($|\/$)/, ''))) ||
+                ((targetElem.className.indexOf('file-icon') > -1) && openpath(targetElem.parentNode.dataset['filename'])) ||
+                ((targetElem.className.indexOf('link-icon') > -1) && (function () {
+                    infoElem = targetElem.parentNode;
+                    var filepath = infoElem.dataset['linktarget'];
+                    if (filepath) {
+                        if (infoElem.dataset['isdir'] === "1") {
+                            update_list(filepath);
+                        } else {
+                            var lastSlash = filepath.lastIndexOf('/');
+                            openpath(filepath.substring(lastSlash + 1), filepath.substring(0, lastSlash));
+                        }
+                    }
+                })()) ||
+                ((targetElem.className.indexOf('folder-icon') > -1) && update_list(concatPath(currentPath, targetElem.parentNode.dataset['filename'])));
+        }
+    }
+
+    function refresh_list(filenames, path) {
+        var rowStyle = "cbi-rowstyle-even";
+        var listHtml = `<table class="cbi-section-table"><tbody>
+            ${path !== '/' ? '<tr><td class="parent-icon" colspan="6"><strong><%:Back to previous%></strong></td></tr>' : ''}
+            ${filenames.map(line => {
+                var [type, , owner, , size, month, day, time, ...fullNameParts] = line.trim().split(/\s+/);
+                var fullName = fullNameParts.join(' ');
+                var isLink = ['z', 'l', 'x'].includes(type[0]);
+                var icon = type[0] === 'd' ? "folder-icon" : (isLink ? "link-icon" : "file-icon");
+                var rowClass = rowStyle === "cbi-rowstyle-even" ? "cbi-rowstyle-odd" : "cbi-rowstyle-even";
+                var truncateDisplayName = fullName.length > 20 ? fullName.substring(0, 20) + '...' : fullName;
+
+                return `<tr class="cbi-section-table-row ${rowClass}" data-filename="${fullName}" data-isdir="${Number(type[0] === 'd' || type[0] === 'z')}" ${(type[0] === 'z' || type[0] === 'l') ? `data-linktarget="${fullName.split(' -> ')[1]}"` : ''}>
+                        <td class="cbi-value-field ${icon}"><strong title="${fullName}">${truncateDisplayName}</strong></td>
+                        <td class="cbi-value-field">${owner}</td>
+                        <td class="cbi-value-field">${size}</td>
+                        <td class="cbi-value-field">${month} ${day} ${time}</td>
+                        <td class="cbi-value-field">${type}</td>
+                        <td class="cbi-section-table-cell">
+                            <input type="button" class="cbi-button cbi-button-apply" value="<%:Rename%>"/>
+                            <input type="button" class="cbi-button cbi-button-remove" value="<%:Delete%>"/>
+                        </td>
+                    </tr>`;
+            }).join('')}
+        </tbody></table>`;
+        listElem.innerHTML = listHtml;
+    }
+
+    const update_list = (path, opt) => {
+        opt = opt || {};
+        path = concatPath(path, '');
+        if (currentPath != path) {
+            iwxhr.get('/cgi-bin/luci/admin/system/filebrowser_list', {
+                path: path
+            }, function (x, res) {
+                res.ec === 0 ? refresh_list(res.data, path) : refresh_list([], path);
+            });
+            (!opt.popState) && history.pushState({ path: path }, null, '?path=' + path);
+            currentPath = path;
+            pathElem.value = currentPath;
+        }
+    };
+
+    const uploadToggle = document.getElementById('upload-toggle');
+    const uploadContainer = document.getElementById('upload-container');
+    let isUploadHide = true;
+
+    uploadToggle.onclick = function () {
+        uploadContainer.style.display = isUploadHide ? 'inline-flex' : 'none';
+        isUploadHide = !isUploadHide;
+    };
+    const uploadBtn = uploadContainer.querySelector('.cbi-input-apply');
+    uploadBtn.onclick = function (evt) {
+        const uploadinput = document.getElementById('upload-file');
+        const fullPath = uploadinput.value;
+        if (!fullPath) {
+            evt.preventDefault();
+        } else {
+            const formData = new FormData();
+            const startIndex = (fullPath.indexOf('\\') >= 0 ? fullPath.lastIndexOf('\\') : fullPath.lastIndexOf('/'));
+            formData.append('upload-filename', fullPath.substring(startIndex + 1));
+            formData.append('upload-dir', concatPath(currentPath, ''));
+            formData.append('upload-file', uploadinput.files[0]);
+
+            const xhr = new XMLHttpRequest();
+            xhr.open("POST", "/cgi-bin/luci/admin/system/filebrowser_upload", true);
+            xhr.onload = function () {
+                if (xhr.status == 200) {
+                    const res = JSON.parse(xhr.responseText);
+                    refresh_list(res.data, currentPath);
+                    uploadinput.value = '';
+                    alert('<%:File has been uploaded to%> ' + currentPath);
+                } else {
+                    alert('<%:upload failed%>');
+                }
+            };
+            xhr.send(formData);
+        }
+    };
+
+    document.addEventListener('DOMContentLoaded', function (evt) {
+        var initPath = '/';
+        if (/path=([/\w]+)/.test(location.search)) {
+            initPath = RegExp.$1;
+        }
+        update_list(initPath, { popState: true });
+    });
+
+    window.addEventListener('popstate', function (evt) {
+        var path = '/';
+        if (evt.state && evt.state.path) {
+            path = evt.state.path;
+        }
+        update_list(path, { popState: true });
+    });
+})();
+</script>
 <%+footer%>

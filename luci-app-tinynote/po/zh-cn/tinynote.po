@@ -148,5 +148,11 @@ msgstr "发生意外错误。错误代码：%s"
 msgid "maximum authority"
 msgstr "权限最大"
 
+msgid "full Screen"
+msgstr "全屏"
+
+msgid "Content copied"
+msgstr "内容已复制"
+
 msgid ""
 msgstr ""

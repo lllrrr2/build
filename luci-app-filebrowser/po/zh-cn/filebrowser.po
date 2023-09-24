@@ -1,0 +1,47 @@
+msgid "File management"
+msgstr "文件管理"
+
+msgid "Current directory"
+msgstr "当前目录"
+
+msgid "File List"
+msgstr "文件列表"
+
+msgid "start"
+msgstr "开始"
+
+msgid "Upload to current directory"
+msgstr "上传到当前目录"
+
+msgid "confirm deletion"
+msgstr "确认删除"
+
+msgid "Enter new name"
+msgstr "输入新的名称"
+
+msgid "Back to previous"
+msgstr "返回上一级"
+
+msgid "Rename"
+msgstr "重命名"
+
+msgid "Delete"
+msgstr "删除"
+
+msgid "successfully deleted!"
+msgstr "删除成功！"
+
+msgid "Renaming successful!"
+msgstr "重命名成功！"
+
+msgid "File has been uploaded to"
+msgstr "文件已上传到"
+
+msgid "upload failed"
+msgstr "上传失败"
+
+msgid "Delete"
+msgstr "删除"
+
+msgid "Delete"
+msgstr "删除"

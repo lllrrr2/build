@@ -5,13 +5,15 @@
     }
 
     .alert-content pre {
-        text-align: left;                         /* 文字左对齐 */
+        cursor: text;                             /* 文本光标 */
+        overflow: auto;                           /* 如果内容超出高度，显示滚动条 */
+        color: #66D9EF;                           /* 字体颜色为蓝色 */
         font-size: 14px;                          /* 字体大小为13像素 */
+        text-align: left;                         /* 文字左对齐 */
         line-height: 1.5;                         /* 行高 */
         /*color: white;                             /* 字体颜色为白色 */
-        background-color: #272822;                /* 背景颜色为黑色 */
-        color: #66D9EF;                           /* 字体颜色为蓝色 */
         font-family: Consolas;                    /* 字体设置为Consolas */
+        background-color: #272822;                /* 背景颜色为黑色 */
     }
 
     .alert-mask {
@@ -24,7 +26,7 @@
         width: 100%;                              /* 宽度占满整个视口 */
         height: 100%;                             /* 高度占满整个视口 */
         background-color: rgba(0, 0, 0, 0.5);     /* 设置背景颜色，使用半透明黑色 */
-        z-index: 9999;                            /* 设置层级，使其在最上层显示 */
+        z-index: 999;                             /* 设置层级，使其在最上层显示 */
     }
 
     .alert-container {                            /* 定义弹窗容器的样式 */
@@ -39,73 +41,88 @@
         background-color: #fff;                   /* 白色背景 */
         border-radius: 5px;                       /* 圆角边框 */
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3); /* 设置阴影效果 */
-        cursor: move;                             /* 添加拖动手势 */
-    }
-
-    .alert-container:active {                     /* 当.alert-container被激活（即被点击）时，将鼠标光标样式设置为抓取 */
-        cursor: grabbing;
+        cursor: move;                             /* 拖动手势光标 */
     }
 
     .alert-title {                                /* 定义弹窗标题栏的样式 */
         font-size: 20px;                          /* 设置字体大小为20像素  */
+        margin-top: 10px;                         /* 上边距为10像素 */
         font-weight: bold;                        /* 设置字体加粗 */
         text-align: center;                       /* 文本居中对齐 */
-        margin-top: 10px;                         /* 上边距为10像素 */
         margin-bottom: 10px;                      /* 下边距为10像素 */
     }
 
     .alert-confirm {                              /* 定义弹窗确认按钮的父容器样式 */
-        position: absolute;                       /* 设置绝对定位 */
-        bottom: 20px;                             /* 距离底部 10 像素 */
         left: 50%;                                /* 水平居中对齐 */
+        bottom: 20px;                             /* 距离底部 10 像素 */
+        display: flex;                            /* 使用 Flex 布局 */
+        position: absolute;                       /* 设置绝对定位 */
+        justify-content: center;                  /* 水平居中对齐的方式为居中对齐 */
         transform: translateX(-50%);              /* 平移来水平居中 */
     }
 
-    .alert-btn {                                  /* 定义弹窗确认按钮的样式 */
-        position: sticky;                         /* 设置为粘性定位 */
-        bottom: 5px;                             /* 距离底部 10 像素 */
-        cursor: pointer;                          /* 鼠标移上去变成手型 */
-        padding: 6px 10px;                        /* 上下内边距为6像素，左右内边距为10像素 */
-        border: none;                             /* 去除边框 */
-        border-radius: 5px;                       /* 圆角边框 */
+    .copy-btn, .alert-btn,
+    .full-screen-btn {                            /* 定义弹窗按钮的样式 */
+        bottom: 5px;                              /* 距离底部 10 像素 */
         color: #fff;                              /* 字体颜色为白色 */
-        background-color: hsl(214, 90%, 52%);     /* 深蓝色背景 */
+        border: none;                             /* 去除边框 */
+        cursor: pointer;                          /* 手型光标 */
+        position: sticky;                         /* 设置为粘性定位 */
+        padding: 6px 10px;                        /* 上下内边距为6像素，左右内边距为10像素 */
+        border-radius: 5px;                       /* 圆角边框 */
+        margin-right: 50px;                       /* 设置按钮的右边外边距，增加按钮之间的距离 */
         /* background-color: transparent;            /* 设置背景颜色为完全透明 */
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3); /* 设置阴影效果 */
         transition: all 0.2s ease-in-out;         /* 添加过渡效果 */
+        background-color: hsl(214, 90%, 52%);     /* 深蓝色背景 */
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3); /* 设置阴影效果 */
     }
 
-    .alert-btn:hover {                            /* 定义弹窗确认按钮的悬浮样式 */
-        background-color: hsl(0, 90%, 42%);       /* 略微调暗颜色 */
+    .copy-btn:hover, .alert-btn:hover,
+    .full-screen-btn:hover {                       /* 定义弹窗确认按钮的悬浮样式 */
+        background-color: hsl(0, 90%, 42%);        /* 略微调暗颜色 */
+    }
+
+    .copy-message {
+        display: flex;                             /* 使用弹性布局 */
+        position: fixed;                           /* 固定定位 */
+        align-items: center;                       /* 垂直居中对齐 */
+        justify-content: center;                   /* 水平居中对齐 */
+        top: 50%;                                  /* 距离顶部的偏移量为50% */
+        left: 50%;                                 /* 距离左侧的偏移量为50% */
+        color: white;                              /* 文字颜色为白色 */
+        z-index: 9999;                             /* z轴顺序为9999，使弹窗处于最上层 */
+        padding: 10px;                             /* 内边距为10像素 */
+        font-size: 16px;                           /* 字体大小为16像素 */
+        border-radius: 5px;                        /* 边框圆角半径为5像素 */
+        transform: translate(-50%, -50%);          /* 使用transform平移来实现居中 */
+        background-color: rgba(0, 0, 0, 0.8);      /* 背景颜色为黑色，透明度为0.8 */
     }
 </style>
 
 <script type="text/javascript">
-    function makeAlertDraggable(alert) {
-        let mouseStartX = 0;   // 鼠标开始的X坐标
-        let mouseStartY = 0;   // 鼠标开始的Y坐标
-        let alertStartX = 0;   // 弹框开始的X坐标
-        let alertStartY = 0;   // 弹框开始的Y坐标
-
-        alert.addEventListener('mousedown', (e) => {   // 鼠标按下事件
-            mouseStartX = e.clientX;                   // 记录鼠标开始的X坐标
-            mouseStartY = e.clientY;                   // 记录鼠标开始的Y坐标
-            alertStartX = alert.offsetLeft;            // 记录弹框开始的X坐标
-            alertStartY = alert.offsetTop;             // 记录弹框开始的Y坐标
+    async function makeAlertDraggable(alert) {
+        let mouseStartX, mouseStartY, alertStartX, alertStartY; // 鼠标和弹框开始的X，y坐标
+        $(alert).mousedown((e) => {                  // 鼠标按下事件
+            mouseStartX = e.clientX;                 // 记录鼠标开始的X坐标
+            mouseStartY = e.clientY;                 // 记录鼠标开始的Y坐标
+            alertStartX = alert.offsetLeft;          // 记录弹框开始的X坐标
+            alertStartY = alert.offsetTop;           // 记录弹框开始的Y坐标
         });
 
-        document.addEventListener('mousemove', (e) => {         // 鼠标移动事件
+        $(document).mousemove((e) => {               // 鼠标移动事件
             if (mouseStartX === 0 && mouseStartY === 0) return; // 如果鼠标没有按下，则不做任何操作
-            const mouseX = e.clientX;                           // 获取当前鼠标的X坐标
-            const mouseY = e.clientY;                           // 获取当前鼠标的Y坐标
-            const deltaX = mouseX - mouseStartX;                // 计算鼠标移动的X距离
-            const deltaY = mouseY - mouseStartY;                // 计算鼠标移动的Y距离
-            alert.style.position = 'absolute';                  // 将弹框的定位设置为绝对定位
-            alert.style.top = `${alertStartY + deltaY}px`;      // 计算弹框的top值
-            alert.style.left = `${alertStartX + deltaX}px`;     // 计算弹框的left值
+            const mouseX = e.clientX;                // 获取当前鼠标的X坐标
+            const mouseY = e.clientY;                // 获取当前鼠标的Y坐标
+            const deltaX = mouseX - mouseStartX;     // 计算鼠标移动的X距离
+            const deltaY = mouseY - mouseStartY;     // 计算鼠标移动的Y距离
+            $(alert).css({                           // 设置弹框的样式
+                position: 'absolute',                // 将弹框的定位设置为绝对定位
+                top: `${alertStartY + deltaY}px`,    // 计算并设置弹框的top值
+                left: `${alertStartX + deltaX}px`    // 计算并设置弹框的left值
+            });
         });
 
-        document.addEventListener('mouseup', () => { // 鼠标抬起事件
+        $(document).mouseup(() => {                  // 鼠标抬起事件
             mouseStartX = 0;                         // 重置鼠标开始的X坐标
             mouseStartY = 0;                         // 重置鼠标开始的Y坐标
             alertStartX = 0;                         // 重置弹框开始的X坐标
@@ -113,29 +130,51 @@
         });
     }
 
-    function createEleWithClass(eleType, className) { // 创建带有指定样式类名的元素
-        const ele = document.createElement(eleType);  // 创建元素
-        ele.className = className;                    // 设置样式类名
-        return ele;                                   // 返回创建的元素
-    }
+    async function alert(data, WarningText = '', alertText = '') {                  // 创建DOM元素
+        const alertMask = $('<div>').addClass('alert-mask');                        // 创建遮罩层
+        const alertConfirm = $('<div>').addClass('alert-confirm');                  // 创建确认按钮容器
+        const alertContainer = $('<div>').addClass('alert-container');              // 创建弹窗容器
+        const alertCopyMessage = $('<div>').addClass('copy-message');               // 创建复制消息容器
+        const alertBtn = $('<button>').addClass('alert-btn').html('<%:Dismiss%>');  // 创建关闭按钮
+        const alertcopyBtn = $('<button>').addClass('copy-btn').html('<%:Copy%>');  // 创建复制按钮
+        const fullScreenBtn = $('<button>').addClass('full-screen-btn').html('<%:full Screen%>');  // 创建全屏按钮
+        const alertTitle = $('<div>').addClass('alert-title').html(WarningText
+            ? '<div style="color: red;"><%:something went wrong%></div>'            // 如果有弹窗文本，则设置错误样式的标题（红色）
+            : '<%:Run Demo%>');                                                     // 否则设置默认标题（"Run Demo"）
+        const alertContent = $('<div>').addClass('alert-content').html(alertText
+            ? `<pre style="text-align: center; font-size: 16px">${alertText}\n\n\n</pre>` // 如果有弹窗文本，显示弹窗文本
+            : `<pre>${data}\n\n</pre>`);                                            // 否则显示传入的数据
 
-    function alert(data, WarningText = '', alertText = '') {                 // 自定义alert
-        const body = document.getElementsByTagName('body')[0];               // 获取body元素
-        const alertBtn = createEleWithClass('button', 'alert-btn');          // 创建弹窗确认按钮元素
-        const alertMask = createEleWithClass('div', 'alert-mask');           // 创建弹窗遮罩层元素
-        const alertTitle = createEleWithClass('div', 'alert-title');         // 创建弹窗标题元素
-        const alertContent = createEleWithClass('div', 'alert-content');     // 创建弹窗内容元素
-        const alertConfirm = createEleWithClass('div', 'alert-confirm');     // 创建弹窗确认按钮的父容器元素
-        const alertContainer = createEleWithClass('div', 'alert-container'); // 创建弹窗容器元素
-        alertTitle.innerHTML = WarningText ? '<div style="color: red;"><%:something went wrong%></div>' : '<%:Run Demo%>';
-        alertContent.innerHTML = alertText ? `<pre style="text-align: center; font-size: 16px">${alertText}\n\n\n</pre>` : `<pre>${data}\n\n</pre>`;
-        alertBtn.innerHTML = '<%:Dismiss%>';                                 // 设置按钮文本内容
-        alertBtn.onclick = () => body.removeChild(alertMask);                // 移除遮罩层
-        alertConfirm.appendChild(alertBtn);                                  // 将确认按钮添加到按钮父容器中
-        alertContainer.append(alertTitle, alertContent, alertConfirm);       // 将确认标题，内容，按钮父容器添加到弹窗容器中
-        alertMask.appendChild(alertContainer);                               // 将弹窗容器添加到遮罩层中
-        body.appendChild(alertMask);                                         // 将遮罩层添加到body元素中
-        makeAlertDraggable(alertContainer);                                  // 使弹窗可拖动
+        alertBtn.click(() => alertMask.remove());                // 点击关闭按钮时，移除遮罩层
+        fullScreenBtn.click(() => {                              // 当点击全屏按钮时触发事件
+            const contentElement = alertContent.find('pre')[0];  // 获取内容容器中的 pre 元素
+            if (contentElement.requestFullscreen) {
+                contentElement.requestFullscreen();              // 使用requestFullscreen方法进入全屏模式
+            } else if (contentElement.mozRequestFullScreen) {
+                contentElement.mozRequestFullScreen();           // 使用mozRequestFullScreen方法进入全屏模式
+            } else if (contentElement.webkitRequestFullscreen) {
+                contentElement.webkitRequestFullscreen();        // 使用webkitRequestFullscreen方法进入全屏模式
+            } else if (contentElement.msRequestFullscreen) {
+                contentElement.msRequestFullscreen();            // 使用msRequestFullscreen方法进入全屏模式
+            }
+        });
+        alertcopyBtn.click(() => {
+            // 创建临时 textarea 元素来存储内容文本，并删除结尾的两个连续空格行
+            const tempTextarea = $('<textarea>').val(alertContent.text().replace(/[\s\n]{2}$/, ''));
+            $('body').append(tempTextarea);                      // 将 textarea 添加到页面中
+            tempTextarea.select();                               // 选中内容
+            document.execCommand('copy');                        // 复制选中内容到剪贴板
+            tempTextarea.remove();                               // 移除临时 textarea
+            alertCopyMessage.text('<%:Content copied%>');        // 设置复制消息文本
+            $('body').append(alertCopyMessage);                  // 将复制消息添加到页面中
+            setTimeout(() => alertCopyMessage.remove(), 1000);   // 1秒后移除复制消息
+        });
+
+        alertConfirm.append(alertcopyBtn, fullScreenBtn, alertBtn);   // 将按钮添加到确认容器中
+        alertContainer.append(alertTitle, alertContent, alertConfirm);// 将标题、内容和确认容器添加到弹窗容器中
+        alertMask.append(alertContainer);                             // 将弹窗容器添加到遮罩层中
+        $('body').append(alertMask);                                  // 将遮罩层添加到 body 元素中
+        makeAlertDraggable(alertContainer[0]);                        // 调用 makeAlertDraggable 函数使弹窗可拖动
     }
 
     function displayError(message) {
@@ -144,7 +183,6 @@
 
     function handleHttpError(status) {
         let errorMessage;
-
         switch (status) {
             case 400:
                 errorMessage = '<%:Bad Request: The request was invalid or cannot be served.%>';
@@ -167,69 +205,49 @@
             default:
                 errorMessage = String.format('<%:An unexpected error occurred. Error code: %s%>', status);
         }
-
         displayError(errorMessage);
     }
 
     async function jQRequest(command = '', file_path = '') {
-        const url  = '<%=url("admin/nas/tinynote/action_run")%>';
-        const data = { command, file_path };
-        $.post(url, data, function (jsonResponse, status, xhr) {
-            if (xhr.status === 200) {
-                if (jsonResponse.result === 'success') {
-                    alert(jsonResponse.data);
-                } else {
-                    displayError(jsonResponse.result);
-                }
-            } else {
-                handleHttpError(xhr.status);
-            }
-        }, 'json').fail(function (xhr, textStatus, errorThrown) {
-            handleHttpError(xhr.status);
-        });
+        const url = '<%=url("admin/nas/tinynote/action_run")%>';   // 请求地址
+        const data = { command, file_path };                       // 请求参数
+        try {
+            const response = await $.post(url, data, 'json');
+            response.result === 'success' ? alert(response.data) : displayError(response.result);
+        } catch (error) {
+            handleHttpError(error.status);                          // 请求失败，处理错误
+        }
     }
 
     async function xhrRequest(command = '', file_path = '') {
-        const xhr = new XMLHttpRequest(); // 创建XMLHttpRequest对象
-        const url = '<%=url("admin/nas/tinynote/action_run")%>'; // 请求地址
-        xhr.open('POST', url, true); // 打开请求
+        const xhr = new XMLHttpRequest();                           // 创建XMLHttpRequest对象
+        const url = '<%=url("admin/nas/tinynote/action_run")%>';    // 请求地址
+        const params = new URLSearchParams({ command, file_path }); // 请求参数
+        xhr.open('POST', url, true);                                // 打开请求
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded'); // 设置请求头
-        xhr.onreadystatechange = () => { // 监听请求状态变化
-            if (xhr.readyState === XMLHttpRequest.DONE) { // 判断请求状态是否完成
-                if (xhr.status === 200) { // 判断请求是否成功
-                    const jsonResponse = JSON.parse(xhr.responseText); // 解析响应数据
-                    if (jsonResponse.result === 'success') { // 判断响应结果是否成功
-                        alert(jsonResponse.data); // 弹出响应数据
-                    } else {
-                        displayError(jsonResponse.result); // 弹出响应结果
-                    }
-                } else {
-                    handleHttpError(xhr.status);
-                }
-            }
+        xhr.onreadystatechange = () => {                            // 监听请求状态变化
+            (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) && (// 如果请求成功并且状态已完成
+                (jsonResponse = JSON.parse(xhr.responseText)).result === 'success'
+                    ? alert(jsonResponse.data)                      // 如果成功则弹出响应数据
+                    : displayError(jsonResponse.result));           // 否则调用显示错误函数
+            xhr.status !== 200 && handleHttpError(xhr.status);      // 如果请求错误，则处理http错误
         };
-
-        const params = new URLSearchParams({ command, file_path }); // 发送请求参数
-        xhr.send(params.toString());
+        xhr.send(params.toString());                                // 发送请求
     }
 
     async function fetchRequest(command = '', file_path = '') {
-        const url  = '<%=url("admin/nas/tinynote/action_run")%>';
-        const data = new URLSearchParams({ command, file_path });
+        const url = '<%=url("admin/nas/tinynote/action_run")%>';    // 请求地址
+        const data = new URLSearchParams({ command, file_path });   // 请求参数
         try {
             const response = await fetch(url, {
                 method: 'POST', body: data, headers: {
                     'Content-Type': 'application/x-www-form-urlencoded'
                 }
             });
-            const jsonResponse = await response.json();
-            if (jsonResponse.result === 'success') {
-                alert(jsonResponse.data);
-            } else {
-                displayError(jsonResponse.result);
-            }
+            const { result, data: responseData } = await response.json(); // 将响应数据解析为JSON格式
+            result === 'success' ? alert(responseData) : displayError(result); // 判断响应结果是否成功，弹出响应数据或显示错误
         } catch (error) {
-            handleHttpError(error);
+            handleHttpError(error);                                  // 捕获异常，处理HTTP错误
         }
     }
 

@@ -4,23 +4,23 @@
   local con = uci:get_all("luci", "tinynote")
 %>
 <style>
-  .CodeMirror {
-    font-size: <%=con.font_size%>px;
-    line-height: <%=con.line_spacing%>%;
-    resize: both !important;
-    text-align: left !important;
-    font-family: Consolas, monospace !important;
-    border-top: 1px solid black;
-    border-bottom: 1px solid black;
-  }
-  .CodeMirror-focused .cm-matchhighlight {
-    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFklEQVQI12NgYGBgkKzc8x9CMDAwAAAmhwSbidEoSQAAAABJRU5ErkJggg==);
-    background-position: bottom;
-    background-repeat: repeat-x;
-  }
-  dt {font-family: monospace; color: hsl(0, 9%, 46%);}
-  .cm-matchhighlight {background-color: hsl(256, 58%, 45%)}
-  .CodeMirror-selection-highlight-scrollbar {background-color: rgb(192, 23, 23)}
+    .CodeMirror {
+        font-size: <%=con.font_size%>px;
+        line-height: <%=con.line_spacing%>%;
+        resize: both !important;
+        text-align: left !important;
+        font-family: Consolas, monospace !important;
+        border-top: 1px solid black;
+        border-bottom: 1px solid black;
+    }
+    .CodeMirror-focused .cm-matchhighlight {
+        background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFklEQVQI12NgYGBgkKzc8x9CMDAwAAAmhwSbidEoSQAAAABJRU5ErkJggg==);
+        background-position: bottom;
+        background-repeat: repeat-x;
+    }
+    dt {font-family: monospace; color: hsl(0, 9%, 46%);}
+    .cm-matchhighlight {background-color: hsl(256, 58%, 45%)}
+    .CodeMirror-selection-highlight-scrollbar {background-color: rgb(192, 23, 23)}
 </style>
 <!-- theme -->
 <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.13/theme/<%=con.theme%>.min.css">
@@ -105,10 +105,10 @@ const toggleFullScreen = (cm) => cm.setOption("fullScreen", !cm.getOption("fullS
 
 // 创建 marker 函数，返回一个包含样式和内容的标记符号元素。
 const makeMarker = () => {
-  const marker = document.createElement("div");
-  marker.style.color = "#822";
-  marker.innerHTML = "●";
-  return marker;
+    const marker = document.createElement("div");
+    marker.style.color = "#822";
+    marker.innerHTML = "●";
+    return marker;
 };
 
 /**
@@ -120,61 +120,60 @@ const makeMarker = () => {
  * @returns {Object} 返回创建的 CodeMirror 编辑器实例。
  */
 const editor = (id, mode, readOnly) => {
-  // 定义 CodeMirror 编辑器选项。
-  const options = {
-    mode,                       // 编辑器的语言模式。
-    autoRefresh: true,          // 自动刷新。
-    lint: true,                 // 启用代码检查。
-    tabSize: 4,                 // Tab 键缩进空格数。
-    keyMap: 'sublime',          // 映射键盘。
-    theme: "<%=con.theme%>" ? "<%=con.theme%>" : "monokai",    // 主题。
-    readOnly,                   // 是否启用只读模式。
-    foldGutter: true,           // 启用折叠 gutter。
-    indentUnit: 4,              // 缩进单位，默认为 2。
-    autocorrect: true,          // 自动更正。
-    spellcheck: true,           // 拼写检查。
-    autoCloseBrackets: true,    // 自动关闭括号和引号。
-    smartIndent: true,          // 智能缩进。
-    lineNumbers: true,          // 显示行号。
-    matchBrackets: true,        // 光标匹配括号。
-    styleActiveLine: true,      // 选中行高亮。
-    lineWrapping: true,         // 是否应滚动或换行以显示长行。
-    lineWiseCopyCut: true,      // 行内复制剪切。
-    showCursorWhenSelecting: true,   // 聚焦时显示光标。
-    maxHighlightLength: Infinity,    // 最大高亮长度，Infinity 表示渲染所有行。
-    viewportMargin: 15,         // 滚动可视范围前后的行数。
-    gutters: GUTTERS,           // gutter 类型。
-    extraKeys: {
-      "F11": toggleFullScreen,  // 切换全屏。
-      "Esc": toggleFullScreen,  // 退出全屏。
-      "Tab": cm => cm.somethingSelected() ? cm.indentSelection('add') : cm.replaceSelection(Array(cm.getOption("indentUnit") + 1).join(" ")),   // 缩进代码。
-      "Alt-F": "findPersistent",// 查找。
-      "Ctrl-J": "toMatchingTag",// 标签匹配。
-    },
-  };
+    // 定义 CodeMirror 编辑器选项。
+    const options = {
+        mode,                       // 编辑器的语言模式。
+        autoRefresh: true,          // 自动刷新。
+        lint: true,                 // 启用代码检查。
+        indentUnit: 4,              // 缩进单位，默认为 2 个空格。
+        keyMap: 'sublime',          // 映射键盘。
+        theme: "<%=con.theme%>" ? "<%=con.theme%>" : "monokai",    // 主题。
+        readOnly,                   // 是否启用只读模式。
+        foldGutter: true,           // 启用折叠 gutter。
+        autocorrect: true,          // 自动更正。
+        spellcheck: true,           // 拼写检查。
+        autoCloseBrackets: true,    // 自动关闭括号和引号。
+        smartIndent: true,          // 智能缩进。
+        lineNumbers: true,          // 显示行号。
+        matchBrackets: true,        // 光标匹配括号。
+        styleActiveLine: true,      // 选中行高亮。
+        lineWrapping: true,         // 是否应滚动或换行以显示长行。
+        lineWiseCopyCut: true,      // 行内复制剪切。
+        showCursorWhenSelecting: true,   // 聚焦时显示光标。
+        maxHighlightLength: Infinity,    // 最大高亮长度，Infinity 表示渲染所有行。
+        viewportMargin: 15,         // 滚动可视范围前后的行数。
+        gutters: GUTTERS,           // gutter 类型。
+        extraKeys: {
+            "F11": toggleFullScreen,  // 切换全屏。
+            "Esc": toggleFullScreen,  // 退出全屏。
+            "Shift-Tab": cm => cm.somethingSelected() ? cm.indentSelection('subtract') : cm.replaceSelection(cm.getOption("indentUnit")),   // Shift-Tab 键缩进。
+            "Alt-F": "findPersistent",// 查找。
+            "Ctrl-J": "toMatchingTag",// 标签匹配。
+        },
+    };
 
-  // 创建 CodeMirror 实例。
-  const editor = CodeMirror.fromTextArea(document.getElementById(id), options);
+    // 创建 CodeMirror 实例。
+    const editor = CodeMirror.fromTextArea(document.getElementById(id), options);
 
-  // 设置编辑器大小。
-  editor.setSize("<%=con.width%>", "<%=con.height%>");
+    // 设置编辑器大小。
+    editor.setSize("<%=con.width%>", "<%=con.height%>");
 
-  // 注册事件处理程序。
-  editor.on("gutterClick", (cm, n) => {
-    const info = cm.lineInfo(n);
-    cm.setGutterMarker(
-      n,
-      "breakpoints",
-      info.gutterMarkers ? null : makeMarker()
-    );
-  }); // 点击 gutter 切换 marker。
+    // 注册事件处理程序。
+    editor.on("gutterClick", (cm, n) => {
+        const info = cm.lineInfo(n);
+        cm.setGutterMarker(
+            n,
+            "breakpoints",
+            info.gutterMarkers ? null : makeMarker()
+        );
+    }); // 点击 gutter 切换 marker。
 
-  // 返回创建的 CodeMirror 编辑器实例。
-  return editor;
+    // 返回创建的 CodeMirror 编辑器实例。
+    return editor;
 };
 
 function jqid(id) {
-  return (!id) ? null : '#' + id.replace(/([#;?%&,.+*~\':"!^$[\]()=>|\/@_])/g, '\\$1');
+    return (id) ? '#' + id.replace(/([#;?%&,.+*~\':"!^$[\]()=>|\/@_])/g, '\\$1') : null;
 };
 
 <%
