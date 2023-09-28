@@ -40,8 +40,44 @@ msgstr "文件已上传到"
 msgid "upload failed"
 msgstr "上传失败"
 
-msgid "Delete"
-msgstr "删除"
+msgid "name"
+msgstr "名称"
 
-msgid "Delete"
-msgstr "删除"
+msgid "owner"
+msgstr "所有者"
+
+msgid "size"
+msgstr "大小"
+
+msgid "Change the time"
+msgstr "修改时间"
+
+msgid "pattern string"
+msgstr "模式字符串"
+
+msgid "File operations"
+msgstr "文件操作"
+
+msgid "Renaming failed"
+msgstr "重命名失败"
+
+msgid "deleted failed"
+msgstr "删除失败"
+
+msgid "Permissions modified successfully"
+msgstr "权限修改成功"
+
+msgid "Permission modification failed"
+msgstr "权限修改失败"
+
+msgid "Please enter new permissions for ${filename}\n(You can enter octal numbers)"
+msgstr "请输入 ${filename} 新的权限\n（可以输入八进制的数字）"
+
+msgid "Modify permissions"
+msgstr "修改权限"
+
+msgid "owner"
+msgstr "所有者"
+
+msgid "size"
+msgstr "大小"
