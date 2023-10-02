@@ -52,8 +52,8 @@ msgstr "大小"
 msgid "Change the time"
 msgstr "修改时间"
 
-msgid "pattern string"
-msgstr "模式字符串"
+msgid "Rights"
+msgstr "权限"
 
 msgid "File operations"
 msgstr "文件操作"
@@ -70,11 +70,32 @@ msgstr "权限修改成功"
 msgid "Permission modification failed"
 msgstr "权限修改失败"
 
-msgid "Please enter new permissions for ${filename}\n(You can enter octal numbers)"
-msgstr "请输入 ${filename} 新的权限\n（可以输入八进制的数字）"
+msgid "Please enter new permissions for ${filename}"
+msgstr "请输入 ${filename} 新的权限"
 
 msgid "Modify permissions"
 msgstr "修改权限"
+
+msgid "There are currently ${regularFiles} files,"
+msgstr "当前有 ${regularFiles} 文件，"
+
+msgid "directory."
+msgstr "个目录。"
+
+msgid "total file size"
+msgstr "文件总大小"
+
+msgid "Go to root directory"
+msgstr "进入根目录"
+
+msgid "Successful installation"
+msgstr "安装成功"
+
+msgid "installation failed"
+msgstr "安装失败"
+
+msgid "Confirm installation"
+msgstr "确认安装"
 
 msgid "owner"
 msgstr "所有者"

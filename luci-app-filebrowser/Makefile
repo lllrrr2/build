@@ -1,10 +1,10 @@
 include $(TOPDIR)/rules.mk
 
 LUCI_TITLE:=LuCI support for white or black list
-LUCI_DEPENDS:=
+LUCI_DEPENDS:=+luci-lib-fs
 LUCI_PKGARCH:=all
 
-PKG_VERSION:=2.1.1-20230924
+PKG_VERSION:=2.2.1-20231001
 
 include $(TOPDIR)/feeds/luci/luci.mk
 
