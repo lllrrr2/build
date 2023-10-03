@@ -10,6 +10,7 @@ function index()
     entry({"admin", "system", "filebrowser_rename"}, call("filebrowser_rename"), nil).leaf = true
     entry({"admin", "system", "filebrowser_upload"}, call("filebrowser_upload"), nil).leaf = true
     entry({"admin", "system", "filebrowser_modify"}, call("filebrowser_modify"), nil).leaf = true
+    entry({"admin", "system", "filebrowser_newfile"}, call("filebrowser_newfile"), nil).leaf = true
     entry({"admin", "system", "filebrowser_install"}, call("fileassistant_install"), nil).leaf = true
 end
 
@@ -57,11 +58,11 @@ local MIME_TYPES = {
     avi   = "video/x-msvideo"
 }
 
-function list_response(path, success)
+function list_response(path, stat)
     http.prepare_content("application/json")
     http.write_json({
-        status = success and 0 or 1,
-        data = success and scandir(path) or nil
+        stat = stat and 0 or 1,
+        data = stat and scandir(path) or nil
     })
 end
 
@@ -69,7 +70,7 @@ function replacePathChars(str)
     return str:gsub("<>", "/"):gsub(" ", "\ ")
 end
 
-local success = false
+local stat = false
 function scandir(dir)
     local linkFiles, regularFiles = {}, {}
     for fileinfo in util.execi("ls -Ah --full-time --group-directories-first '%s'" %dir) do
@@ -89,32 +90,38 @@ end
 function filebrowser_delete()
     local isdir = http.formvalue("isdir")
     local path = replacePathChars(http.formvalue("path"))
-    success = isdir and util.exec('rm -rf "%s"' %path) or fs.remover(path)
-    list_response(fs.dirname(path), success)
+    stat = isdir and util.exec('rm -rf "%s"' %path) or fs.remover(path)
+    list_response(fs.dirname(path), stat)
 end
 
-function filebrowser_rename()
-    local filepath = http.formvalue("filepath")
-    local newpath = http.formvalue("newpath")
-    success = fs.move(filepath, newpath)
-    list_response(fs.dirname(filepath), success)
+function filebrowser_newfile()
+    local data = http.formvalue("data") or ''
+    local newfile = http.formvalue("newfile")
+    local file_handle = io.open(newfile, "w")
+    if not file_handle then return "" end
+
+    file_handle:setvbuf("full", 1024 * 1024)
+    stat = file_handle:write(data)
+    
+    file_handle:close()
+    list_response(fs.dirname(newfile), stat)
 end
 
 function filebrowser_modify()
     local path = http.formvalue("path")
     local permissions = http.formvalue("permissions")
-    success = permissions and fs.chmod(path, permissions)
-    list_response(fs.dirname(path), success)
+    stat = permissions and fs.chmod(path, permissions)
+    list_response(fs.dirname(path), stat)
 end
 
 function fileassistant_install()
     local filepath = replacePathChars(http.formvalue("filepath"))
     if filepath:match(".+%.(%w+)$") == "ipk" then
-        success = util.exec('opkg --force-depends install "%s"' %filepath)
+        stat = util.exec('opkg --force-depends install "%s"' %filepath)
     end
     http.prepare_content("application/json")
     http.write_json({
-        status = success,
+        stat = stat,
         filepath = filepath
     })
 end
@@ -131,7 +138,7 @@ function filebrowser_upload()
         function(meta, chunk, eof)
             if not fd then
                 if not meta then return end
-                if  meta and chunk then fd = nixio.open(uploaddir .. filename, "w") end
+                if  meta and chunk then fd = io.open(uploaddir .. filename, "w") end
                 if not fd then return end
             end
             if chunk and fd then
@@ -145,7 +152,7 @@ function filebrowser_upload()
     )
     http.prepare_content("application/json")
     http.write_json({
-        status = eof,
+        stat = eof,
         filename = filename,
         uploaddir = uploaddir
     })
