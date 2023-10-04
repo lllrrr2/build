@@ -196,6 +196,8 @@
     }
 </style>
 
+<script src="/luci-static/resources/fb/sweetalert2.all.js"></script>
+<link rel="stylesheet" href="/luci-static/resources/fb/sweetalert2.min.css">
 <h2 name="content"><%:File management%></h2>
 <fieldset class="fb-container">
     <div class="input-container">
@@ -207,9 +209,7 @@
         <button id="upload-toggle" class="cbi-button cbi-button-apply button-upload"><%:upload%></button>
     </div>
     <div id="list-content"></div>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<!--     <link href="https://cdn.bootcdn.net/ajax/libs/sweetalert2/11.7.27/sweetalert2.css" rel="stylesheet">
-    <script src="https://cdn.bootcdn.net/ajax/libs/sweetalert2/11.7.27/sweetalert2.all.js"></script> -->
+
 </fieldset>
 
 <script>
@@ -305,9 +305,9 @@ String.prototype.replaceAll = function (search, replacement) {
                 }, (x, res) => {
                     if (res && res.stat === 0) {
                         refresh_list(res.data);
-                        showNotification(`${filename} <%:Renaming successful!%>`, '');
+                        showNotification(`${filename} <%:Renaming successful!%>`, 'success');
                     } else {
-                        showNotification(`${filename} <%:Renaming failed%>`, '');
+                        showNotification(`${filename} <%:Renaming failed%>`, 'error');
                     }
                 });
             }
@@ -316,7 +316,7 @@ String.prototype.replaceAll = function (search, replacement) {
 
     const removePath = (filename, isdir) => {
         Swal.fire({
-            icon: '',
+            icon: 'warning',
             ...swalConfig,
             title: `<%:confirm deletion%> "${filename}" ?`
         }).then((result) => {
@@ -327,9 +327,9 @@ String.prototype.replaceAll = function (search, replacement) {
                 }, function (x, res) {
                     if (res && res.stat === 0) {
                         refresh_list(res.data);
-                        showNotification(`${filename}`, '', '<%:successfully deleted!%>')
+                        showNotification(`${filename} <%:successfully deleted!%>`, 'success')
                     } else {
-                        showNotification(`${filename}`, '', '<%:deleted failed%>')
+                        showNotification(`${filename} <%:deleted failed%>`, 'error')
                     }
                 });
             }
@@ -340,6 +340,7 @@ String.prototype.replaceAll = function (search, replacement) {
         Swal.fire({
             ...swalConfig,
             input: 'text',
+            icon: 'warning',
             inputAttributes: {
                 autocorrect: 'off',
                 autocomplete: 'off',
@@ -357,9 +358,9 @@ String.prototype.replaceAll = function (search, replacement) {
             }, (x, res) => {
                 if (res && res.stat === 0) {
                     refresh_list(res.data);
-                    showNotification(`${filename} <%:Permissions modified successfully%>`, '');
+                    showNotification(`${filename} <%:Permissions modified successfully%>`, 'success');
                 } else {
-                    showNotification(`${filename} <%:Permission modification failed%>`, '');
+                    showNotification(`${filename} <%:Permission modification failed%>`, 'error');
                 }
             });
         });
@@ -382,8 +383,7 @@ String.prototype.replaceAll = function (search, replacement) {
                 input: 'textarea',
                 inputAttributes: {
                     autocapitalize: 'off',
-                    placeholder: '<%:Enter text here%>',
-                    rows: 500
+                    placeholder: '<%:Enter text here%>'
                 },
                 title: '<%:Enter file content:%>'
             });
@@ -395,9 +395,9 @@ String.prototype.replaceAll = function (search, replacement) {
                 }, function (x, res) {
                     if (res && res.stat === 0) {
                         refresh_list(res.data);
-                        showNotification(`${concatPath(currentPath, newname)} <%:File created successfully!%>`, '');
+                        showNotification(`${concatPath(currentPath, newname)} <%:File created successfully!%>`, 'success');
                     } else {
-                        showNotification(`${concatPath(currentPath, newname)} <%:File creation failed!%>`, '');
+                        showNotification(`${concatPath(currentPath, newname)} <%:File creation failed!%>`, 'error');
                     }
                 });
             }
@@ -414,9 +414,9 @@ String.prototype.replaceAll = function (search, replacement) {
                     filepath: concatPath(currentPath, filename)
                 }, function (x, res) {
                     if (res && res.stat === 0) {
-                        showNotification(`${res.filepath} <%:Successful installation%>`, '');
+                        showNotification(`${res.filepath} <%:Successful installation%>`, 'success');
                     } else {
-                        showNotification(`${res.filepath} <%:installation failed%>`, '');
+                        showNotification(`${res.filepath} <%:installation failed%>`, 'error');
                     }
                 });
             }
@@ -627,10 +627,10 @@ String.prototype.replaceAll = function (search, replacement) {
                 const res = await response.json();
                 uploadinput.value = '';
                 update_list(res.uploaddir, '', true);
-                showNotification((res.filename) + ' <%:File has been uploaded to%> ' + currentPath, '');
+                showNotification((res.filename) + ' <%:File has been uploaded to%> ' + currentPath, 'success');
             }
         } catch (error) {
-            showNotification('<%:upload failed%>', '');
+            showNotification('<%:upload failed%>', 'error');
         }
     };
 

@@ -94,6 +94,13 @@ function filebrowser_delete()
     list_response(fs.dirname(path), stat)
 end
 
+function filebrowser_rename()
+    local filepath = http.formvalue("filepath")
+    local newpath = http.formvalue("newpath")
+    success = fs.move(filepath, newpath)
+    list_response(fs.dirname(filepath), success)
+end
+
 function filebrowser_newfile()
     local data = http.formvalue("data") or ''
     local newfile = http.formvalue("newfile")
