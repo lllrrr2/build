@@ -209,7 +209,6 @@
         <button id="upload-toggle" class="cbi-button cbi-button-apply button-upload"><%:upload%></button>
     </div>
     <div id="list-content"></div>
-
 </fieldset>
 
 <script>
@@ -235,16 +234,16 @@ String.prototype.replaceAll = function (search, replacement) {
     };
 
     const update_list = (path, opt = {}, upload) => {
-        path = concatPath(path, ''); // 调用concatPath函数拼接路径
-        if (currentPath != path || upload) { // 检查当前路径是否与传入的路径相同
+        path = concatPath(path, '');
+        if (currentPath != path || upload) {
             xhr.get('/cgi-bin/luci/admin/system/filebrowser_list', {
-                path: path
-            }, function (x, res) {// 发送GET请求获取文件列表，并处理响应结果
-                (res && res.stat === 0) ? refresh_list(res.data) : refresh_list([]); // 判断响应状态，调用不同的刷新函数
+                path
+            }, function (x, res) {
+                (res && res.stat === 0) ? refresh_list(res.data) : refresh_list([]);
             });
-            (!opt.popState) && history.pushState({ path: path }, null, '?path=' + path); // 将当前路径添加到浏览器历史记录中
-            currentPath = path; // 更新当前路径
-            pathElem.value = currentPath; // 更新路径表单元素的值
+            (!opt.popState) && history.pushState({ path: path }, null, '?path=' + path);
+            currentPath = path;
+            pathElem.value = path;
         }
     };
 
@@ -295,7 +294,10 @@ String.prototype.replaceAll = function (search, replacement) {
                 autocapitalize: 'off'
             },
             title: '<%:Enter new name%>',
-            didRender: () => setTimeout(() => document.querySelector('.swal2-input')?.select(), 0),
+            didRender: () => setTimeout(() => {
+                    const inputValue = document.querySelector('.swal2-input')?.value ?? '';
+                    document.querySelector('.swal2-input')?.setSelectionRange(0, inputValue.lastIndexOf('.'));
+                }, 0),
             preConfirm: (newname) => {
                 newname = newname.trim();
                 if (!newname || newname === filename) return;
@@ -322,8 +324,7 @@ String.prototype.replaceAll = function (search, replacement) {
         }).then((result) => {
             if (result.isConfirmed) {
                 xhr.get('/cgi-bin/luci/admin/system/filebrowser_delete', {
-                    isdir: isdir,
-                    path: concatPath(currentPath, filename)
+                    isdir, path: concatPath(currentPath, filename)
                 }, function (x, res) {
                     if (res && res.stat === 0) {
                         refresh_list(res.data);
@@ -352,7 +353,7 @@ String.prototype.replaceAll = function (search, replacement) {
             didRender: () => setTimeout(() => document.querySelector('.swal2-input')?.select(), 0)
         }).then(({ dismiss, value }) => {
             if (dismiss || value.trim() === '') return;
-            xhr.get('/cgi-bin/luci/admin/system/filebrowser_modify', {
+            xhr.post('/cgi-bin/luci/admin/system/filebrowser_modify', {
                 permissions: value.trim(),
                 path: concatPath(currentPath, filename)
             }, (x, res) => {
@@ -376,32 +377,29 @@ String.prototype.replaceAll = function (search, replacement) {
             },
             title: '<%:Enter file name%>：'
         });
+        if (!newname) return;
 
-        if (newname) {
-            const { value: fileData } = await Swal.fire({
-                ...swalConfig,
-                input: 'textarea',
-                inputAttributes: {
-                    autocapitalize: 'off',
-                    placeholder: '<%:Enter text here%>'
-                },
-                title: '<%:Enter file content:%>'
-            });
+        const { value: data } = await Swal.fire({
+            ...swalConfig,
+            input: 'textarea',
+            inputAttributes: {
+                autocapitalize: 'off',
+                placeholder: '<%:Enter text here%>'
+            },
+            title: '<%:Enter file content:%>'
+        });
+        if (!data) return;
 
-            if (fileData) {
-                xhr.post('/cgi-bin/luci/admin/system/filebrowser_newfile', {
-                    data: fileData,
-                    newfile: concatPath(currentPath, newname)
-                }, function (x, res) {
-                    if (res && res.stat === 0) {
-                        refresh_list(res.data);
-                        showNotification(`${concatPath(currentPath, newname)} <%:File created successfully!%>`, 'success');
-                    } else {
-                        showNotification(`${concatPath(currentPath, newname)} <%:File creation failed!%>`, 'error');
-                    }
-                });
+        xhr.post('/cgi-bin/luci/admin/system/filebrowser_newfile', {
+            data, newfile: concatPath(currentPath, newname)
+        }, function (x, res) {
+            if (res && res.stat === 0) {
+                refresh_list(res.data);
+                showNotification(`${concatPath(currentPath, newname)} <%:File created successfully!%>`, 'success');
+            } else {
+                showNotification(`${concatPath(currentPath, newname)} <%:File creation failed!%>`, 'error');
             }
-        }
+        });
     };
 
     const installipk = (filename) => {

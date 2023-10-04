@@ -39,6 +39,7 @@ local MIME_TYPES = {
     log   = "text/plain",
     js    = "text/javascript",
     json  = "application/json",
+    lua   = "text/plain",
     css   = "text/css",
     htm   = "text/html",
     html  = "text/html",
@@ -48,7 +49,7 @@ local MIME_TYPES = {
     o     = "text/x-object",
     ko    = "text/x-object",
     pl    = "application/x-perl",
-    sh    = "application/x-shellscript",
+    sh    = "text/plain",
     php   = "application/x-php",
     mp3   = "audio/mpeg",
     ogg   = "audio/x-vorbis+ogg",
@@ -89,14 +90,14 @@ end
 
 function filebrowser_delete()
     local isdir = http.formvalue("isdir")
-    local path = replacePathChars(http.formvalue("path"))
+    local path  = replacePathChars(http.formvalue("path"))
     stat = isdir and util.exec('rm -rf "%s"' %path) or fs.remover(path)
     list_response(fs.dirname(path), stat)
 end
 
 function filebrowser_rename()
+    local newpath  = http.formvalue("newpath")
     local filepath = http.formvalue("filepath")
-    local newpath = http.formvalue("newpath")
     success = fs.move(filepath, newpath)
     list_response(fs.dirname(filepath), success)
 end
@@ -109,15 +110,14 @@ function filebrowser_newfile()
 
     file_handle:setvbuf("full", 1024 * 1024)
     stat = file_handle:write(data)
-    
     file_handle:close()
     list_response(fs.dirname(newfile), stat)
 end
 
 function filebrowser_modify()
-    local path = http.formvalue("path")
-    local permissions = http.formvalue("permissions")
-    stat = permissions and fs.chmod(path, permissions)
+    local path   = http.formvalue("path")
+    local modify = http.formvalue("permissions")
+    stat = fs.chmod(path, modify)
     list_response(fs.dirname(path), stat)
 end
 
@@ -134,29 +134,27 @@ function fileassistant_install()
 end
 
 function filebrowser_upload()
-    local filename = http.formvalue("upload-filename")
     local uploaddir = http.formvalue("upload-dir")
+    local filename = http.formvalue("upload-filename")
     if filename:match(".+%.(%w+)$") == "ipk" then
         uploaddir = '/tmp/upload/'
         fs.mkdir(uploaddir)
     end
     local fd
-    http.setfilehandler(
-        function(meta, chunk, eof)
-            if not fd then
-                if not meta then return end
-                if  meta and chunk then fd = io.open(uploaddir .. filename, "w") end
-                if not fd then return end
-            end
-            if chunk and fd then
-                fd:write(chunk)
-            end
-            if eof and fd then
-                fd:close()
-                fd = nil
+    http.setfilehandler(function(meta, chunk, eof)
+        if not fd then
+            if meta and chunk then
+                fd = io.open(uploaddir .. filename, "w")
             end
         end
-    )
+        if chunk and fd then
+            fd:write(chunk)
+        end
+        if eof and fd then
+            fd:close()
+            fd = nil
+        end
+    end)
     http.prepare_content("application/json")
     http.write_json({
         stat = eof,
