@@ -63,7 +63,7 @@ function list_response(path, stat)
     http.prepare_content("application/json")
     http.write_json({
         stat = stat and 0 or 1,
-        data = stat and scandir(path) or nil
+        data = stat and arrangefiles(path) or nil
     })
 end
 
@@ -72,7 +72,7 @@ function replacePathChars(str)
 end
 
 local stat = false
-function scandir(dir)
+function arrangefiles(dir)
     local linkFiles, regularFiles = {}, {}
     for fileinfo in util.execi("ls -Ah --full-time --group-directories-first '%s'" %dir) do
         if fileinfo:sub(1, 2) == 'lr' then
@@ -123,20 +123,17 @@ end
 
 function fileassistant_install()
     local filepath = replacePathChars(http.formvalue("filepath"))
-    if filepath:match(".+%.(%w+)$") == "ipk" then
+    if filepath:match("%.(%w+)$") == "ipk" then
         stat = util.exec('opkg --force-depends install "%s"' %filepath)
     end
     http.prepare_content("application/json")
-    http.write_json({
-        stat = stat,
-        filepath = filepath
-    })
+    http.write_json({ stat = stat })
 end
 
 function filebrowser_upload()
     local uploaddir = http.formvalue("upload-dir")
     local filename = http.formvalue("upload-filename")
-    if filename:match(".+%.(%w+)$") == "ipk" then
+    if filename:match("%.(%w+)$") == "ipk" then
         uploaddir = '/tmp/upload/'
         fs.mkdir(uploaddir)
     end
@@ -157,9 +154,7 @@ function filebrowser_upload()
     end)
     http.prepare_content("application/json")
     http.write_json({
-        stat = eof,
-        filename = filename,
-        uploaddir = uploaddir
+        stat = eof, filename = filename, uploaddir = uploaddir
     })
 end
 
@@ -168,16 +163,14 @@ function to_mime(filename)
         return "application/octet-stream"
     end
 
-    local ext = filename:match("[^%.]+$")
+    local ext = filename:match("%.(%w+)$")
     return MIME_TYPES[ext and ext:lower()] or "application/octet-stream"
 end
 
 function filebrowser_open()
     local path = http.formvalue("path")
     local filename = http.formvalue("filename")
-    local mime = to_mime(filename)
-
     http.header('Content-Disposition', 'inline; filename="%s"' %filename)
-    http.prepare_content(mime)
+    http.prepare_content(to_mime(filename))
     luci.ltn12.pump.all(luci.ltn12.source.file(io.open(path .. filename, "r")), http.write)
 end

@@ -407,17 +407,16 @@ String.prototype.replaceAll = function (search, replacement) {
             ...swalConfig,
             title: `<%:Confirm installation%> "${filename}" ?`
         }).then((result) => {
-            if (result.isConfirmed) {
-                xhr.get('/cgi-bin/luci/admin/system/filebrowser_install', {
-                    filepath: concatPath(currentPath, filename)
-                }, function (x, res) {
-                    if (res && res.stat === 0) {
-                        showNotification(`${res.filepath} <%:Successful installation%>`, 'success');
-                    } else {
-                        showNotification(`${res.filepath} <%:installation failed%>`, 'error');
-                    }
-                });
-            }
+            if (!result.isConfirmed) return;
+            xhr.get('/cgi-bin/luci/admin/system/filebrowser_install', {
+                filepath: concatPath(currentPath, filename)
+            }, function (x, res) {
+                if (res && res.stat === 0) {
+                    showNotification(`${filename} <%:Successful installation%>`, 'success');
+                } else {
+                    showNotification(`${filename} <%:installation failed%>`, 'error');
+                }
+            });
         });
     };
 
@@ -442,8 +441,7 @@ String.prototype.replaceAll = function (search, replacement) {
     };
 
     function handleClick(evt) {
-        var targetElem = evt.target;
-        var infoElem, filepath;
+        var targetElem = evt.target, infoElem, filepath;
 
         if (targetElem.classList.contains('button-remove')) {
             infoElem = targetElem.parentNode.parentNode;
@@ -530,32 +528,22 @@ String.prototype.replaceAll = function (search, replacement) {
 
     const calculateTotalSize = (filenames) => {
         let totalSize = 0;
+        const sizeFactor = { K: 1024, M: 1024 * 1024, G: 1024 * 1024 * 1024 };
         filenames.forEach(line => {
             const [, , , , size] = line.trim().split(/\s+/);
             const suffix = size.slice(-1).toUpperCase();
             const num = parseFloat(size.slice(0, -1));
-            let factor = 1;
-            if (suffix === 'K') {
-                factor = 1024;
-            } else if (suffix === 'M') {
-                factor = 1024 * 1024;
-            } else if (suffix === 'G') {
-                factor = 1024 * 1024 * 1024;
-            }
+            const factor = sizeFactor[suffix] || 1;
             const parsedSize = num * factor;
-            if (!isNaN(parsedSize)) {
-                totalSize += parsedSize;
-            }
+            if (!isNaN(parsedSize)) totalSize += parsedSize;
         });
-        if (totalSize < 1024) {
-            return `${totalSize} B`;
-        } else if (totalSize < 1024 * 1024) {
-            return `${(totalSize / 1024).toFixed(2)} KB`;
-        } else if (totalSize < 1024 * 1024 * 1024) {
-            return `${(totalSize / (1024 * 1024)).toFixed(2)} MB`;
-        } else {
-            return `${(totalSize / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+        const units = ['B', 'KB', 'MB', 'GB'];
+        let unitIndex = 0;
+        while (totalSize >= 1024 && unitIndex < units.length - 1) {
+            totalSize /= 1024;
+            unitIndex++;
         }
+        return `${totalSize.toFixed(2)} ${units[unitIndex]}`;
     };
 
     const setupCustomContextMenu = () => {

@@ -17,7 +17,7 @@ msgid "confirm deletion"
 msgstr "确定删除"
 
 msgid "Enter new name"
-msgstr "输入新的名称"
+msgstr "输入新的文件名"
 
 msgid "Back to previous"
 msgstr "返回上一级"
