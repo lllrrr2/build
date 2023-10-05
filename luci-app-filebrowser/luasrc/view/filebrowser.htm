@@ -527,7 +527,8 @@ String.prototype.replaceAll = function (search, replacement) {
     };
 
     function calculateTotalSize(filenames) {
-        let totalSize = 0;
+        let totalSize = 0, unitIndex = 0;
+        const units = ['B', 'KB', 'MB', 'GB'];
         const sizeFactor = { K: 1024, M: 1024 * 1024, G: 1024 * 1024 * 1024 };
         filenames.forEach(line => {
             const [, , , , size] = line.trim().split(/\s+/);
@@ -537,11 +538,8 @@ String.prototype.replaceAll = function (search, replacement) {
             const parsedSize = num * factor;
             if (!isNaN(parsedSize)) totalSize += parsedSize;
         });
-        const units = ['B', 'KB', 'MB', 'GB'];
-        let unitIndex = 0;
         while (totalSize >= 1024 && unitIndex < units.length - 1) {
-            totalSize /= 1024;
-            unitIndex++;
+            totalSize /= 1024, unitIndex++;
         }
         return `${totalSize.toFixed(2)} ${units[unitIndex]}`;
     };
