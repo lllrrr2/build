@@ -49,7 +49,7 @@
 
     /* 父级图标样式 */
     .fb-container .back-icon,
-    .fb-container .root-icon {
+    .fb-container .back-root-icon {
         color: red;
         font-size: 25px;
         cursor: pointer;
@@ -233,7 +233,7 @@ String.prototype.replaceAll = function (search, replacement) {
         if (evt.keyCode === 13) { this.blur(); }
     };
 
-    const update_list = (path, opt = {}, upload) => {
+    function update_list(path, opt = {}, upload) {
         path = concatPath(path, '');
         if (currentPath != path || upload) {
             xhr.get('/cgi-bin/luci/admin/system/filebrowser_list', {
@@ -247,7 +247,7 @@ String.prototype.replaceAll = function (search, replacement) {
         }
     };
 
-    const convertPermissions = permissions => {
+    function convertPermissions(permissions) {
         const map = { 'r': 4, 'w': 2, 'x': 1 };
         let octalValue = '';
         for (let i = 1; i < permissions.length; i += 3) {
@@ -258,7 +258,7 @@ String.prototype.replaceAll = function (search, replacement) {
         return octalValue;
     };
 
-    const showNotification = (title = '', icon = '', text = '') => {
+    function showNotification(title = '', icon = '', text = '') {
         Swal.fire({
             icon, text, title, position: 'center',
             timer: 2000, showConfirmButton: false,
@@ -285,7 +285,7 @@ String.prototype.replaceAll = function (search, replacement) {
         }
     };
 
-    const renamePath = filename => {
+    function renamePath(filename) {
         Swal.fire({
             ...swalConfig,
             input: 'text',
@@ -307,16 +307,16 @@ String.prototype.replaceAll = function (search, replacement) {
                 }, (x, res) => {
                     if (res && res.stat === 0) {
                         refresh_list(res.data);
-                        showNotification(`${filename} <%:Renaming successful!%>`, 'success');
+                        showNotification(`"${filename}" <%:Renaming successful!%>`, 'success');
                     } else {
-                        showNotification(`${filename} <%:Renaming failed%>`, 'error');
+                        showNotification(`"${filename}" <%:Renaming failed%>`, 'error');
                     }
                 });
             }
         });
     };
 
-    const removePath = (filename, isdir) => {
+    function removePath(filename, isdir) {
         Swal.fire({
             icon: 'warning',
             ...swalConfig,
@@ -328,16 +328,16 @@ String.prototype.replaceAll = function (search, replacement) {
                 }, function (x, res) {
                     if (res && res.stat === 0) {
                         refresh_list(res.data);
-                        showNotification(`${filename} <%:successfully deleted!%>`, 'success')
+                        showNotification(`"${filename}" <%:successfully deleted!%>`, 'success')
                     } else {
-                        showNotification(`${filename} <%:deleted failed%>`, 'error')
+                        showNotification(`"${filename}" <%:deleted failed%>`, 'error')
                     }
                 });
             }
         });
     };
 
-    const chmodPath = (filename, type) => {
+    function chmodPath(filename, type) {
         Swal.fire({
             ...swalConfig,
             input: 'text',
@@ -359,9 +359,9 @@ String.prototype.replaceAll = function (search, replacement) {
             }, (x, res) => {
                 if (res && res.stat === 0) {
                     refresh_list(res.data);
-                    showNotification(`${filename} <%:Permissions modified successfully%>`, 'success');
+                    showNotification(`"${filename}" <%:Permissions modified successfully%>`, 'success');
                 } else {
-                    showNotification(`${filename} <%:Permission modification failed%>`, 'error');
+                    showNotification(`"${filename}" <%:Permission modification failed%>`, 'error');
                 }
             });
         });
@@ -395,14 +395,14 @@ String.prototype.replaceAll = function (search, replacement) {
         }, function (x, res) {
             if (res && res.stat === 0) {
                 refresh_list(res.data);
-                showNotification(`${concatPath(currentPath, newname)} <%:File created successfully!%>`, 'success');
+                showNotification(`"${concatPath(currentPath, newname)}" <%:File created successfully!%>`, 'success');
             } else {
-                showNotification(`${concatPath(currentPath, newname)} <%:File creation failed!%>`, 'error');
+                showNotification(`"${concatPath(currentPath, newname)}" <%:File creation failed!%>`, 'error');
             }
         });
     };
 
-    const installipk = (filename) => {
+    function installipk(filename) {
         Swal.fire({
             ...swalConfig,
             title: `<%:Confirm installation%> "${filename}" ?`
@@ -412,21 +412,21 @@ String.prototype.replaceAll = function (search, replacement) {
                 filepath: concatPath(currentPath, filename)
             }, function (x, res) {
                 if (res && res.stat === 0) {
-                    showNotification(`${filename} <%:Successful installation%>`, 'success');
+                    showNotification(`"${filename}" <%:Successful installation%>`, 'success');
                 } else {
-                    showNotification(`${filename} <%:installation failed%>`, 'error');
+                    showNotification(`"${filename}" <%:installation failed%>`, 'error');
                 }
             });
         });
     };
 
-    const openPath = (filename, dirname = currentPath) => {
+    function openPath(filename, dirname = currentPath) {
         window.open('/cgi-bin/luci/admin/system/filebrowser_open?path=' +
             encodeURIComponent(dirname) + '&filename=' +
             encodeURIComponent(filename));
     };
 
-    const getFileElem = elem => {
+    function getFileElem(elem) {
         if (elem.className.includes('-icon')) {
             return elem;
         } else if (elem.parentNode.className.includes('-icon')) {
@@ -436,7 +436,7 @@ String.prototype.replaceAll = function (search, replacement) {
         }
     };
 
-    const concatPath = (path, filename) => {
+    function concatPath(path, filename) {
         return path === "/" ? `/${filename}` : `${path.replace(/\/$/, "")}/${filename}`;
     };
 
@@ -455,7 +455,7 @@ String.prototype.replaceAll = function (search, replacement) {
         } else {
             var fileElem = getFileElem(targetElem);
             if (fileElem) {
-                if (fileElem.classList.contains('root-icon')) {
+                if (fileElem.classList.contains('back-root-icon')) {
                     update_list('/');
                 } else if (fileElem.classList.contains('back-icon')) {
                     update_list(currentPath.replace(/\/[^/]+($|\/$)/, ''));
@@ -471,7 +471,7 @@ String.prototype.replaceAll = function (search, replacement) {
                             update_list(filepath);
                         } else {
                             var lastSlash = filepath.lastIndexOf('/');
-                            openPath(filepath.substring(lastSlash + 1), filepath.substring(0, lastSlash));
+                            openPath(filepath.substring(lastSlash + 1), filepath.substring(0, lastSlash + 1));
                         }
                     }
                 }
@@ -479,7 +479,7 @@ String.prototype.replaceAll = function (search, replacement) {
         }
     };
 
-    const refresh_list = filenames => {
+    function refresh_list(filenames) {
         const rowStyle = "cbi-rowstyle-even";
         const regularFiles = filenames.filter(line => !line.startsWith("d")).length
         const listHtml = `
@@ -491,7 +491,7 @@ String.prototype.replaceAll = function (search, replacement) {
                     <tr>
                         <td class="cbi-value-field return-icon">
                             <b class="display-480px"><%:name%></b>
-                            ${getInitPath() !== '/' ? '<div class="root-icon" title="<%:Go to root directory%>">\u2302</div><div class="back-icon" title="<%:Back to previous%>">\u21A9</div>' : ''}
+                            ${getInitPath() !== '/' ? '<div class="back-root-icon" title="<%:Go to root directory%>">\u2302</div><div class="back-icon" title="<%:Back to previous%>">\u21A9</div>' : ''}
                         </td>
                         <td class="cbi-value-field display-480px"><b><%:size%></b></td>
                         <td class="cbi-value-field display-480px"><b><%:Change the time%></b></td>
@@ -526,7 +526,7 @@ String.prototype.replaceAll = function (search, replacement) {
         listElem.innerHTML = listHtml;
     };
 
-    const calculateTotalSize = (filenames) => {
+    function calculateTotalSize(filenames) {
         let totalSize = 0;
         const sizeFactor = { K: 1024, M: 1024 * 1024, G: 1024 * 1024 * 1024 };
         filenames.forEach(line => {
@@ -546,10 +546,10 @@ String.prototype.replaceAll = function (search, replacement) {
         return `${totalSize.toFixed(2)} ${units[unitIndex]}`;
     };
 
-    const setupCustomContextMenu = () => {
+    function setupCustomContextMenu() {
         let customMenu = null;
 
-        const createCustomMenu = (filename, targetElem) => {
+        function createCustomMenu(filename, targetElem) {
             removeCustomMenu();
             const menuItems = [
                 { label: "<%:Rename%>", action: () => renamePath(filename) },
@@ -569,11 +569,8 @@ String.prototype.replaceAll = function (search, replacement) {
             document.body.appendChild(customMenu);
         }
 
-        const removeCustomMenu = () => {
-            if (customMenu) {
-                customMenu.remove();
-                customMenu = null;
-            }
+        function removeCustomMenu() {
+            if (customMenu) { customMenu.remove(); customMenu = null; }
         };
 
         document.addEventListener('contextmenu', event => {
@@ -587,16 +584,14 @@ String.prototype.replaceAll = function (search, replacement) {
     };
     setupCustomContextMenu();
 
-    const uploadToggle = document.getElementById('upload-toggle');
     const uploadContainer = document.getElementById('upload-container');
     let isUploadHide = true;
-
-    uploadToggle.onclick = function () {
+    document.getElementById('upload-toggle').onclick = function () {
         uploadContainer.style.display = isUploadHide ? 'inline-flex' : 'none';
         isUploadHide = !isUploadHide;
     };
-    const uploadBtn = uploadContainer.querySelector('.button-upload');
-    uploadBtn.onclick = async function (evt) {
+
+    uploadContainer.querySelector('.button-upload').onclick = async function (evt) {
         const uploadinput = document.getElementById('upload-file');
         const fullPath = uploadinput.value;
         if (!fullPath) { evt.preventDefault(); return; }
@@ -613,11 +608,9 @@ String.prototype.replaceAll = function (search, replacement) {
                 const res = await response.json();
                 uploadinput.value = '';
                 update_list(res.uploaddir, '', true);
-                showNotification((res.filename) + ' <%:File has been uploaded to%> ' + currentPath, 'success');
+                showNotification(`${res.filename} <%:File has been uploaded to%> ${currentPath}`, 'success');
             }
-        } catch (error) {
-            showNotification('<%:upload failed%>', 'error');
-        }
+        } catch (error) { showNotification('<%:upload failed%>', 'error'); }
     };
 
     function getInitPath() {
