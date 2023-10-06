@@ -110,22 +110,6 @@
         background-image: url(/luci-static/resources/fb/link-icon.png); /* 链接图标 */
     }
 
-    .notification {
-        top: 50%;                                  /* 距离顶部的偏移量为50% */
-        left: 50%;                                 /* 距离左侧的偏移量为50% */
-        color: white;                              /* 文字颜色为白色 */
-        z-index: 9999;                             /* z轴顺序为9999，使弹窗处于最上层 */
-        padding: 20px;                             /* 内边距为20像素 */
-        display: flex;                             /* 使用弹性布局 */
-        position: fixed;                           /* 固定定位 */
-        font-size: 16px;                           /* 字体大小为16像素 */
-        border-radius: 5px;                        /* 边框圆角半径为5像素 */
-        align-items: center;                       /* 垂直居中对齐 */
-        justify-content: center;                   /* 水平居中对齐 */
-        transform: translate(-50%, -50%);          /* 使用transform平移来实现居中 */
-        background-color: rgba(0, 0, 0, 0.8);      /* 背景颜色为黑色，透明度为0.8 */
-    }
-
     /* 定义自定义菜单样式 */
     .custom-menu {
         position: fixed; /* 菜单固定定位在页面上 */
@@ -218,12 +202,10 @@ String.prototype.replaceAll = function (search, replacement) {
 
 // console.log(uploaddir);
 (function () {
-    var xhr = new XHR();
-    var listElem = document.getElementById("list-content");
+    const xhr = new XHR();
+    const listElem = document.getElementById("list-content");
+    const pathElem = document.getElementById("current-path");
     listElem.onclick = handleClick;
-
-    var currentPath;
-    var pathElem = document.getElementById("current-path");
 
     pathElem.onblur = function () {
         update_list(this.value.trim());
@@ -233,19 +215,17 @@ String.prototype.replaceAll = function (search, replacement) {
         if (evt.keyCode === 13) { this.blur(); }
     };
 
+    let currentPath;
     function update_list(path, opt = {}, upload) {
-        path = concatPath(path, '');
-        if (currentPath != path || upload) {
-            xhr.get('/cgi-bin/luci/admin/system/filebrowser_list', {
-                path
-            }, function (x, res) {
-                (res && res.stat === 0) ? refresh_list(res.data) : refresh_list([]);
-            });
-            (!opt.popState) && history.pushState({ path: path }, null, '?path=' + path);
-            currentPath = path;
-            pathElem.value = path;
-        }
-    };
+        path = concatPath(path);
+        if (currentPath === path && !upload) return;
+        xhr.get('/cgi-bin/luci/admin/system/filebrowser_list', { path }, (_, res) => {
+            refresh_list(res?.stat === 0 ? res.data : []);
+        });
+        opt.popState || history.pushState({ path }, null, '?path=' + path);
+        currentPath = path;
+        pathElem.value = path;
+    }
 
     function convertPermissions(permissions) {
         const map = { 'r': 4, 'w': 2, 'x': 1 };
@@ -285,11 +265,11 @@ String.prototype.replaceAll = function (search, replacement) {
         }
     };
 
-    function renamePath(filename) {
+    function renamePath(oldname) {
         Swal.fire({
             ...swalConfig,
             input: 'text',
-            inputValue: filename,
+            inputValue: oldname,
             inputAttributes: {
                 autocapitalize: 'off'
             },
@@ -300,16 +280,16 @@ String.prototype.replaceAll = function (search, replacement) {
                 }, 0),
             preConfirm: (newname) => {
                 newname = newname.trim();
-                if (!newname || newname === filename) return;
-                xhr.get('/cgi-bin/luci/admin/system/filebrowser_rename', {
-                    newpath: concatPath(currentPath, newname),
-                    filepath: concatPath(currentPath, filename)
-                }, (x, res) => {
+                if (!newname || newname === oldname) return;
+                xhr.post('/cgi-bin/luci/admin/system/filebrowser_rename', {
+                    newname: concatPath(currentPath, newname),
+                    oldname: concatPath(currentPath, oldname)
+                }, (_, res) => {
                     if (res && res.stat === 0) {
                         refresh_list(res.data);
-                        showNotification(`"${filename}" <%:Renaming successful!%>`, 'success');
+                        showNotification(`"${oldname}" <%:Renaming successful!%>`, 'success');
                     } else {
-                        showNotification(`"${filename}" <%:Renaming failed%>`, 'error');
+                        showNotification(`"${oldname}" <%:Renaming failed%>`, 'error');
                     }
                 });
             }
@@ -323,9 +303,9 @@ String.prototype.replaceAll = function (search, replacement) {
             title: `<%:confirm deletion%> "${filename}" ?`
         }).then((result) => {
             if (result.isConfirmed) {
-                xhr.get('/cgi-bin/luci/admin/system/filebrowser_delete', {
+                xhr.post('/cgi-bin/luci/admin/system/filebrowser_delete', {
                     isdir, path: concatPath(currentPath, filename)
-                }, function (x, res) {
+                }, function (_, res) {
                     if (res && res.stat === 0) {
                         refresh_list(res.data);
                         showNotification(`"${filename}" <%:successfully deleted!%>`, 'success')
@@ -351,12 +331,12 @@ String.prototype.replaceAll = function (search, replacement) {
             inputValue: convertPermissions(type),
             title: `<%:Please enter new permissions for ${filename}%>：`,
             didRender: () => setTimeout(() => document.querySelector('.swal2-input')?.select(), 0)
-        }).then(({ dismiss, value }) => {
-            if (dismiss || value.trim() === '') return;
+        }).then(({ value }) => {
+            var permissions = value.trim();
+            if (!permissions || permissions === '') return;
             xhr.post('/cgi-bin/luci/admin/system/filebrowser_modify', {
-                permissions: value.trim(),
-                path: concatPath(currentPath, filename)
-            }, (x, res) => {
+                permissions, path: concatPath(currentPath, filename)
+            }, (_, res) => {
                 if (res && res.stat === 0) {
                     refresh_list(res.data);
                     showNotification(`"${filename}" <%:Permissions modified successfully%>`, 'success');
@@ -392,7 +372,7 @@ String.prototype.replaceAll = function (search, replacement) {
 
         xhr.post('/cgi-bin/luci/admin/system/filebrowser_newfile', {
             data, newfile: concatPath(currentPath, newname)
-        }, function (x, res) {
+        }, function (_, res) {
             if (res && res.stat === 0) {
                 refresh_list(res.data);
                 showNotification(`"${concatPath(currentPath, newname)}" <%:File created successfully!%>`, 'success');
@@ -410,7 +390,7 @@ String.prototype.replaceAll = function (search, replacement) {
             if (!result.isConfirmed) return;
             xhr.get('/cgi-bin/luci/admin/system/filebrowser_install', {
                 filepath: concatPath(currentPath, filename)
-            }, function (x, res) {
+            }, function (_, res) {
                 if (res && res.stat === 0) {
                     showNotification(`"${filename}" <%:Successful installation%>`, 'success');
                 } else {
@@ -427,16 +407,12 @@ String.prototype.replaceAll = function (search, replacement) {
     };
 
     function getFileElem(elem) {
-        if (elem.className.includes('-icon')) {
-            return elem;
-        } else if (elem.parentNode.className.includes('-icon')) {
-            return elem.parentNode;
-        } else {
-            return '';
-        }
+        if (elem.className.includes('-icon')) return elem;
+        else if (elem.parentNode.className.includes('-icon')) return elem.parentNode;
+        else return '';
     };
 
-    function concatPath(path, filename) {
+    function concatPath(path, filename = '') {
         return path === "/" ? `/${filename}` : `${path.replace(/\/$/, "")}/${filename}`;
     };
 
@@ -455,15 +431,11 @@ String.prototype.replaceAll = function (search, replacement) {
         } else {
             var fileElem = getFileElem(targetElem);
             if (fileElem) {
-                if (fileElem.classList.contains('back-root-icon')) {
-                    update_list('/');
-                } else if (fileElem.classList.contains('back-icon')) {
-                    update_list(currentPath.replace(/\/[^/]+($|\/$)/, ''));
-                } else if (fileElem.classList.contains('file-icon')) {
-                    openPath(fileElem.parentNode.dataset.filename);
-                } else if (fileElem.classList.contains('folder-icon')) {
-                    update_list(concatPath(currentPath, fileElem.parentNode.dataset.filename));
-                } else if (fileElem.classList.contains('link-icon')) {
+                if (fileElem.classList.contains('back-root-icon')) update_list('/');
+                else if (fileElem.classList.contains('file-icon')) openPath(fileElem.parentNode.dataset.filename);
+                else if (fileElem.classList.contains('back-icon')) update_list(currentPath.replace(/\/[^/]+($|\/$)/, ''));
+                else if (fileElem.classList.contains('folder-icon')) update_list(concatPath(currentPath, fileElem.parentNode.dataset.filename));
+                else if (fileElem.classList.contains('link-icon')) {
                     infoElem = fileElem.parentNode;
                     filepath = infoElem.dataset.linktarget;
                     if (filepath) {
@@ -533,13 +505,12 @@ String.prototype.replaceAll = function (search, replacement) {
         filenames.forEach(line => {
             const [, , , , size] = line.trim().split(/\s+/);
             const suffix = size.slice(-1).toUpperCase();
-            const num = parseFloat(size.slice(0, -1));
-            const factor = sizeFactor[suffix] || 1;
-            const parsedSize = num * factor;
+            const parsedSize = parseFloat(size.slice(0, -1)) * sizeFactor[suffix] || 1;
             if (!isNaN(parsedSize)) totalSize += parsedSize;
         });
         while (totalSize >= 1024 && unitIndex < units.length - 1) {
-            totalSize /= 1024, unitIndex++;
+            totalSize /= 1024;
+            unitIndex++;
         }
         return `${totalSize.toFixed(2)} ${units[unitIndex]}`;
     };
@@ -595,7 +566,7 @@ String.prototype.replaceAll = function (search, replacement) {
         if (!fullPath) { evt.preventDefault(); return; }
         const data = new FormData();
         data.append('upload-file', uploadinput.files[0]);
-        data.append('upload-dir', concatPath(currentPath, ''));
+        data.append('upload-dir', concatPath(currentPath));
         data.append('upload-filename', fullPath.substring(fullPath.lastIndexOf('\\') + 1));
         try {
             const response = await fetch("/cgi-bin/luci/admin/system/filebrowser_upload", {

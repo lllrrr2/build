@@ -96,21 +96,21 @@ function filebrowser_delete()
 end
 
 function filebrowser_rename()
-    local newpath  = http.formvalue("newpath")
-    local filepath = http.formvalue("filepath")
-    success = fs.move(filepath, newpath)
-    list_response(fs.dirname(filepath), success)
+    local newname = http.formvalue("newname")
+    local oldname = http.formvalue("oldname")
+    stat = newname and fs.move(oldname, newname)
+    list_response(fs.dirname(oldname), stat)
 end
 
 function filebrowser_newfile()
     local data = http.formvalue("data") or ''
     local newfile = http.formvalue("newfile")
     local file_handle = io.open(newfile, "w")
-    if not file_handle then return "" end
-
-    file_handle:setvbuf("full", 1024 * 1024)
-    stat = file_handle:write(data)
-    file_handle:close()
+    if file_handle then
+        file_handle:setvbuf("full", 1024 * 1024)
+        stat = file_handle:write(data)
+        file_handle:close()
+    end
     list_response(fs.dirname(newfile), stat)
 end
 
