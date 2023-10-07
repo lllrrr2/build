@@ -74,6 +74,22 @@
         cursor: pointer; /* 鼠标样式 */
     }
 
+    .notification {
+        top: 50%;                                  /* 距离顶部的偏移量为50% */
+        left: 50%;                                 /* 距离左侧的偏移量为50% */
+        color: white;                              /* 文字颜色为白色 */
+        z-index: 9999;                             /* z轴顺序为9999，使弹窗处于最上层 */
+        padding: 20px;                             /* 内边距为20像素 */
+        display: flex;                             /* 使用弹性布局 */
+        position: fixed;                           /* 固定定位 */
+        font-size: 16px;                           /* 字体大小为16像素 */
+        border-radius: 5px;                        /* 边框圆角半径为5像素 */
+        align-items: center;                       /* 垂直居中对齐 */
+        justify-content: center;                   /* 水平居中对齐 */
+        transform: translate(-50%, -50%);          /* 使用transform平移来实现居中 */
+        background-color: rgba(0, 0, 0, 0.8);      /* 背景颜色为黑色，透明度为0.8 */
+    }
+
     /* 文件图标样式 */
     .fb-container .file-icon,
     .fb-container .folder-icon,
@@ -238,6 +254,14 @@ String.prototype.replaceAll = function (search, replacement) {
         return octalValue;
     };
 
+    // function showNotification(message) {
+    //     const alertDiv = document.createElement('div');
+    //     alertDiv.classList.add('notification');
+    //     alertDiv.textContent = message;
+    //     document.body.appendChild(alertDiv);
+    //     setTimeout(() => alertDiv.remove(), 2000);
+    // };
+
     function showNotification(title = '', icon = '', text = '') {
         Swal.fire({
             icon, text, title, position: 'center',
@@ -296,6 +320,25 @@ String.prototype.replaceAll = function (search, replacement) {
         });
     };
 
+    // function renamePath(oldname) {
+    //     var newname = prompt('<%:Enter new name%> ', oldname.substring(0, oldname.lastIndexOf('.')));
+    //     if (newname && newname.trim() !== oldname) {
+    //         var extension = oldname.substring(oldname.lastIndexOf('.'));
+    //         newname = newname.trim() + extension;
+    //         xhr.get('/cgi-bin/luci/admin/system/filebrowser_rename', {
+    //             oldname: concatPath(currentPath, oldname),
+    //             newname: concatPath(currentPath, newname)
+    //         }, function (_, res) {
+    //             if (res.stat === 0) {
+    //                 refresh_list(res.data);
+    //                 showNotification(`${oldname} <%:Renaming successful!%>`);
+    //             } else {
+    //                 showNotification(`${oldname} <%:Renaming failed%>`);
+    //             }
+    //         });
+    //     }
+    // };
+
     function removePath(filename, isdir) {
         Swal.fire({
             icon: 'warning',
@@ -317,7 +360,23 @@ String.prototype.replaceAll = function (search, replacement) {
         });
     };
 
+    // const removePath = (filename, isdir) => {
+    //     if (confirm(`<%:confirm deletion%> "${filename}" ?`)) {
+    //         xhr.post('/cgi-bin/luci/admin/system/filebrowser_delete', {
+    //             isdir, path: concatPath(currentPath, filename)
+    //         }, function (x, res) {
+    //             if (res.stat === 0) {
+    //                 refresh_list(res.data);
+    //                 showNotification(`${filename} <%:successfully deleted!%>`);
+    //             } else {
+    //                 showNotification(`${filename} <%:deleted failed%>`);
+    //             }
+    //         });
+    //     }
+    // };
+
     function chmodPath(filename, type) {
+        var oldPermissions = convertPermissions(type);
         Swal.fire({
             ...swalConfig,
             input: 'text',
@@ -328,12 +387,12 @@ String.prototype.replaceAll = function (search, replacement) {
                 spellcheck: 'false',
                 autocapitalize: 'off'
             },
-            inputValue: convertPermissions(type),
+            inputValue: oldPermissions,
             title: `<%:Please enter new permissions for ${filename}%>：`,
             didRender: () => setTimeout(() => document.querySelector('.swal2-input')?.select(), 0)
         }).then(({ value }) => {
-            var permissions = value.trim();
-            if (!permissions || permissions === '') return;
+            var permissions = (value || '').trim();
+            if (!permissions || permissions === oldPermissions) return;
             xhr.post('/cgi-bin/luci/admin/system/filebrowser_modify', {
                 permissions, path: concatPath(currentPath, filename)
             }, (_, res) => {
@@ -399,6 +458,20 @@ String.prototype.replaceAll = function (search, replacement) {
             });
         });
     };
+
+    // function installipk(filename) {
+    //     if (confirm(`<%:Confirm installation%> "${filename}" ?`)) {
+    //         xhr.get('/cgi-bin/luci/admin/system/filebrowser_install', {
+    //             filepath: concatPath(currentPath, filename)
+    //         }, function (x, res) {
+    //             if (res.status === 0) {
+    //                 showNotification(`${filename} <%:Successful installation%>`);
+    //             } else {
+    //                 showNotification(`${filename} <%:installation failed%>`);
+    //             }
+    //         });
+    //     }
+    // };
 
     function openPath(filename, dirname = currentPath) {
         window.open('/cgi-bin/luci/admin/system/filebrowser_open?path=' +

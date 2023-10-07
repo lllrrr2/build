@@ -33,23 +33,23 @@ local MIME_TYPES = {
     tgz   = "application/x-compressed-tar",
     deb   = "application/x-deb",
     iso   = "application/x-cd-image",
-    txt   = "text/plain",
-    conf  = "text/plain",
-    ovpn  = "text/plain",
-    log   = "text/plain",
-    js    = "text/javascript",
-    json  = "application/json",
-    lua   = "text/plain",
-    css   = "text/css",
-    htm   = "text/html",
-    html  = "text/html",
-    patch = "text/x-patch",
+    txt   = "text/plain;charset=UTF-8",
+    conf  = "text/plain;charset=UTF-8",
+    ovpn  = "text/plain;charset=UTF-8",
+    log   = "text/plain;charset=UTF-8",
+    js    = "text/javascript;charset=UTF-8",
+    json  = "application/json;charset=UTF-8",
+    lua   = "text/plain;charset=UTF-8",
+    css   = "text/css;charset=UTF-8",
+    htm   = "text/html;charset=UTF-8",
+    html  = "text/html;charset=UTF-8",
+    patch = "text/x-patch;charset=UTF-8",
     c     = "text/x-csrc",
     h     = "text/x-chdr",
     o     = "text/x-object",
     ko    = "text/x-object",
     pl    = "application/x-perl",
-    sh    = "text/plain",
+    sh    = "text/plain;charset=UTF-8",
     php   = "application/x-php",
     mp3   = "audio/mpeg",
     ogg   = "audio/x-vorbis+ogg",
@@ -98,7 +98,7 @@ end
 function filebrowser_rename()
     local newname = http.formvalue("newname")
     local oldname = http.formvalue("oldname")
-    stat = newname and fs.move(oldname, newname)
+    stat = fs.move(oldname, newname)
     list_response(fs.dirname(oldname), stat)
 end
 
@@ -117,7 +117,7 @@ end
 function filebrowser_modify()
     local path   = http.formvalue("path")
     local modify = http.formvalue("permissions")
-    stat = fs.chmod(path, modify)
+    stat = path and fs.chmod(path, modify)
     list_response(fs.dirname(path), stat)
 end
 
