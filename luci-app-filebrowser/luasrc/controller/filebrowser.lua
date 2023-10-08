@@ -6,11 +6,11 @@ function index()
     entry({"admin", "system", "filebrowser"}, template("filebrowser"), _("File management"), 60).dependent = true
     entry({"admin", "system", "filebrowser_list"}, call("filebrowser_list"), nil).leaf = true
     entry({"admin", "system", "filebrowser_open"}, call("filebrowser_open"), nil).leaf = true
-    entry({"admin", "system", "filebrowser_delete"}, call("filebrowser_delete"), nil).leaf = true
-    entry({"admin", "system", "filebrowser_rename"}, call("filebrowser_rename"), nil).leaf = true
+    entry({"admin", "system", "deleteFiles"}, call("deleteFiles"), nil).leaf = true
+    entry({"admin", "system", "renameFile"}, call("renameFile"), nil).leaf = true
     entry({"admin", "system", "filebrowser_upload"}, call("filebrowser_upload"), nil).leaf = true
-    entry({"admin", "system", "filebrowser_modify"}, call("filebrowser_modify"), nil).leaf = true
-    entry({"admin", "system", "filebrowser_newfile"}, call("filebrowser_newfile"), nil).leaf = true
+    entry({"admin", "system", "modifypermissions"}, call("modifypermissions"), nil).leaf = true
+    entry({"admin", "system", "createNewFile"}, call("createNewFile"), nil).leaf = true
     entry({"admin", "system", "filebrowser_install"}, call("fileassistant_install"), nil).leaf = true
 end
 
@@ -88,21 +88,21 @@ function filebrowser_list()
     list_response(http.formvalue("path"), true)
 end
 
-function filebrowser_delete()
+function deleteFiles()
     local isdir = http.formvalue("isdir")
     local path  = replacePathChars(http.formvalue("path"))
     stat = isdir and util.exec('rm -rf "%s"' %path) or fs.remover(path)
     list_response(fs.dirname(path), stat)
 end
 
-function filebrowser_rename()
+function renameFile()
     local newname = http.formvalue("newname")
     local oldname = http.formvalue("oldname")
     stat = fs.move(oldname, newname)
     list_response(fs.dirname(oldname), stat)
 end
 
-function filebrowser_newfile()
+function createNewFile()
     local data = http.formvalue("data") or ''
     local newfile = http.formvalue("newfile")
     local file_handle = io.open(newfile, "w")
@@ -114,7 +114,7 @@ function filebrowser_newfile()
     list_response(fs.dirname(newfile), stat)
 end
 
-function filebrowser_modify()
+function modifypermissions()
     local path   = http.formvalue("path")
     local modify = http.formvalue("permissions")
     stat = path and fs.chmod(path, modify)

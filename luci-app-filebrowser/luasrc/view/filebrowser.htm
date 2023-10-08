@@ -262,6 +262,71 @@ String.prototype.replaceAll = function (search, replacement) {
     //     setTimeout(() => alertDiv.remove(), 2000);
     // };
 
+    // function renameFile(oldname) {
+    //     // var newname = prompt('<%:Enter new name%> ', oldname.substring(0, oldname.lastIndexOf('.')));
+    //     var newname = prompt('<%:Enter new name%> ', oldname);
+    //     if (newname && newname.trim() !== oldname) {
+    //         // var extension = oldname.substring(oldname.lastIndexOf('.'));
+    //         // newname = newname.trim() + extension;
+    //         xhr.get('/cgi-bin/luci/admin/system/renameFile', {
+    //             oldname: concatPath(currentPath, oldname),
+    //             newname: concatPath(currentPath, newname)
+    //         }, function (_, res) {
+    //             if (res.stat === 0) {
+    //                 refresh_list(res.data);
+    //                 showNotification(`${oldname} <%:Renaming successful!%>`);
+    //             } else {
+    //                 showNotification(`${oldname} <%:Renaming failed%>`);
+    //             }
+    //         });
+    //     }
+    // };
+
+    // function deleteFiles(filename, isdir) {
+    //     if (confirm(`<%:confirm deletion%> "${filename}" ?`)) {
+    //         xhr.post('/cgi-bin/luci/admin/system/deleteFiles', {
+    //             isdir, path: concatPath(currentPath, filename)
+    //         }, function (x, res) {
+    //             if (res.stat === 0) {
+    //                 refresh_list(res.data);
+    //                 showNotification(`${filename} <%:successfully deleted!%>`);
+    //             } else {
+    //                 showNotification(`${filename} <%:deleted failed%>`);
+    //             }
+    //         });
+    //     }
+    // };
+
+    // function modifypermissions(filename, type) {
+    //     var oldPermissions = convertPermissions(type);
+    //     var permissions = prompt(`<%:Please enter new permissions for ${filename}%> `, oldPermissions);
+    //     if (!permissions || permissions === oldPermissions) return;
+    //     xhr.post('/cgi-bin/luci/admin/system/modifypermissions', {
+    //         permissions, path: concatPath(currentPath, filename)
+    //     }, (_, res) => {
+    //         if (res && res.stat === 0) {
+    //             refresh_list(res.data);
+    //             showNotification(`"${filename}" <%:Permissions modified successfully%>`, 'success');
+    //         } else {
+    //             showNotification(`"${filename}" <%:Permission modification failed%>`, 'error');
+    //         }
+    //     });
+    // };
+
+    // function installipk(filename) {
+    //     if (confirm(`<%:Confirm installation%> "${filename}" ?`)) {
+    //         xhr.get('/cgi-bin/luci/admin/system/filebrowser_install', {
+    //             filepath: concatPath(currentPath, filename)
+    //         }, function (x, res) {
+    //             if (res.status === 0) {
+    //                 showNotification(`${filename} <%:Successful installation%>`);
+    //             } else {
+    //                 showNotification(`${filename} <%:installation failed%>`);
+    //             }
+    //         });
+    //     }
+    // };
+
     function showNotification(title = '', icon = '', text = '') {
         Swal.fire({
             icon, text, title, position: 'center',
@@ -289,7 +354,7 @@ String.prototype.replaceAll = function (search, replacement) {
         }
     };
 
-    function renamePath(oldname) {
+    function renameFile(oldname) {
         Swal.fire({
             ...swalConfig,
             input: 'text',
@@ -305,7 +370,7 @@ String.prototype.replaceAll = function (search, replacement) {
             preConfirm: (newname) => {
                 newname = newname.trim();
                 if (!newname || newname === oldname) return;
-                xhr.post('/cgi-bin/luci/admin/system/filebrowser_rename', {
+                xhr.post('/cgi-bin/luci/admin/system/renameFile', {
                     newname: concatPath(currentPath, newname),
                     oldname: concatPath(currentPath, oldname)
                 }, (_, res) => {
@@ -320,33 +385,14 @@ String.prototype.replaceAll = function (search, replacement) {
         });
     };
 
-    // function renamePath(oldname) {
-    //     var newname = prompt('<%:Enter new name%> ', oldname.substring(0, oldname.lastIndexOf('.')));
-    //     if (newname && newname.trim() !== oldname) {
-    //         var extension = oldname.substring(oldname.lastIndexOf('.'));
-    //         newname = newname.trim() + extension;
-    //         xhr.get('/cgi-bin/luci/admin/system/filebrowser_rename', {
-    //             oldname: concatPath(currentPath, oldname),
-    //             newname: concatPath(currentPath, newname)
-    //         }, function (_, res) {
-    //             if (res.stat === 0) {
-    //                 refresh_list(res.data);
-    //                 showNotification(`${oldname} <%:Renaming successful!%>`);
-    //             } else {
-    //                 showNotification(`${oldname} <%:Renaming failed%>`);
-    //             }
-    //         });
-    //     }
-    // };
-
-    function removePath(filename, isdir) {
+    function deleteFiles(filename, isdir) {
         Swal.fire({
             icon: 'warning',
             ...swalConfig,
             title: `<%:confirm deletion%> "${filename}" ?`
         }).then((result) => {
             if (result.isConfirmed) {
-                xhr.post('/cgi-bin/luci/admin/system/filebrowser_delete', {
+                xhr.post('/cgi-bin/luci/admin/system/deleteFiles', {
                     isdir, path: concatPath(currentPath, filename)
                 }, function (_, res) {
                     if (res && res.stat === 0) {
@@ -360,22 +406,7 @@ String.prototype.replaceAll = function (search, replacement) {
         });
     };
 
-    // const removePath = (filename, isdir) => {
-    //     if (confirm(`<%:confirm deletion%> "${filename}" ?`)) {
-    //         xhr.post('/cgi-bin/luci/admin/system/filebrowser_delete', {
-    //             isdir, path: concatPath(currentPath, filename)
-    //         }, function (x, res) {
-    //             if (res.stat === 0) {
-    //                 refresh_list(res.data);
-    //                 showNotification(`${filename} <%:successfully deleted!%>`);
-    //             } else {
-    //                 showNotification(`${filename} <%:deleted failed%>`);
-    //             }
-    //         });
-    //     }
-    // };
-
-    function chmodPath(filename, type) {
+    function modifypermissions(filename, type) {
         var oldPermissions = convertPermissions(type);
         Swal.fire({
             ...swalConfig,
@@ -393,7 +424,7 @@ String.prototype.replaceAll = function (search, replacement) {
         }).then(({ value }) => {
             var permissions = (value || '').trim();
             if (!permissions || permissions === oldPermissions) return;
-            xhr.post('/cgi-bin/luci/admin/system/filebrowser_modify', {
+            xhr.post('/cgi-bin/luci/admin/system/modifypermissions', {
                 permissions, path: concatPath(currentPath, filename)
             }, (_, res) => {
                 if (res && res.stat === 0) {
@@ -406,7 +437,7 @@ String.prototype.replaceAll = function (search, replacement) {
         });
     };
 
-    const newfile = async () => {
+    const createNewFile = async () => {
         const { value: newname } = await Swal.fire({
             ...swalConfig,
             input: 'text',
@@ -429,7 +460,7 @@ String.prototype.replaceAll = function (search, replacement) {
         });
         if (!data) return;
 
-        xhr.post('/cgi-bin/luci/admin/system/filebrowser_newfile', {
+        xhr.post('/cgi-bin/luci/admin/system/createNewFile', {
             data, newfile: concatPath(currentPath, newname)
         }, function (_, res) {
             if (res && res.stat === 0) {
@@ -459,20 +490,6 @@ String.prototype.replaceAll = function (search, replacement) {
         });
     };
 
-    // function installipk(filename) {
-    //     if (confirm(`<%:Confirm installation%> "${filename}" ?`)) {
-    //         xhr.get('/cgi-bin/luci/admin/system/filebrowser_install', {
-    //             filepath: concatPath(currentPath, filename)
-    //         }, function (x, res) {
-    //             if (res.status === 0) {
-    //                 showNotification(`${filename} <%:Successful installation%>`);
-    //             } else {
-    //                 showNotification(`${filename} <%:installation failed%>`);
-    //             }
-    //         });
-    //     }
-    // };
-
     function openPath(filename, dirname = currentPath) {
         window.open('/cgi-bin/luci/admin/system/filebrowser_open?path=' +
             encodeURIComponent(dirname) + '&filename=' +
@@ -494,10 +511,10 @@ String.prototype.replaceAll = function (search, replacement) {
 
         if (targetElem.classList.contains('button-remove')) {
             infoElem = targetElem.parentNode.parentNode;
-            removePath(infoElem.dataset.filename, infoElem.dataset.isdir);
+            deleteFiles(infoElem.dataset.filename, infoElem.dataset.isdir);
         } else if (targetElem.classList.contains('button-rename')) {
             infoElem = targetElem.parentNode.parentNode;
-            renamePath(infoElem.dataset.filename);
+            renameFile(infoElem.dataset.filename);
         } else if (targetElem.classList.contains('button-install')) {
             infoElem = targetElem.parentNode.parentNode;
             installipk(infoElem.dataset.filename);
@@ -594,10 +611,10 @@ String.prototype.replaceAll = function (search, replacement) {
         function createCustomMenu(filename, targetElem) {
             removeCustomMenu();
             const menuItems = [
-                { label: "<%:Rename%>", action: () => renamePath(filename) },
-                { label: "<%:create a new file%>", action: () => newfile() },
-                { label: "<%:Delete%>", action: () => removePath(filename, targetElem.dataset.isdir) },
-                { label: "<%:Modify permissions%>", action: () => chmodPath(filename, targetElem.dataset.type) },
+                { label: "<%:Rename%>", action: () => renameFile(filename) },
+                { label: "<%:create a new file%>", action: () => createNewFile() },
+                { label: "<%:Delete%>", action: () => deleteFiles(filename, targetElem.dataset.isdir) },
+                { label: "<%:Modify permissions%>", action: () => modifypermissions(filename, targetElem.dataset.type) },
                 ...(currentPath.split('/').length > 2 ? [{ label: "<%:Back to previous%>", action: () => update_list(currentPath.replace(/\/[^/]+\/?$/, '')) }] : [])
             ];
             customMenu = document.createElement('ul');
