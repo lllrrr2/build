@@ -118,6 +118,12 @@ msgstr "文件创建失败！"
 msgid "create a new file"
 msgstr "新建文件"
 
+msgid "Current directory"
+msgstr "当前目录"
+
+msgid "upload file"
+msgstr "上传文件"
+
 msgid "owner"
 msgstr "所有者"
 

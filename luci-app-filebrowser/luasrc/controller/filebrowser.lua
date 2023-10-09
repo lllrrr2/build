@@ -131,8 +131,8 @@ function fileassistant_install()
 end
 
 function filebrowser_upload()
-    local uploaddir = http.formvalue("upload-dir")
-    local filename = http.formvalue("upload-filename")
+    local filename = http.formvalue("filename")
+    local uploaddir = http.formvalue("uploaddir")
     if filename:match("%.(%w+)$") == "ipk" then
         uploaddir = '/tmp/upload/'
         fs.mkdir(uploaddir)
