@@ -1,20 +1,17 @@
 msgid "File management"
 msgstr "文件管理"
 
-msgid "Current directory"
-msgstr "当前目录"
-
-msgid "File List"
-msgstr "文件列表"
-
-msgid "start"
-msgstr "开始"
+msgid "Go to directory"
+msgstr "转到目录"
 
 msgid "Upload to current directory"
 msgstr "上传到当前目录"
 
 msgid "confirm deletion"
 msgstr "确定删除"
+
+msgid "create new file"
+msgstr "创建新文件"
 
 msgid "Enter new name"
 msgstr "输入新的文件名"
@@ -97,8 +94,8 @@ msgstr "安装失败"
 msgid "Confirm installation"
 msgstr "确定安装"
 
-msgid "Enter file name"
-msgstr "输入文件名"
+msgid "Enter name"
+msgstr "输入名称"
 
 msgid "For example: example.txt"
 msgstr "例如：example.txt"
@@ -106,7 +103,7 @@ msgstr "例如：example.txt"
 msgid "Enter file content"
 msgstr "输入文件内容"
 
-msgid "enter text here"
+msgid "Enter text here"
 msgstr "在这里输入文本"
 
 msgid "File created successfully!"
@@ -115,14 +112,32 @@ msgstr "文件创建成功！"
 msgid "File creation failed!"
 msgstr "文件创建失败！"
 
-msgid "create a new file"
-msgstr "新建文件"
-
-msgid "Current directory"
-msgstr "当前目录"
+msgid "Create file (directory)"
+msgstr "创建文件（目录）"
 
 msgid "upload file"
 msgstr "上传文件"
+
+msgid "Create as directory"
+msgstr "创建为目录"
+
+msgid "You can enter a file name or directory name"
+msgstr "可以输入文件名或者目录名"
+
+msgid "download file"
+msgstr "下载文件"
+
+msgid "Confirm download"
+msgstr "确定下载"
+
+msgid "Do you want to create this directory?"
+msgstr "是否要创建该目录？"
+
+msgid "The directory does not exist"
+msgstr "的目录不存在"
+
+msgid "If the path is the root directory, add '&' at the first character"
+msgstr "如路径是根目录在首字符添加'&'"
 
 msgid "owner"
 msgstr "所有者"

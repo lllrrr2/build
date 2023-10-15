@@ -1,13 +1,11 @@
 <%+header%>
 <style>
-    /* 容器样式 */
     .fb-container {
         margin: 0; /* 居中显示 */
         max-width: 800px; /* 容器最大宽度 */
         margin-top: 1rem; /* 顶部边距 */
     }
 
-    /* 表格样式 */
     .fb-container table {
         width: 100%; /* 宽度自适应 */
     }
@@ -19,148 +17,96 @@
 /*        border-bottom: 1px solid #ddd;*/
     }
 
-    /* 奇数行样式 */
     .cbi-section-table-row:nth-child(odd) {
         color: #000000; /* 奇数行文本颜色 */
         background-color: #f2f2f2; /* 奇数行背景色 */
     }
 
-    /* 偶数行样式 */
     .cbi-section-table-row:nth-child(even) {
         color: #333333; /* 偶数行文本颜色 */
         background-color: #ffffff; /* 偶数行背景色 */
     }
 
-    /* 输入框样式 */
     .fb-container .cbi-input-text {
         width: 100%; /* 宽度自适应 */
     }
 
-    /* 上传文件容器样式 */
-    .upload-container {
-        display: none; /* 隐藏上传文件容器 */
-        margin: 1rem 0; /* 上下间距 */
-    }
-
-    /* 字段值样式 */
     .fb-container .cbi-value-field {
         text-align: left; /* 文字左对齐 */
     }
 
-    /* 父级图标样式 */
-    .fb-container .back-icon,
-    .fb-container .back-root-icon {
-        color: red;
-        font-size: 25px;
-        cursor: pointer;
-        text-align: right;
-        margin-left: 10px;
-    }
-
-    /* 输入框容器样式 */
     .input-container {
         display: flex; /* 使用flexbox布局 */
         align-items: center; /* 垂直居中对齐 */
         justify-content: center; /* 水平居中对齐 */
     }
 
-    .return-icon {
-        display: flex; /* 使用flexbox布局 */
-        align-items: center; /* 垂直居中对齐 */
-    }
-
-    /* 图标样式 */
     .fb-container td[class$="-icon"] {
         cursor: pointer; /* 鼠标样式 */
     }
 
-    .notification {
-        top: 50%;                                  /* 距离顶部的偏移量为50% */
-        left: 50%;                                 /* 距离左侧的偏移量为50% */
-        color: white;                              /* 文字颜色为白色 */
-        z-index: 9999;                             /* z轴顺序为9999，使弹窗处于最上层 */
-        padding: 20px;                             /* 内边距为20像素 */
-        display: flex;                             /* 使用弹性布局 */
-        position: fixed;                           /* 固定定位 */
-        font-size: 16px;                           /* 字体大小为16像素 */
-        border-radius: 5px;                        /* 边框圆角半径为5像素 */
-        align-items: center;                       /* 垂直居中对齐 */
-        justify-content: center;                   /* 水平居中对齐 */
-        transform: translate(-50%, -50%);          /* 使用transform平移来实现居中 */
-        background-color: rgba(0, 0, 0, 0.8);      /* 背景颜色为黑色，透明度为0.8 */
-    }
-
-    /* 文件图标样式 */
     .fb-container .file-icon,
-    .fb-container .folder-icon,
-    .fb-container .link-icon {
+    .fb-container .link-icon,
+    .fb-container .folder-icon, {
         position: relative; /* 相对定位 */
     }
 
-    /* 文件伪元素样式 */
     .fb-container .file-icon:before,
     .fb-container .link-icon:before,
     .fb-container .folder-icon:before {
-        position: relative; /* 相对定位 */
         content: ''; /* 伪元素的内容为空 */
         width: 1.5rem; /* 宽度 */
         height: 1.5rem; /* 高度 */
+        position: relative; /* 相对定位 */
+        margin-right: 0.5rem; /* 右边间距 */
         display: inline-block; /* 行内块元素 */
         vertical-align: middle; /* 垂直居中 */
-        margin-right: 0.5rem; /* 右边间距 */
         background-size: contain; /* 背景图自适应 */
     }
 
-    /* 文件图标伪元素样式 */
     .fb-container .file-icon:before {
-        background-image: url(/luci-static/resources/fb/file-icon.png); /* 文件图标 */
+        background-image: url(/luci-static/resources/fb/file-icon.png);
     }
 
-    /* 文件夹图标伪元素样式 */
     .fb-container .folder-icon:before {
-        background-image: url(/luci-static/resources/fb/folder-icon.png); /* 文件夹图标 */
+        background-image: url(/luci-static/resources/fb/folder-icon.png);
     }
 
-    /* 链接图标伪元素样式 */
     .fb-container .link-icon:before {
-        background-image: url(/luci-static/resources/fb/link-icon.png); /* 链接图标 */
+        background-image: url(/luci-static/resources/fb/link-icon.png);
     }
 
-    /* 定义自定义菜单样式 */
     .custom-menu {
-        position: fixed; /* 菜单固定定位在页面上 */
-        background-color: #f5f5f5; /* 菜单背景色为灰色 */
-        border: 1px solid #ddd; /* 菜单外边框为浅灰色, 1像素粗 */
-        border-radius: 5px; /* 菜单边框圆角半径为5像素 */
-        padding: 5px 0; /* 菜单内部上下有5像素的内边距, 左右无内边距 */
-        font-size: 14px; /* 菜单项的字体大小为14像素 */
-        font-family: Arial, sans-serif; /* 使用 Arial 字体, 如果不存在则使用 sans-serif 字体 */
-        box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.1); /* 为菜单添加阴影效果 */
-        z-index: 99999; /* 设置菜单的z轴层级, 以确保它在其他元素之上显示 */
+        padding: 5px 0;
+        z-index: 99999;
+        position: fixed;
+        font-size: 14px;
+        border-radius: 5px;
+        border: 1px solid #ddd;
+        background-color: #f5f5f5;
+        font-family: Arial, sans-serif;
+        box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.1);
     }
 
-    /* 定义菜单项样式 */
     .menu-item {
-        display: block; /* 将菜单项以块级元素方式显示 */
-        color: #333; /* 菜单项的字体颜色为深灰色 */
-        cursor: pointer; /* 当鼠标悬浮在菜单项上时，鼠标指针显示为手型 */
-        padding: 5px 10px; /* 菜单项内部上下有8像素的内边距, 左右有16像素的内边距 */
-        transition: all 0.3s ease-in-out; /* 菜单项过渡效果，耗时0.3秒，平滑过渡 */
+        color: #333;
+        display: block;
+        cursor: pointer;
+        padding: 5px 10px;
+        transition: all 0.3s ease-in-out;
     }
 
-    /* 当鼠标悬浮在菜单项上时，改变背景色和文字颜色 */
     .menu-item:hover {
-        color: #007bff; /* 鼠标悬浮在菜单项上时，字体颜色变为蓝色 */
-        background-color: #fff; /* 鼠标悬浮在菜单项上时，背景色变为白色 */
+        color: #007bff;
+        background-color: #fff;
     }
 
-    /* 定义菜单项之间的分割线 */
     .menu-item:not(:last-child) {
-        border-bottom: 1px solid #ddd; /* 菜单项之间使用浅灰色分割线, 线宽为1像素 */
+        border-bottom: 1px solid #ddd;
     }
 
     .swal-title {
-        font-size: 20px;
+        font-size: 18px;
     }
 
     .swal-text {
@@ -173,72 +119,139 @@
         background-color: #f2f2f2;
     }
 
-    .swal-confirm-button, .swal-cancel-button {
-        font-size: 10px; /*设置字体大小为16像素。*/
-        padding: 6px 10px; /*设置内边距为上下各10像素，左右各20像素。*/
+    .swal-cancel-button,
+    .swal-confirm-button {
+        bottom: 5px;
+        color: #fff;
+        border: none;
+        cursor: pointer;
+        position: sticky;
+        padding: 6px 10px;
+        border-radius: 5px;
+        margin-right: 50px;
+        transition: all 0.2s ease-in-out;
+        background-color: hsl(214, 90%, 52%);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
     }
 
-    /* 响应式样式 */
+    .swal-cancel-button:hover,
+    .swal-confirm-button:hover {
+        background-color: hsl(324, 90%, 52%); /* 调整为不同的色相（差别大） */
+    }
+
+/*    在480px以下的屏幕*/
     @media screen and (max-width: 480px) {
-        /* 上传文件容器宽度样式 */
-        .fb-container .upload-file {
-            width: 7rem; /* 根据屏幕宽度调整上传文件容器的宽度 */
+        .cbi-value-field {
+          width: 30px; /* 设置一个固定宽度，根据需求调整 */
+          white-space: nowrap; /* 防止换行 */
+          overflow: hidden; /* 控制溢出隐藏 */
+          text-overflow: ellipsis; /* 显示省略号 */
         }
 
-        .return-icon {
-            align-items: center; /* 垂直居中对齐 */
+        .menu-item {
+            font-size: 12px;
+            padding: 3px 8px;
         }
 
-        /* 权限信息隐藏样式 */
         .display-480px {
-            display: none; /* 在480px以下的屏幕上隐藏权限信息 */
+            display: none;
         }
     }
 </style>
-
-<script src="/luci-static/resources/fb/sweetalert2.all.js"></script>
-<link rel="stylesheet" href="/luci-static/resources/fb/sweetalert2.min.css">
 <h2 name="content"><%:File management%></h2>
 <fieldset class="fb-container">
     <div class="input-container">
-        <div style="white-space: nowrap; text-align: right; padding-right: 2ch;"><b><%:Current directory%></b></div>
-        <input id="current-path" type="text" class="current-path cbi-input-text" value="/" />
-        <button id="upload-toggle" class="cbi-button cbi-button-apply"><%:Upload to current directory%></button>
+        <button id="createnewfile" class="cbi-button cbi-button-apply"><%:create new file%></button>
+        <input id="current-path" type="text" title="<%:If the path is the root directory, add '&' at the first character%>" class="cbi-input-text" value="/" />
+        <button id="godirectory" class="cbi-button cbi-button-apply"><%:Go to directory%></button>
+        <button id="uploadfile" class="cbi-button cbi-button-apply"><%:Upload to current directory%></button>
     </div>
-    <div id="list-content"></div>
 </fieldset>
-
 <script>
+
 String.prototype.replaceAll = function (search, replacement) {
     return this.replace(new RegExp(search, 'g'), replacement); //替换所有匹配字符串
 };
+// const container = document.getElementById('maincontent');
+// function createHTML(strings, ...values) {
+//     const template = document.createElement('template');
+//     template.innerHTML = strings.reduce((acc, str, i) => acc + str + (values[i] || ''), '');
+//     return template.content;
+// }
+// container.append(
+//     createHTML`
+//         <h2 name="content"><%:File management%></h2>
+//         <fieldset class="fb-container">
+//             <div class="input-container">
+//                 <button id="createnewfile" class="cbi-button cbi-button-apply"><%:create new file%></button>
+//                 <input id="current-path" type="text" class="current-path cbi-input-text" title="<%:If the path is the root directory, add '&' at the first character%>" value="/">
+//                 <button id="godirectory" class="cbi-button cbi-button-apply"><%:Go to directory%></button>
+//                 <button id="uploadfile" class="cbi-button cbi-button-apply"><%:Upload to current directory%></button>
+//             </div>
+//         </fieldset>
+//     `
+// );
+
+const scriptElem = document.createElement('script');
+scriptElem.src = '/luci-static/resources/fb/sweetalert2.all.js';
+const linkElem = document.createElement('link');
+linkElem.rel = 'stylesheet';
+linkElem.href = '/luci-static/resources/fb/sweetalert2.min.css';
+document.head.append(scriptElem, linkElem);
 
 // console.log(uploaddir);
 (function () {
+    let currentPath, customMenu = null;
     const xhr = new XHR();
-    const listElem = document.getElementById("list-content");
     const pathElem = document.getElementById("current-path");
+    document.getElementById('uploadfile').addEventListener('click', uploadfile);
+    document.getElementById('godirectory').addEventListener('click', godirectory);
+    document.getElementById('createnewfile').addEventListener('click', createnewfile);
+    const listElem = document.querySelector(".fb-container").appendChild(document.createElement("div"));
+    listElem.id = "file-list";
     listElem.onclick = handleClick;
 
-    pathElem.onblur = function () {
-        update_list(this.value.trim());
+    pathElem.onblur = async function() {
+        let filePath = resolveFilePath(this.value.trim());
+        const exists = await checkdirectory(filePath);
+        exists ? update_list(filePath) : await godirectory();
     };
 
-    pathElem.onkeyup = function (evt) {
-        if (evt.keyCode === 13) { this.blur(); }
-    };
+    pathElem.addEventListener("keyup", event => {
+        if (event.key === "Enter") { pathElem.blur(); }
+    });
 
-    let currentPath;
+    function getInitPath() {
+        const urlParams = new URLSearchParams(location.search);
+        return urlParams.get('path') || '/';
+    }
 
-    function update_list(path, opt = {}, upload) {
-        path = concatPath(path);
-        if (currentPath === path && !upload) return;
-        xhr.get('/cgi-bin/luci/admin/system/filebrowser_list', { path }, (_, res) => {
-            refresh_list(res?.stat === 0 ? res.data : []);
-        });
-        currentPath = path;
-        pathElem.value = path;
-        opt.popState || history.pushState({ path }, null, '?path=' + path);
+    function concatPath(path, filename = '') {
+        return `${path.replace(/\/*$/, '/')}${filename}`;
+    }
+
+    function resolveFilePath(newname) {
+        return /^&\//.test(newname)
+            ? newname.replace(/^&/, '')
+            : newname.startsWith(currentPath)
+                ? newname
+                : concatPath(currentPath, newname.replace(/^\//, ''));
+    }
+
+    function colorMessage(name, color) {
+        return `<span style="color: ${color};">${name}</span>`;
+    }
+
+    function removeCustomMenu() {
+        customMenu?.remove(); customMenu = null;
+    }
+
+    function getFileElem(elem) {
+        return elem.className.includes('-icon')
+            ? elem
+            : elem.parentNode.className.includes('-icon')
+                ? elem.parentNode
+                : '';
     }
 
     function convertPermissions(permissions) {
@@ -252,151 +265,68 @@ String.prototype.replaceAll = function (search, replacement) {
         return octalValue;
     }
 
-    // function showNotification(message) {
-    //     const alertDiv = document.createElement('div');
-    //     alertDiv.classList.add('notification');
-    //     alertDiv.textContent = message;
-    //     document.body.appendChild(alertDiv);
-    //     setTimeout(() => alertDiv.remove(), 2000);
-    // }
+    function calculateTotalSize(filenames) {
+        let totalSize = 0, unitIndex = 0;
+        const units = ['B', 'KB', 'MB', 'GB'];
+        const sizeFactor = { K: 1024, M: 1024 * 1024, G: 1024 * 1024 * 1024 };
 
-    // function renameFile(oldname) {
-    //     // var newname = prompt('<%:Enter new name%> ', oldname.substring(0, oldname.lastIndexOf('.')));
-    //     var newname = prompt('<%:Enter new name%> ', oldname);
-    //     if (newname && newname.trim() !== oldname) {
-    //         // var extension = oldname.substring(oldname.lastIndexOf('.'));
-    //         // newname = newname.trim() + extension;
-    //         xhr.get('/cgi-bin/luci/admin/system/renameFile', {
-    //             oldname: concatPath(currentPath, oldname),
-    //             newname: concatPath(currentPath, newname)
-    //         }, function (_, res) {
-    //             if (res.stat === 0) {
-    //                 refresh_list(res.data);
-    //                 showNotification(`${oldname} <%:Renaming successful!%>`);
-    //             } else {
-    //                 showNotification(`${oldname} <%:Renaming failed%>`);
-    //             }
-    //         });
-    //     }
-    // }
+        filenames.forEach(line => {
+            const [, , , , size] = line.trim().split(/\s+/);
+            const suffix = size.slice(-1).toUpperCase();
+            const parsedSize = parseFloat(size.slice(0, -1)) * sizeFactor[suffix] || 1;
+            if (!isNaN(parsedSize)) totalSize += parsedSize;
+        });
 
-    // function deleteFiles(filename, isdir) {
-    //     if (confirm(`<%:confirm deletion%> "${filename}" ?`)) {
-    //         xhr.post('/cgi-bin/luci/admin/system/deleteFiles', {
-    //             isdir, path: concatPath(currentPath, filename)
-    //         }, function (x, res) {
-    //             if (res.stat === 0) {
-    //                 refresh_list(res.data);
-    //                 showNotification(`${filename} <%:successfully deleted!%>`);
-    //             } else {
-    //                 showNotification(`${filename} <%:deleted failed%>`);
-    //             }
-    //         });
-    //     }
-    // }
+        while (totalSize >= 1024 && unitIndex < units.length - 1) {
+            totalSize /= 1024; unitIndex++;
+        }
 
-    // function modifypermissions(filename, type) {
-    //     var oldPermissions = convertPermissions(type);
-    //     var permissions = prompt(`<%:Please enter new permissions for ${filename}%> `, oldPermissions);
-    //     if (!permissions || permissions === oldPermissions) return;
-    //     xhr.post('/cgi-bin/luci/admin/system/modifypermissions', {
-    //         permissions, path: concatPath(currentPath, filename)
-    //     }, (_, res) => {
-    //         if (res && res.stat === 0) {
-    //             refresh_list(res.data);
-    //             showNotification(`"${filename}" <%:Permissions modified successfully%>`, 'success');
-    //         } else {
-    //             showNotification(`"${filename}" <%:Permission modification failed%>`, 'error');
-    //         }
-    //     });
-    // }
+        return `${totalSize.toFixed(2)} ${units[unitIndex]}`;
+    }
 
-    // function installipk(filename) {
-    //     if (confirm(`<%:Confirm installation%> "${filename}" ?`)) {
-    //         xhr.get('/cgi-bin/luci/admin/system/filebrowser_install', {
-    //             filepath: concatPath(currentPath, filename)
-    //         }, function (x, res) {
-    //             if (res.status === 0) {
-    //                 showNotification(`${filename} <%:Successful installation%>`);
-    //             } else {
-    //                 showNotification(`${filename} <%:installation failed%>`);
-    //             }
-    //         });
-    //     }
-    // }
-
-    function showNotification(title = '', icon = '', text = '') {
+    function swalNotification(title = '', icon = '') {
         Swal.fire({
-            icon, text, title, position: 'center',
-            timer: 2000, showConfirmButton: false,
+            icon, title, timer: 2000, showConfirmButton: false,
             customClass: {
-                text: 'swal-text',
-                title: 'swal-title',
-                popup: 'swal-popup'
+                text: 'swal-text', title: 'swal-title', popup: 'swal-popup'
             }
         });
     }
 
     const swalConfig = {
-        showCancelButton: true,
-        cancelButtonColor: '#d33',
-        confirmButtonColor: '#3085d6',
-        cancelButtonText: '<%:Cancel%>',
-        confirmButtonText: '<%:Confirm%>',
+        showCloseButton: true, cancelButtonText: '<%:Cancel%>',
+        showCancelButton: true, confirmButtonText: '<%:Confirm%>',
+        cancelButtonColor: '#d33', confirmButtonColor: '#3085d6',
         customClass: {
-            text: 'swal-text',
             title: 'swal-title',
-            popup: 'swal-popup',
-            cancelButton: 'swal-cancel-button',
-            confirmButton: 'swal-confirm-button'
+            text: 'swal-text', confirmButton: 'swal-confirm-button',
+            popup: 'swal-popup', cancelButton: 'swal-cancel-button'
         }
+    };
+
+    function update_list(path, opt = {}, upload) {
+        path = concatPath(path);
+        if (currentPath === path && !upload) return;
+        let xhr = new XMLHttpRequest();
+        xhr.open('GET', '/cgi-bin/luci/admin/system/file_list?path=' + encodeURIComponent(path), true);
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                if (xhr.status === 200) {
+                    const res = JSON.parse(xhr.responseText);
+                    refresh_list(res?.stat === 0 ? res.data : []);
+                }
+            }
+        };
+        xhr.send();
+        currentPath = path; pathElem.value = path;
+        opt.popState || history.pushState({ path }, null, `?path=${path}`);
     }
 
-    const uploadToggleBtn = document.getElementById('upload-toggle');
-    uploadToggleBtn.addEventListener('click', uploadfile);
-
-    async function uploadfile() {
-        const { value: file } = await Swal.fire({
-            ...swalConfig,
-            input: 'file',
-            title: '<%:upload file%>',
-            inputAttributes: {
-                accept: '/*' // 可以根据需要设置文件类型限制，例如只接受图片文件：accept: 'image/*'
-            }
-        });
-
-        if (!file) return
-        const data = new FormData();
-        data.append('file', file);
-        data.append('filename', file.name);
-        data.append('uploaddir', concatPath(currentPath));
-
-        try {
-            const response = await fetch("/cgi-bin/luci/admin/system/filebrowser_upload", {
-                body: data, method: 'POST'
-            });
-
-            if (response.ok) {
-                const res = await response.json();
-                update_list(res.uploaddir, '', true);
-                showNotification(`${res.filename} <%:File has been uploaded to%> ${res.uploaddir}`, 'success');
-            } else {
-                showNotification('<%:upload failed%>', 'error');
-            }
-        } catch (error) {
-            showNotification('<%:upload failed%>', 'error');
-        }
-    }
-
-    function renameFile(oldname) {
+    function renamefile(oldname) {
         Swal.fire({
-            ...swalConfig,
-            input: 'text',
-            inputValue: oldname,
-            inputAttributes: {
-                autocapitalize: 'off'
-            },
-            title: '<%:Enter new name%>',
+            ...swalConfig, inputValue: oldname,
+            inputAttributes: { autocapitalize: 'off' },
+            title: '<%:Enter new name%>', input: 'text',
             didRender: () => setTimeout(() => {
                     const inputValue = document.querySelector('.swal2-input')?.value ?? '';
                     document.querySelector('.swal2-input')?.setSelectionRange(0, inputValue.lastIndexOf('.'));
@@ -404,104 +334,139 @@ String.prototype.replaceAll = function (search, replacement) {
             preConfirm: (newname) => {
                 newname = newname.trim();
                 if (!newname || newname === oldname) return;
-                xhr.post('/cgi-bin/luci/admin/system/renameFile', {
+                xhr.post('/cgi-bin/luci/admin/system/renamefile', {
                     newname: concatPath(currentPath, newname),
                     oldname: concatPath(currentPath, oldname)
                 }, (_, res) => {
                     if (res?.stat === 0) {
                         refresh_list(res.data);
-                        showNotification(`"${oldname}" <%:Renaming successful!%>`, 'success');
+                        swalNotification(`${colorMessage(oldname, 'blue')} <%:Renaming successful!%>`, 'success');
                     } else {
-                        showNotification(`"${oldname}" <%:Renaming failed%>`, 'error');
+                        swalNotification(`${colorMessage(oldname, 'red')} <%:Renaming failed%>`, 'error');
                     }
                 });
             }
         });
     }
 
-    function deleteFiles(filename, isdir) {
+    function deletefiles(filename, isdir) {
         Swal.fire({
-            ...swalConfig,
-            icon: 'warning',
-            title: `<%:confirm deletion%> "${filename}" ?`
+            ...swalConfig, icon: 'warning',
+            title: `<%:confirm deletion%> ${colorMessage(filename, 'red')} ?`
         }).then((result) => {
-            if (result.isConfirmed) {
-                xhr.post('/cgi-bin/luci/admin/system/deleteFiles', {
+            if (result.value) {
+                xhr.post('/cgi-bin/luci/admin/system/deletefiles', {
                     isdir, path: concatPath(currentPath, filename)
                 }, function (_, res) {
                     if (res?.stat === 0) {
                         refresh_list(res.data);
-                        showNotification(`"${filename}" <%:successfully deleted!%>`, 'success')
+                        swalNotification(`${colorMessage(filename, 'blue')} <%:successfully deleted!%>`, 'success')
                     } else {
-                        showNotification(`"${filename}" <%:deleted failed%>`, 'error')
+                        swalNotification(`${colorMessage(filename, 'red')} <%:deleted failed%>`, 'error')
                     }
                 });
             }
         });
     }
 
-    function modifypermissions(filename, type) {
-        var oldPermissions = convertPermissions(type);
+    function modifypermissions(filepath, type) {
+        let oldPermissions = convertPermissions(type);
+        let filename = `${colorMessage(filepath, 'blue')}`;
         Swal.fire({
-            ...swalConfig,
-            input: 'text',
-            icon: 'warning',
-            inputAttributes: {
-                autocorrect: 'off',
-                autocomplete: 'off',
-                spellcheck: 'false',
-                autocapitalize: 'off'
-            },
-            inputValue: oldPermissions,
+            inputValue: oldPermissions, input: 'text', icon: 'warning',
             title: `<%:Please enter new permissions for ${filename}%>：`,
+            ...swalConfig, inputAttributes: {
+                autocorrect: 'off', autocomplete: 'off',
+                spellcheck: 'false', autocapitalize: 'off'
+            },
             didRender: () => setTimeout(() => document.querySelector('.swal2-input')?.select(), 0)
-        }).then(({ value }) => {
-            var permissions = (value || '').trim();
+        }).then((result) => {
+            let permissions = (result.value || '').trim();
             if (!permissions || permissions === oldPermissions) return;
             xhr.post('/cgi-bin/luci/admin/system/modifypermissions', {
-                permissions, path: concatPath(currentPath, filename)
+                permissions, path: concatPath(currentPath, filepath)
             }, (_, res) => {
                 if (res?.stat === 0) {
                     refresh_list(res.data);
-                    showNotification(`"${filename}" <%:Permissions modified successfully%>`, 'success');
+                    swalNotification(`${colorMessage(filepath, 'blue')} <%:Permissions modified successfully%>`, 'success');
                 } else {
-                    showNotification(`"${filename}" <%:Permission modification failed%>`, 'error');
+                    swalNotification(`${colorMessage(filepath, 'red')} <%:Permission modification failed%>`, 'error');
                 }
             });
         });
     }
 
-    const createNewFile = async () => {
-        const { value: newname } = await Swal.fire({
-            ...swalConfig,
-            input: 'text',
-            inputAttributes: {
-                autocapitalize: 'off',
-                placeholder: '<%:For example: example.txt%>'
-            },
-            title: '<%:Enter file name%>：'
-        });
-        if (!newname) return;
+    async function godirectory() {
+        let path = resolveFilePath(pathElem.value);
+        const exists = await checkdirectory(path);
+        if (exists) {
+            update_list(path);
+        } else {
+            const { value, isConfirmed } = await Swal.fire({
+                ...swalConfig, confirmButtonText: '<%:create%>',
+                text: '<%:Do you want to create this directory?%>',
+                title: `${colorMessage(path, 'red')} <%:The directory does not exist%>`
+            });
+            if (isConfirmed) createnewfile(path);
+            else return;
+        }
+    }
 
-        const { value: data } = await Swal.fire({
-            ...swalConfig,
-            input: 'textarea',
-            inputAttributes: {
-                autocapitalize: 'off',
-                placeholder: '<%:Enter text here%>'
+    async function createnewfile(filePath = '') {
+        const { value, isConfirmed } = await Swal.fire({
+            ...swalConfig, title: '<%:Enter name%>：',
+            html: `
+                <input type="text" id="newname" class="swal2-input" autocapitalize="off" placeholder="<%:For example: example.txt%>" title="<%:You can enter a file name or directory name%>"><br><br>
+                <input type="checkbox" id="createdirectory" class="swal2-checkbox">
+                <label for="createdirectory"><b><%:Create as directory%></b></label><br>
+                <span id="directorytip" class="hidden" style="font-size: smaller;"><%:If the path is the root directory, add '&' at the first character%></span>
+            `,
+            didOpen: () => {
+                if (typeof filePath === 'string' && filePath.trim() !== '') {
+                    document.getElementById('newname').value = filePath;
+                    document.getElementById('createdirectory').checked = true;
+                    document.getElementById('createdirectory').dispatchEvent(new Event('change'));
+                }
             },
-            title: '<%:Enter file content:%>'
-        });
-        if (!data) return;
+            preConfirm: () => {
+                const newname = document.getElementById('newname').value;
+                const createdirectory = document.getElementById('createdirectory').checked;
+                return { newname: newname || '', createdirectory };
+            },
+            didRender: () => {
+                const directorytip = document.getElementById('directorytip');
+                const createdirectoryCheckbox = document.getElementById('createdirectory');
+                createdirectoryCheckbox?.addEventListener('change', () => {
+                    directorytip?.classList.toggle('hidden', !createdirectoryCheckbox.checked);
+                });
 
-        xhr.post('/cgi-bin/luci/admin/system/createNewFile', {
-            data, newfile: concatPath(currentPath, newname)
-        }, function (_, res) {
+                const newnameInput = document.getElementById('newname');
+                directorytip?.classList.toggle('hidden', !newnameInput?.value.trim());
+            },
+        });
+        if (!isConfirmed) return;
+
+        let data = null;
+        const { newname, createdirectory } = value;
+        const newfile = filePath ? newname : resolveFilePath(newname);
+
+        if (!createdirectory) {
+            const { value: newData, isConfirmed } = await Swal.fire({
+                ...swalConfig, title: '<%:Enter file content%>',
+                input: 'textarea', inputAttributes: {
+                    autocapitalize: 'off', placeholder: '<%:Enter text here%>'
+                }
+            });
+            if (isConfirmed) data = newData;
+        }
+
+        xhr.post('/cgi-bin/luci/admin/system/createnewfile', { data, newfile, createdirectory }, (_, res) => {
             if (res?.stat === 0) {
                 refresh_list(res.data);
-                showNotification(`"${concatPath(currentPath, newname)}" <%:File created successfully!%>`, 'success');
+                createdirectory && update_list(newfile);
+                swalNotification(`${colorMessage(newfile, 'blue')} <%:File created successfully!%>`, 'success');
             } else {
-                showNotification(`"${concatPath(currentPath, newname)}" <%:File creation failed!%>`, 'error');
+                swalNotification(`${colorMessage(newfile, 'red')} <%:File creation failed!%>`, 'error');
             }
         });
     }
@@ -509,74 +474,95 @@ String.prototype.replaceAll = function (search, replacement) {
     function installipk(filename) {
         Swal.fire({
             ...swalConfig,
-            title: `<%:Confirm installation%> "${filename}" ?`
+            title: `<%:Confirm installation%> ${colorMessage(filename, 'red')} ?`
         }).then((result) => {
-            if (!result.isConfirmed) return;
-            xhr.get('/cgi-bin/luci/admin/system/filebrowser_install', {
+            if (!result.value) return;
+            xhr.get('/cgi-bin/luci/admin/system/installipk', {
                 filepath: concatPath(currentPath, filename)
             }, function (_, res) {
-                if (res?.stat === 0) {
-                    showNotification(`"${filename}" <%:Successful installation%>`, 'success');
-                } else {
-                    showNotification(`"${filename}" <%:installation failed%>`, 'error');
-                }
+                res?.stat === 0
+                    ? swalNotification(`${colorMessage(filename, 'blue')} <%:Successful installation%>`, 'success')
+                    : swalNotification(`${colorMessage(filename, 'red')} <%:installation failed%>`, 'error');
             });
         });
     }
 
-    function openPath(filename, dirname = currentPath) {
-        window.open('/cgi-bin/luci/admin/system/filebrowser_open?path=' +
-            encodeURIComponent(dirname) + '&filename=' +
-            encodeURIComponent(filename));
-    }
-
-    function getFileElem(elem) {
-        if (elem.className.includes('-icon')) {
-            return elem;
-        } else if (elem.parentNode.className.includes('-icon')) {
-            return elem.parentNode;
-        } else {
-            return '';
+    async function uploadfile() {
+        const { value: file } = await Swal.fire({
+            ...swalConfig, title: '<%:upload file%>',
+            inputAttributes: { accept: '/*' }, input: 'file'
+        });
+        if (!file) return;
+        const data = new FormData();
+        data.append('file', file);
+        data.append('filename', file.name);
+        data.append('filedir', concatPath(currentPath));
+        try {
+            const response = await fetch("/cgi-bin/luci/admin/system/uploadfile", {
+                body: data, method: 'POST'
+            });
+            if (response.ok) {
+                const res = await response.json();
+                update_list(res.filedir, '', true);
+                swalNotification(`${colorMessage(res.filename, 'blue')} <%:File has been uploaded to%> ${res.filedir}`, 'success');
+            } else {
+                swalNotification(`${colorMessage(res.filename, 'red')} <%:upload failed%>`, 'error');
+            }
+        } catch (error) {
+            swalNotification(`${colorMessage(res.filename, 'red')} <%:upload failed%>`, 'error');
         }
     }
 
-    function concatPath(path, filename = '') {
-        return path === "/" ? `/${filename}` : `${path.replace(/\/$/, "")}/${filename}`;
+    function dpfile(filename, dirname = currentPath, download = '') {
+        if (filename.includes("->")) {
+            [, dirname = "/", filename = ""] = filename.match(/-> (.+)/)?.[1].match(/(.+\/)(.+)/);
+        }
+        const url = `/cgi-bin/luci/admin/system/dpfile?path=${encodeURIComponent(dirname)}&filename=${encodeURIComponent(filename)}`;
+        download === '' ? window.open(url) : Swal.fire({
+            ...swalConfig, icon: 'info',
+            title: `<%:Confirm download%> ${colorMessage(filename, 'blue')} ?`
+        }).then((result) => {
+            if (result.value) window.open(`${url}&download=${download}`);
+        });
+    }
+
+    function checkdirectory(filepath) {
+        return new Promise((resolve, reject) => {
+            xhr.get('/cgi-bin/luci/admin/system/checkdirectory', { filepath }, function (_, res) {
+                resolve(res?.stat === 0 ? true : false);
+            });
+        });
     }
 
     function handleClick(evt) {
-        var targetElem = evt.target, infoElem, filepath;
+        let targetElem = evt.target, infoElem, filepath;
 
         if (targetElem.classList.contains('button-remove')) {
             infoElem = targetElem.parentNode.parentNode;
-            deleteFiles(infoElem.dataset.filename, infoElem.dataset.isdir);
+            deletefiles(infoElem.dataset.filename, infoElem.dataset.isdir);
         } else if (targetElem.classList.contains('button-rename')) {
             infoElem = targetElem.parentNode.parentNode;
-            renameFile(infoElem.dataset.filename);
+            renamefile(infoElem.dataset.filename);
         } else if (targetElem.classList.contains('button-install')) {
             infoElem = targetElem.parentNode.parentNode;
             installipk(infoElem.dataset.filename);
         } else {
-            var fileElem = getFileElem(targetElem);
+            let fileElem = getFileElem(targetElem);
             if (fileElem) {
                 if (fileElem.classList.contains('back-root-icon')) {
                     update_list('/');
                 } else if (fileElem.classList.contains('file-icon')) {
-                    openPath(fileElem.parentNode.dataset.filename);
+                    dpfile(fileElem.parentNode.dataset.filename);
                 } else if (fileElem.classList.contains('back-icon')) {
                     update_list(currentPath.replace(/\/[^/]+($|\/$)/, ''));
                 } else if (fileElem.classList.contains('folder-icon')) {
                     update_list(concatPath(currentPath, fileElem.parentNode.dataset.filename));
                 } else if (fileElem.classList.contains('link-icon')) {
-                    infoElem = fileElem.parentNode;
-                    filepath = infoElem.dataset.linktarget;
-                    if (filepath) {
-                        if (infoElem.dataset.isdir === "1") {
-                            update_list(filepath);
-                        } else {
-                            var lastSlash = filepath.lastIndexOf('/');
-                            openPath(filepath.substring(lastSlash + 1), filepath.substring(0, lastSlash + 1));
-                        }
+                    let filePath = fileElem.parentNode.dataset.linktarget.replace(/^\/*/, '/');
+                    if (filePath) {
+                        checkdirectory(filePath).then((exists) => {
+                            update_list(exists ? filePath : filePath.match(/(.+\/)(.+)/)[1]);
+                        });
                     }
                 }
             }
@@ -590,13 +576,14 @@ String.prototype.replaceAll = function (search, replacement) {
             <table class="cbi-section-table">
                 <tbody>
                     <tr>
-                        <td colspan="6"><b><%:There are currently ${regularFiles} files,%> ${filenames.filter(line => line.startsWith("d")).length} <%:directory.%> <%:total file size%>：${calculateTotalSize(filenames)}</b></td>
+                        <td colspan="6">
+                            ${getInitPath() !== '/' ? '<button type="button" class="cbi-button cbi-button-apply back-root-icon" style="margin-right: 10px;"><%:Go to root directory%></button>' : ''}
+                            <b><%:There are currently ${regularFiles} files,%> ${filenames.filter(line => line.startsWith("d")).length} <%:directory.%> <%:total file size%>：${calculateTotalSize(filenames)}</b>
+                            ${getInitPath() !== '/' ? '<button type="button" class="cbi-button cbi-button-apply back-icon" style="margin-left: 10px;"><%:Back to previous%></button>' : ''}
+                        </td>
                     </tr>
                     <tr>
-                        <td class="cbi-value-field return-icon">
-                            <b class="display-480px"><%:name%></b>
-                            ${getInitPath() !== '/' ? '<div class="back-root-icon" title="<%:Go to root directory%>">\u2302</div><div class="back-icon" title="<%:Back to previous%>">\u21A9</div>' : ''}
-                        </td>
+                        <td class="cbi-value-field"><b><%:name%></b></td>
                         <td class="cbi-value-field display-480px"><b><%:size%></b></td>
                         <td class="cbi-value-field display-480px"><b><%:Change the time%></b></td>
                         <td class="cbi-value-field display-480px"><b><%:Rights%></b></td>
@@ -609,13 +596,13 @@ String.prototype.replaceAll = function (search, replacement) {
                         const isLink = ['z', 'l', 'x'].includes(type[0]);
                         const icon = type[0] === 'd' ? "folder-icon" : (isLink ? "link-icon" : "file-icon");
                         const rowClass = rowStyle === "cbi-rowstyle-even" ? "cbi-rowstyle-odd" : "cbi-rowstyle-even";
-                        const truncateDisplayName = fullName.length > 20 ? `${fullName.substring(0, 20)}...` : fullName;
-                        var installButtonHtml = fullName.endsWith(".ipk") ? `<input type="button" class="cbi-button cbi-button-apply button-install" value="<%:Install%>"/>` : "";
+                        const truncatedName = fullName.length > 20 ? `${fullName.slice(0, 13)}...${fullName.slice(-7)}` : fullName;
+                        let installButtonHtml = fullName.endsWith(".ipk") ? `<input type="button" class="cbi-button cbi-button-apply button-install" value="<%:Install%>"/>` : "";
                         return `
-                            <tr class="cbi-section-table-row ${rowClass}" data-filename="${fullName}" data-isdir="${Number(type[0] === 'd' || type[0] === 'z')}" data-type="${type}" ${(type[0] === 'z' || type[0] === 'l') ? `data-linktarget="${fullName.split(' -> ')[1]}"` : ''}">
-                                <td class="cbi-value-field ${icon}"><b title="${fullName}">${truncateDisplayName}</b></td>
+                            <tr class="cbi-section-table-row ${rowClass}" data-filename="${fullName}" data-isdir="${Number(type[0] === 'd' || type[0] === 'z')}" data-type="${type}" ${(type[0] === 'z' || type[0] === 'l') ? `data-linktarget="${fullName.match(/-> (.+)/)?.[1]}"` : ''}">
+                                <td class="cbi-value-field ${icon}"><b title="${fullName}">${truncatedName}</b></td>
                                 <td class="cbi-value-field">${size}</td>
-                                <td class="cbi-value-field">${month} ${day}</td>
+                                <td class="cbi-value-field display-480px">${month} ${day}</td>
                                 <td class="cbi-value-field display-480px"> [ ${convertPermissions(type)} ] ${type}</td>
                                 <td class="cbi-value-field display-480px">${owner}</td>
                                 <td class="cbi-section-table-cell">
@@ -623,85 +610,52 @@ String.prototype.replaceAll = function (search, replacement) {
                                     <input type="button" class="cbi-button cbi-button-remove button-remove" value="<%:Delete%>"/>
                                     ${installButtonHtml}
                                 </td>
-                            </tr>`;
+                            </tr>
+                        `;
                     }).join('')}
                 </tbody>
-            </table>`;
+            </table>
+        `;
 
         listElem.innerHTML = listHtml;
-    };
-
-    function calculateTotalSize(filenames) {
-        let totalSize = 0, unitIndex = 0;
-        const units = ['B', 'KB', 'MB', 'GB'];
-        const sizeFactor = { K: 1024, M: 1024 * 1024, G: 1024 * 1024 * 1024 };
-
-        filenames.forEach(line => {
-            const [, , , , size] = line.trim().split(/\s+/);
-            const suffix = size.slice(-1).toUpperCase();
-            const parsedSize = parseFloat(size.slice(0, -1)) * sizeFactor[suffix] || 1;
-            if (!isNaN(parsedSize)) {
-                totalSize += parsedSize;
-            }
-        });
-
-        while (totalSize >= 1024 && unitIndex < units.length - 1) {
-            totalSize /= 1024;
-            unitIndex++;
-        }
-
-        return `${totalSize.toFixed(2)} ${units[unitIndex]}`;
     }
 
-    function setupCustomContextMenu() {
-        let customMenu = null;
-
-        function createCustomMenu(filename, targetElem) {
-            removeCustomMenu();
-            const menuItems = [
-                { label: "<%:Rename%>", action: () => renameFile(filename) },
-                { label: "<%:create a new file%>", action: () => createNewFile() },
-                { label: "<%:Delete%>", action: () => deleteFiles(filename, targetElem.dataset.isdir) },
-                { label: "<%:Modify permissions%>", action: () => modifypermissions(filename, targetElem.dataset.type) },
-                ...(currentPath.split('/').length > 2 ? [{ label: "<%:Back to previous%>", action: () => update_list(currentPath.replace(/\/[^/]+\/?$/, '')) }] : [])
-            ];
-            customMenu = document.createElement('ul');
-            customMenu.className = 'custom-menu';
-            menuItems.forEach(({ label, action }) => {
-                const menuItemElem = Object.assign(document.createElement('div'), { className: 'menu-item', innerText: label });
-                menuItemElem.addEventListener('click', action);
-                customMenu.appendChild(menuItemElem);
-            });
-            Object.assign(customMenu.style, { top: `${event.clientY}px`, left: `${event.clientX}px` });
-            document.body.appendChild(customMenu);
-        }
-
-        function removeCustomMenu() {
-            if (customMenu) {
-                customMenu.remove();
-                customMenu = null;
-            }
-        }
-
-        document.addEventListener('contextmenu', event => {
-            event.preventDefault();
-            const filenameElement = event.target.closest('[data-filename]');
-            if (filenameElement) {
-                createCustomMenu(filenameElement.dataset.filename, filenameElement);
-            } else {
-                removeCustomMenu();
-            }
+    function createCustomMenu(filename, targetElem) {
+        removeCustomMenu();
+        const menuItems = [
+            { label: "<%:Delete%>", action: () => deletefiles(filename, targetElem.dataset.isdir) },
+            { label: "<%:Rename%>", action: () => renamefile(filename) },
+            { label: "<%:Modify permissions%>", action: () => modifypermissions(filename, targetElem.dataset.type) },
+            { label: "<%:upload file%>", action: uploadfile },
+            { label: "<%:download file%>", action: () => dpfile(filename, currentPath, true) },
+            { label: "<%:Create file (directory)%>", action: createnewfile },
+            ...(currentPath.split('/').length > 2 ? [{ label: "<%:Back to previous%>", action: () => update_list(currentPath.replace(/\/[^/]+\/?$/, '')) }] : [])
+        ];
+        customMenu = document.createElement('ul');
+        customMenu.className = 'custom-menu';
+        menuItems.forEach(({ label, action }) => {
+            const menuItemElem = Object.assign(document.createElement('div'), { className: 'menu-item', innerText: label });
+            menuItemElem.addEventListener('click', action);
+            customMenu.appendChild(menuItemElem);
         });
 
-        document.addEventListener('click', removeCustomMenu);
-    };
-    setupCustomContextMenu();
-
-    function getInitPath() {
-        const urlParams = new URLSearchParams(location.search);
-        return urlParams.get('path') || '/';
+        const { clientX, clientY } = event;
+        const menuHeight = menuItems.length * 30;
+        const bottomEdge = clientY + menuHeight > window.innerHeight;
+        const position = bottomEdge ? { bottom: `${window.innerHeight - clientY}px`, left: `${clientX}px` } : { top: `${clientY}px`, left: `${clientX}px` };
+        Object.assign(customMenu.style, position);
+        document.body.appendChild(customMenu);
     }
 
+    document.addEventListener('contextmenu', event => {
+        event.preventDefault();
+        const filenameElement = event.target.closest('[data-filename]');
+        filenameElement
+            ? createCustomMenu(filenameElement.dataset.filename, filenameElement)
+            : removeCustomMenu();
+    });
+
+    document.addEventListener('click', removeCustomMenu);
     document.addEventListener('DOMContentLoaded', function(evt) {
         update_list(getInitPath(), { popState: true });
     });
