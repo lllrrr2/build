@@ -155,12 +155,12 @@ function uploadfile()
 end
 
 function installipk()
-    local filepath = replacePathChars(http.formvalue("filepath"))
-    if filepath:match("%.(%w+)$") == "ipk" then
-        stat = util.exec('opkg --force-depends install "%s"' % {filepath}) and 1 or 0
+    local filepath = http.formvalue("filepath")
+    if filepath:match(".*%.(.*)$") == "ipk" then
+        stat = util.exec('opkg --force-depends install "%s"' % {filepath})
     end
     http.prepare_content("application/json")
-    http.write_json({ stat = stat })
+    http.write_json({ data = stat, stat = stat and 0 or 1 })
 end
 
 function downloadfile(filepath)

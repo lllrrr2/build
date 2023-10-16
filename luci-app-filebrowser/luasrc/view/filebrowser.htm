@@ -136,16 +136,54 @@
 
     .swal-cancel-button:hover,
     .swal-confirm-button:hover {
-        background-color: hsl(324, 90%, 52%); /* 调整为不同的色相（差别大） */
+        background-color: hsl(324, 90%, 52%);
+    }
+
+    .alert-mask {
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 9999;
+        display: flex;
+        position: fixed;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .alert-container {
+        width: 70%;
+        overflow: auto;
+        max-width: 900px;
+        max-height: 70vh;
+        position: relative;
+        border-radius: 5px;
+        background-color: #fff;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    .alert-content {
+        overflow: auto;
+        max-height: calc(70vh - 100px);
+    }
+
+    .alert-content pre {
+        color: #66D9EF;
+        font-size: 14px;
+        line-height: 1.5;
+        text-align: left;
+        font-family: Consolas;
+        background-color: #272822;
     }
 
 /*    在480px以下的屏幕*/
     @media screen and (max-width: 480px) {
         .cbi-value-field {
-          width: 30px; /* 设置一个固定宽度，根据需求调整 */
-          white-space: nowrap; /* 防止换行 */
-          overflow: hidden; /* 控制溢出隐藏 */
-          text-overflow: ellipsis; /* 显示省略号 */
+            width: 30px; /* 设置一个固定宽度，根据需求调整 */
+            overflow: hidden; /* 控制溢出隐藏 */
+            white-space: nowrap; /* 防止换行 */
+            text-overflow: ellipsis; /* 显示省略号 */
         }
 
         .menu-item {
@@ -158,6 +196,8 @@
         }
     }
 </style>
+<script src="/luci-static/resources/fb/sweetalert2.all.js"></script>
+<link rel="stylesheet" href="/luci-static/resources/fb/sweetalert2.min.css">
 <h2 name="content"><%:File management%></h2>
 <fieldset class="fb-container">
     <div class="input-container">
@@ -192,12 +232,12 @@ String.prototype.replaceAll = function (search, replacement) {
 //     `
 // );
 
-const scriptElem = document.createElement('script');
-scriptElem.src = '/luci-static/resources/fb/sweetalert2.all.js';
-const linkElem = document.createElement('link');
-linkElem.rel = 'stylesheet';
-linkElem.href = '/luci-static/resources/fb/sweetalert2.min.css';
-document.head.append(scriptElem, linkElem);
+// const scriptElem = document.createElement('script');
+// scriptElem.src = '/luci-static/resources/fb/sweetalert2.all.js';
+// const linkElem = document.createElement('link');
+// linkElem.rel = 'stylesheet';
+// linkElem.href = '/luci-static/resources/fb/sweetalert2.min.css';
+// document.head.append(scriptElem, linkElem);
 
 // console.log(uploaddir);
 (function () {
@@ -264,6 +304,27 @@ document.head.append(scriptElem, linkElem);
         }
         return octalValue;
     }
+
+    const alert = (msg) => {
+        const body = document.body;
+        const alertMask = document.createElement('div');
+        alertMask.className = 'alert-mask';
+
+        const alertContainer = document.createElement('div');
+        alertContainer.className = 'alert-container';
+
+        const alertContent = document.createElement('div');
+        alertContent.className = 'alert-content';
+        alertContent.innerHTML = `<pre>\n${msg}\n\n</pre>`;
+
+        alertMask.onclick = ({ target }) => {
+            if (target === alertMask) body.removeChild(alertMask);
+        };
+
+        alertContainer.appendChild(alertContent);
+        alertMask.appendChild(alertContainer);
+        body.appendChild(alertMask);
+    };
 
     function calculateTotalSize(filenames) {
         let totalSize = 0, unitIndex = 0;
@@ -448,7 +509,7 @@ document.head.append(scriptElem, linkElem);
 
         let data = null;
         const { newname, createdirectory } = value;
-        const newfile = filePath ? newname : resolveFilePath(newname);
+        let newfile = filePath ? newname : resolveFilePath(newname);
 
         if (!createdirectory) {
             const { value: newData, isConfirmed } = await Swal.fire({
@@ -457,13 +518,13 @@ document.head.append(scriptElem, linkElem);
                     autocapitalize: 'off', placeholder: '<%:Enter text here%>'
                 }
             });
-            if (isConfirmed) data = newData;
+            if (isConfirmed) { data = newData; newfile = `${currentPath}${newfile}`; }
         }
 
         xhr.post('/cgi-bin/luci/admin/system/createnewfile', { data, newfile, createdirectory }, (_, res) => {
             if (res?.stat === 0) {
-                refresh_list(res.data);
                 createdirectory && update_list(newfile);
+                refresh_list(res.data);
                 swalNotification(`${colorMessage(newfile, 'blue')} <%:File created successfully!%>`, 'success');
             } else {
                 swalNotification(`${colorMessage(newfile, 'red')} <%:File creation failed!%>`, 'error');
@@ -471,19 +532,18 @@ document.head.append(scriptElem, linkElem);
         });
     }
 
-    function installipk(filename) {
-        Swal.fire({
-            ...swalConfig,
+    async function installipk(filename) {
+        let filepath = concatPath(currentPath, filename);
+        const confirmed = await Swal.fire({
+            ...swalConfig, icon: 'info',
             title: `<%:Confirm installation%> ${colorMessage(filename, 'red')} ?`
-        }).then((result) => {
-            if (!result.value) return;
-            xhr.get('/cgi-bin/luci/admin/system/installipk', {
-                filepath: concatPath(currentPath, filename)
-            }, function (_, res) {
-                res?.stat === 0
-                    ? swalNotification(`${colorMessage(filename, 'blue')} <%:Successful installation%>`, 'success')
-                    : swalNotification(`${colorMessage(filename, 'red')} <%:installation failed%>`, 'error');
-            });
+        });
+        if (!confirmed.value) return;
+        
+        xhr.post('/cgi-bin/luci/admin/system/installipk', { filepath }, (_, res) => {
+            res?.stat === 0
+                ? alert(res.data)
+                : swalNotification(`${colorMessage(filename, 'red')} <%:installation failed%>`, 'error');
         });
     }
 
@@ -577,7 +637,7 @@ document.head.append(scriptElem, linkElem);
                 <tbody>
                     <tr>
                         <td colspan="6">
-                            ${getInitPath() !== '/' ? '<button type="button" class="cbi-button cbi-button-apply back-root-icon" style="margin-right: 10px;"><%:Go to root directory%></button>' : ''}
+                            ${getInitPath() !== '/' ? '<button type="button" class="cbi-button cbi-button-apply back-root-icon display-480px" style="margin-right: 10px;"><%:Go to root directory%></button>' : ''}
                             <b><%:There are currently ${regularFiles} files,%> ${filenames.filter(line => line.startsWith("d")).length} <%:directory.%> <%:total file size%>：${calculateTotalSize(filenames)}</b>
                             ${getInitPath() !== '/' ? '<button type="button" class="cbi-button cbi-button-apply back-icon" style="margin-left: 10px;"><%:Back to previous%></button>' : ''}
                         </td>
