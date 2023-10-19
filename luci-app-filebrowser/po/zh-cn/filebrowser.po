@@ -139,6 +139,12 @@ msgstr "的目录不存在"
 msgid "If the path is the root directory, add '&' at the first character"
 msgstr "如路径是根目录在首字符添加'&'"
 
+msgid "open file"
+msgstr "打开文件"
+
+msgid "Confirm open"
+msgstr "确定打开"
+
 msgid "owner"
 msgstr "所有者"
 

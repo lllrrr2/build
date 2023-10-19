@@ -1,7 +1,7 @@
 <%+header%>
 <style>
     .fb-container {
-        margin: 0; /* 居中显示 */
+        margin: 1rem auto; /* 水平居中显示，顶部边距为 1rem */
         max-width: 800px; /* 容器最大宽度 */
         margin-top: 1rem; /* 顶部边距 */
     }
@@ -41,6 +41,14 @@
         justify-content: center; /* 水平居中对齐 */
     }
 
+    .input-container.float {
+        padding: 4px;
+        z-index: 666;
+        position: sticky;
+        border-radius: 8px;
+        background-color: #9FE4E6;
+    }
+
     .fb-container td[class$="-icon"] {
         cursor: pointer; /* 鼠标样式 */
     }
@@ -77,8 +85,8 @@
     }
 
     .custom-menu {
+        z-index: 999;
         padding: 5px 0;
-        z-index: 99999;
         position: fixed;
         font-size: 14px;
         border-radius: 5px;
@@ -144,8 +152,8 @@
         left: 0;
         width: 100%;
         height: 100%;
-        z-index: 9999;
         display: flex;
+        z-index: 9999;
         position: fixed;
         align-items: center;
         justify-content: center;
@@ -201,10 +209,10 @@
 <h2 name="content"><%:File management%></h2>
 <fieldset class="fb-container">
     <div class="input-container">
-        <button id="createnewfile" class="cbi-button cbi-button-apply"><%:create new file%></button>
+        <button id="createnewfile" class="cbi-button cbi-button-apply" style="margin-right: 6px;"><%:create new file%></button>
         <input id="current-path" type="text" title="<%:If the path is the root directory, add '&' at the first character%>" class="cbi-input-text" value="/" />
         <button id="godirectory" class="cbi-button cbi-button-apply"><%:Go to directory%></button>
-        <button id="uploadfile" class="cbi-button cbi-button-apply"><%:Upload to current directory%></button>
+        <button id="uploadfile" class="cbi-button cbi-button-apply" style="margin-left: 6px;"><%:Upload to current directory%></button>
     </div>
 </fieldset>
 <script>
@@ -212,33 +220,6 @@
 String.prototype.replaceAll = function (search, replacement) {
     return this.replace(new RegExp(search, 'g'), replacement); //替换所有匹配字符串
 };
-// const container = document.getElementById('maincontent');
-// function createHTML(strings, ...values) {
-//     const template = document.createElement('template');
-//     template.innerHTML = strings.reduce((acc, str, i) => acc + str + (values[i] || ''), '');
-//     return template.content;
-// }
-// container.append(
-//     createHTML`
-//         <h2 name="content"><%:File management%></h2>
-//         <fieldset class="fb-container">
-//             <div class="input-container">
-//                 <button id="createnewfile" class="cbi-button cbi-button-apply"><%:create new file%></button>
-//                 <input id="current-path" type="text" class="current-path cbi-input-text" title="<%:If the path is the root directory, add '&' at the first character%>" value="/">
-//                 <button id="godirectory" class="cbi-button cbi-button-apply"><%:Go to directory%></button>
-//                 <button id="uploadfile" class="cbi-button cbi-button-apply"><%:Upload to current directory%></button>
-//             </div>
-//         </fieldset>
-//     `
-// );
-
-// const scriptElem = document.createElement('script');
-// scriptElem.src = '/luci-static/resources/fb/sweetalert2.all.js';
-// const linkElem = document.createElement('link');
-// linkElem.rel = 'stylesheet';
-// linkElem.href = '/luci-static/resources/fb/sweetalert2.min.css';
-// document.head.append(scriptElem, linkElem);
-
 // console.log(uploaddir);
 (function () {
     let currentPath, customMenu = null;
@@ -261,14 +242,28 @@ String.prototype.replaceAll = function (search, replacement) {
         if (event.key === "Enter") { pathElem.blur(); }
     });
 
+    document.addEventListener('DOMContentLoaded', () => {
+        let isFloating = false;
+        const inputContainer = document.querySelector('.input-container');
+        const originalPosition = document.querySelector('header').getBoundingClientRect().bottom + document.querySelector('h2').offsetHeight + window.scrollY;
+        const navHeight = document.querySelector('header').offsetHeight;
+        const originalWidth = inputContainer.offsetWidth;
+        const floatInputContainer = () => {
+            const shouldFloat = window.pageYOffset > originalPosition;
+            isFloating = shouldFloat !== isFloating ? shouldFloat : isFloating;
+            inputContainer.style = `top: ${isFloating ? navHeight : 0}px; width: ${originalWidth}px`;
+            inputContainer.classList.toggle('float', isFloating);
+        };
+        window.addEventListener('scroll', floatInputContainer);
+    });
+
     function getInitPath() {
         const urlParams = new URLSearchParams(location.search);
         return urlParams.get('path') || '/';
     }
 
-    function concatPath(path, filename = '') {
-        return `${path.replace(/\/*$/, '/')}${filename}`;
-    }
+    const concatPath = (path, filename = '') => `${path.replace(/\/*$/, '/')}${filename}`;
+    const colorMessage = (name, color) => `<span style="color: ${color};">${name}</span>`;
 
     function resolveFilePath(newname) {
         return /^&\//.test(newname)
@@ -276,10 +271,6 @@ String.prototype.replaceAll = function (search, replacement) {
             : newname.startsWith(currentPath)
                 ? newname
                 : concatPath(currentPath, newname.replace(/^\//, ''));
-    }
-
-    function colorMessage(name, color) {
-        return `<span style="color: ${color};">${name}</span>`;
     }
 
     function removeCustomMenu() {
@@ -539,7 +530,7 @@ String.prototype.replaceAll = function (search, replacement) {
             title: `<%:Confirm installation%> ${colorMessage(filename, 'red')} ?`
         });
         if (!confirmed.value) return;
-        
+
         xhr.post('/cgi-bin/luci/admin/system/installipk', { filepath }, (_, res) => {
             res?.stat === 0
                 ? alert(res.data)
@@ -577,13 +568,13 @@ String.prototype.replaceAll = function (search, replacement) {
         if (filename.includes("->")) {
             [, dirname = "/", filename = ""] = filename.match(/-> (.+)/)?.[1].match(/(.+\/)(.+)/);
         }
-        const url = `/cgi-bin/luci/admin/system/dpfile?path=${encodeURIComponent(dirname)}&filename=${encodeURIComponent(filename)}`;
-        download === '' ? window.open(url) : Swal.fire({
+        const url = `/cgi-bin/luci/admin/system/dpfile?path=${encodeURIComponent(dirname)}&filename=${encodeURIComponent(filename)}&download=${download}`;
+        if (download === '') return window.open(url);
+        const confirmTitle = download === 'open' ? `<%:Confirm open%>` : `<%:Confirm download%>`;
+        Swal.fire({
             ...swalConfig, icon: 'info',
-            title: `<%:Confirm download%> ${colorMessage(filename, 'blue')} ?`
-        }).then((result) => {
-            if (result.value) window.open(`${url}&download=${download}`);
-        });
+            title: `${confirmTitle} ${colorMessage(filename, 'blue')} ?`,
+        }).then((isConfirm) => isConfirm.value && window.open(url));
     }
 
     function checkdirectory(filepath) {
@@ -614,7 +605,7 @@ String.prototype.replaceAll = function (search, replacement) {
                 } else if (fileElem.classList.contains('file-icon')) {
                     dpfile(fileElem.parentNode.dataset.filename);
                 } else if (fileElem.classList.contains('back-icon')) {
-                    update_list(currentPath.replace(/\/[^/]+($|\/$)/, ''));
+                    update_list(currentPath.replace(/\/[^/]*\/?$/, '/'));
                 } else if (fileElem.classList.contains('folder-icon')) {
                     update_list(concatPath(currentPath, fileElem.parentNode.dataset.filename));
                 } else if (fileElem.classList.contains('link-icon')) {
@@ -688,8 +679,9 @@ String.prototype.replaceAll = function (search, replacement) {
             { label: "<%:Modify permissions%>", action: () => modifypermissions(filename, targetElem.dataset.type) },
             { label: "<%:upload file%>", action: uploadfile },
             { label: "<%:download file%>", action: () => dpfile(filename, currentPath, true) },
+            { label: "<%:open file%>", action: () => dpfile(filename, currentPath, 'open') },
             { label: "<%:Create file (directory)%>", action: createnewfile },
-            ...(currentPath.split('/').length > 2 ? [{ label: "<%:Back to previous%>", action: () => update_list(currentPath.replace(/\/[^/]+\/?$/, '')) }] : [])
+            ...(currentPath.split('/').length > 2 ? [{ label: "<%:Back to previous%>", action: () => update_list(currentPath.replace(/\/[^/]*\/?$/, '/')) }] : [])
         ];
         customMenu = document.createElement('ul');
         customMenu.className = 'custom-menu';
@@ -702,7 +694,7 @@ String.prototype.replaceAll = function (search, replacement) {
         const { clientX, clientY } = event;
         const menuHeight = menuItems.length * 30;
         const bottomEdge = clientY + menuHeight > window.innerHeight;
-        const position = bottomEdge ? { bottom: `${window.innerHeight - clientY}px`, left: `${clientX}px` } : { top: `${clientY}px`, left: `${clientX}px` };
+        const position = bottomEdge ? { bottom: `${window.innerHeight - clientY - 30}px`, left: `${clientX}px` } : { top: `${clientY}px`, left: `${clientX}px` };
         Object.assign(customMenu.style, position);
         document.body.appendChild(customMenu);
     }

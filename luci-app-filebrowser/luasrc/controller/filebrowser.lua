@@ -71,13 +71,9 @@ function list_response(path, stat)
     })
 end
 
-function replacePathChars(str)
-    return str:gsub("<>", "/"):gsub(" ", "\ ")
-end
-
 function arrangefiles(dir)
     local linkFiles, regularFiles = {}, {}
-    for fileinfo in util.execi("ls -Ah --full-time --group-directories-first '%s'" % {dir}) do
+    for fileinfo in util.execi('ls -Ah --full-time --group-directories-first "%s"' %{dir}) do
         if fileinfo:sub(1, 2) == 'lr' then
             util.append(linkFiles, fileinfo)
         else
@@ -92,24 +88,21 @@ function file_list()
 end
 
 function deletefiles()
-    local isdir = http.formvalue("isdir")
-    local path  = replacePathChars(http.formvalue("path"))
-    stat = isdir and util.exec('rm -rf "%s"' % {path}) or nfs.remover(path)
+    local path, isdir = http.formvalue("path"), http.formvalue("isdir")
+    stat = isdir and util.exec('rm -rf "%s"' %{path}) or nfs.remover(path)
     list_response(nfs.dirname(path), stat)
 end
 
 function renamefile()
-    local newname = http.formvalue("newname")
-    local oldname = http.formvalue("oldname")
+    local newname, oldname = http.formvalue("newname"), http.formvalue("oldname")
     stat = nfs.move(oldname, newname)
     list_response(nfs.dirname(oldname), stat)
 end
 
 function createnewfile()
-    local data = http.formvalue("data")
-    local newfile = http.formvalue("newfile")
+    local data, newfile = http.formvalue("data"), http.formvalue("newfile")
     if http.formvalue("createdirectory") == "true" then
-        stat = util.exec('mkdir -p "%s"' % {newfile})
+        stat = util.exec('mkdir -p "%s"' %{newfile})
     else
         local file_handle = io.open(newfile, "w")
         file_handle:setvbuf("full", 1024 * 1024)
@@ -120,18 +113,16 @@ function createnewfile()
 end
 
 function modifypermissions()
-    local path   = http.formvalue("path")
-    local modify = http.formvalue("permissions")
-    stat = path and nfs.chmod(path, modify)
+    local path, modify = http.formvalue("path"), http.formvalue("modify")
+    stat = nfs.chmod(path, modify)
     list_response(nfs.dirname(path), stat)
 end
 
 function uploadfile()
-    local filedir  = http.formvalue("filedir")
-    local filename = http.formvalue("filename")
-    if filename:match("%.(%w+)$") == "ipk" then
+    local filedir, filename = http.formvalue("filedir"), http.formvalue("filename")
+    if filename:match(".*%.(.*)$") == "ipk" then
         filedir = '/tmp/ipkdir/'
-        nfs.mkdir(filedir)
+        if not nfs.access(filedir) then nfs.mkdir(filedir) end
     end
     local fd
     http.setfilehandler(function(meta, chunk, eof)
@@ -157,20 +148,18 @@ end
 function installipk()
     local filepath = http.formvalue("filepath")
     if filepath:match(".*%.(.*)$") == "ipk" then
-        stat = util.exec('opkg --force-depends install "%s"' % {filepath})
+        stat = util.exec('opkg --force-depends install "%s"' %{filepath})
     end
     http.prepare_content("application/json")
     http.write_json({ data = stat, stat = stat and 0 or 1 })
 end
 
 function downloadfile(filepath)
-    local fd, block, filename
-    local isDir = lfs.isdirectory(filepath)
-
-    fd = (isDir and io.popen('tar -C "%s" -cz .' % {filepath}, "r")) or nixio.open(filepath, "r")
+    local fd, block, filename, isDir = fd, block, filename, lfs.isdirectory(filepath)
+    fd = (isDir and io.popen('tar -C "%s" -cz .' %{filepath}, "r")) or nixio.open(filepath, "r")
     if not fd then return end
     filename = (isDir and lfs.basename(filepath) .. ".tar.gz") or lfs.basename(filepath)
-    http.header('Content-Disposition', 'inline; filename="%s"' % {filename})
+    http.header('Content-Disposition', 'inline; filename="%s"' %{filename})
 
     repeat
         block = fd:read(nixio.const.buffersize)
@@ -182,7 +171,9 @@ function downloadfile(filepath)
 end
 
 function to_mime(filename, download)
-    if download == 'true' or type(filename) ~= "string" then
+    if download == 'open' then
+        return "text/plain;charset=UTF-8"
+    elseif download == 'true' or type(filename) ~= "string" then
         return "application/octet-stream"
     end
 
@@ -191,8 +182,7 @@ function to_mime(filename, download)
 end
 
 function checkdirectory()
-    local state = 1
-    local filepath = http.formvalue("filepath")
+    local state, filepath = 1, http.formvalue("filepath")
     if lfs.isdirectory(filepath) then
         state = 0
     end
@@ -210,7 +200,7 @@ function dpfile()
     if mime == "application/octet-stream" then
         downloadfile(filepath)
     else
-        http.header('Content-Disposition', 'inline; filename="%s"' % {filename})
+        http.header('Content-Disposition', 'inline; filename="%s"' %{filename})
         luci.ltn12.pump.all(luci.ltn12.source.file(io.open(filepath, "r")), http.write)
     end
     http.close()
