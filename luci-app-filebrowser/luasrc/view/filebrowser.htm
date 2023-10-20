@@ -585,36 +585,26 @@ String.prototype.replaceAll = function (search, replacement) {
         });
     }
 
-    function handleClick(evt) {
-        let targetElem = evt.target, infoElem, filepath;
+    function handleClick(event) {
+        let targetElem = event.target;
+        let fileElem = getFileElem(targetElem);
+        let infoElem = targetElem.parentNode.parentNode.dataset;
+        let hasClass = (element, className) => element.classList.contains(className);
 
-        if (targetElem.classList.contains('button-remove')) {
-            infoElem = targetElem.parentNode.parentNode;
-            deletefiles(infoElem.dataset.filename, infoElem.dataset.isdir);
-        } else if (targetElem.classList.contains('button-rename')) {
-            infoElem = targetElem.parentNode.parentNode;
-            renamefile(infoElem.dataset.filename);
-        } else if (targetElem.classList.contains('button-install')) {
-            infoElem = targetElem.parentNode.parentNode;
-            installipk(infoElem.dataset.filename);
-        } else {
-            let fileElem = getFileElem(targetElem);
-            if (fileElem) {
-                if (fileElem.classList.contains('back-root-icon')) {
-                    update_list('/');
-                } else if (fileElem.classList.contains('file-icon')) {
-                    dpfile(fileElem.parentNode.dataset.filename);
-                } else if (fileElem.classList.contains('back-icon')) {
-                    update_list(currentPath.replace(/\/[^/]*\/?$/, '/'));
-                } else if (fileElem.classList.contains('folder-icon')) {
-                    update_list(concatPath(currentPath, fileElem.parentNode.dataset.filename));
-                } else if (fileElem.classList.contains('link-icon')) {
-                    let filePath = fileElem.parentNode.dataset.linktarget.replace(/^\/*/, '/');
-                    if (filePath) {
-                        checkdirectory(filePath).then((exists) => {
-                            update_list(exists ? filePath : filePath.match(/(.+\/)(.+)/)[1]);
-                        });
-                    }
+        if (hasClass(targetElem, 'button-rename')) renamefile(infoElem.filename);
+        else if (hasClass(targetElem, 'button-install')) installipk(infoElem.filename);
+        else if (hasClass(targetElem, 'button-remove')) deletefiles(infoElem.filename, infoElem.isdir);
+        if (fileElem) {
+            if (hasClass(fileElem, 'back-root-icon')) update_list('/');
+            else if (hasClass(fileElem, 'file-icon')) dpfile(fileElem.parentNode.dataset.filename);
+            else if (hasClass(fileElem, 'back-icon')) update_list(currentPath.replace(/\/[^/]*\/?$/, '/'));
+            else if (hasClass(fileElem, 'folder-icon')) update_list(concatPath(currentPath, fileElem.parentNode.dataset.filename));
+            else if (hasClass(fileElem, 'link-icon')) {
+                let filePath = infoElem.linktarget.replace(/^\/*/, '/');
+                if (filePath) {
+                    checkdirectory(filePath).then((exists) => {
+                        update_list(exists ? filePath : filePath.match(/(.+\/)(.+)/)[1]);
+                    });
                 }
             }
         }
@@ -674,14 +664,25 @@ String.prototype.replaceAll = function (search, replacement) {
     function createCustomMenu(filename, targetElem) {
         removeCustomMenu();
         const menuItems = [
-            { label: "<%:Delete%>", action: () => deletefiles(filename, targetElem.dataset.isdir) },
+            { label: "<%:Delete%>", action: () => deletefiles(filename, targetElem.isdir) },
             { label: "<%:Rename%>", action: () => renamefile(filename) },
-            { label: "<%:Modify permissions%>", action: () => modifypermissions(filename, targetElem.dataset.type) },
+            { label: "<%:Modify permissions%>", action: () => modifypermissions(filename, targetElem.type) },
             { label: "<%:upload file%>", action: uploadfile },
-            { label: "<%:download file%>", action: () => dpfile(filename, currentPath, true) },
-            { label: "<%:open file%>", action: () => dpfile(filename, currentPath, 'open') },
-            { label: "<%:Create file (directory)%>", action: createnewfile },
-            ...(currentPath.split('/').length > 2 ? [{ label: "<%:Back to previous%>", action: () => update_list(currentPath.replace(/\/[^/]*\/?$/, '/')) }] : [])
+            ...((targetElem.isdir === '0')
+                ? [
+                    { label: "<%:download file%>", action: () => dpfile(filename, currentPath, true) },
+                    { label: "<%:open file%>", action: () => dpfile(filename, currentPath, 'open') }
+                ]
+                : [
+                    { label: "<%:Download catalog%>", action: () => dpfile(filename, currentPath, true) },
+                    { label: "<%:open Directory%>", action: () => update_list(concatPath(currentPath, targetElem.filename)) }
+                ]
+            ),
+            { label: "<%:Create file (directory)%>", action: () => createnewfile() },
+            ...(currentPath.split('/').length > 2
+                ? [{ label: "<%:Back to previous%>", action: () => update_list(currentPath.replace(/\/[^/]*\/?$/, '/')) }]
+                : []
+            )
         ];
         customMenu = document.createElement('ul');
         customMenu.className = 'custom-menu';
@@ -692,9 +693,10 @@ String.prototype.replaceAll = function (search, replacement) {
         });
 
         const { clientX, clientY } = event;
-        const menuHeight = menuItems.length * 30;
-        const bottomEdge = clientY + menuHeight > window.innerHeight;
-        const position = bottomEdge ? { bottom: `${window.innerHeight - clientY - 30}px`, left: `${clientX}px` } : { top: `${clientY}px`, left: `${clientX}px` };
+        const bottomEdge = clientY + menuItems.length * 30 > window.innerHeight;
+        const position = bottomEdge
+            ? { bottom: `${window.innerHeight - clientY - 30}px`, left: `${clientX}px` }
+            : { top: `${clientY}px`, left: `${clientX}px` };
         Object.assign(customMenu.style, position);
         document.body.appendChild(customMenu);
     }
@@ -703,7 +705,7 @@ String.prototype.replaceAll = function (search, replacement) {
         event.preventDefault();
         const filenameElement = event.target.closest('[data-filename]');
         filenameElement
-            ? createCustomMenu(filenameElement.dataset.filename, filenameElement)
+            ? createCustomMenu(filenameElement.dataset.filename, filenameElement.dataset)
             : removeCustomMenu();
     });
 
