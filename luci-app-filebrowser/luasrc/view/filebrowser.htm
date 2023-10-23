@@ -14,7 +14,7 @@
         padding: 6px; /* 行高 */
         text-align: center; /* 文字居中 */
         /* 底部边框为1像素实线，颜色为#ddd */
-/*        border-bottom: 1px solid #ddd;*/
+        border-bottom: 1px solid #ddd;
     }
 
     .cbi-section-table-row:nth-child(odd) {
@@ -51,12 +51,6 @@
 
     .fb-container td[class$="-icon"] {
         cursor: pointer; /* 鼠标样式 */
-    }
-
-    .fb-container .file-icon,
-    .fb-container .link-icon,
-    .fb-container .folder-icon, {
-        position: relative; /* 相对定位 */
     }
 
     .fb-container .file-icon:before,
@@ -213,6 +207,7 @@
         <input id="current-path" type="text" title="<%:If the path is the root directory, add '&' at the first character%>" class="cbi-input-text" value="/" />
         <button id="godirectory" class="cbi-button cbi-button-apply"><%:Go to directory%></button>
         <button id="uploadfile" class="cbi-button cbi-button-apply" style="margin-left: 6px;"><%:Upload to current directory%></button>
+        <button id="selectedremove" class="cbi-button cbi-button-remove" style="margin-left: 6px;"><%:Delete%></button>
     </div>
 </fieldset>
 <script>
@@ -223,19 +218,22 @@ String.prototype.replaceAll = function (search, replacement) {
 // console.log(uploaddir);
 (function () {
     let currentPath, customMenu = null;
-    const xhr = new XHR();
     const pathElem = document.getElementById("current-path");
     document.getElementById('uploadfile').addEventListener('click', uploadfile);
     document.getElementById('godirectory').addEventListener('click', godirectory);
+    document.getElementById('selectedremove').addEventListener('click', deletefiles);
     document.getElementById('createnewfile').addEventListener('click', createnewfile);
     const listElem = document.querySelector(".fb-container").appendChild(document.createElement("div"));
     listElem.id = "file-list";
     listElem.onclick = handleClick;
 
-    pathElem.onblur = async function() {
-        let filePath = resolveFilePath(this.value.trim());
-        const exists = await checkdirectory(filePath);
-        exists ? update_list(filePath) : await godirectory();
+    pathElem.onblur = () => {
+        let filePath = resolveFilePath(pathElem.value.trim());
+        checkdirectory(filePath).then(exists =>
+            exists
+                ? update_list(filePath)
+                : godirectory()
+        );
     };
 
     pathElem.addEventListener("keyup", event => {
@@ -262,6 +260,7 @@ String.prototype.replaceAll = function (search, replacement) {
         return urlParams.get('path') || '/';
     }
 
+    const ensureString = (value) => typeof value === 'string' ? value.trim() : '';
     const concatPath = (path, filename = '') => `${path.replace(/\/*$/, '/')}${filename}`;
     const colorMessage = (name, color) => `<span style="color: ${color};">${name}</span>`;
 
@@ -277,12 +276,9 @@ String.prototype.replaceAll = function (search, replacement) {
         customMenu?.remove(); customMenu = null;
     }
 
-    function getFileElem(elem) {
-        return elem.className.includes('-icon')
-            ? elem
-            : elem.parentNode.className.includes('-icon')
-                ? elem.parentNode
-                : '';
+    const getFileElem = (elem) => {
+        while (elem && !elem.className?.includes('-icon')) elem = elem.parentNode;
+        return elem || '';
     }
 
     function convertPermissions(permissions) {
@@ -374,48 +370,60 @@ String.prototype.replaceAll = function (search, replacement) {
         opt.popState || history.pushState({ path }, null, `?path=${path}`);
     }
 
+    function deletefiles(filename = '', isdir = '') {
+        isdir = ensureString(isdir);
+        filename = ensureString(filename);
+        const deleteSingleFile = (name, dir) => {
+            let path = concatPath(currentPath, name);
+            XHR.post('/cgi-bin/luci/admin/system/deletefiles', { isdir: dir, path }, (_, res) => {
+                let isSuccess = res?.stat === 0;
+                let message = isSuccess
+                    ? `${colorMessage(name, 'blue')} <%:successfully deleted!%>`
+                    : `${colorMessage(name, 'red')} <%:deleted failed%>`;
+                swalNotification(message, isSuccess ? 'success' : 'error');
+                isSuccess && refresh_list(res.data);
+            });
+        };
+
+        if (filename || isdir) {
+            return Swal.fire({
+                ...swalConfig, icon: 'warning',
+                title: `<%:confirm deletion%> ${colorMessage(filename, 'red')} ?`
+            }).then((result) => {
+                result.isConfirmed && deleteSingleFile(filename, isdir);
+            });
+        }
+        let selectedFiles = Array.from(document.querySelectorAll('.file-checkbox:checked'))
+            .map((checkbox) => checkbox.closest('tr').dataset);
+        let selectedFileNames = selectedFiles.map((file) => file.filename);
+        let title = `<%:confirm deletion%> ${
+            selectedFileNames.length === 1
+                ? colorMessage(selectedFileNames[0], 'red') + ' ?'
+                : `\n${colorMessage(selectedFileNames.join('\n'), 'red')} ?`
+        }`;
+        Swal.fire({ ...swalConfig, icon: 'warning', title })
+            .then(result => result.isConfirmed && selectedFiles.forEach(file => deleteSingleFile(file.filename, file.isdir)));
+    }
+
     function renamefile(oldname) {
         Swal.fire({
             ...swalConfig, inputValue: oldname,
-            inputAttributes: { autocapitalize: 'off' },
             title: '<%:Enter new name%>', input: 'text',
             didRender: () => setTimeout(() => {
-                    const inputValue = document.querySelector('.swal2-input')?.value ?? '';
-                    document.querySelector('.swal2-input')?.setSelectionRange(0, inputValue.lastIndexOf('.'));
-                }, 0),
-            preConfirm: (newname) => {
-                newname = newname.trim();
-                if (!newname || newname === oldname) return;
-                xhr.post('/cgi-bin/luci/admin/system/renamefile', {
-                    newname: concatPath(currentPath, newname),
-                    oldname: concatPath(currentPath, oldname)
-                }, (_, res) => {
-                    if (res?.stat === 0) {
-                        refresh_list(res.data);
-                        swalNotification(`${colorMessage(oldname, 'blue')} <%:Renaming successful!%>`, 'success');
-                    } else {
-                        swalNotification(`${colorMessage(oldname, 'red')} <%:Renaming failed%>`, 'error');
-                    }
-                });
-            }
-        });
-    }
-
-    function deletefiles(filename, isdir) {
-        Swal.fire({
-            ...swalConfig, icon: 'warning',
-            title: `<%:confirm deletion%> ${colorMessage(filename, 'red')} ?`
+                const input = Swal.getInput();
+                input?.setSelectionRange(0, oldname.lastIndexOf('.'));
+            }, 0)
         }).then((result) => {
-            if (result.value) {
-                xhr.post('/cgi-bin/luci/admin/system/deletefiles', {
-                    isdir, path: concatPath(currentPath, filename)
-                }, function (_, res) {
-                    if (res?.stat === 0) {
-                        refresh_list(res.data);
-                        swalNotification(`${colorMessage(filename, 'blue')} <%:successfully deleted!%>`, 'success')
-                    } else {
-                        swalNotification(`${colorMessage(filename, 'red')} <%:deleted failed%>`, 'error')
-                    }
+            const newname = result.value?.trim() || '';
+            if (newname && newname !== oldname) {
+                XHR.post('/cgi-bin/luci/admin/system/renamefile', {
+                    newname: concatPath(currentPath, newname), oldname: concatPath(currentPath, oldname)
+                }, (_, res) => {
+                    const isSuccess = res?.stat === 0;
+                    isSuccess 
+                        ? (refresh_list(res.data), swalNotification(`${colorMessage(oldname, 'blue')} <%:Renaming successful!%>`, 'success'))
+                        : swalNotification(`${colorMessage(oldname, 'red')} <%:Renaming failed%>`, 'error');
+                    isSuccess && refresh_list(res.data);
                 });
             }
         });
@@ -435,37 +443,35 @@ String.prototype.replaceAll = function (search, replacement) {
         }).then((result) => {
             let permissions = (result.value || '').trim();
             if (!permissions || permissions === oldPermissions) return;
-            xhr.post('/cgi-bin/luci/admin/system/modifypermissions', {
+            XHR.post('/cgi-bin/luci/admin/system/modifypermissions', {
                 permissions, path: concatPath(currentPath, filepath)
             }, (_, res) => {
-                if (res?.stat === 0) {
-                    refresh_list(res.data);
-                    swalNotification(`${colorMessage(filepath, 'blue')} <%:Permissions modified successfully%>`, 'success');
-                } else {
-                    swalNotification(`${colorMessage(filepath, 'red')} <%:Permission modification failed%>`, 'error');
-                }
+                let isSuccess = res?.stat === 0;
+                let message = isSuccess 
+                    ? `${colorMessage(filepath, 'blue')} <%:Permissions modified successfully%>`
+                    : `${colorMessage(filepath, 'red')} <%:Permission modification failed%>`;
+                swalNotification(message, isSuccess ? 'success' : 'error');
+                isSuccess && refresh_list(res.data);
             });
         });
     }
 
-    async function godirectory() {
-        let path = resolveFilePath(pathElem.value);
-        const exists = await checkdirectory(path);
-        if (exists) {
-            update_list(path);
-        } else {
-            const { value, isConfirmed } = await Swal.fire({
+    function godirectory() {
+        const path = resolveFilePath(pathElem.value);
+        checkdirectory(path).then(exists => exists
+            ? update_list(path)
+            : Swal.fire({
                 ...swalConfig, confirmButtonText: '<%:create%>',
                 text: '<%:Do you want to create this directory?%>',
                 title: `${colorMessage(path, 'red')} <%:The directory does not exist%>`
-            });
-            if (isConfirmed) createnewfile(path);
-            else return;
-        }
+            }).then(result => result.isConfirmed && createnewfile(path))
+        );
     }
 
-    async function createnewfile(filePath = '') {
-        const { value, isConfirmed } = await Swal.fire({
+    function createnewfile(filePath = '') {
+        let data = '';
+        filePath = ensureString(filePath);
+        Swal.fire({
             ...swalConfig, title: '<%:Enter name%>：',
             html: `
                 <input type="text" id="newname" class="swal2-input" autocapitalize="off" placeholder="<%:For example: example.txt%>" title="<%:You can enter a file name or directory name%>"><br><br>
@@ -474,7 +480,7 @@ String.prototype.replaceAll = function (search, replacement) {
                 <span id="directorytip" class="hidden" style="font-size: smaller;"><%:If the path is the root directory, add '&' at the first character%></span>
             `,
             didOpen: () => {
-                if (typeof filePath === 'string' && filePath.trim() !== '') {
+                if (filePath) {
                     document.getElementById('newname').value = filePath;
                     document.getElementById('createdirectory').checked = true;
                     document.getElementById('createdirectory').dispatchEvent(new Event('change'));
@@ -494,47 +500,55 @@ String.prototype.replaceAll = function (search, replacement) {
 
                 const newnameInput = document.getElementById('newname');
                 directorytip?.classList.toggle('hidden', !newnameInput?.value.trim());
-            },
-        });
-        if (!isConfirmed) return;
+            }
+        }).then((result) => {
+            if (!result.isConfirmed) return;
+            let { newname, createdirectory } = result.value;
+            let newfile = (filePath && !createdirectory)
+                ? newname
+                : (filePath && createdirectory)
+                    ? filePath
+                    : resolveFilePath(newname);
 
-        let data = null;
-        const { newname, createdirectory } = value;
-        let newfile = filePath ? newname : resolveFilePath(newname);
+            if (!createdirectory) {
+                Swal.fire({
+                    ...swalConfig, title: '<%:Enter file content%>',
+                    input: 'textarea', inputAttributes: {
+                        autocapitalize: 'off', placeholder: '<%:Enter text here%>'
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) { data = result.value; executeOrder(); }
+                });
+            } else executeOrder();
 
-        if (!createdirectory) {
-            const { value: newData, isConfirmed } = await Swal.fire({
-                ...swalConfig, title: '<%:Enter file content%>',
-                input: 'textarea', inputAttributes: {
-                    autocapitalize: 'off', placeholder: '<%:Enter text here%>'
-                }
-            });
-            if (isConfirmed) { data = newData; newfile = `${currentPath}${newfile}`; }
-        }
-
-        xhr.post('/cgi-bin/luci/admin/system/createnewfile', { data, newfile, createdirectory }, (_, res) => {
-            if (res?.stat === 0) {
-                createdirectory && update_list(newfile);
-                refresh_list(res.data);
-                swalNotification(`${colorMessage(newfile, 'blue')} <%:File created successfully!%>`, 'success');
-            } else {
-                swalNotification(`${colorMessage(newfile, 'red')} <%:File creation failed!%>`, 'error');
+            function executeOrder() {
+                XHR.post('/cgi-bin/luci/admin/system/createnewfile', { data, newfile, createdirectory }, (_, res) => {
+                    if (res?.stat === 0) {
+                        createdirectory && update_list(newfile || '');
+                        refresh_list(res.data);
+                        swalNotification(`${colorMessage(newfile, 'blue')} <%:File created successfully!%>`, 'success');
+                    } else {
+                        swalNotification(`${colorMessage(newfile, 'red')} <%:File creation failed!%>`, 'error');
+                    }
+                });
             }
         });
     }
 
-    async function installipk(filename) {
-        let filepath = concatPath(currentPath, filename);
-        const confirmed = await Swal.fire({
+    function installipk(filename) {
+        Swal.fire({
             ...swalConfig, icon: 'info',
             title: `<%:Confirm installation%> ${colorMessage(filename, 'red')} ?`
-        });
-        if (!confirmed.value) return;
-
-        xhr.post('/cgi-bin/luci/admin/system/installipk', { filepath }, (_, res) => {
-            res?.stat === 0
-                ? alert(res.data)
-                : swalNotification(`${colorMessage(filename, 'red')} <%:installation failed%>`, 'error');
+        }).then(function(result) {
+            if (result.value) {
+                XHR.post('/cgi-bin/luci/admin/system/installipk', {
+                    filepath: concatPath(currentPath, filename)
+                }, (_, res) => {
+                    res?.stat === 0
+                        ? alert(res.data)
+                        : swalNotification(`${colorMessage(filename, 'red')} <%:installation failed%>`, 'error');
+                }); 
+            }
         });
     }
 
@@ -573,16 +587,14 @@ String.prototype.replaceAll = function (search, replacement) {
         const confirmTitle = download === 'open' ? `<%:Confirm open%>` : `<%:Confirm download%>`;
         Swal.fire({
             ...swalConfig, icon: 'info',
-            title: `${confirmTitle} ${colorMessage(filename, 'blue')} ?`,
-        }).then((isConfirm) => isConfirm.value && window.open(url));
+            title: `${confirmTitle} ${colorMessage(filename, 'blue')} ?`
+        }).then((result) => result.value && window.open(url));
     }
 
     function checkdirectory(filepath) {
-        return new Promise((resolve, reject) => {
-            xhr.get('/cgi-bin/luci/admin/system/checkdirectory', { filepath }, function (_, res) {
-                resolve(res?.stat === 0 ? true : false);
-            });
-        });
+        return fetch(`/cgi-bin/luci/admin/system/checkdirectory?filepath=${filepath}`)
+            .then(response => response.json())
+            .then(json => Promise.resolve(json.stat === 0))
     }
 
     function handleClick(event) {
@@ -611,44 +623,46 @@ String.prototype.replaceAll = function (search, replacement) {
     }
 
     function refresh_list(filenames) {
-        const rowStyle = "cbi-rowstyle-even";
         const regularFiles = filenames.filter(line => !line.startsWith("d")).length;
-        const listHtml = `
+        listElem.innerHTML = `
             <table class="cbi-section-table">
                 <tbody>
                     <tr>
-                        <td colspan="6">
+                        <td colspan="7">
                             ${getInitPath() !== '/' ? '<button type="button" class="cbi-button cbi-button-apply back-root-icon display-480px" style="margin-right: 10px;"><%:Go to root directory%></button>' : ''}
                             <b><%:There are currently ${regularFiles} files,%> ${filenames.filter(line => line.startsWith("d")).length} <%:directory.%> <%:total file size%>：${calculateTotalSize(filenames)}</b>
                             ${getInitPath() !== '/' ? '<button type="button" class="cbi-button cbi-button-apply back-icon" style="margin-left: 10px;"><%:Back to previous%></button>' : ''}
                         </td>
                     </tr>
                     <tr>
+                        <td></td>
                         <td class="cbi-value-field"><b><%:name%></b></td>
                         <td class="cbi-value-field display-480px"><b><%:size%></b></td>
                         <td class="cbi-value-field display-480px"><b><%:Change the time%></b></td>
                         <td class="cbi-value-field display-480px"><b><%:Rights%></b></td>
                         <td class="cbi-value-field display-480px"><b><%:owner%></b></td>
-                        <td class="cbi-value-field display-480px input-container"><b><%:File operations%></b></td>
+                        <td class="cbi-value-field display-480px" style="position: relative; text-align: center;"><span style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"><b><%:File operations%></b></span></td>
                     </tr>
                     ${filenames.map(line => {
                         const [type, , owner, , size, month, day, , ...fullNameParts] = line.trim().split(/\s+/);
                         const fullName = fullNameParts.join(' ');
                         const isLink = ['z', 'l', 'x'].includes(type[0]);
                         const icon = type[0] === 'd' ? "folder-icon" : (isLink ? "link-icon" : "file-icon");
-                        const rowClass = rowStyle === "cbi-rowstyle-even" ? "cbi-rowstyle-odd" : "cbi-rowstyle-even";
                         const truncatedName = fullName.length > 20 ? `${fullName.slice(0, 13)}...${fullName.slice(-7)}` : fullName;
-                        let installButtonHtml = fullName.endsWith(".ipk") ? `<input type="button" class="cbi-button cbi-button-apply button-install" value="<%:Install%>"/>` : "";
+                        let installButtonHtml = fullName.endsWith(".ipk") ? `<button class="cbi-button cbi-button-apply button-install"><%:Install%></button>` : "";
                         return `
-                            <tr class="cbi-section-table-row ${rowClass}" data-filename="${fullName}" data-isdir="${Number(type[0] === 'd' || type[0] === 'z')}" data-type="${type}" ${(type[0] === 'z' || type[0] === 'l') ? `data-linktarget="${fullName.match(/-> (.+)/)?.[1]}"` : ''}">
+                            <tr class="cbi-section-table-row" data-filename="${fullName}" data-isdir="${Number(type[0] === 'd' || type[0] === 'z')}" data-type="${type}" ${(type[0] === 'z' || type[0] === 'l') ? `data-linktarget="${fullName.match(/-> (.+)/)?.[1]}"` : ''}">
+                                <td class="cbi-value-field">
+                                    <input type="checkbox" class="file-checkbox" />
+                                </td>
                                 <td class="cbi-value-field ${icon}"><b title="${fullName}">${truncatedName}</b></td>
                                 <td class="cbi-value-field">${size}</td>
                                 <td class="cbi-value-field display-480px">${month} ${day}</td>
                                 <td class="cbi-value-field display-480px"> [ ${convertPermissions(type)} ] ${type}</td>
                                 <td class="cbi-value-field display-480px">${owner}</td>
                                 <td class="cbi-section-table-cell">
-                                    <input type="button" class="cbi-button cbi-button-apply button-rename" value="<%:Rename%>"/>
-                                    <input type="button" class="cbi-button cbi-button-remove button-remove" value="<%:Delete%>"/>
+                                    <button class="cbi-button cbi-button-apply button-rename"><%:Rename%></button>
+                                    <button class="cbi-button cbi-button-remove button-remove"><%:Delete%></button>
                                     ${installButtonHtml}
                                 </td>
                             </tr>
@@ -657,8 +671,13 @@ String.prototype.replaceAll = function (search, replacement) {
                 </tbody>
             </table>
         `;
-
-        listElem.innerHTML = listHtml;
+        const deleteButton = document.getElementById('selectedremove');
+        document.querySelectorAll('.file-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+                deleteButton.style.display = document.querySelectorAll('.file-checkbox:checked').length > 0 ? 'block' : 'none';
+            });
+        });
+        deleteButton.style.display = 'none';
     }
 
     function createCustomMenu(filename, targetElem) {

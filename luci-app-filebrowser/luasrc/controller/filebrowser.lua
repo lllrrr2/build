@@ -113,7 +113,7 @@ function createnewfile()
 end
 
 function modifypermissions()
-    local path, modify = http.formvalue("path"), http.formvalue("modify")
+    local path, modify = http.formvalue("path"), http.formvalue("permissions")
     stat = nfs.chmod(path, modify)
     list_response(nfs.dirname(path), stat)
 end
