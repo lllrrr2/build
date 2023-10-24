@@ -349,22 +349,22 @@ String.prototype.replaceAll = function (search, replacement) {
         );
     }
 
-    function update_list(path, opt = {}, upload) {
+    function update_list(path, opt = false, upload = false) {
         path = concatPath(path);
         if (currentPath === path && !upload) return;
-        let xhr = new XMLHttpRequest();
-        xhr.open('GET', '/cgi-bin/luci/admin/system/file_list?path=' + encodeURIComponent(path), true);
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState === XMLHttpRequest.DONE) {
-                if (xhr.status === 200) {
-                    const res = JSON.parse(xhr.responseText);
-                    refresh_list(res?.stat === 0 ? res.data : []);
-                }
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', `/cgi-bin/luci/admin/system/file_list?path=${encodeURIComponent(path)}`, true);
+        xhr.onreadystatechange = () => {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                const res = JSON.parse(xhr.responseText);
+                const isSuccess = res?.stat === 0;
+                refresh_list(isSuccess ? res.data : []);
+                if (isSuccess) currentPath = pathElem.value = path;
             }
         };
         xhr.send();
-        currentPath = path; pathElem.value = path;
-        opt.popState || history.pushState({ path }, null, `?path=${path}`);
+        if (!opt) history.pushState({ path }, null, `?path=${path}`);
+        console.log(opt, upload);
     }
 
     function deletefiles(filename = '', isdir = '') {
@@ -552,7 +552,7 @@ String.prototype.replaceAll = function (search, replacement) {
                 ? response.json()
                 : Promise.reject(new Error('<%:upload failed%>')))
             .then(res => {
-                update_list(res.filedir, '', true);
+                update_list(res.filedir, undefined, true);
                 swalNotification(`${colorMessage(res.filename, 'blue')} <%:File has been uploaded to%> ${res.filedir}`, 'success');
             }).catch(error => swalNotification(`${colorMessage(file.name, 'red')} <%:upload failed%>`, 'error'));
         });
@@ -638,7 +638,7 @@ String.prototype.replaceAll = function (search, replacement) {
                         return `
                             <tr class="cbi-section-table-row" data-filename="${fullName}" data-isdir="${Number(type[0] === 'd' || type[0] === 'z')}" data-type="${type}" data-linktarget="${(/->.*/.test(fullName)) && fullName}">
                                 <td class="cbi-value-field">
-                                    <input type="checkbox" class="file-checkbox" />
+                                    <input type="checkbox" class="file-checkbox" name="${fullName}"/>
                                 </td>
                                 <td class="cbi-value-field ${icon}"><b title="${fullName}">${truncatedName}</b></td>
                                 <td class="cbi-value-field">${size}</td>
@@ -715,11 +715,11 @@ String.prototype.replaceAll = function (search, replacement) {
 
     document.addEventListener('click', removeCustomMenu);
     document.addEventListener('DOMContentLoaded', function(evt) {
-        update_list(getInitPath(), { popState: true });
+        update_list(getInitPath(), true);
     });
 
     window.addEventListener('popstate', function(evt) {
-        update_list(evt.state?.path || '/', { popState: true });
+        update_list(evt.state?.path || '/', true);
     });
 })();
 </script>
