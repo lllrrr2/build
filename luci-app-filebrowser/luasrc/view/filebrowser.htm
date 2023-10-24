@@ -213,7 +213,7 @@
 <script>
 
 String.prototype.replaceAll = function (search, replacement) {
-    return this.replace(new RegExp(search, 'g'), replacement); //替换所有匹配字符串
+    return this.replace(new RegExp(search, 'g'), replacement);
 };
 // console.log(uploaddir);
 (function () {
@@ -226,19 +226,7 @@ String.prototype.replaceAll = function (search, replacement) {
     const listElem = document.querySelector(".fb-container").appendChild(document.createElement("div"));
     listElem.id = "file-list";
     listElem.onclick = handleClick;
-
-    pathElem.onblur = () => {
-        let filePath = resolveFilePath(pathElem.value.trim());
-        checkdirectory(filePath).then(exists =>
-            exists
-                ? update_list(filePath)
-                : godirectory()
-        );
-    };
-
-    pathElem.addEventListener("keyup", event => {
-        if (event.key === "Enter") { pathElem.blur(); }
-    });
+    pathElem.addEventListener("keyup", event => event.key === "Enter" && godirectory());
 
     document.addEventListener('DOMContentLoaded', () => {
         let isFloating = false;
@@ -255,12 +243,8 @@ String.prototype.replaceAll = function (search, replacement) {
         window.addEventListener('scroll', floatInputContainer);
     });
 
-    function getInitPath() {
-        const urlParams = new URLSearchParams(location.search);
-        return urlParams.get('path') || '/';
-    }
-
     const ensureString = (value) => typeof value === 'string' ? value.trim() : '';
+    const getInitPath = () => new URLSearchParams(location.search).get('path') || '/';
     const concatPath = (path, filename = '') => `${path.replace(/\/*$/, '/')}${filename}`;
     const colorMessage = (name, color) => `<span style="color: ${color};">${name}</span>`;
 
@@ -304,10 +288,7 @@ String.prototype.replaceAll = function (search, replacement) {
         alertContent.className = 'alert-content';
         alertContent.innerHTML = `<pre>\n${msg}\n\n</pre>`;
 
-        alertMask.onclick = ({ target }) => {
-            if (target === alertMask) body.removeChild(alertMask);
-        };
-
+        alertMask.onclick = ({ target }) => target === alertMask && body.removeChild(alertMask);
         alertContainer.appendChild(alertContent);
         alertMask.appendChild(alertContainer);
         body.appendChild(alertMask);
@@ -334,7 +315,7 @@ String.prototype.replaceAll = function (search, replacement) {
 
     function swalNotification(title = '', icon = '') {
         Swal.fire({
-            icon, title, timer: 2000, showConfirmButton: false,
+            icon, title, timer: 2500, showConfirmButton: false,
             customClass: {
                 text: 'swal-text', title: 'swal-title', popup: 'swal-popup'
             }
@@ -351,6 +332,22 @@ String.prototype.replaceAll = function (search, replacement) {
             popup: 'swal-popup', cancelButton: 'swal-cancel-button'
         }
     };
+
+    function godirectory(filePath = '') {
+        let path;
+        ensureString(filePath)
+            ? path = filePath
+            : path = resolveFilePath(pathElem.value.trim())
+        checkdirectory(path).then(exists =>
+            exists
+                ? update_list(path)
+                : Swal.fire({
+                    ...swalConfig, confirmButtonText: '<%:create%>',
+                    text: '<%:Do you want to create this directory?%>',
+                    title: `${colorMessage(path, 'red')} <%:The directory does not exist%>`
+                }).then(result => result.isConfirmed && createnewfile(path))
+        );
+    }
 
     function update_list(path, opt = {}, upload) {
         path = concatPath(path);
@@ -371,8 +368,7 @@ String.prototype.replaceAll = function (search, replacement) {
     }
 
     function deletefiles(filename = '', isdir = '') {
-        isdir = ensureString(isdir);
-        filename = ensureString(filename);
+        [isdir, filename] = [ensureString(isdir), ensureString(filename)];
         const deleteSingleFile = (name, dir) => {
             let path = concatPath(currentPath, name);
             XHR.post('/cgi-bin/luci/admin/system/deletefiles', { isdir: dir, path }, (_, res) => {
@@ -389,9 +385,7 @@ String.prototype.replaceAll = function (search, replacement) {
             return Swal.fire({
                 ...swalConfig, icon: 'warning',
                 title: `<%:confirm deletion%> ${colorMessage(filename, 'red')} ?`
-            }).then((result) => {
-                result.isConfirmed && deleteSingleFile(filename, isdir);
-            });
+            }).then((result) => result.isConfirmed && deleteSingleFile(filename, isdir));
         }
         let selectedFiles = Array.from(document.querySelectorAll('.file-checkbox:checked'))
             .map((checkbox) => checkbox.closest('tr').dataset);
@@ -406,26 +400,28 @@ String.prototype.replaceAll = function (search, replacement) {
     }
 
     function renamefile(oldname) {
-        Swal.fire({
-            ...swalConfig, inputValue: oldname,
-            title: '<%:Enter new name%>', input: 'text',
-            didRender: () => setTimeout(() => {
-                const input = Swal.getInput();
-                input?.setSelectionRange(0, oldname.lastIndexOf('.'));
-            }, 0)
-        }).then((result) => {
-            const newname = result.value?.trim() || '';
-            if (newname && newname !== oldname) {
-                XHR.post('/cgi-bin/luci/admin/system/renamefile', {
-                    newname: concatPath(currentPath, newname), oldname: concatPath(currentPath, oldname)
-                }, (_, res) => {
-                    const isSuccess = res?.stat === 0;
-                    isSuccess 
-                        ? (refresh_list(res.data), swalNotification(`${colorMessage(oldname, 'blue')} <%:Renaming successful!%>`, 'success'))
-                        : swalNotification(`${colorMessage(oldname, 'red')} <%:Renaming failed%>`, 'error');
-                    isSuccess && refresh_list(res.data);
-                });
-            }
+        checkdirectory(concatPath(currentPath, oldname)).then(exists => {
+            Swal.fire({
+                ...swalConfig, inputValue: oldname,
+                title: '<%:Enter new name%>', input: 'text',
+                didRender: () => { setTimeout(() => {
+                    const input = Swal.getInput();
+                    exists ? input?.select() : input?.setSelectionRange(0, oldname.lastIndexOf('.'))
+                }, 0)}
+            }).then((result) => {
+                let newname = (result.value || '').trim();
+                if (newname && newname !== oldname) {
+                    XHR.post('/cgi-bin/luci/admin/system/renamefile', {
+                        newname: concatPath(currentPath, newname), oldname: concatPath(currentPath, oldname)
+                    }, (_, res) => {
+                        const isSuccess = res?.stat === 0;
+                        isSuccess 
+                            ? (refresh_list(res.data), swalNotification(`${colorMessage(oldname, 'blue')} <%:Renaming successful!%>`, 'success'))
+                            : swalNotification(`${colorMessage(oldname, 'red')} <%:Renaming failed%>`, 'error');
+                        isSuccess && refresh_list(res.data);
+                    });
+                }
+            });
         });
     }
 
@@ -439,38 +435,26 @@ String.prototype.replaceAll = function (search, replacement) {
                 autocorrect: 'off', autocomplete: 'off',
                 spellcheck: 'false', autocapitalize: 'off'
             },
-            didRender: () => setTimeout(() => document.querySelector('.swal2-input')?.select(), 0)
+            didRender: () => setTimeout(() => Swal.getInput()?.select(), 0)
         }).then((result) => {
             let permissions = (result.value || '').trim();
-            if (!permissions || permissions === oldPermissions) return;
-            XHR.post('/cgi-bin/luci/admin/system/modifypermissions', {
-                permissions, path: concatPath(currentPath, filepath)
-            }, (_, res) => {
-                let isSuccess = res?.stat === 0;
-                let message = isSuccess 
-                    ? `${colorMessage(filepath, 'blue')} <%:Permissions modified successfully%>`
-                    : `${colorMessage(filepath, 'red')} <%:Permission modification failed%>`;
-                swalNotification(message, isSuccess ? 'success' : 'error');
-                isSuccess && refresh_list(res.data);
-            });
+            if (permissions && permissions !== oldPermissions) {
+                XHR.post('/cgi-bin/luci/admin/system/modifypermissions', {
+                    permissions, path: concatPath(currentPath, filepath)
+                }, (_, res) => {
+                    let isSuccess = res?.stat === 0;
+                    let message = isSuccess 
+                        ? `${colorMessage(filepath, 'blue')} <%:Permissions modified successfully%>`
+                        : `${colorMessage(filepath, 'red')} <%:Permission modification failed%>`;
+                    swalNotification(message, isSuccess ? 'success' : 'error');
+                    isSuccess && refresh_list(res.data);
+                });
+            }
         });
-    }
-
-    function godirectory() {
-        const path = resolveFilePath(pathElem.value);
-        checkdirectory(path).then(exists => exists
-            ? update_list(path)
-            : Swal.fire({
-                ...swalConfig, confirmButtonText: '<%:create%>',
-                text: '<%:Do you want to create this directory?%>',
-                title: `${colorMessage(path, 'red')} <%:The directory does not exist%>`
-            }).then(result => result.isConfirmed && createnewfile(path))
-        );
     }
 
     function createnewfile(filePath = '') {
         let data = '';
-        filePath = ensureString(filePath);
         Swal.fire({
             ...swalConfig, title: '<%:Enter name%>：',
             html: `
@@ -517,7 +501,7 @@ String.prototype.replaceAll = function (search, replacement) {
                         autocapitalize: 'off', placeholder: '<%:Enter text here%>'
                     }
                 }).then((result) => {
-                    if (result.isConfirmed) { data = result.value; executeOrder(); }
+                    if (result.isConfirmed) data = result.value, executeOrder();
                 });
             } else executeOrder();
 
@@ -540,7 +524,7 @@ String.prototype.replaceAll = function (search, replacement) {
             ...swalConfig, icon: 'info',
             title: `<%:Confirm installation%> ${colorMessage(filename, 'red')} ?`
         }).then(function(result) {
-            if (result.value) {
+            if (result.isConfirmed) {
                 XHR.post('/cgi-bin/luci/admin/system/installipk', {
                     filepath: concatPath(currentPath, filename)
                 }, (_, res) => {
@@ -552,30 +536,26 @@ String.prototype.replaceAll = function (search, replacement) {
         });
     }
 
-    async function uploadfile() {
-        const { value: file } = await Swal.fire({
+    function uploadfile() {
+        Swal.fire({
             ...swalConfig, title: '<%:upload file%>',
             inputAttributes: { accept: '/*' }, input: 'file'
-        });
-        if (!file) return;
-        const data = new FormData();
-        data.append('file', file);
-        data.append('filename', file.name);
-        data.append('filedir', concatPath(currentPath));
-        try {
-            const response = await fetch("/cgi-bin/luci/admin/system/uploadfile", {
-                body: data, method: 'POST'
-            });
-            if (response.ok) {
-                const res = await response.json();
+        }).then(({ value: file }) => {
+            if (!file) return;
+            const data = new FormData();
+            data.append('file', file);
+            data.append('filename', file.name);
+            data.append('filedir', concatPath(currentPath));
+
+            fetch("/cgi-bin/luci/admin/system/uploadfile", { body: data, method: 'POST' })
+            .then(response => response.ok
+                ? response.json()
+                : Promise.reject(new Error('<%:upload failed%>')))
+            .then(res => {
                 update_list(res.filedir, '', true);
                 swalNotification(`${colorMessage(res.filename, 'blue')} <%:File has been uploaded to%> ${res.filedir}`, 'success');
-            } else {
-                swalNotification(`${colorMessage(res.filename, 'red')} <%:upload failed%>`, 'error');
-            }
-        } catch (error) {
-            swalNotification(`${colorMessage(res.filename, 'red')} <%:upload failed%>`, 'error');
-        }
+            }).catch(error => swalNotification(`${colorMessage(file.name, 'red')} <%:upload failed%>`, 'error'));
+        });
     }
 
     function dpfile(filename, dirname = currentPath, download = '') {
@@ -588,7 +568,7 @@ String.prototype.replaceAll = function (search, replacement) {
         Swal.fire({
             ...swalConfig, icon: 'info',
             title: `${confirmTitle} ${colorMessage(filename, 'blue')} ?`
-        }).then((result) => result.value && window.open(url));
+        }).then((result) => result.isConfirmed && window.open(url));
     }
 
     function checkdirectory(filepath) {
@@ -612,10 +592,15 @@ String.prototype.replaceAll = function (search, replacement) {
             else if (hasClass(fileElem, 'back-icon')) update_list(currentPath.replace(/\/[^/]*\/?$/, '/'));
             else if (hasClass(fileElem, 'folder-icon')) update_list(concatPath(currentPath, fileElem.parentNode.dataset.filename));
             else if (hasClass(fileElem, 'link-icon')) {
-                let filePath = infoElem.linktarget.replace(/^\/*/, '/');
-                if (filePath) {
+                let [, sourcefile, destinationfile] = infoElem.linktarget.match(/(.*) -> (.*)/) ?? [];
+                if (sourcefile && destinationfile) {
+                    let filePath = destinationfile.replace(/^\/*/, '/');
                     checkdirectory(filePath).then((exists) => {
-                        update_list(exists ? filePath : filePath.match(/(.+\/)(.+)/)[1]);
+                        exists
+                            ? update_list(filePath)
+                            : (destinationfile.match(/\//g) || []).length > 1
+                                ? update_list(filePath.match(/(.+\/)(.+)/)[1])
+                                : swalNotification(`${colorMessage(sourcefile, 'red')} <%:It’s the current directory%> ${colorMessage(destinationfile, 'blue')}`, 'info');
                     });
                 }
             }
@@ -641,7 +626,7 @@ String.prototype.replaceAll = function (search, replacement) {
                         <td class="cbi-value-field display-480px"><b><%:Change the time%></b></td>
                         <td class="cbi-value-field display-480px"><b><%:Rights%></b></td>
                         <td class="cbi-value-field display-480px"><b><%:owner%></b></td>
-                        <td class="cbi-value-field display-480px" style="position: relative; text-align: center;"><span style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"><b><%:File operations%></b></span></td>
+                        <td class="cbi-value-field display-480px" style="position: relative; text-align: center;"><b><%:File operations%></b></td>
                     </tr>
                     ${filenames.map(line => {
                         const [type, , owner, , size, month, day, , ...fullNameParts] = line.trim().split(/\s+/);
@@ -651,7 +636,7 @@ String.prototype.replaceAll = function (search, replacement) {
                         const truncatedName = fullName.length > 20 ? `${fullName.slice(0, 13)}...${fullName.slice(-7)}` : fullName;
                         let installButtonHtml = fullName.endsWith(".ipk") ? `<button class="cbi-button cbi-button-apply button-install"><%:Install%></button>` : "";
                         return `
-                            <tr class="cbi-section-table-row" data-filename="${fullName}" data-isdir="${Number(type[0] === 'd' || type[0] === 'z')}" data-type="${type}" ${(type[0] === 'z' || type[0] === 'l') ? `data-linktarget="${fullName.match(/-> (.+)/)?.[1]}"` : ''}">
+                            <tr class="cbi-section-table-row" data-filename="${fullName}" data-isdir="${Number(type[0] === 'd' || type[0] === 'z')}" data-type="${type}" data-linktarget="${(/->.*/.test(fullName)) && fullName}">
                                 <td class="cbi-value-field">
                                     <input type="checkbox" class="file-checkbox" />
                                 </td>
@@ -673,9 +658,8 @@ String.prototype.replaceAll = function (search, replacement) {
         `;
         const deleteButton = document.getElementById('selectedremove');
         document.querySelectorAll('.file-checkbox').forEach(checkbox => {
-            checkbox.addEventListener('change', () => {
-                deleteButton.style.display = document.querySelectorAll('.file-checkbox:checked').length > 0 ? 'block' : 'none';
-            });
+            checkbox.addEventListener('change', () =>
+                deleteButton.style.display = document.querySelectorAll('.file-checkbox:checked').length > 0 ? 'block' : 'none');
         });
         deleteButton.style.display = 'none';
     }
@@ -683,7 +667,7 @@ String.prototype.replaceAll = function (search, replacement) {
     function createCustomMenu(filename, targetElem) {
         removeCustomMenu();
         const menuItems = [
-            { label: "<%:Delete%>", action: () => deletefiles(filename, targetElem.isdir) },
+            { label: "<%:Refresh Page%>", action: () => location.reload() },
             { label: "<%:Rename%>", action: () => renamefile(filename) },
             { label: "<%:Modify permissions%>", action: () => modifypermissions(filename, targetElem.type) },
             { label: "<%:upload file%>", action: uploadfile },
@@ -698,6 +682,7 @@ String.prototype.replaceAll = function (search, replacement) {
                 ]
             ),
             { label: "<%:Create file (directory)%>", action: () => createnewfile() },
+            { label: "<%:Delete file (directory)%>", action: () => deletefiles(filename, targetElem.isdir) },
             ...(currentPath.split('/').length > 2
                 ? [{ label: "<%:Back to previous%>", action: () => update_list(currentPath.replace(/\/[^/]*\/?$/, '/')) }]
                 : []
