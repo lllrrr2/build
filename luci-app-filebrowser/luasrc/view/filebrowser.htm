@@ -27,10 +27,6 @@
         background-color: #ffffff; /* 偶数行背景色 */
     }
 
-    .fb-container .cbi-input-text {
-        width: 100%; /* 宽度自适应 */
-    }
-
     .fb-container .cbi-value-field {
         text-align: left; /* 文字左对齐 */
     }
@@ -193,7 +189,7 @@
             padding: 3px 8px;
         }
 
-        .display-480px {
+        .display-none {
             display: none;
         }
     }
@@ -204,7 +200,7 @@
 <fieldset class="fb-container">
     <div class="input-container">
         <button id="createnewfile" class="cbi-button cbi-button-apply" style="margin-right: 6px;"><%:create new file%></button>
-        <input id="current-path" type="text" title="<%:If the path is the root directory, add '&' at the first character%>" class="cbi-input-text" value="/" />
+        <input id="current-path" type="text" title="<%:If the path is the root directory, add '&' at the first character%>" style="width: 100%;" value="/" />
         <button id="godirectory" class="cbi-button cbi-button-apply"><%:Go to directory%></button>
         <button id="uploadfile" class="cbi-button cbi-button-apply" style="margin-left: 6px;"><%:Upload to current directory%></button>
         <button id="selectedremove" class="cbi-button cbi-button-remove" style="margin-left: 6px;"><%:Delete%></button>
@@ -212,9 +208,6 @@
 </fieldset>
 <script>
 
-String.prototype.replaceAll = function (search, replacement) {
-    return this.replace(new RegExp(search, 'g'), replacement);
-};
 // console.log(uploaddir);
 (function () {
     let currentPath, customMenu = null;
@@ -232,7 +225,9 @@ String.prototype.replaceAll = function (search, replacement) {
         let isFloating = false;
         const inputContainer = document.querySelector('.input-container');
         const originalPosition = document.querySelector('header').getBoundingClientRect().bottom + document.querySelector('h2').offsetHeight + window.scrollY;
-        const navHeight = document.querySelector('header').offsetHeight;
+        let navHeight = document.querySelector('header').offsetHeight;
+        /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) && 
+            (navHeight = navHeight === 0 ? 40 : navHeight < 40 ? navHeight * 10 : navHeight);
         const originalWidth = inputContainer.offsetWidth;
         const floatInputContainer = () => {
             const shouldFloat = window.pageYOffset > originalPosition;
@@ -309,13 +304,13 @@ String.prototype.replaceAll = function (search, replacement) {
         while (totalSize >= 1024 && unitIndex < units.length - 1) {
             totalSize /= 1024; unitIndex++;
         }
-
         return `${totalSize.toFixed(2)} ${units[unitIndex]}`;
     }
 
-    function swalNotification(title = '', icon = '') {
+    function swalNotification(html = '', icon = '') {
         Swal.fire({
-            icon, title, timer: 2500, showConfirmButton: false,
+            toast: true, timerProgressBar: true, html,
+            icon, timer: 2500, showConfirmButton: false,
             customClass: {
                 text: 'swal-text', title: 'swal-title', popup: 'swal-popup'
             }
@@ -323,7 +318,7 @@ String.prototype.replaceAll = function (search, replacement) {
     }
 
     const swalConfig = {
-        showCloseButton: true, cancelButtonText: '<%:Cancel%>',
+        cancelButtonText: '<%:Cancel%>',
         showCancelButton: true, confirmButtonText: '<%:Confirm%>',
         cancelButtonColor: '#d33', confirmButtonColor: '#3085d6',
         customClass: {
@@ -364,7 +359,6 @@ String.prototype.replaceAll = function (search, replacement) {
         };
         xhr.send();
         if (!opt) history.pushState({ path }, null, `?path=${path}`);
-        console.log(opt, upload);
     }
 
     function deletefiles(filename = '', isdir = '') {
@@ -383,27 +377,29 @@ String.prototype.replaceAll = function (search, replacement) {
 
         if (filename || isdir) {
             return Swal.fire({
-                ...swalConfig, icon: 'warning',
-                title: `<%:confirm deletion%> ${colorMessage(filename, 'red')} ?`
+                ...swalConfig, icon: 'warning', iconColor: 'red',
+                html: `<%:confirm deletion%> ${colorMessage(filename, 'red')} ?`
             }).then((result) => result.isConfirmed && deleteSingleFile(filename, isdir));
         }
         let selectedFiles = Array.from(document.querySelectorAll('.file-checkbox:checked'))
             .map((checkbox) => checkbox.closest('tr').dataset);
-        let selectedFileNames = selectedFiles.map((file) => file.filename);
-        let title = `<%:confirm deletion%> ${
+        let selectedFileNames = selectedFiles.map((file) => {
+            return file.filename.length > 28 ? `${file.filename.slice(0, 20)}...${file.filename.slice(-8)}` : file.filename;
+        });
+        let html = `<%:confirm deletion%> ?${
             selectedFileNames.length === 1
                 ? colorMessage(selectedFileNames[0], 'red') + ' ?'
-                : `\n${colorMessage(selectedFileNames.join('\n'), 'red')} ?`
+                : `<br>${colorMessage(selectedFileNames.join('<br>'), 'red')}`
         }`;
-        Swal.fire({ ...swalConfig, icon: 'warning', title })
+        Swal.fire({ ...swalConfig, html, icon: 'warning', iconColor: 'red'})
             .then(result => result.isConfirmed && selectedFiles.forEach(file => deleteSingleFile(file.filename, file.isdir)));
     }
 
     function renamefile(oldname) {
         checkdirectory(concatPath(currentPath, oldname)).then(exists => {
             Swal.fire({
-                ...swalConfig, inputValue: oldname,
-                title: '<%:Enter new name%>', input: 'text',
+                ...swalConfig, inputValue: oldname, iconColor: 'red',
+                title: '<%:Enter new name%>', input: 'text', icon: 'warning',
                 didRender: () => { setTimeout(() => {
                     const input = Swal.getInput();
                     exists ? input?.select() : input?.setSelectionRange(0, oldname.lastIndexOf('.'))
@@ -429,9 +425,9 @@ String.prototype.replaceAll = function (search, replacement) {
         let oldPermissions = convertPermissions(type);
         let filename = `${colorMessage(filepath, 'blue')}`;
         Swal.fire({
-            inputValue: oldPermissions, input: 'text', icon: 'warning',
-            title: `<%:Please enter new permissions for ${filename}%>：`,
-            ...swalConfig, inputAttributes: {
+            ...swalConfig, iconColor: 'red', input: 'text', icon: 'warning',
+            html: `<%:Please enter new permissions for ${filename}%>：`,
+            inputValue: oldPermissions, inputAttributes: {
                 autocorrect: 'off', autocomplete: 'off',
                 spellcheck: 'false', autocapitalize: 'off'
             },
@@ -522,7 +518,7 @@ String.prototype.replaceAll = function (search, replacement) {
     function installipk(filename) {
         Swal.fire({
             ...swalConfig, icon: 'info',
-            title: `<%:Confirm installation%> ${colorMessage(filename, 'red')} ?`
+            html: `<%:Confirm installation%> ${colorMessage(filename, 'red')} ?`
         }).then(function(result) {
             if (result.isConfirmed) {
                 XHR.post('/cgi-bin/luci/admin/system/installipk', {
@@ -614,19 +610,19 @@ String.prototype.replaceAll = function (search, replacement) {
                 <tbody>
                     <tr>
                         <td colspan="7">
-                            ${getInitPath() !== '/' ? '<button type="button" class="cbi-button cbi-button-apply back-root-icon display-480px" style="margin-right: 10px;"><%:Go to root directory%></button>' : ''}
+                            ${getInitPath() !== '/' ? '<button type="button" class="cbi-button cbi-button-apply back-root-icon display-none" style="margin-right: 10px;"><%:Go to root directory%></button>' : ''}
                             <b><%:There are currently ${regularFiles} files,%> ${filenames.filter(line => line.startsWith("d")).length} <%:directory.%> <%:total file size%>：${calculateTotalSize(filenames)}</b>
                             ${getInitPath() !== '/' ? '<button type="button" class="cbi-button cbi-button-apply back-icon" style="margin-left: 10px;"><%:Back to previous%></button>' : ''}
                         </td>
                     </tr>
-                    <tr>
+                    <tr class="display-none">
                         <td></td>
                         <td class="cbi-value-field"><b><%:name%></b></td>
-                        <td class="cbi-value-field display-480px"><b><%:size%></b></td>
-                        <td class="cbi-value-field display-480px"><b><%:Change the time%></b></td>
-                        <td class="cbi-value-field display-480px"><b><%:Rights%></b></td>
-                        <td class="cbi-value-field display-480px"><b><%:owner%></b></td>
-                        <td class="cbi-value-field display-480px" style="position: relative; text-align: center;"><b><%:File operations%></b></td>
+                        <td class="cbi-value-field"><b><%:size%></b></td>
+                        <td class="cbi-value-field"><b><%:Change the time%></b></td>
+                        <td class="cbi-value-field"><b><%:Rights%></b></td>
+                        <td class="cbi-value-field"><b><%:owner%></b></td>
+                        <td class="cbi-value-field" style="position: relative; text-align: center;"><b><%:File operations%></b></td>
                     </tr>
                     ${filenames.map(line => {
                         const [type, , owner, , size, month, day, , ...fullNameParts] = line.trim().split(/\s+/);
@@ -637,14 +633,14 @@ String.prototype.replaceAll = function (search, replacement) {
                         let installButtonHtml = fullName.endsWith(".ipk") ? `<button class="cbi-button cbi-button-apply button-install"><%:Install%></button>` : "";
                         return `
                             <tr class="cbi-section-table-row" data-filename="${fullName}" data-isdir="${Number(type[0] === 'd' || type[0] === 'z')}" data-type="${type}" data-linktarget="${(/->.*/.test(fullName)) && fullName}">
-                                <td class="cbi-value-field">
+                                <td class="cbi-value-field display-none">
                                     <input type="checkbox" class="file-checkbox" name="${fullName}"/>
                                 </td>
                                 <td class="cbi-value-field ${icon}"><b title="${fullName}">${truncatedName}</b></td>
                                 <td class="cbi-value-field">${size}</td>
-                                <td class="cbi-value-field display-480px">${month} ${day}</td>
-                                <td class="cbi-value-field display-480px"> [ ${convertPermissions(type)} ] ${type}</td>
-                                <td class="cbi-value-field display-480px">${owner}</td>
+                                <td class="cbi-value-field display-none">${month} ${day}</td>
+                                <td class="cbi-value-field display-none"> [ ${convertPermissions(type)} ] ${type}</td>
+                                <td class="cbi-value-field display-none">${owner}</td>
                                 <td class="cbi-section-table-cell">
                                     <button class="cbi-button cbi-button-apply button-rename"><%:Rename%></button>
                                     <button class="cbi-button cbi-button-remove button-remove"><%:Delete%></button>
@@ -670,7 +666,7 @@ String.prototype.replaceAll = function (search, replacement) {
             { label: "<%:Refresh Page%>", action: () => location.reload() },
             { label: "<%:Rename%>", action: () => renamefile(filename) },
             { label: "<%:Modify permissions%>", action: () => modifypermissions(filename, targetElem.type) },
-            { label: "<%:upload file%>", action: uploadfile },
+            { label: "<%:upload file%>", action: () => uploadfile() },
             ...((targetElem.isdir === '0')
                 ? [
                     { label: "<%:download file%>", action: () => dpfile(filename, currentPath, true) },
@@ -678,7 +674,7 @@ String.prototype.replaceAll = function (search, replacement) {
                 ]
                 : [
                     { label: "<%:Download catalog%>", action: () => dpfile(filename, currentPath, true) },
-                    { label: "<%:open Directory%>", action: () => update_list(concatPath(currentPath, targetElem.filename)) }
+                    { label: "<%:open Directory%>", action: () => update_list(concatPath(currentPath, filename)) }
                 ]
             ),
             { label: "<%:Create file (directory)%>", action: () => createnewfile() },
@@ -706,10 +702,9 @@ String.prototype.replaceAll = function (search, replacement) {
     }
 
     document.addEventListener('contextmenu', event => {
-        event.preventDefault();
         const filenameElement = event.target.closest('[data-filename]');
         filenameElement
-            ? createCustomMenu(filenameElement.dataset.filename, filenameElement.dataset)
+            ? (event.preventDefault(), createCustomMenu(filenameElement.dataset.filename, filenameElement.dataset))
             : removeCustomMenu();
     });
 
