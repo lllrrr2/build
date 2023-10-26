@@ -103,22 +103,25 @@
         border-bottom: 1px solid #ddd;
     }
 
-    .swal-title {
-        font-size: 18px;
+    .swal2-title {
+        font-size: 20px;
+        line-height: 20px;
+        font-weight: 550;
     }
 
-    .swal-text {
+    .swal2-text {
         font-size: 17px;
+        line-height: 17px;
     }
 
-    .swal-popup {
+    .swal2-popup {
         width: 400px;
         font-size: 15px;
         background-color: #f2f2f2;
     }
 
-    .swal-cancel-button,
-    .swal-confirm-button {
+    .swal2-cancel,
+    .swal2-confirm {
         bottom: 5px;
         color: #fff;
         border: none;
@@ -132,9 +135,13 @@
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
     }
 
-    .swal-cancel-button:hover,
-    .swal-confirm-button:hover {
+    .swal2-cancel:hover,
+    .swal2-confirm:hover {
         background-color: hsl(324, 90%, 52%);
+    }
+
+    .swal2-timer-progress-bar {
+        background-color: #f37a7a;
     }
 
     .alert-mask {
@@ -167,6 +174,7 @@
     }
 
     .alert-content pre {
+        margin: 0;
         color: #66D9EF;
         font-size: 14px;
         line-height: 1.5;
@@ -207,7 +215,6 @@
     </div>
 </fieldset>
 <script>
-
 // console.log(uploaddir);
 (function () {
     let currentPath, customMenu = null;
@@ -253,11 +260,6 @@
 
     function removeCustomMenu() {
         customMenu?.remove(); customMenu = null;
-    }
-
-    const getFileElem = (elem) => {
-        while (elem && !elem.className?.includes('-icon')) elem = elem.parentNode;
-        return elem || '';
     }
 
     function convertPermissions(permissions) {
@@ -310,9 +312,10 @@
     function swalNotification(html = '', icon = '') {
         Swal.fire({
             toast: true, timerProgressBar: true, html,
-            icon, timer: 2500, showConfirmButton: false,
+            icon, showConfirmButton: false, timer: 2500,
             customClass: {
-                text: 'swal-text', title: 'swal-title', popup: 'swal-popup'
+                text: 'swal-text', title: 'swal-title', //popup: 'swal-popup'
+                progress: 'custom-progress-bar'
             }
         });
     }
@@ -321,11 +324,11 @@
         cancelButtonText: '<%:Cancel%>',
         showCancelButton: true, confirmButtonText: '<%:Confirm%>',
         cancelButtonColor: '#d33', confirmButtonColor: '#3085d6',
-        customClass: {
-            title: 'swal-title',
-            text: 'swal-text', confirmButton: 'swal-confirm-button',
-            popup: 'swal-popup', cancelButton: 'swal-cancel-button'
-        }
+        // customClass: {
+        //     cancelButton: 'swal-cancel-button',
+        //     confirmButton: 'swal-confirm-button',
+        //     title: 'swal-title', text: 'swal-text', popup: 'swal-popup'
+        // }
     };
 
     function godirectory(filePath = '') {
@@ -333,14 +336,13 @@
         ensureString(filePath)
             ? path = filePath
             : path = resolveFilePath(pathElem.value.trim())
-        checkdirectory(path).then(exists =>
-            exists
-                ? update_list(path)
-                : Swal.fire({
-                    ...swalConfig, confirmButtonText: '<%:create%>',
-                    text: '<%:Do you want to create this directory?%>',
-                    title: `${colorMessage(path, 'red')} <%:The directory does not exist%>`
-                }).then(result => result.isConfirmed && createnewfile(path))
+        checkdirectory(path).then(exists => exists
+            ? update_list(path)
+            : Swal.fire({
+                ...swalConfig, confirmButtonText: '<%:create%>',
+                text: '<%:Do you want to create this directory?%>',
+                title: `${colorMessage(path, 'red')} <%:The directory does not exist%>`
+            }).then(result => result.isConfirmed && createnewfile(path))
         );
     }
 
@@ -425,17 +427,24 @@
         let oldPermissions = convertPermissions(type);
         let filename = `${colorMessage(filepath, 'blue')}`;
         Swal.fire({
-            ...swalConfig, iconColor: 'red', input: 'text', icon: 'warning',
-            html: `<%:Please enter new permissions for ${filename}%>：`,
-            inputValue: oldPermissions, inputAttributes: {
-                autocorrect: 'off', autocomplete: 'off',
-                spellcheck: 'false', autocapitalize: 'off'
-            },
-            didRender: () => setTimeout(() => Swal.getInput()?.select(), 0)
+            ...swalConfig, iconColor: 'red', inputValue: oldPermissions,
+            html: `<%:Please select new permissions for ${filename}%>`, input: 'select',
+            inputPlaceholder: '<%:Select the required permissions%>', icon: 'warning',
+            inputAttributes: { style: 'height: auto; margin: 0 auto; width: 350px;' },
+            inputOptions: {
+                777: '<%:777 - All users have read, write and execute permissions%>',
+                755: '<%:755 - All users have read and execute permissions, but only the file owner has write permissions%>',
+                700: '<%:700 - Only the file owner has read, write, and execute permissions%>',
+                666: '<%:666 - All users have read and write permissions but no execute permissions%>',
+                644: '<%:644 - All users have read permissions, but only the file owner has write permissions%>',
+                600: '<%:600 - Only the file owner has read and write permissions%>',
+                555: '<%:555 - All users have execute permissions, but only the file owner has read and write permissions%>',
+                444: '<%:444 - All users have read permissions but no write and execute permissions%>',
+            }
         }).then((result) => {
             let permissions = (result.value || '').trim();
             if (permissions && permissions !== oldPermissions) {
-                XHR.post('/cgi-bin/luci/admin/system/modifypermissions', {
+                XHR.post('<%=url("admin/system/modifypermissions")%>', {
                     permissions, path: concatPath(currentPath, filepath)
                 }, (_, res) => {
                     let isSuccess = res?.stat === 0;
@@ -450,39 +459,38 @@
     }
 
     function createnewfile(filePath = '') {
-        let data = '';
+        filePath = ensureString(filePath);
         Swal.fire({
             ...swalConfig, title: '<%:Enter name%>：',
             html: `
-                <input type="text" id="newname" class="swal2-input" autocapitalize="off" placeholder="<%:For example: example.txt%>" title="<%:You can enter a file name or directory name%>"><br><br>
-                <input type="checkbox" id="createdirectory" class="swal2-checkbox">
+                <input id="newname" class="swal2-input" placeholder="<%:For example: example.txt%>" type="text" title="<%:You can enter a file name or directory name%>"><br><br>
+                <input id="createdirectory" class="swal2-checkbox" type="checkbox">
                 <label for="createdirectory"><b><%:Create as directory%></b></label><br>
                 <span id="directorytip" class="hidden" style="font-size: smaller;"><%:If the path is the root directory, add '&' at the first character%></span>
             `,
-            didOpen: () => {
+            didOpen: () => { //在弹出框打开后执行的操作。
                 if (filePath) {
                     document.getElementById('newname').value = filePath;
                     document.getElementById('createdirectory').checked = true;
                     document.getElementById('createdirectory').dispatchEvent(new Event('change'));
                 }
             },
-            preConfirm: () => {
+            preConfirm: () => { //在用户点击确认按钮之前执行的操作。
                 const newname = document.getElementById('newname').value;
                 const createdirectory = document.getElementById('createdirectory').checked;
-                return { newname: newname || '', createdirectory };
+                return { newname, createdirectory };
             },
-            didRender: () => {
+            didRender: () => { //在弹出框渲染完成后执行的操作。
+                const newnameInput = document.getElementById('newname');
                 const directorytip = document.getElementById('directorytip');
                 const createdirectoryCheckbox = document.getElementById('createdirectory');
-                createdirectoryCheckbox?.addEventListener('change', () => {
-                    directorytip?.classList.toggle('hidden', !createdirectoryCheckbox.checked);
-                });
 
-                const newnameInput = document.getElementById('newname');
+                createdirectoryCheckbox?.addEventListener('change', () => directorytip?.classList.toggle('hidden', !createdirectoryCheckbox.checked));
                 directorytip?.classList.toggle('hidden', !newnameInput?.value.trim());
             }
         }).then((result) => {
             if (!result.isConfirmed) return;
+            let data = '';
             let { newname, createdirectory } = result.value;
             let newfile = (filePath && !createdirectory)
                 ? newname
@@ -492,17 +500,15 @@
 
             if (!createdirectory) {
                 Swal.fire({
-                    ...swalConfig, title: '<%:Enter file content%>',
-                    input: 'textarea', inputAttributes: {
-                        autocapitalize: 'off', placeholder: '<%:Enter text here%>'
-                    }
+                    ...swalConfig, inputLabel: '<%:Enter file content%>',
+                    inputPlaceholder: '<%:Enter text here%>', input: 'textarea'
                 }).then((result) => {
-                    if (result.isConfirmed) data = result.value, executeOrder();
+                    if (result.isConfirmed) { data = result.value; executeOrder(); }
                 });
-            } else executeOrder();
+            } else { executeOrder(); }
 
             function executeOrder() {
-                XHR.post('/cgi-bin/luci/admin/system/createnewfile', { data, newfile, createdirectory }, (_, res) => {
+                XHR.post('<%=url("admin/system/createnewfile")%>', { data, newfile, createdirectory }, (_, res) => {
                     if (res?.stat === 0) {
                         createdirectory && update_list(newfile || '');
                         refresh_list(res.data);
@@ -555,9 +561,7 @@
     }
 
     function dpfile(filename, dirname = currentPath, download = '') {
-        if (filename.includes("->")) {
-            [, dirname = "/", filename = ""] = filename.match(/-> (.+)/)?.[1].match(/(.+\/)(.+)/);
-        }
+        if (filename.includes("->")) [, dirname, filename] = filename.match(/(.*) -> (.*)/) ?? [];
         const url = `/cgi-bin/luci/admin/system/dpfile?path=${encodeURIComponent(dirname)}&filename=${encodeURIComponent(filename)}&download=${download}`;
         if (download === '') return window.open(url);
         const confirmTitle = download === 'open' ? `<%:Confirm open%>` : `<%:Confirm download%>`;
@@ -574,6 +578,10 @@
     }
 
     function handleClick(event) {
+        const getFileElem = (elem) => {
+            while (elem && !elem.className?.includes('-icon')) elem = elem.parentNode;
+            return elem || '';
+        }
         let targetElem = event.target;
         let fileElem = getFileElem(targetElem);
         let infoElem = targetElem.parentNode.parentNode.dataset;
@@ -584,19 +592,18 @@
         else if (hasClass(targetElem, 'button-remove')) deletefiles(infoElem.filename, infoElem.isdir);
         if (fileElem) {
             if (hasClass(fileElem, 'back-root-icon')) update_list('/');
-            else if (hasClass(fileElem, 'file-icon')) dpfile(fileElem.parentNode.dataset.filename);
+            else if (hasClass(fileElem, 'file-icon')) dpfile(infoElem.linktarget);
             else if (hasClass(fileElem, 'back-icon')) update_list(currentPath.replace(/\/[^/]*\/?$/, '/'));
             else if (hasClass(fileElem, 'folder-icon')) update_list(concatPath(currentPath, fileElem.parentNode.dataset.filename));
             else if (hasClass(fileElem, 'link-icon')) {
                 let [, sourcefile, destinationfile] = infoElem.linktarget.match(/(.*) -> (.*)/) ?? [];
                 if (sourcefile && destinationfile) {
                     let filePath = destinationfile.replace(/^\/*/, '/');
-                    checkdirectory(filePath).then((exists) => {
-                        exists
-                            ? update_list(filePath)
-                            : (destinationfile.match(/\//g) || []).length > 1
-                                ? update_list(filePath.match(/(.+\/)(.+)/)[1])
-                                : swalNotification(`${colorMessage(sourcefile, 'red')} <%:It’s the current directory%> ${colorMessage(destinationfile, 'blue')}`, 'info');
+                    checkdirectory(filePath).then((exists) => { exists
+                        ? update_list(filePath)
+                        : (destinationfile.match(/\//g) || []).length > 1
+                            ? update_list(filePath.match(/(.+\/)(.+)/)[1])
+                            : swalNotification(`${colorMessage(sourcefile, 'red')} <%:It’s the current directory%> ${colorMessage(destinationfile, 'blue')}`, 'info');
                     });
                 }
             }
@@ -668,20 +675,15 @@
             { label: "<%:Modify permissions%>", action: () => modifypermissions(filename, targetElem.type) },
             { label: "<%:upload file%>", action: () => uploadfile() },
             ...((targetElem.isdir === '0')
-                ? [
-                    { label: "<%:download file%>", action: () => dpfile(filename, currentPath, true) },
-                    { label: "<%:open file%>", action: () => dpfile(filename, currentPath, 'open') }
-                ]
-                : [
-                    { label: "<%:Download catalog%>", action: () => dpfile(filename, currentPath, true) },
-                    { label: "<%:open Directory%>", action: () => update_list(concatPath(currentPath, filename)) }
-                ]
+                ? [{ label: "<%:download file%>", action: () => dpfile(filename, currentPath, true) },
+                    { label: "<%:open file%>", action: () => dpfile(filename, currentPath, 'open') }]
+                : [{ label: "<%:Download catalog%>", action: () => dpfile(filename, currentPath, true) },
+                    { label: "<%:open Directory%>", action: () => update_list(concatPath(currentPath, filename)) }]
             ),
             { label: "<%:Create file (directory)%>", action: () => createnewfile() },
             { label: "<%:Delete file (directory)%>", action: () => deletefiles(filename, targetElem.isdir) },
             ...(currentPath.split('/').length > 2
-                ? [{ label: "<%:Back to previous%>", action: () => update_list(currentPath.replace(/\/[^/]*\/?$/, '/')) }]
-                : []
+                ? [{ label: "<%:Back to previous%>", action: () => update_list(currentPath.replace(/\/[^/]*\/?$/, '/')) }] : []
             )
         ];
         customMenu = document.createElement('ul');
