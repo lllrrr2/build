@@ -13,7 +13,6 @@
     .fb-container td {
         padding: 6px; /* 行高 */
         text-align: center; /* 文字居中 */
-        /* 底部边框为1像素实线，颜色为#ddd */
         border-bottom: 1px solid #ddd;
     }
 
@@ -43,6 +42,10 @@
         position: sticky;
         border-radius: 8px;
         background-color: #9FE4E6;
+    }
+
+    .input-container #godirectory {
+        min-width: 70px;
     }
 
     .fb-container td[class$="-icon"] {
@@ -117,11 +120,11 @@
     .swal2-popup {
         width: 400px;
         font-size: 15px;
-        background-color: #f2f2f2;
+        background-color: #ffffff;
     }
 
-    .swal2-cancel,
-    .swal2-confirm {
+    .swal2-styled.swal2-cancel,
+    .swal2-styled.swal2-confirm {
         color: #fff;
         cursor: pointer;
         position: sticky;
@@ -133,30 +136,49 @@
         transform: translateY(0);
     }
 
-    .swal2-cancel:hover,
-    .swal2-confirm:hover {
+    .swal2-styled.swal2-confirm {
+        background-color: #6bdaff;
+    }
+
+    .swal2-styled.swal2-cancel {
+        background-color: #ff6b6b;
+    }
+
+    .swal2-styled.swal2-confirm:hover {
+        background-color: #119beb;
+    }
+
+    .swal2-styled.swal2-cancel:hover {
+        background-color: rgb(207, 46, 46);
+    }
+
+    .swal2-styled.swal2-cancel:hover,
+    .swal2-styled.swal2-confirm:hover {
         box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
         transform: translateY(-2px);
     }
 
-    .swal2-confirm {
-        background-color: #6bdaff;
-    }
-
-    .swal2-cancel {
-        background-color: #ff6b6b;
-    }
-
-    .swal2-confirm:hover {
-        background-color: #4fc1ff;
-    }
-
-    .swal2-cancel:hover {
-        background-color: #d33;
-    }
-
     .swal2-timer-progress-bar {
-        background-color: #f37a7a;
+        background-color: #ff0000;
+    }
+
+    .swal2-styled.swal2-confirm:focus {
+        box-shadow: 0 0 0 3px rgba(4, 135, 179, 0.527);
+    }
+
+    div:where(.swal2-container) .swal2-select {
+        font-size: 14.5px;
+    }
+
+    div:where(.swal2-container) .swal2-select:focus,
+    div:where(.swal2-container) input:where(.swal2-input):focus,
+    div:where(.swal2-container) input:where(.swal2-file):focus,
+    div:where(.swal2-container) textarea:where(.swal2-textarea):focus {
+        color: initial;
+        box-shadow: none;
+        background-color: initial;
+        border: 2px solid #f9782a;
+        border-color: #f9782a !important;
     }
 
     .alert-mask {
@@ -218,14 +240,14 @@
     }
 </style>
 <script src="/luci-static/resources/fb/sweetalert2.all.js"></script>
-<link rel="stylesheet" href="/luci-static/resources/fb/sweetalert2.min.css">
+<!-- <link rel="stylesheet" href="/luci-static/resources/fb/sweetalert2.min.css"> -->
 <h2 name="content"><%:File management%></h2>
 <fieldset class="fb-container">
     <div class="input-container">
         <button id="createnewfile" class="cbi-button cbi-button-apply" style="margin-right: 6px;"><%:create new file%></button>
         <input id="current-path" type="text" title="<%:If the path is the root directory, add '&' at the first character%>" style="width: 100%;" value="/" />
-        <button id="godirectory" class="cbi-button cbi-button-apply"><%:Go to directory%></button>
-        <button id="uploadfile" class="cbi-button cbi-button-apply" style="margin-left: 6px;"><%:Upload to current directory%></button>
+        <button id="godirectory" type="button" class="btn cbi-button cbi-button-apply"><%:Go to directory%></button>
+        <button id="uploadfile" type="button" class="btn cbi-button cbi-button-apply" style="margin-left: 6px;"><%:Upload to current directory%></button>
         <button id="selectedremove" class="cbi-button cbi-button-remove" style="margin-left: 6px;"><%:Delete%></button>
     </div>
 </fieldset>
@@ -597,7 +619,7 @@
         else if (hasClass(targetElem, 'button-remove')) deletefiles(infoElem.filename, infoElem.isdir);
         if (fileElem) {
             if (hasClass(fileElem, 'back-root-icon')) update_list('/');
-            else if (hasClass(fileElem, 'file-icon')) dpfile(infoElem.linktarget);
+            else if (hasClass(fileElem, 'file-icon')) dpfile(infoElem.filename);
             else if (hasClass(fileElem, 'back-icon')) update_list(currentPath.replace(/\/[^/]*\/?$/, '/'));
             else if (hasClass(fileElem, 'folder-icon')) update_list(concatPath(currentPath, fileElem.parentNode.dataset.filename));
             else if (hasClass(fileElem, 'link-icon')) {
