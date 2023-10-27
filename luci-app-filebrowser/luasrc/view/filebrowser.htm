@@ -130,10 +130,9 @@
         position: sticky;
         padding: 6px 10px;
         border-radius: 5px;
-        margin-right: 50px;
+        transform: translateY(0);
         transition: all 0.3s ease-in-out;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-        transform: translateY(0);
     }
 
     .swal2-styled.swal2-confirm {
@@ -154,12 +153,12 @@
 
     .swal2-styled.swal2-cancel:hover,
     .swal2-styled.swal2-confirm:hover {
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
         transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
     }
 
-    .swal2-timer-progress-bar {
-        background-color: #ff0000;
+    .swal2-popup.swal2-toast .swal2-html-container {
+        text-align: center;
     }
 
     .swal2-styled.swal2-confirm:focus {
@@ -171,14 +170,21 @@
     }
 
     div:where(.swal2-container) .swal2-select:focus,
-    div:where(.swal2-container) input:where(.swal2-input):focus,
     div:where(.swal2-container) input:where(.swal2-file):focus,
+    div:where(.swal2-container) input:where(.swal2-input):focus,
     div:where(.swal2-container) textarea:where(.swal2-textarea):focus {
-        color: initial;
-        box-shadow: none;
-        background-color: initial;
-        border: 2px solid #f9782a;
-        border-color: #f9782a !important;
+        outline: 0;
+        text-decoration: none;
+        border-color: rgba(235, 120, 67, 0.8) !important;
+        box-shadow: inset 0 1px 3px hsla(206, 100%, 50%, 0.01), 0 0 8px rgba(235, 120, 67, 0.6)
+/*        border-color: rgba(82, 168, 236, 0.8) !important;
+        box-shadow: inset 0 1px 3px hsla(0, 0%, 99%, 0.01), 0 0 8px rgba(82, 168, 236, 0.6);*/
+
+    }
+
+    div:where(.swal2-container) div:where(.swal2-timer-progress-bar) {
+        height: 3px;
+        background: #ff0000;
     }
 
     .alert-mask {
@@ -425,6 +431,7 @@
     }
 
     function renamefile(oldname) {
+        if (oldname.includes("->")) return swalNotification(`${colorMessage(oldname, 'red')} <%:Linked files are not allowed to be modified%>`, 'error');
         checkdirectory(concatPath(currentPath, oldname)).then(exists => {
             Swal.fire({
                 ...swalConfig, inputValue: oldname, iconColor: 'red',
@@ -501,6 +508,7 @@
                     document.getElementById('createdirectory').checked = true;
                     document.getElementById('createdirectory').dispatchEvent(new Event('change'));
                 }
+                document.getElementById("newname").focus();
             },
             preConfirm: () => { //在用户点击确认按钮之前执行的操作。
                 const newname = document.getElementById('newname').value;
