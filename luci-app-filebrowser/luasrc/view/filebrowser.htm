@@ -165,10 +165,6 @@
         box-shadow: 0 0 0 3px rgba(4, 135, 179, 0.527);
     }
 
-    div:where(.swal2-container) .swal2-select {
-        font-size: 14.5px;
-    }
-
     div:where(.swal2-container) .swal2-select:focus,
     div:where(.swal2-container) input:where(.swal2-file):focus,
     div:where(.swal2-container) input:where(.swal2-input):focus,
@@ -176,15 +172,15 @@
         outline: 0;
         text-decoration: none;
         border-color: rgba(235, 120, 67, 0.8) !important;
-        box-shadow: inset 0 1px 3px hsla(206, 100%, 50%, 0.01), 0 0 8px rgba(235, 120, 67, 0.6)
+        box-shadow: inset 0 1px 3.5px hsla(206, 100%, 50%, 0.01), 0 0 10px rgba(249, 128, 72, 0.8) !important;
 /*        border-color: rgba(82, 168, 236, 0.8) !important;
-        box-shadow: inset 0 1px 3px hsla(0, 0%, 99%, 0.01), 0 0 8px rgba(82, 168, 236, 0.6);*/
+        box-shadow: inset 0 1px 3px hsla(0, 0%, 99%, 0.01), 0 0 8px rgba(82, 168, 236, 0.6) !important;*/
 
     }
 
     div:where(.swal2-container) div:where(.swal2-timer-progress-bar) {
-        height: 3px;
-        background: #ff0000;
+        height: 3px !important;
+        background: #ff0000 !important;
     }
 
     .alert-mask {
@@ -206,9 +202,9 @@
         max-width: 900px;
         max-height: 70vh;
         position: relative;
-        border-radius: 5px;
+        border-radius: 7px;
         background-color: #fff;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     }
 
     .alert-content {
@@ -246,7 +242,6 @@
     }
 </style>
 <script src="/luci-static/resources/fb/sweetalert2.all.js"></script>
-<!-- <link rel="stylesheet" href="/luci-static/resources/fb/sweetalert2.min.css"> -->
 <h2 name="content"><%:File management%></h2>
 <fieldset class="fb-container">
     <div class="input-container">
@@ -352,16 +347,21 @@
         return `${totalSize.toFixed(2)} ${units[unitIndex]}`;
     }
 
-    function swalNotification(html = '', icon = '') {
+    swalNotification = (html = '', icon = '') => {
         Swal.fire({
-            toast: true, timerProgressBar: true, html,
-            icon, showConfirmButton: false, timer: 2500,
-        });
+            html, toast: true, timerProgressBar: true,
+            icon, timer: 2000, showConfirmButton: false,
+            didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer)
+                toast.addEventListener('mouseleave', Swal.resumeTimer)
+            }
+        })
     }
 
     const swalConfig = {
+        showCancelButton: true,
         cancelButtonText: '<%:Cancel%>',
-        showCancelButton: true, confirmButtonText: '<%:Confirm%>',
+        confirmButtonText: '<%:Confirm%>'
     };
 
     function godirectory(filePath = '') {
@@ -461,10 +461,9 @@
         let oldPermissions = convertPermissions(type);
         let filename = `${colorMessage(filepath, 'blue')}`;
         Swal.fire({
-            ...swalConfig, iconColor: 'red', inputValue: oldPermissions,
+            ...swalConfig, icon: 'warning', iconColor: 'red', inputValue: oldPermissions,
             html: `<%:Please select new permissions for ${filename}%>`, input: 'select',
-            inputPlaceholder: '<%:Select the required permissions%>', icon: 'warning',
-            inputAttributes: { style: 'height: auto; margin: 0 auto; width: 350px;' },
+            inputAttributes: { style: 'height: auto; margin: 0 auto; width: 350px; font-size: 14.5px;' },
             inputOptions: {
                 777: '<%:777 - All users have read, write and execute permissions%>',
                 755: '<%:755 - All users have read and execute permissions, but only the file owner has write permissions%>',
