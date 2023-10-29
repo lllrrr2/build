@@ -41,7 +41,7 @@
         z-index: 666;
         position: sticky;
         border-radius: 8px;
-        background-color: #9FE4E6;
+        background-color: #6efbff;
     }
 
     .input-container #godirectory {
@@ -214,12 +214,12 @@
 
     .alert-content pre {
         margin: 0;
-        color: #66D9EF;
+        color: #3699ff;
         font-size: 14px;
         line-height: 1.5;
         text-align: left;
         font-family: Consolas;
-        background-color: #272822;
+        background-color: #212121;
     }
 
 /*    在480px以下的屏幕*/
@@ -253,7 +253,7 @@
     </div>
 </fieldset>
 <script>
-// console.log(uploaddir);
+// console.log(Object.keys(Swal));
 (function () {
     let currentPath, customMenu = null;
     const pathElem = document.getElementById("current-path");
@@ -436,6 +436,7 @@
             Swal.fire({
                 ...swalConfig, inputValue: oldname, iconColor: 'red',
                 title: '<%:Enter new name%>', input: 'text', icon: 'warning',
+                inputAttributes: { style: 'margin: 10px 28px; width: auto; height: 42px;' },
                 didRender: () => { setTimeout(() => {
                     const input = Swal.getInput();
                     exists ? input?.select() : input?.setSelectionRange(0, oldname.lastIndexOf('.'))
@@ -463,7 +464,7 @@
         Swal.fire({
             ...swalConfig, icon: 'warning', iconColor: 'red', inputValue: oldPermissions,
             html: `<%:Please select new permissions for ${filename}%>`, input: 'select',
-            inputAttributes: { style: 'height: auto; margin: 0 auto; width: 350px; font-size: 14.5px;' },
+            inputAttributes: { style: 'height: auto; margin: 10px 28px; width: auto; height: 42px;' },
             inputOptions: {
                 777: '<%:777 - All users have read, write and execute permissions%>',
                 755: '<%:755 - All users have read and execute permissions, but only the file owner has write permissions%>',
@@ -496,7 +497,7 @@
         Swal.fire({
             ...swalConfig, title: '<%:Enter name%>：',
             html: `
-                <input id="newname" class="swal2-input" placeholder="<%:For example: example.txt%>" type="text" title="<%:You can enter a file name or directory name%>"><br><br>
+                <input id="newname" class="swal2-input" style="margin: 10px 28px; width: auto; height: 42px;" placeholder="<%:For example: example.txt%>" type="text" title="<%:You can enter a file name or directory name%>"><br><br>
                 <input id="createdirectory" class="swal2-checkbox" type="checkbox">
                 <label for="createdirectory"><b><%:Create as directory%></b></label><br>
                 <span id="directorytip" class="hidden" style="font-size: smaller;"><%:If the path is the root directory, add '&' at the first character%></span>
@@ -534,8 +535,9 @@
 
             if (!createdirectory) {
                 Swal.fire({
-                    ...swalConfig, inputLabel: '<%:Enter file content%>',
-                    inputPlaceholder: '<%:Enter text here%>', input: 'textarea'
+                    ...swalConfig, title: '<%:Enter file content%>',
+                    inputPlaceholder: '<%:Enter text here%>', input: 'textarea',
+                    inputAttributes: { style: "margin: 10px 28px; width: auto; height: 42px;" },
                 }).then((result) => {
                     if (result.isConfirmed) { data = result.value; executeOrder(); }
                 });
@@ -574,8 +576,8 @@
 
     function uploadfile() {
         Swal.fire({
-            ...swalConfig, title: '<%:upload file%>',
-            inputAttributes: { accept: '/*' }, input: 'file'
+            ...swalConfig, title: '<%:upload file%>', input: 'file',
+            inputAttributes: { style: "margin: 10px 28px;", accept: '/*' }
         }).then(({ value: file }) => {
             if (!file) return;
             const data = new FormData();
