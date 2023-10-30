@@ -187,6 +187,12 @@ msgstr "刷新页面"
 msgid "It’s the current directory"
 msgstr "就是当前目录的"
 
+msgid "The name contains a non-canonical string"
+msgstr "名称包含了不是规范字符串"
+
+msgid "Failed to check the directory"
+msgstr "检查目录失败"
+
 msgid "owner"
 msgstr "所有者"
 

@@ -108,11 +108,11 @@
 
     .swal2-title {
         font-size: 20px;
-        line-height: 20px;
+        line-height: 30px;
         font-weight: 550;
     }
 
-    .swal2-text {
+/*    .swal2-text {
         font-size: 17px;
         line-height: 17px;
     }
@@ -121,7 +121,7 @@
         width: 400px;
         font-size: 15px;
         background-color: #ffffff;
-    }
+    }*/
 
     .swal2-styled.swal2-cancel,
     .swal2-styled.swal2-confirm {
@@ -287,6 +287,7 @@
     const getInitPath = () => new URLSearchParams(location.search).get('path') || '/';
     const concatPath = (path, filename = '') => `${path.replace(/\/*$/, '/')}${filename}`;
     const colorMessage = (name, color) => `<span style="color: ${color};">${name}</span>`;
+    const validateInput = value => /^[A-Za-z0-9._-]+$/.test(value) ? '' : '<%:The name contains a non-canonical string%>';
 
     function resolveFilePath(newname) {
         return /^&\//.test(newname)
@@ -347,7 +348,7 @@
         return `${totalSize.toFixed(2)} ${units[unitIndex]}`;
     }
 
-    swalNotification = (html = '', icon = '') => {
+    swalNotification = (html = '', icon = 'success') => {
         Swal.fire({
             html, toast: true, timerProgressBar: true,
             icon, timer: 2000, showConfirmButton: false,
@@ -432,15 +433,16 @@
 
     function renamefile(oldname) {
         if (oldname.includes("->")) return swalNotification(`${colorMessage(oldname, 'red')} <%:Linked files are not allowed to be modified%>`, 'error');
-        checkdirectory(concatPath(currentPath, oldname)).then(exists => {
+        checkdirectory(concatPath(currentPath, oldname)).then((exists) => {
             Swal.fire({
-                ...swalConfig, inputValue: oldname, iconColor: 'red',
-                title: '<%:Enter new name%>', input: 'text', icon: 'warning',
-                inputAttributes: { style: 'margin: 10px 28px; width: auto; height: 42px;' },
+                ...swalConfig, inputValue: oldname, iconColor: 'red', input: 'text',
+                inputAttributes: { style: 'margin: 10px 100px; width: auto; height: 38px;' },
+                title: `${colorMessage(oldname, 'blue')} <%:Enter new name%>`, icon: 'warning',
                 didRender: () => { setTimeout(() => {
                     const input = Swal.getInput();
                     exists ? input?.select() : input?.setSelectionRange(0, oldname.lastIndexOf('.'))
-                }, 0)}
+                }, 0)},
+                inputValidator: validateInput
             }).then((result) => {
                 let newname = (result.value || '').trim();
                 if (newname && newname !== oldname) {
@@ -452,10 +454,10 @@
                             ? (refresh_list(res.data), swalNotification(`${colorMessage(oldname, 'blue')} <%:Renaming successful!%>`, 'success'))
                             : swalNotification(`${colorMessage(oldname, 'red')} <%:Renaming failed%>`, 'error');
                         isSuccess && refresh_list(res.data);
-                    });
+                    }, () => swalNotification(`${colorMessage(oldname, 'red')} <%:Renaming failed%>`, 'error'));
                 }
-            });
-        });
+            }).catch(() => swalNotification(`${colorMessage(oldname, 'red')} <%:Renaming failed%>`, 'error'));
+        }).catch(() => swalNotification(`${colorMessage('<%:Failed to check the directory%>', 'red')}`, 'error'));
     }
 
     function modifypermissions(filepath, type) {
@@ -463,8 +465,8 @@
         let filename = `${colorMessage(filepath, 'blue')}`;
         Swal.fire({
             ...swalConfig, icon: 'warning', iconColor: 'red', inputValue: oldPermissions,
-            html: `<%:Please select new permissions for ${filename}%>`, input: 'select',
-            inputAttributes: { style: 'height: auto; margin: 10px 28px; width: auto; height: 42px;' },
+            title: `<%:Please select new permissions for ${filename}%>`, input: 'select',
+            inputAttributes: { style: 'height: auto; margin: 10px 28px; width: auto; height: 38px;' },
             inputOptions: {
                 777: '<%:777 - All users have read, write and execute permissions%>',
                 755: '<%:755 - All users have read and execute permissions, but only the file owner has write permissions%>',
@@ -497,7 +499,7 @@
         Swal.fire({
             ...swalConfig, title: '<%:Enter name%>：',
             html: `
-                <input id="newname" class="swal2-input" style="margin: 10px 28px; width: auto; height: 42px;" placeholder="<%:For example: example.txt%>" type="text" title="<%:You can enter a file name or directory name%>"><br><br>
+                <input id="newname" class="swal2-input" style="margin: 10px 28px; width: auto; height: 38px;" placeholder="<%:For example: example.txt%>" type="text" title="<%:You can enter a file name or directory name%>"><br><br>
                 <input id="createdirectory" class="swal2-checkbox" type="checkbox">
                 <label for="createdirectory"><b><%:Create as directory%></b></label><br>
                 <span id="directorytip" class="hidden" style="font-size: smaller;"><%:If the path is the root directory, add '&' at the first character%></span>
@@ -516,13 +518,10 @@
                 return { newname, createdirectory };
             },
             didRender: () => { //在弹出框渲染完成后执行的操作。
-                const newnameInput = document.getElementById('newname');
                 const directorytip = document.getElementById('directorytip');
                 const createdirectoryCheckbox = document.getElementById('createdirectory');
-
                 createdirectoryCheckbox?.addEventListener('change', () => directorytip?.classList.toggle('hidden', !createdirectoryCheckbox.checked));
-                directorytip?.classList.toggle('hidden', !newnameInput?.value.trim());
-            }
+            },
         }).then((result) => {
             if (!result.isConfirmed) return;
             let data = '';
@@ -537,7 +536,7 @@
                 Swal.fire({
                     ...swalConfig, title: '<%:Enter file content%>',
                     inputPlaceholder: '<%:Enter text here%>', input: 'textarea',
-                    inputAttributes: { style: "margin: 10px 28px; width: auto; height: 42px;" },
+                    inputAttributes: { style: "margin: 10px 28px; width: auto;" },
                 }).then((result) => {
                     if (result.isConfirmed) { data = result.value; executeOrder(); }
                 });
@@ -560,17 +559,17 @@
     function installipk(filename) {
         Swal.fire({
             ...swalConfig, icon: 'info',
-            html: `<%:Confirm installation%> ${colorMessage(filename, 'red')} ?`
-        }).then(function(result) {
-            if (result.isConfirmed) {
-                XHR.post('/cgi-bin/luci/admin/system/installipk', {
+            html: `<%:Confirm installation%> ${colorMessage(filename, 'red')} ?`,
+            preConfirm: () => {
+                return XHR.post('/cgi-bin/luci/admin/system/installipk', {
                     filepath: concatPath(currentPath, filename)
                 }, (_, res) => {
                     res?.stat === 0
                         ? alert(res.data)
                         : swalNotification(`${colorMessage(filename, 'red')} <%:installation failed%>`, 'error');
                 }); 
-            }
+            },
+            allowOutsideClick: () => !Swal.isLoading()
         });
     }
 
