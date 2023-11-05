@@ -17,12 +17,10 @@
     }
 
     .cbi-section-table-row:nth-child(odd) {
-        color: #000000; /* 奇数行文本颜色 */
-        background-color: #f2f2f2; /* 奇数行背景色 */
+        background-color: #f1f1f1;
     }
 
     .cbi-section-table-row:nth-child(even) {
-        color: #333333; /* 偶数行文本颜色 */
         background-color: #ffffff; /* 偶数行背景色 */
     }
 
@@ -78,12 +76,13 @@
     }
 
     .custom-menu {
+        margin: 0;
         z-index: 999;
         padding: 5px 0;
         position: fixed;
-        font-size: 14px;
+        font-size: 15px;
         border-radius: 5px;
-        border: 1px solid #ddd;
+        border: 1px solid #dadada;
         background-color: #f5f5f5;
         font-family: Arial, sans-serif;
         box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.1);
@@ -112,17 +111,6 @@
         font-weight: 550;
     }
 
-/*    .swal2-text {
-        font-size: 17px;
-        line-height: 17px;
-    }
-
-    .swal2-popup {
-        width: 400px;
-        font-size: 15px;
-        background-color: #ffffff;
-    }*/
-
     .swal2-styled.swal2-cancel,
     .swal2-styled.swal2-confirm {
         color: #fff;
@@ -136,19 +124,19 @@
     }
 
     .swal2-styled.swal2-confirm {
-        background-color: #6bdaff;
+        background-color: hsl(195, 100%, 71%);
     }
 
     .swal2-styled.swal2-cancel {
-        background-color: #ff6b6b;
+        background-color: rgb(255, 107, 107);
     }
 
     .swal2-styled.swal2-confirm:hover {
-        background-color: #119beb;
+        background-color: hsl(195deg 95.63% 31.87%)
     }
 
     .swal2-styled.swal2-cancel:hover {
-        background-color: rgb(207, 46, 46);
+        background-color: rgb(161 32 32);
     }
 
     .swal2-styled.swal2-cancel:hover,
@@ -242,6 +230,7 @@
     }
 </style>
 <script src="/luci-static/resources/fb/sweetalert2.all.js"></script>
+<!-- <script src="https://cdn.bootcdn.net/ajax/libs/sweetalert2/11.7.27/sweetalert2.all.min.js"></script> -->
 <h2 name="content"><%:File management%></h2>
 <fieldset class="fb-container">
     <div class="input-container">
@@ -271,7 +260,7 @@
         const inputContainer = document.querySelector('.input-container');
         const originalPosition = document.querySelector('header').getBoundingClientRect().bottom + document.querySelector('h2').offsetHeight + window.scrollY;
         let navHeight = document.querySelector('header').offsetHeight;
-        /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) && 
+        /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) &&
             (navHeight = navHeight === 0 ? 40 : navHeight < 40 ? navHeight * 10 : navHeight);
         const originalWidth = inputContainer.offsetWidth;
         const floatInputContainer = () => {
@@ -422,13 +411,10 @@
         let selectedFileNames = selectedFiles.map((file) => {
             return file.filename.length > 28 ? `${file.filename.slice(0, 20)}...${file.filename.slice(-8)}` : file.filename;
         });
-        let html = `<%:confirm deletion%> ?${
-            selectedFileNames.length === 1
-                ? colorMessage(selectedFileNames[0], 'red') + ' ?'
-                : `<br>${colorMessage(selectedFileNames.join('<br>'), 'red')}`
-        }`;
-        Swal.fire({ ...swalConfig, html, icon: 'warning', iconColor: 'red'})
-            .then(result => result.isConfirmed && selectedFiles.forEach(file => deleteSingleFile(file.filename, file.isdir)));
+        Swal.fire({
+            ...swalConfig, icon: 'warning', iconColor: 'red',
+            html: `<%:confirm deletion%> ?<br>${colorMessage(selectedFileNames.join('<br>'), 'red')}`
+        }).then(result => result.isConfirmed && selectedFiles.forEach(file => deleteSingleFile(file.filename, file.isdir)));
     }
 
     function renamefile(oldname) {
@@ -438,10 +424,12 @@
                 ...swalConfig, inputValue: oldname, iconColor: 'red', input: 'text',
                 inputAttributes: { style: 'margin: 10px 100px; width: auto; height: 38px;' },
                 title: `${colorMessage(oldname, 'blue')} <%:Enter new name%>`, icon: 'warning',
-                didRender: () => { setTimeout(() => {
-                    const input = Swal.getInput();
-                    exists ? input?.select() : input?.setSelectionRange(0, oldname.lastIndexOf('.'))
-                }, 0)},
+                didRender: () => {
+                    setTimeout(() => {
+                        const input = Swal.getInput();
+                        exists ? input?.select() : input?.setSelectionRange(0, oldname.lastIndexOf('.'))
+                    }, 0)
+                },
                 inputValidator: validateInput
             }).then((result) => {
                 let newname = (result.value || '').trim();
@@ -450,7 +438,7 @@
                         newname: concatPath(currentPath, newname), oldname: concatPath(currentPath, oldname)
                     }, (_, res) => {
                         const isSuccess = res?.stat === 0;
-                        isSuccess 
+                        isSuccess
                             ? (refresh_list(res.data), swalNotification(`${colorMessage(oldname, 'blue')} <%:Renaming successful!%>`, 'success'))
                             : swalNotification(`${colorMessage(oldname, 'red')} <%:Renaming failed%>`, 'error');
                         isSuccess && refresh_list(res.data);
@@ -540,7 +528,7 @@
                 }).then((result) => {
                     if (result.isConfirmed) { data = result.value; executeOrder(); }
                 });
-            } else { executeOrder(); }
+            } else executeOrder();
 
             function executeOrder() {
                 XHR.post('<%=url("admin/system/createnewfile")%>', { data, newfile, createdirectory }, (_, res) => {
@@ -557,17 +545,16 @@
     }
 
     function installipk(filename) {
+        let filepath = concatPath(currentPath, filename)
         Swal.fire({
             ...swalConfig, icon: 'info',
             html: `<%:Confirm installation%> ${colorMessage(filename, 'red')} ?`,
             preConfirm: () => {
-                return XHR.post('/cgi-bin/luci/admin/system/installipk', {
-                    filepath: concatPath(currentPath, filename)
-                }, (_, res) => {
+                return XHR.post('/cgi-bin/luci/admin/system/installipk', { filepath }, (_, res) => {
                     res?.stat === 0
                         ? alert(res.data)
                         : swalNotification(`${colorMessage(filename, 'red')} <%:installation failed%>`, 'error');
-                }); 
+                });
             },
             allowOutsideClick: () => !Swal.isLoading()
         });
@@ -585,13 +572,14 @@
             data.append('filedir', concatPath(currentPath));
 
             fetch("/cgi-bin/luci/admin/system/uploadfile", { body: data, method: 'POST' })
-            .then(response => response.ok
-                ? response.json()
-                : Promise.reject(new Error('<%:upload failed%>')))
-            .then(res => {
-                update_list(res.filedir, undefined, true);
-                swalNotification(`${colorMessage(res.filename, 'blue')} <%:File has been uploaded to%> ${res.filedir}`, 'success');
-            }).catch(error => swalNotification(`${colorMessage(file.name, 'red')} <%:upload failed%>`, 'error'));
+                .then(response => response.ok
+                    ? response.json()
+                    : Promise.reject(new Error('<%:upload failed%>')))
+                .then(res => {
+                    update_list(res.filedir, undefined, true);
+                    swalNotification(`${colorMessage(res.filename, 'blue')} <%:File has been uploaded to%> ${res.filedir}`, 'success');
+                })
+                .catch(error => swalNotification(`${colorMessage(file.name, 'red')} <%:upload failed%>`, 'error'));
         });
     }
 
@@ -634,11 +622,12 @@
                 let [, sourcefile, destinationfile] = infoElem.linktarget.match(/(.*) -> (.*)/) ?? [];
                 if (sourcefile && destinationfile) {
                     let filePath = destinationfile.replace(/^\/*/, '/');
-                    checkdirectory(filePath).then((exists) => { exists
-                        ? update_list(filePath)
-                        : (destinationfile.match(/\//g) || []).length > 1
-                            ? update_list(filePath.match(/(.+\/)(.+)/)[1])
-                            : swalNotification(`${colorMessage(sourcefile, 'red')} <%:It’s the current directory%> ${colorMessage(destinationfile, 'blue')}`, 'info');
+                    checkdirectory(filePath).then((exists) => {
+                        exists
+                            ? update_list(filePath)
+                            : (destinationfile.match(/\//g) || []).length > 1
+                                ? update_list(filePath.match(/(.+\/)(.+)/)[1])
+                                : swalNotification(`${colorMessage(sourcefile, 'red')} <%:It’s the current directory%> ${colorMessage(destinationfile, 'blue')}`, 'info');
                     });
                 }
             }
@@ -690,7 +679,7 @@
                                 </td>
                             </tr>
                         `;
-                    }).join('')}
+        }).join('')}
                 </tbody>
             </table>
         `;
@@ -711,9 +700,9 @@
             { label: "<%:upload file%>", action: () => uploadfile() },
             ...((targetElem.isdir === '0')
                 ? [{ label: "<%:download file%>", action: () => dpfile(filename, currentPath, true) },
-                    { label: "<%:open file%>", action: () => dpfile(filename, currentPath, 'open') }]
+                { label: "<%:open file%>", action: () => dpfile(filename, currentPath, 'open') }]
                 : [{ label: "<%:Download catalog%>", action: () => dpfile(filename, currentPath, true) },
-                    { label: "<%:open Directory%>", action: () => update_list(concatPath(currentPath, filename)) }]
+                { label: "<%:open Directory%>", action: () => update_list(concatPath(currentPath, filename)) }]
             ),
             { label: "<%:Create file (directory)%>", action: () => createnewfile() },
             { label: "<%:Delete file (directory)%>", action: () => deletefiles(filename, targetElem.isdir) },
@@ -746,11 +735,11 @@
     });
 
     document.addEventListener('click', removeCustomMenu);
-    document.addEventListener('DOMContentLoaded', function(evt) {
+    document.addEventListener('DOMContentLoaded', function (evt) {
         update_list(getInitPath(), true);
     });
 
-    window.addEventListener('popstate', function(evt) {
+    window.addEventListener('popstate', function (evt) {
         update_list(evt.state?.path || '/', true);
     });
 })();

@@ -5,6 +5,7 @@
     }
 
     .alert-content pre {
+        margin: 0;
         cursor: text;                             /* 文本光标 */
         overflow: auto;                           /* 如果内容超出高度，显示滚动条 */
         color: #66D9EF;                           /* 字体颜色为蓝色 */
@@ -102,31 +103,27 @@
 <script type="text/javascript">
     async function makeAlertDraggable(alert) {
         let mouseStartX, mouseStartY, alertStartX, alertStartY; // 鼠标和弹框开始的X，y坐标
-        $(alert).mousedown((e) => {                  // 鼠标按下事件
-            mouseStartX = e.clientX;                 // 记录鼠标开始的X坐标
-            mouseStartY = e.clientY;                 // 记录鼠标开始的Y坐标
-            alertStartX = alert.offsetLeft;          // 记录弹框开始的X坐标
-            alertStartY = alert.offsetTop;           // 记录弹框开始的Y坐标
+        $(alert).mousedown(({ clientX, clientY }) => {          // 使用解构赋值获取鼠标按下时的X坐标和Y坐标
+            mouseStartX = clientX,                              // 记录鼠标开始的X坐标
+            mouseStartY = clientY,                              // 记录鼠标开始的Y坐标
+            alertStartX = alert.offsetLeft,                     // 记录弹框开始的X坐标
+            alertStartY = alert.offsetTop;                      // 记录弹框开始的Y坐标
         });
 
-        $(document).mousemove((e) => {               // 鼠标移动事件
+        $(document).mousemove((e) => {                          // 鼠标移动事件
             if (mouseStartX === 0 && mouseStartY === 0) return; // 如果鼠标没有按下，则不做任何操作
-            const mouseX = e.clientX;                // 获取当前鼠标的X坐标
-            const mouseY = e.clientY;                // 获取当前鼠标的Y坐标
-            const deltaX = mouseX - mouseStartX;     // 计算鼠标移动的X距离
-            const deltaY = mouseY - mouseStartY;     // 计算鼠标移动的Y距离
-            $(alert).css({                           // 设置弹框的样式
-                position: 'absolute',                // 将弹框的定位设置为绝对定位
-                top: `${alertStartY + deltaY}px`,    // 计算并设置弹框的top值
-                left: `${alertStartX + deltaX}px`    // 计算并设置弹框的left值
+            const { clientX: mouseX, clientY: mouseY } = e;     // 获取鼠标当前的X坐标和Y坐标
+            const deltaX = mouseX - (mouseStartX ?? 0);         // 计算鼠标移动的X距离（如果mouseStartX未定义，则默认为0）
+            const deltaY = mouseY - (mouseStartY ?? 0);         // 计算鼠标移动的Y距离（如果mouseStartY未定义，则默认为0）
+            $(alert).css({
+                position: 'absolute',                           // 设置弹框的定位方式为绝对定位
+                top: `${alertStartY + (deltaY ?? 0)}px`,        // 根据鼠标移动的Y距离调整弹框的top位置（如果deltaY未定义，则默认为0）
+                left: `${alertStartX + (deltaX ?? 0)}px`        // 根据鼠标移动的X距离调整弹框的left位置（如果deltaX未定义，则默认为0）
             });
         });
 
-        $(document).mouseup(() => {                  // 鼠标抬起事件
-            mouseStartX = 0;                         // 重置鼠标开始的X坐标
-            mouseStartY = 0;                         // 重置鼠标开始的Y坐标
-            alertStartX = 0;                         // 重置弹框开始的X坐标
-            alertStartY = 0;                         // 重置弹框开始的Y坐标
+        $(document).mouseup(() => {                             // 鼠标抬起事件
+            [mouseStartX, mouseStartY, alertStartX, alertStartY] = [0, 0, 0, 0];
         });
     }
 
@@ -251,7 +248,7 @@
         }
     }
 
-    function handleCommandRequest(command = '', file_path = '', requestType = '') {
+    function handleCommandRequest( file_path = '', command = '',requestType = '') {
         if (requestType === 'fetch') {
             fetchRequest(command, file_path);
         } else if (requestType === 'xhr') {
@@ -267,52 +264,39 @@
 </script>
 
 <div style="display: inline-block; margin-right: 20px;">
-    <label for="<%=cbid%>_requestType"></label>
-    <select id="<%=cbid%>_requestType" style="width: 60px; margin-right: 15px;" title="<%:Select request type%>">
-        <option value="xhr">xhr</option>
-        <option value="jQuery">jQuery</option>
-        <option value="fetch">fetch</option>
-    </select>
-    <label for="<%=cbid%>_commandInput"><%:Enter command to run:%></label>
-    <datalist id="<%=cbid%>_options">
-        <option value="lua"></option>
-        <option value="sh"></option>
-        <option value="python"></option>
-        <option value="bash"></option>
-    </datalist>
-    <input
-        id="<%=cbid%>_commandInput"
-        style="width: 60px;"
-        title="<%:Enter or select the running command of the script on the current page, and leave blank to set the default command.%>"
-        list="<%=cbid%>_options"
-    >
-    <% if self:cfgvalue(section) ~= false then %>
-        <input
-            type="button"
-            class="cbi-button cbi-button-apply"
-            style="margin-right: 10px; margin-left: 10px;"
-            onclick="handleCommandRequest(
-                getElementBy_Id('<%=cbid%>_commandInput'),
+    <label for="<%=cbid%>_requestType">
+        <select id="<%=cbid%>_requestType" style="width: 60px; margin-right: 15px;" title="<%:Select request type%>">
+            <option value="xhr">xhr</option>
+            <option value="jQuery">jQuery</option>
+            <option value="fetch">fetch</option>
+        </select>
+    </label>
+    <label for="<%=cbid%>_commandSelect"><%:Enter command to run:%>
+        <input id="<%=cbid%>_commandInput" list="commands" style="width: 70px;"
+            title="<%:Enter or select the running command of the script on the current page, and leave blank to set the default command.%>">
+        <datalist id="commands">
+            <option value="lua">lua</option>
+            <option value="sh">sh</option>
+            <option value="python">python</option>
+            <option value="bash">bash</option>
+        </datalist>
+    </label>
+    <% if self:cfgvalue(section) ~=false then %>
+        <input type="button" class="btn cbi-button cbi-button-apply" style="margin-right: 10px; margin-left: 10px;" onclick="handleCommandRequest(
                 '<%=self.file_path%>',
+                getElementBy_Id('<%=cbid%>_commandInput'),
                 getElementBy_Id('<%=cbid%>_requestType')
-            );"
-            <% if self.disable then %>disabled<% end %>
-    <%=attr("name", cbid) .. attr("id", cbid) .. attr("value", self.inputtitle or self.title)%>
-        />
+            );" <% if self.disable then %>disabled<% end %>
+            <%=attr("name", cbid) .. attr("id", cbid) .. attr("value", self.inputtitle or self.title)%>/>
     <% else %> - <% end %>
-    <label for="<%=cbid%>_shellInput"><%:Enter shell command:%></label>
-    <input
-        id="<%=cbid%>_shellInput"
-        style="width: 150px; margin-right: 10px;"
-        title="<%:Enter a shell command that can be run%>"
-    >
-    <button
-        type="button"
-        class="cbi-button cbi-button-apply"
-        onclick="handleCommandRequest(
-            getElementBy_Id('<%=cbid%>_shellInput'),
-            '',
-            getElementBy_Id('<%=cbid%>_requestType')
-        );"
-    ><%:Execute Command%></button>
+    <label for="<%=cbid%>_shellInput"><%:Enter shell command:%>
+        <input id="<%=cbid%>_shellInput" style="width: 150px; margin-right: 10px;"
+            title="<%:Enter a shell command that can be run%>">
+        <button type="button" class="btn cbi-button cbi-button-apply" onclick="
+            handleCommandRequest(
+                undefined,
+                getElementBy_Id('<%=cbid%>_shellInput'),
+                getElementBy_Id('<%=cbid%>_requestType')
+            );"><%:Execute Command%></button>
+    </label>
 </div>
