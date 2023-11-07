@@ -1,6 +1,8 @@
 module("luci.controller.qbittorrent", package.seeall)
 local sys  = require "luci.sys"
 local http = require "luci.http"
+local uci  = require "luci.model.uci".cursor()
+local con  = uci:get_all("qbittorrent", "main")
 
 function index()
     if not nixio.fs.access("/etc/config/qbittorrent") then return end
@@ -19,13 +21,11 @@ function encryptPassword()
 
     if password then
         local password_key = flag and "Password_PBKDF2" or "Password_ha1"
-        local command = string.format("uci -q set qbittorrent.main.%s='%s'", password_key, password)
-        sys.exec(command)
-        sys.exec("uci -q commit qbittorrent")
+        uci:set("qbittorrent", "main", password_key, password)
+        uci:commit("qbittorrent")
     end
 end
 
-local con  = luci.model.uci.cursor():get_all("qbittorrent", "main")
 function act_status()
     local BinaryLocation = con.BinaryLocation or "/usr/bin/qbittorrent-nox"
     http.prepare_content("application/json")
@@ -42,7 +42,7 @@ function action_log_read()
         log    = "",
         syslog = sys.exec("/sbin/logread -e qbittorrent | tail -n 60")
     }
-    local log_file = (con.RootProfilePath or "/tmp") .. "/qBittorrent/data/logs/qbittorrent.log"
+    local log_file = (con.Path or con.RootProfilePath .. "/qBittorrent/data/logs") .. "/qbittorrent.log"
     if nixio.fs.access(log_file) then
         file.log = sys.exec("tail -n 60 %s | sed 'x;1!H;$!d;x'" %log_file)
     end

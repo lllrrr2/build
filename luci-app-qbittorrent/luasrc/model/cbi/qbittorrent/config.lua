@@ -398,9 +398,9 @@ e.enabled = 'true'
 e.disabled = 'false'
 e.default = e.enabled
 
-e = t:taboption('logger', Value, 'Path', translate('Log Path'))
+e = t:taboption('logger', Value, 'Path', translate('Log Path'),
+    translate("Leave blank and save to '/tmp/qBittorrent/logs'"))
 e:depends('Enabled', 'true')
-e.placeholder = translate('The path for qBittorrent log.')
 
 e = t:taboption('logger', Flag, 'Backup', translate('Enable Backup'),
     translate('Backup log file when oversize the given size.'))
@@ -409,6 +409,11 @@ e.enabled = 'true'
 e.disabled = 'false'
 e.default = e.enabled
 
+e = t:taboption('logger', Value, 'MaxSizeBytes', translate('Log Max Size'),
+    translate('The max size for qBittorrent log (Unit: Bytes).'))
+e:depends('Backup', 'true')
+e.default = '66560'
+
 e = t:taboption('logger', Flag, 'DeleteOld', translate('Delete Old Backup'),
     translate('When enabled, the overdue log files will be deleted after given keep time.'))
 e:depends('Enabled', 'true')
@@ -416,15 +421,16 @@ e.enabled = 'true'
 e.disabled = 'false'
 e.default = e.enabled
 
-e = t:taboption('logger', Value, 'MaxSizeBytes', translate('Log Max Size'),
-    translate('The max size for qBittorrent log (Unit: Bytes).'))
-e:depends('Enabled', 'true')
-e.placeholder = '66560'
-
 e = t:taboption('logger', Value, 'SaveTime', translate('Log Keep Time'),
     translate('Give the ' .. 'time for keeping the old log, refer the setting "Delete Old Backup", eg. 1d' .. ' for one day, 1m for one month and 1y for one year.'))
-e:depends('Enabled', 'true')
-e.datatype = 'string'
+e:depends('DeleteOld', 'true')
+e.default  = '1m'
+e.validate = function(self, value)
+    if not value:match("^%d+[dDmMyY]$") then
+        return nil, translate("Please enter a valid time format, e.g. 1d, 1m, 1y.")
+    end
+    return Value.validate(self, value)
+end
 
 e = t:taboption("advanced", Flag, "IncludeOverhead", translate("Limit Overhead Usage"),
     translate("The overhead usage is been limitted."))

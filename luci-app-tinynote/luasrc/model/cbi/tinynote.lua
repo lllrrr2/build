@@ -1,10 +1,10 @@
-local fs   = require "nixio.fs"
-local util = require "luci.util"
-local uci  = require "luci.model.uci".cursor()
+local fs   = require 'nixio.fs'
+local util = require 'luci.util'
+local uci  = require 'luci.model.uci'.cursor()
 
-if not uci:get("luci", "tinynote") then
-    uci:set("luci", "tinynote", "tinynote")
-    uci:commit("luci")
+if not uci:get('luci', 'tinynote') then
+    uci:set('luci', 'tinynote', 'tinynote')
+    uci:commit('luci')
 end
 
 local function new_write_file(path, note_suffix, value)
@@ -18,10 +18,11 @@ local function new_write_file(path, note_suffix, value)
               "import sys\n" ..
               "import time\n",
         lua = "#!/usr/bin/env lua\n" ..
-              "local fs   = require \"nixio.fs\"\n" ..
-              "local sys  = require \"luci.sys\"\n" ..
-              "local util = require \"luci.util\"\n" ..
-              "local uci  = require \"luci.model.uci\".cursor()\n",
+              "local lfs  = require 'luci.fs'\n" ..
+              "local nfs  = require 'nixio.fs'\n" ..
+              "local sys  = require 'luci.sys'\n" ..
+              "local util = require 'luci.util'\n" ..
+              "local uci  = require 'luci.model.uci'.cursor()\n",
     }
     local data = value or (note_suffix_array[note_suffix] or '')
     fs.writefile(path, data)

@@ -93,7 +93,7 @@ msgid "Enable additional qBittorrent"
 msgstr "启用其他 qBittorrent"
 
 msgid "Specify the binary location of qBittorrent."
-msgstr "指定 qBittorrent 二进制文件的路径"
+msgstr "指定 qBittorrent 二进制文件的绝对路径"
 
 msgid "Overwrite the settings"
 msgstr "优先设置"
@@ -110,8 +110,8 @@ msgstr "将运行日志记录到日志文件"
 msgid "Log Path"
 msgstr "日志路径"
 
-msgid "The path for qBittorrent log."
-msgstr "保存qBittorrent日志文件的路径"
+msgid "Leave blank and save to '/tmp/qBittorrent/logs'"
+msgstr "留空保存到 '/tmp/qBittorrent/logs'"
 
 msgid "Enable Backup"
 msgstr "启用日志备份"
@@ -142,6 +142,9 @@ msgstr ""
 "给出保存旧日志文件的时间, "
 "参考设置 \"删除旧备份\", 例如， 1d代表1天，"
 " 1m代表1个月， 1y代表一年。"
+
+msgid "Please enter a valid time format, e.g. 1d, 1m, 1y."
+msgstr "请输入有效的时间格式，例如1d、1m、1y。"
 
 msgid "Use UPnP for Connections"
 msgstr "启用UPnP"

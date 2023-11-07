@@ -27,12 +27,12 @@ sed_options() {
 
         if [ -n "$val" ]; then
             if grep -q "^$node=" "$QBT_CONF_FILE"; then
-                [ "$Overwrite" -eq 1 -a "$category" != "FileLogger" ] && sed -i "s|$node=.*|$node=$val|" "$QBT_CONF_FILE"
+                [ "$Overwrite" -eq 1 ] && sed -i "s|$node=.*|$node=$val|" "$QBT_CONF_FILE"
             else
                 sed -i "/\[$Anchor\]/a $node=$val" $QBT_CONF_FILE
             fi
         else
-            [ "$Overwrite" -eq 1 -a "$category" != "FileLogger" ] && sed -i "/$node=.*/d" "$QBT_CONF_FILE"
+            [ "$Overwrite" -eq 1 ] && sed -i "/$node=.*/d" "$QBT_CONF_FILE"
         fi
     done
 }
@@ -72,14 +72,13 @@ init_instance() {
         CustomHTTPHeaders="$(echo -E "$CustomHTTPHeaders" | sed ':tag;N;s/\n/\\n/;b tag')"
     fi
 
-    if [ -n "$SaveTime" ]; then
-        if echo "$SaveTime" | grep -E '^[0-9]+[dmyDMY]$' > /dev/null; then
-            Age="${SaveTime//[dmyDMY]/}"
-            AgeType=$(echo "$SaveTime" | sed 's/[0-9]*//g' | tr 'dmyDMY' '001122')
-        else
-            _err "Error save time setted."
-            return 1
-        fi
+    if [ -n "$SaveTime" ] && echo "$SaveTime" | grep -qE '^[0-9]+[dmyDMY]$'; then
+        Age="${SaveTime//[dmyDMY]/}"
+        case "${SaveTime//[!dmyDYM]/}" in
+            d|D) AgeType=0;;
+            m|M) AgeType=1;;
+            y|Y) AgeType=2;;
+        esac
     fi
 
     if [ ! -f "$QBT_CONF_FILE" ]; then
@@ -112,7 +111,7 @@ init_instance() {
         "MaxRatio" "MaxRatioAction" "MaxUploads" "MaxUploadsPerTorrent" "PeX" "uTP_rate_limited"
     sed_options "Preferences" "Advanced" "AnnounceToAllTrackers" "AnonymousMode" "IgnoreLimitsLAN" \
         "IncludeOverhead" "osCache" "OutgoingPortsMax" "OutgoingPortsMin"
-    # sed_options "Application" "FileLogger" "Age" "AgeType" "Backup" "DeleteOld" "Enabled" "Path" "MaxSizeBytes"
+    sed_options "Application" "FileLogger" "Age" "AgeType" "Backup" "DeleteOld" "Enabled" "Path" "MaxSizeBytes"
 
     [ "$Overwrite" = "1" ] && sed -i "s/\(MigrationVersion\)=.*/\1=1/g" "$QBT_CONF_FILE"
 
@@ -160,7 +159,6 @@ start_service() {
         'DisableAutoTMMByDefault:or("true","false"):true'                   \
         'DiskWriteCacheSize:integer'                                        \
         'DiskWriteCacheTTL:integer'                                         \
-        'Enabled:or("true","false"):true'                                   \
         'Encryption:or("0","1","2"):0'                                      \
         'FinishedTorrentExportDir:string'                                   \
         'GlobalDLLimit:float'                                               \
@@ -194,7 +192,7 @@ start_service() {
         'Overwrite:bool:1'                                                  \
         'Password_ha1:string'                                               \
         'Password_PBKDF2:string'                                            \
-        'Path:string'                                                       \
+        'Path:string:/tmp/qBittorrent/logs'                                 \
         'PeX:or("true","false"):true'                                       \
         'Port:port:8080'                                                    \
         'PortRangeMin:range(1024,65535)'                                    \
@@ -221,7 +219,10 @@ start_service() {
         'nice:range(-20,19):0'                                              \
         'osCache:or("true","false")'                                        \
         'uTP_rate_limited:or("true","false"):true'                          \
-        'user:string:root'
+        'user:string:root'                                                  \
+        'Enabled:or("true","false"):true'                                   \
+        'AgeType:or("0","1","2")'                                           \
+        'Age:string'
 }
 
 reload_service() {
