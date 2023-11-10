@@ -39,22 +39,23 @@ s.addremove = true -- 添加
 enable = s:option(Flag, "enable", translate("enable"))
 enable.rmempty = false
 enable.default = 0
+enable.width = '10%'
 
 minute = s:option(Value, "minute", translate("minute"))
 minute.default = '0'
-minute.size = 4
+minute.width = '20%'
 
 hour = s:option(Value, "hour", translate("Hour"))
 hour.default = '5'
-hour.size = 4
+hour.width = '20%'
 
 day = s:option(Value, "day", translate("day"))
 day.default = '*'
-day.size = 4
+day.width = '20%'
 
 month = s:option(Value, "month", translate("Month"))
 month.default = '*'
-month.size = 4
+month.width = '20%'
 
 week = s:option(Value, "week", translate("weeks"))
 week:value('*', translate("Every day"))
@@ -66,7 +67,6 @@ week:value(5, translate("Friday"))
 week:value(6, translate("Saturday"))
 week:value(7, translate("Sunday"))
 week.default = '*'
-week.size = 4
 
 command = s:option(Value, "command", translate("Task"))
 command:value('sleep 5 && touch /etc/banner && reboot', translate("Reboots"))
@@ -80,7 +80,6 @@ command:value('wifi up', translate("Turn on WIFI"))
 command:value('sync && echo 3 > /proc/sys/vm/drop_caches', translate("Free up memory"))
 command:value('poweroff', translate("Turn off the power"))
 command.rmempty = false
-command.size = 25
 
 btn = s:option(Button, "Button", translate("Executed immediately"))
 btn.inputtitle = translate("Execute")

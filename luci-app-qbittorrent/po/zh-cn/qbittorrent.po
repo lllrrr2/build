@@ -110,8 +110,8 @@ msgstr "将运行日志记录到日志文件"
 msgid "Log Path"
 msgstr "日志路径"
 
-msgid "Leave blank and save to '/tmp/qBittorrent/logs'"
-msgstr "留空保存到 '/tmp/qBittorrent/logs'"
+msgid "Saved in the configuration directory by default"
+msgstr "默认保存在配置目录"
 
 msgid "Enable Backup"
 msgstr "启用日志备份"
@@ -129,19 +129,13 @@ msgid "Log Max Size"
 msgstr "日志最大大小"
 
 msgid "The max size for qBittorrent log (Unit: Bytes)."
-msgstr "qBittorrent日志文件的最大大小（单位：字节）"
+msgstr "日志文件的最大大小（单位：字节）"
 
 msgid "Log Keep Time"
 msgstr "日志保存时间"
 
-msgid ""
-"Give the "
-"time for keeping the old log, refer the setting \"Delete Old Backup\", eg. 1d"
-" for one day, 1m for one month and 1y for one year."
-msgstr ""
-"给出保存旧日志文件的时间, "
-"参考设置 \"删除旧备份\", 例如， 1d代表1天，"
-" 1m代表1个月， 1y代表一年。"
+msgid "1d represents 1 day, 1m represents 1 month, and 1y represents a year"
+msgstr "1d代表1天，1m代表1个月，1y代表一年"
 
 msgid "Please enter a valid time format, e.g. 1d, 1m, 1y."
 msgstr "请输入有效的时间格式，例如1d、1m、1y。"

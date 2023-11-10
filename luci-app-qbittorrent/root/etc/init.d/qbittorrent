@@ -44,6 +44,7 @@ init_instance() {
 
     RootProfilePath=${RootProfilePath%/}
     QBT_CONF_FILE="$RootProfilePath/$confdir/config/qBittorrent.conf"
+    Path="${Path:-$RootProfilePath/$confdir/data/logs}"
     local PROG="${BinaryLocation:-/usr/bin/qbittorrent-nox}"
     [ -x "$PROG" ] || chmod +x "$PROG"
 
@@ -192,7 +193,7 @@ start_service() {
         'Overwrite:bool:1'                                                  \
         'Password_ha1:string'                                               \
         'Password_PBKDF2:string'                                            \
-        'Path:string:/tmp/qBittorrent/logs'                                 \
+        'Path:string'                                                       \
         'PeX:or("true","false"):true'                                       \
         'Port:port:8080'                                                    \
         'PortRangeMin:range(1024,65535)'                                    \

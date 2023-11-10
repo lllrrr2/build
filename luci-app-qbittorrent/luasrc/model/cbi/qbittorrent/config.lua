@@ -106,13 +106,13 @@ e.enabled = 'true'
 e.disabled = 'false'
 e.default = e.disabled
 
-o = t:taboption("connection", Value, "PortRangeMin",
-    translate("Connection Port"))
+o = t:taboption("connection", Value, "PortRangeMin", translate("Connection Port"))
+o.width = '125'
+o.datatype = "port"
+o.optional = true
+o.onclick = "RandomPort();"
 o:depends("UseRandomPort", false)
 o.template = "qbittorrent/qb_value"
-o.datatype = "port"
-o.btnclick = "RandomPort();"
-o.btntext = translate("Generate Randomly")
 
 e = t:taboption("connection", Value, "GlobalDLLimit", translate("Global Download Speed"))
 e.datatype = "float"
@@ -399,7 +399,7 @@ e.disabled = 'false'
 e.default = e.enabled
 
 e = t:taboption('logger', Value, 'Path', translate('Log Path'),
-    translate("Leave blank and save to '/tmp/qBittorrent/logs'"))
+    translate("Saved in the configuration directory by default"))
 e:depends('Enabled', 'true')
 
 e = t:taboption('logger', Flag, 'Backup', translate('Enable Backup'),
@@ -422,7 +422,7 @@ e.disabled = 'false'
 e.default = e.enabled
 
 e = t:taboption('logger', Value, 'SaveTime', translate('Log Keep Time'),
-    translate('Give the ' .. 'time for keeping the old log, refer the setting "Delete Old Backup", eg. 1d' .. ' for one day, 1m for one month and 1y for one year.'))
+    translate('1d represents 1 day, 1m represents 1 month, and 1y represents a year'))
 e:depends('DeleteOld', 'true')
 e.default  = '1m'
 e.validate = function(self, value)

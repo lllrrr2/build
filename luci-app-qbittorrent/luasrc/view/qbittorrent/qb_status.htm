@@ -1,34 +1,26 @@
-<style>
-    .mar-10 {
-        margin-left: 20px;
-        margin-right: 10px;
-    }
-</style>
 <script>//<![CDATA[
     XHR.poll(5, '<%=url("admin/nas/qbittorrent/status")%>', null, function(x, data) {
         var tb = document.getElementById('qbittorrent_status');
         if (data && tb) {
             if (data.pid) {
-                var links = '<em><b><font color="green">qBittorrent <%:RUNNING%></font></b></em><input type="button" class="cbi-button cbi-button-apply mar-10" value="<%:Open Web Interface%>"/>';
-                if (data.pat) {
-                    links += `<em><%:The current qBittorrent is at%><font color="red">${data.pat}</em>`;
-                }
-                tb.onclick = () => openwebui(data.port, data.pid, data.https);
+                var links = '<b><font color="green">qBittorrent <%:RUNNING%></font></b><input type="button" class="cbi-button cbi-button-apply" style="margin-left: 20px;" value="<%:Open Web Interface%>"/>';
+                if (data.pat) links += `<%:The current qBittorrent is at%><font color="red">${data.pat}</font>`;
+                tb.onclick = () => openwebui(data.port, data.https, data.pid);
                 tb.innerHTML = links;
             } else {
-                tb.innerHTML = '<em><b><font color="red">qBittorrent <%:NOT RUNNING%></font></b></em>';
+                tb.innerHTML = '<b><font color="red">qBittorrent <%:NOT RUNNING%></font></b>';
             }
         }
     });
 
-    function openwebui(port, pid, https) {
+    function openwebui(port, https, pid) {
         var protocol = (https === false) ? 'https://' : 'http://';
-        var url = `${protocol}${window.location.host}:${port}`;
-        window.open(url, 'qbittorrent');
+        window.open(`${protocol}${window.location.host}:${port}`, 'qbittorrent');
+    };
+    function RandomPort() {
+        document.getElementById('cbid.qbittorrent.main.PortRangeMin').value = Math.floor(Math.random() * (65535 - 1024 + 1)) + 1024;
     };
 //]]></script>
 <fieldset class="cbi-section">
-    <p id="qbittorrent_status">
-        <em><%:Collecting data...%></em>
-    </p>
+    <p id="qbittorrent_status"><%:Collecting data...%></p>
 </fieldset>

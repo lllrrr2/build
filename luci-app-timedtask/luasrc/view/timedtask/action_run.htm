@@ -37,6 +37,7 @@
     }
 
     .alert-content pre {
+        margin: 0;
         text-align: left;
         font-size: 14px;
         line-height: 1.5;
@@ -77,11 +78,7 @@
 
 <script type="text/javascript">
     function makeAlertDraggable(alert) {
-        let mouseStartX = 0;
-        let mouseStartY = 0;
-        let alertStartX = 0;
-        let alertStartY = 0;
-
+        let [mouseStartX, mouseStartY, alertStartX, alertStartY] = [0, 0, 0, 0];
         alert.addEventListener('mousedown', (e) => {
             mouseStartX = e.clientX;
             mouseStartY = e.clientY;
@@ -99,13 +96,7 @@
             alert.style.top = `${alertStartY + deltaY}px`;
             alert.style.left = `${alertStartX + deltaX}px`;
         });
-
-        document.addEventListener('mouseup', () => {
-            mouseStartX = 0;
-            mouseStartY = 0;
-            alertStartX = 0;
-            alertStartY = 0;
-        });
+        document.addEventListener('mouseup', () => [mouseStartX, mouseStartY, alertStartX, alertStartY] = [0, 0, 0, 0]);
     }
 
     function alert(msg){
@@ -119,7 +110,7 @@
 
         var alertContent = document.createElement('div');
         alertContent.className = 'alert-content';
-        alertContent.innerHTML = '<pre>' + msg + '\n\n\n</pre>';
+        alertContent.innerHTML = '<pre>' + msg + '\n\n</pre>';
 
         var alertConfirm = document.createElement('div');
         alertConfirm.className = 'alert-confirm';
@@ -128,13 +119,9 @@
         alertBtn.className = 'alert-btn';
         alertBtn.innerHTML = '关闭';
 
-        alertBtn.onclick = function() {
-            body.removeChild(alertMask);
-        }
-
+        alertBtn.onclick = () => body.removeChild(alertMask);
         alertConfirm.appendChild(alertBtn);
-        alertContainer.appendChild(alertContent);
-        alertContainer.appendChild(alertConfirm);
+        alertContainer.append(alertContent, alertConfirm);
         alertMask.appendChild(alertContainer);
 
         body.appendChild(alertMask);
