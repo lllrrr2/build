@@ -1,9 +1,9 @@
 <script>//<![CDATA[
     XHR.poll(5, '<%=url("admin/nas/qbittorrent/status")%>', null, function(x, data) {
-        var tb = document.getElementById('qbittorrent_status');
+        const tb = document.getElementById('qbittorrent_status');
         if (data && tb) {
             if (data.pid) {
-                var links = '<b><font color="green">qBittorrent <%:RUNNING%></font></b><input type="button" class="cbi-button cbi-button-apply" style="margin-left: 20px;" value="<%:Open Web Interface%>"/>';
+                let links = '<b><font color="green">qBittorrent <%:RUNNING%></font></b><input type="button" class="cbi-button cbi-button-apply" style="margin-left: 20px;" value="<%:Open Web Interface%>"/>';
                 if (data.pat) links += `<%:The current qBittorrent is at%><font color="red">${data.pat}</font>`;
                 tb.onclick = () => openwebui(data.port, data.https, data.pid);
                 tb.innerHTML = links;
@@ -13,14 +13,16 @@
         }
     });
 
-    function openwebui(port, https, pid) {
-        var protocol = (https === false) ? 'https://' : 'http://';
+    const openwebui = (port, https, pid) => {
+        const protocol = (https === false) ? 'https://' : 'http://';
         window.open(`${protocol}${window.location.host}:${port}`, 'qbittorrent');
-    };
-    function RandomPort() {
-        document.getElementById('cbid.qbittorrent.main.PortRangeMin').value = Math.floor(Math.random() * (65535 - 1024 + 1)) + 1024;
-    };
+    }
+
+    const RandomPort = () => {
+        const PortRangeMin = document.getElementById('cbid.qbittorrent.main.PortRangeMin');
+        PortRangeMin.value = Math.floor(Math.random() * (65535 - 1024 + 1)) + 1024;
+    }
 //]]></script>
-<fieldset class="cbi-section">
+<div class="cbi-section">
     <p id="qbittorrent_status"><%:Collecting data...%></p>
-</fieldset>
+</div>

@@ -134,8 +134,17 @@ msgstr "日志文件的最大大小（单位：字节）"
 msgid "Log Keep Time"
 msgstr "日志保存时间"
 
-msgid "1d represents 1 day, 1m represents 1 month, and 1y represents a year"
-msgstr "1d代表1天，1m代表1个月，1y代表一年"
+msgid "Select time unit"
+msgstr "选择时间单位"
+
+msgid "days"
+msgstr "天"
+
+msgid "month"
+msgstr "月"
+
+msgid "year"
+msgstr "年"
 
 msgid "Please enter a valid time format, e.g. 1d, 1m, 1y."
 msgstr "请输入有效的时间格式，例如1d、1m、1y。"

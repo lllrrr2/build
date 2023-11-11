@@ -421,12 +421,13 @@ e.enabled = 'true'
 e.disabled = 'false'
 e.default = e.enabled
 
-e = t:taboption('logger', Value, 'SaveTime', translate('Log Keep Time'),
-    translate('1d represents 1 day, 1m represents 1 month, and 1y represents a year'))
+e = t:taboption('logger', Value, 'SaveTime', translate('Log Keep Time'))
 e:depends('DeleteOld', 'true')
 e.default  = '1m'
+e.width = '150'
+e.template = "qbittorrent/qb_timeunit"
 e.validate = function(self, value)
-    if not value:match("^%d+[dDmMyY]$") then
+    if not value:match("^[0-9]+[dDmMyY]$") then
         return nil, translate("Please enter a valid time format, e.g. 1d, 1m, 1y.")
     end
     return Value.validate(self, value)
