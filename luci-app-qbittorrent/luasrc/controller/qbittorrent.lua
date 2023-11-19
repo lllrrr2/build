@@ -44,7 +44,7 @@ function action_log_read()
     }
     local log_file = (con.Path or con.RootProfilePath .. "/qBittorrent/data/logs") .. "/qbittorrent.log"
     if nixio.fs.access(log_file) then
-        file.log = sys.exec("tail -n 60 %s | sed 'x;1!H;$!d;x'" %log_file)
+        file.log = sys.exec("tail -n 60 %s" %log_file)
     end
     http.prepare_content("application/json")
     http.write_json(file)

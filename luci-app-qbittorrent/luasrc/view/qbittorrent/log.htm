@@ -23,18 +23,15 @@
 <script>//<![CDATA[
     var maxLines = 20;
     function updateMaxLines() {
-        var selectBox = document.getElementById('line_count_select');
-        maxLines = parseInt(selectBox.value);
-
+        maxLines = parseInt(document.getElementById('line_count_select').value);
         XHR.poll(5, '<%=url("admin/nas/qbittorrent/action_log")%>', null,
             function (x, data) {
                 var logElm = document.getElementById('log_text');
                 if (data && logElm) {
-                    var logData = data.log ? data.log.split('\n').slice(-maxLines).join('\n') : '<%:No log data.%>';
-                    var syslogData = data.syslog ? data.syslog.split('\n').slice(-maxLines).join('\n') : '<%:No log data.%>';
+                    var logData = data.log ? data.log.split('\n').slice(-maxLines).reverse().join('\n') : '<%:No log data.%>';
+                    var syslogData = data.syslog ? data.syslog.split('\n').slice(-maxLines).reverse().join('\n') : '<%:No log data.%>';
                     var description = String.format('<span class="description"><%:Last %s lines of file:%></span><br/>', maxLines);
                     var syslog = String.format('<br/><br/><span class="description"><%:Last %s lines of syslog:%></span><br/>', maxLines);
-
                     logElm.innerHTML = `<pre>${description}${logData}${syslog}${syslogData}</pre>`;
                 } else {
                     logElm.innerHTML = '<strong><%:Failed to load log data.%></strong>';

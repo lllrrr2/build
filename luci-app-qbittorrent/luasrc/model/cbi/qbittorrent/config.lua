@@ -61,11 +61,14 @@ local p = t:taboption("basic", Value, "password", translate("Password"),
     translate("The login password for WebUI."))
 p.password = true
 p.rmempty = false
-p.datatype = "string"
+p.placeholder = "adminadmin"
 p.template = "qbittorrent/qb_password"
+local oldpassword = con.password
 function p.transform(self, value)
     self.flag = ver:gsub("%D", "") >= '420'
-    self.pwd  = value and value ~= con.password and value
+    if value and (not oldpassword or (con.Overwrite == '1' and value ~= oldpassword)) then
+        self.pwd = value
+    end
     return value
 end
 
@@ -89,9 +92,7 @@ e.placeholder = "/usr/sbin/qbittorrent-nox"
 
 e = t:taboption("basic", Flag, "Overwrite", translate("Overwrite the settings"),
     translate("If this option is enabled, the configuration set in WebUI will be replaced by the one in the LuCI."))
-e.enabled = "true"
-e.disabled = "false"
-e.default = e.enabled
+e.default = true
 
 e = t:taboption("connection", Flag, "UPnP", translate("Use UPnP for Connections"),
     translate("Use UPnP/ NAT-PMP port forwarding from the router."))
