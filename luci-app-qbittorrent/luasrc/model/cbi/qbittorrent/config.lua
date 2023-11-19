@@ -1,7 +1,7 @@
 local util = require "luci.util"
 local con  = luci.model.uci.cursor():get_all("qbittorrent", "main")
 local BinaryLocation = con.BinaryLocation or "/usr/bin/qbittorrent-nox"
-local ver  = util.exec(string.format("export HOME=/var/run/qbittorrent; %s -v 2>/dev/null | awk '{print $2}'", BinaryLocation))
+local ver  = util.exec("export HOME=/var/run/qbittorrent; %s -v 2>/dev/null | awk '{print $2}'" %BinaryLocation)
 
 function titlesplit(e)
     return translatef("<p style='font-size:13px; font-weight:bold; color:DodgerBlue'>%s</p>", translate(e))
@@ -57,16 +57,16 @@ local e = t:taboption("basic", Value, "Username", translate("Username"),
     translate("The login name for WebUI."))
 e.placeholder = "admin"
 
-local password = t:taboption("basic", Value, "password", translate("Password"),
+local p = t:taboption("basic", Value, "password", translate("Password"),
     translate("The login password for WebUI."))
-password.password = true
-password.template = "qbittorrent/qb_password"
-password.validate = function(self, value)
-    if value ~= con.password then
-        self.Value = value
-        self.flag  = ver:gsub("%D", "") >= '420'
-    end
-    return Value.validate(self, value)
+p.password = true
+p.rmempty = false
+p.datatype = "string"
+p.template = "qbittorrent/qb_password"
+function p.transform(self, value)
+    self.flag = ver:gsub("%D", "") >= '420'
+    self.pwd  = value and value ~= con.password and value
+    return value
 end
 
 e = t:taboption("basic", Value, "Port", translate("Listening Port"),
@@ -110,7 +110,6 @@ o = t:taboption("connection", Value, "PortRangeMin", translate("Connection Port"
 o.width = '125'
 o.datatype = "port"
 o.optional = true
-o.onclick = "RandomPort();"
 o:depends("UseRandomPort", false)
 o.template = "qbittorrent/qb_value"
 
@@ -430,7 +429,7 @@ e.validate = function(self, value)
     if not value:match("^[0-9]+[dDmMyY]$") then
         return nil, translate("Please enter a valid time format, e.g. 1d, 1m, 1y.")
     end
-    return Value.validate(self, value)
+    return value
 end
 
 e = t:taboption("advanced", Flag, "IncludeOverhead", translate("Limit Overhead Usage"),

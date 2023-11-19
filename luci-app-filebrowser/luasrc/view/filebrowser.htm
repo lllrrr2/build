@@ -319,17 +319,17 @@
     };
 
     function calculateTotalSize(filenames) {
-        let totalSize = 0, unitIndex = 0;
+        let unitIndex = 0;
         const units = ['B', 'KB', 'MB', 'GB'];
-        const sizeFactor = { K: 1024, M: 1024 * 1024, G: 1024 * 1024 * 1024 };
-
-        filenames.forEach(line => {
-            const [, , , , size] = line.trim().split(/\s+/);
-            const suffix = size.slice(-1).toUpperCase();
-            const parsedSize = parseFloat(size.slice(0, -1)) * sizeFactor[suffix] || 1;
-            if (!isNaN(parsedSize)) totalSize += parsedSize;
-        });
-
+        const sizeFactor = { K: 1024, M: 1024 ** 2, G: 1024 ** 3 };
+        let totalSize = filenames
+            .filter(line => !/^(d|l)/.test(line))
+            .reduce((total, line) => {
+                const [, , , , size] = line.trim().split(/\s+/);
+                const suffix = size.slice(-1).toUpperCase();
+                const parsedSize = parseFloat(size) * (sizeFactor[suffix] || 1);
+                return isNaN(parsedSize) ? total : total + parsedSize;
+            }, 0);
         while (totalSize >= 1024 && unitIndex < units.length - 1) {
             totalSize /= 1024; unitIndex++;
         }
@@ -634,7 +634,7 @@
     }
 
     function refresh_list(filenames) {
-        const regularFiles = filenames.filter(line => !line.startsWith("d")).length;
+        const regularFiles = filenames.filter(line => /^[^dl]/.test(line)).length;
         listElem.innerHTML = `
             <table class="cbi-section-table">
                 <tbody>
