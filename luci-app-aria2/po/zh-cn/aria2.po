@@ -829,8 +829,8 @@ msgid "prealloc"
 msgstr ""
 
 #: applications/luci-app-aria2/luasrc/model/cbi/aria2/config.lua:456
-msgid "trunc"
-msgstr ""
+msgid "The directory where the log files are saved"
+msgstr "日志文件的保存目录"
 
 msgid "AriaNg"
 msgstr "打开AriaNg的Web管理界面"
@@ -872,3 +872,12 @@ msgstr "打开YAAW的Web管理界面"
 
 msgid "Current version of aria2: <b style=\"color:green\"> %s"
 msgstr "当前Aria2的版本: <b style=\"color:green\"> %s"
+
+msgid "Distributed Hash Table"
+msgstr "分布式哈希表"
+
+msgid "Local Peer Discovery"
+msgstr "本地对等发现"
+
+msgid "Enable peer exchange"
+msgstr "启用对等交换"
