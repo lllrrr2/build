@@ -20,22 +20,30 @@
 </style>
 
 <script type="text/javascript">//<![CDATA[
-    XHR.poll(5, '<%=url("admin/nas/aria2/action_log_read")%>', null,
-        function (x, data) {
-            var logElm = document.getElementById('log_text');
-            if (logElm) {
-                logElm.innerHTML = data
-                    ? String.format(
-                        '<pre>%s%s%s%s</pre>',
-                        '<span class="description"><%:Last 50 lines of log file:%></span><br><br>',
-                        data.log || '<%:No log data.%>',
-                        '<br><br><span class="description"><%:Last 50 lines of syslog:%></span><br><br>',
-                        data.syslog || '<%:No log data.%>'
-                    )
-                    : '<strong><%:Failed to load log data.%></strong>';
+    var maxLines = 20;
+    function updateMaxLines() {
+        maxLines = parseInt(document.getElementById('line_count_select').value);
+        XHR.poll(5, '<%=url("admin/nas/aria2/action_log_read")%>', null,
+            function (x, data) {
+                var logElm = document.getElementById('log_text');
+                if (data && logElm) {
+                    var logData = data.log ? data.log.split('\n').slice(-maxLines).reverse().join('\n') : '<%:No log data.%>';
+                    var syslogData = data.syslog ? data.syslog.split('\n').slice(-maxLines).reverse().join('\n') : '<%:No log data.%>';
+                    var log = String.format('<span class="description"><%:Last %s lines of file:%></span>', maxLines);
+                    var syslog = String.format('<span class="description"><%:Last %s lines of syslog:%></span>', maxLines);
+                    logElm.innerHTML = `<pre>${syslog}<br>${syslogData}<br><br>${log}<br>${logData}</pre>`;
+                } else {
+                    logElm.innerHTML = '<strong><%:Failed to load log data.%></strong>';
+                }
             }
-        }
-    );
+        );
+    }
+
+    window.onload = function () {
+        updateMaxLines();
+        var selectBox = document.getElementById('line_count_select');
+        selectBox.addEventListener('change', updateMaxLines);
+    }
 
     function clearlog() {
         XHR.get('<%=url("admin/nas/aria2/clear_log")%>', null,
@@ -43,14 +51,22 @@
         );
     }
 //]]></script>
-
 <div class="cbi-map">
     <h2 name="content"><%:Aria2%> - <%:Log Data%></h2>
-    <div style="text-align: right">
-        <input class="btn cbi-button cbi-button-remove" type="submit" onclick="clearlog()" value="<%:Clear logs%>" />
-        <div style="display: inline-block; vertical-align: middle">
+    <div class="cbi-section-wrapper">
+        <div style="float: right;">
+            <input class="btn cbi-button cbi-button-remove" type="submit" onclick="clearlog()" value="<%:Clear logs%>" />
             <small><%:Refresh every 5 seconds.%></small>
         </div>
+        <label for="line_count_select" style="display: inline-block;">
+            <%:Number of lines to display:%>
+        </label>
+        <select id="line_count_select" style="display: inline-block; width: 50px;">
+            <option value="20">20</option>
+            <option value="30">30</option>
+            <option value="50">50</option>
+            <option value="60">60</option>
+        </select>
     </div>
     <div id="log_text">
         <img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" />
