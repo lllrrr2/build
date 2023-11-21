@@ -1,23 +1,31 @@
 #!/bin/sh /etc/rc.common
 
 START=99
-token=$(uci_get ddnsto ddnsto token)
 enable=$(uci_get ddnsto ddnsto enable)
+threads=$(uci_get ddnsto ddnsto threads)
+routerId=$(uci_get ddnsto ddnsto routerId)
+username=$(uci_get ddnsto ddnsto username)
+log_level=$(uci_get ddnsto ddnsto log_level)
+
+if [ "$threads" == "0" ]; then
+    threads=$(grep 'processor' /proc/cpuinfo | wc -l)
+fi
 
 start() {
     [ x$enable = x1 ] || return 0
-    [ -z $token ] && {
-        logger -t ddnsto "token值为空"
+    [ -z $username ] && {
+        logger -t ddnsto "username值为空"
         return 1
     }
-    /usr/bin/ddnsto -u $token -d >/dev/null 2>&1 && \
-    logger -t ddnsto "启动 ddnsto 服务"
+    idx=${routerId:+"-x $routerId"}
+    /usr/bin/ddnsto -u $username -c $threads -l $log_level $idx -d >/dev/null 2>&1 && \
+        logger -t ddnsto "启动 ddnsto 服务"
 }
 
 stop() {
     pidof ddnsto >/dev/null && {
         killall ddnsto 2>/dev/null && \
-        logger -t ddnsto "关闭 ddnsto 服务"
+            logger -t ddnsto "关闭 ddnsto 服务"
     }
 }
 

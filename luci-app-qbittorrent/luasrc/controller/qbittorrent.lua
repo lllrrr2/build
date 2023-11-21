@@ -12,10 +12,10 @@ function index()
     entry({"admin", "nas", "qbittorrent", "log"}, form("qbittorrent/log"), _("Log"), 3).leaf=true
     entry({"admin", "nas", "qbittorrent", "status"}, call("act_status")).leaf=true
     entry({"admin", "nas", "qbittorrent", "action_log"}, call("action_log_read")).leaf=true
-    entry({"admin", "nas", "qbittorrent", "encryptPassword"}, call("encryptPassword")).leaf=true
+    entry({"admin", "nas", "qbittorrent", "savePassword"}, call("savePassword")).leaf=true
 end
 
-function encryptPassword()
+function savePassword()
     local flag = http.formvalue('flag')
     local password = http.formvalue('password')
 
@@ -38,14 +38,10 @@ function act_status()
 end
 
 function action_log_read()
-    local file = {
-        log    = "",
-        syslog = sys.exec("/sbin/logread -e qbittorrent | tail -n 60")
-    }
     local log_file = (con.Path or con.RootProfilePath .. "/qBittorrent/data/logs") .. "/qbittorrent.log"
-    if nixio.fs.access(log_file) then
-        file.log = sys.exec("tail -n 60 %s" %log_file)
-    end
     http.prepare_content("application/json")
-    http.write_json(file)
+    http.write_json({
+        syslog = sys.exec("/sbin/logread -e qbittorrent | tail -n 100") or nil,
+        log    = nixio.fs.access(log_file) and sys.exec("tail -n 100 %s" %log_file) or nil
+    })
 end
