@@ -212,7 +212,7 @@
 
 /*    在480px以下的屏幕*/
     @media screen and (max-width: 480px) {
-        .cbi-value-field {
+        .cbi-titles {
             width: 30px; /* 设置一个固定宽度，根据需求调整 */
             overflow: hidden; /* 控制溢出隐藏 */
             white-space: nowrap; /* 防止换行 */
@@ -259,8 +259,11 @@
         const inputContainer = document.querySelector('.input-container');
         const originalPosition = document.querySelector('header').getBoundingClientRect().bottom + document.querySelector('h2').offsetHeight + window.scrollY;
         let navHeight = document.querySelector('header').offsetHeight;
-        /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) &&
-            (navHeight = navHeight === 0 ? 40 : navHeight < 40 ? navHeight * 10 : navHeight);
+        let a = navigator.userAgent,
+            b = /Android/.test(a),
+            c = /AppleWebKit/.test(a) && /Mobile\/\w+/.test(a),
+            d = b || c || /webOS|BlackBerry|Opera Mini|Opera Mobi|IEMobile/i.test(a);
+        d && (navHeight = navHeight === 0 ? 40 : navHeight < 40 ? navHeight * 10 : navHeight);
         const originalWidth = inputContainer.offsetWidth;
         const floatInputContainer = () => {
             const shouldFloat = window.pageYOffset > originalPosition;
@@ -636,50 +639,48 @@
     function refresh_list(filenames) {
         const regularFiles = filenames.filter(line => /^[^dl]/.test(line)).length;
         listElem.innerHTML = `
-            <table class="cbi-section-table">
-                <tbody>
-                    <tr>
-                        <td colspan="7">
-                            ${getInitPath() !== '/' ? '<button type="button" class="cbi-button cbi-button-apply back-root-icon display-none" style="margin-right: 10px;"><%:Go to root directory%></button>' : ''}
-                            <b><%:There are currently ${regularFiles} files,%> ${filenames.filter(line => line.startsWith("d")).length} <%:directory.%> <%:total file size%>：${calculateTotalSize(filenames)}</b>
-                            ${getInitPath() !== '/' ? '<button type="button" class="cbi-button cbi-button-apply back-icon" style="margin-left: 10px;"><%:Back to previous%></button>' : ''}
-                        </td>
-                    </tr>
-                    <tr class="display-none">
-                        <td></td>
-                        <td class="cbi-value-field"><b><%:name%></b></td>
-                        <td class="cbi-value-field"><b><%:size%></b></td>
-                        <td class="cbi-value-field"><b><%:Change the time%></b></td>
-                        <td class="cbi-value-field"><b><%:Rights%></b></td>
-                        <td class="cbi-value-field"><b><%:owner%></b></td>
-                        <td class="cbi-value-field" style="position: relative; text-align: center;"><b><%:File operations%></b></td>
-                    </tr>
-                    ${filenames.map(line => {
-                        const [type, , owner, , size, month, day, , ...fullNameParts] = line.trim().split(/\s+/);
-                        const fullName = fullNameParts.join(' ');
-                        const isLink = ['z', 'l', 'x'].includes(type[0]);
-                        const icon = type[0] === 'd' ? "folder-icon" : (isLink ? "link-icon" : "file-icon");
-                        const truncatedName = fullName.length > 20 ? `${fullName.slice(0, 13)}...${fullName.slice(-7)}` : fullName;
-                        let installButtonHtml = fullName.endsWith(".ipk") ? `<button class="cbi-button cbi-button-apply button-install"><%:Install%></button>` : "";
-                        return `
-                            <tr class="cbi-section-table-row" data-filename="${fullName}" data-isdir="${Number(type[0] === 'd' || type[0] === 'z')}" data-type="${type}" data-linktarget="${(/->.*/.test(fullName)) && fullName}">
-                                <td class="cbi-value-field display-none">
-                                    <input type="checkbox" class="file-checkbox" name="${fullName}"/>
-                                </td>
-                                <td class="cbi-value-field ${icon}"><b title="${fullName}">${truncatedName}</b></td>
-                                <td class="cbi-value-field">${size}</td>
-                                <td class="cbi-value-field display-none">${month} ${day}</td>
-                                <td class="cbi-value-field display-none"> [ ${convertPermissions(type)} ] ${type}</td>
-                                <td class="cbi-value-field display-none">${owner}</td>
-                                <td class="cbi-section-table-cell">
-                                    <button class="cbi-button cbi-button-apply button-rename"><%:Rename%></button>
-                                    <button class="cbi-button cbi-button-remove button-remove"><%:Delete%></button>
-                                    ${installButtonHtml}
-                                </td>
-                            </tr>
-                        `;
-                    }).join('')}
-                </tbody>
+            <table class="table">
+                <tr>
+                    <td colspan="7">
+                        ${getInitPath() !== '/' ? '<button class="btn cbi-button cbi-button-apply back-root-icon display-none" style="margin-right: 10px;"><%:Go to root directory%></button>' : ''}
+                        <b><%:There are currently ${regularFiles} files,%> ${filenames.filter(line => line.startsWith('d')).length} <%:directory.%> <%:total file size%>：${calculateTotalSize(filenames)}</b>
+                        ${getInitPath() !== '/' ? '<button class="btn cbi-button cbi-button-apply back-icon" style="margin-left: 10px;"><%:Back to previous%></button>' : ''}
+                    </td>
+                </tr>
+                <tr class="tr table-titles">
+                    <th></th>
+                    <th class="th cbi-titles"><%:name%></th>
+                    <th class="th cbi-titles"><%:size%></th>
+                    <th class="th cbi-titles"><%:Change the time%></th>
+                    <th class="th cbi-titles"><%:Rights%></th>
+                    <th class="th cbi-titles"><%:owner%></th>
+                    <th class="th cbi-titles" style="position: relative; text-align: center;"><%:File operations%></th>
+                </tr>
+                ${filenames.map(line => {
+                    const [type, , owner, , size, month, day, , ...fullNameParts] = line.trim().split(/\s+/);
+                    const fullName = fullNameParts.join(' ');
+                    const isLink = ['z', 'l', 'x'].includes(type[0]);
+                    const icon = type[0] === 'd' ? "folder-icon" : (isLink ? "link-icon" : "file-icon");
+                    const truncatedName = fullName.length > 20 ? `${fullName.slice(0, 13)}...${fullName.slice(-7)}` : fullName;
+                    let installButtonHtml = fullName.endsWith(".ipk") ? `<button class="btn cbi-button cbi-button-apply button-install"><%:Install%></button>` : "";
+                    return `
+                        <tr class="cbi-section-table-row" data-filename="${fullName}" data-isdir="${Number(type[0] === 'd' || type[0] === 'z')}" data-type="${type}" data-linktarget="${(/->.*/.test(fullName)) && fullName}">
+                            <td class="display-none">
+                                <input type="checkbox" class="file-checkbox" name="${fullName}"/>
+                            </td>
+                            <td class="cbi-value-field cbi-titles ${icon}"><b title="${fullName}">${truncatedName}</b></td>
+                            <td class="cbi-value-field">${size}</td>
+                            <td class="display-none">${month} ${day}</td>
+                            <td class="display-none"> [ ${convertPermissions(type)} ] ${type}</td>
+                            <td class="display-none">${owner}</td>
+                            <td class="cbi-section-table-cell">
+                                <button class="btn cbi-button cbi-button-apply button-rename"><%:Rename%></button>
+                                <button class="btn cbi-button cbi-button-remove button-remove"><%:Delete%></button>
+                                ${installButtonHtml}
+                            </td>
+                        </tr>
+                    `;
+                }).join('')}
             </table>
         `;
         const deleteButton = document.getElementById('selectedremove');
