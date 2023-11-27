@@ -41,7 +41,7 @@ function action_log_read()
     local log_file = (con.Path or con.RootProfilePath .. "/qBittorrent/data/logs") .. "/qbittorrent.log"
     http.prepare_content("application/json")
     http.write_json({
-        syslog = sys.exec("/sbin/logread -e qbittorrent | tail -n 100") or nil,
+        syslog = sys.exec("/sbin/logread -e qbittorrent -t 100") or nil,
         log    = nixio.fs.access(log_file) and sys.exec("tail -n 100 %s" %log_file) or nil
     })
 end
