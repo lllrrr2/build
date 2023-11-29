@@ -13,12 +13,12 @@
         }
     });
 
-    const openwebui = (port, https, pid) => {
+    function openwebui(port, https, pid) {
         const protocol = (https === false) ? 'https://' : 'http://';
         window.open(`${protocol}${window.location.host}:${port}`, 'qbittorrent');
     }
 
-    const RandomPort = () => {
+    function randomPort() {
         const PortRangeMin = document.getElementById('cbid.qbittorrent.main.PortRangeMin');
         PortRangeMin.value = Math.floor(Math.random() * (65535 - 1024 + 1)) + 1024;
     }

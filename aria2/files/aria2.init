@@ -44,14 +44,15 @@ _change_owner() {
 
 append_options() {
     for o in "$@"; do
-        v="$(eval echo "\$$o")"
-        [ -n "$v" ] && echo "${o//_/-}=$v" >>"$config_file_tmp"
+        eval "v=\$$o"
+        [ -n "$v" ] && echo "${o//_/-}=$v" >> "$config_file_tmp"
     done
 }
 
 append_setting() {
-    for s in "$@"; do
-        [ "${s#*=}" ] && echo "$s" >>"$config_file_tmp"
+    while [ "$#" -gt 0 ]; do
+        [ "${1#*=}" ] && echo "$1" >> "$config_file_tmp"
+        shift
     done
 }
 
@@ -136,32 +137,61 @@ aria2_validate() {
     'user_agent:string'
 }
 
+pro_conf() {
+    cd $pro
+    if [ ! -s aria2.conf ]; then
+        for i in core aria2.conf clean.sh delete.sh tracker.sh dht.dat dht6.dat script.conf; do
+            wget -qN -t2 -T3 raw.githubusercontent.com/P3TERX/aria2.conf/master/$i || \
+            wget -qN -t2 -T3 cdn.jsdelivr.net/gh/P3TERX/aria2.conf/$i || \
+            curl -fsSLO p3terx.github.io/aria2.conf/$i
+            [ -s $i ] && _info " $i 下载成功 !" || _info " $i 下载失败 !"
+        done
+        sed -i "{
+            /033/d
+            s|^#!.*|#!/bin/sh|g
+            s|/root/.aria2|$pro|g
+            /CONF_DIR/{s/aria2.conf/$NAME.conf.$section/g}
+        }" *
+        chmod +x *.sh && sh ./tracker.sh
+        _info "Aria2加强配置下载完成！"
+    fi
+    [ ! -s aria2.conf ] && return 1
+    [ x"$rpc_secret" = x ] && sed -i '/^rpc-secret/s/^/#/' aria2.conf
+    sed '/^$/{N;/\n$/D};' aria2.conf >"$config_file"
+    echo -e "# 以下是系统生成，如和上面的配置有重复以下面为准。#" >>"$config_file"
+    while read p; do
+        grep -q "^${p%%=*}" $config_file && {
+            sed -i "s|^${p%%=*}=.*|$p|" $config_file
+        } || echo "$p" >> $config_file
+    done < $config_file_tmp
+}
+
 aria2_start() {
     local section="$1"
     [ "$2" = "0" ] || { _info "验证失败。"; return 1; }
-    [ "$enabled" -eq "1" ] || return 1
-    if [ "$enable_pro" -eq "1" ]; then
+    [ "$enabled" = "1" ] || return 1
+    [ -n "$dir" ] && make_dir "$dir" || { _info "请设置下载目录。"; return 1; }
+    if [ "$enable_pro" = "1" ]; then
         a="$pro"
         make_dir "$pro"
     else
         a="$config_dir"
+        [ -d "$pro" ] && rm -rf "$pro"; _info "扩展功能已关闭，删除原来的 $pro 目录"
         make_dir "$config_dir"
-        [ -d "$pro" ] && rm -rf "$pro"; _info "扩展功能已关闭，删除原来的$Pro目录"
-        if [ ! -f "$a"/dht.dat ] && [ ."$enable_dht" = ."true" ]; then
-            dht_file="$a/dht.dat"
-            create_file "$dht_file"
-            append_setting "enable-dht=true" "dht-file-path=$dht_file"
-        fi
+        chmod 755 "$config_dir"
     fi
-    [ -n "$dir" ] && make_dir "$dir" || { _info "请设置下载目录。"; return 1; }
 
-    config_file="$a/$NAME.$section.conf"
-    config_file_tmp="$a/$NAME.conf.tmp"
     session_file="$a/$NAME.session"
+    config_file_tmp="$a/$NAME.conf.tmp"
+    config_file="$a/$NAME.$section.conf"
 
-    create_file "$session_file" "$config_file" "$config_file_tmp"
+    create_file "$session_file"
+    if [ ."$enable_dht" = ."true" -a ! -f "$a"/dht.dat ]; then
+        dht_file="$a/dht.dat"
+        create_file "$dht_file"
+        append_setting "enable-dht=true" "dht-file-path=$dht_file"
+    fi
 
-    # 创建tmp文件
     append_setting "all-proxy-passwd=$all_proxy_passwd" "all-proxy-user=$all_proxy_user" \
     "enable-rpc=true" "quiet=true" "input-file=$session_file" "log-level=$log_level" "log_dir=$log_dir" "log=$log" \
     "save-session=$a/$NAME.session" "rpc-allow-origin-all=true" "rpc-listen-all=true" \
@@ -169,7 +199,7 @@ aria2_start() {
 
     if [ -z "$enable_logging" ]; then
         append_options "log_dir" "log_level" "log"
-    elif [ "$enable_logging" -eq "1" ]; then
+    elif [ "$enable_logging" = "1" ]; then
         make_dir "$log_dir"
         [ x$log_dir = x ] && log="/var/log/aria2.log" || log="${log_dir}/aria2.log"
         append_setting "log_dir=$log_dir" "log=$log"
@@ -177,7 +207,7 @@ aria2_start() {
         [ -s "$log_dir"/aria2.log ] || echo > "$log_dir"/aria2.log
     fi
 
-    if [ -z "$enable_proxy" ] || [ "$enable_proxy" -eq "1" ]; then
+    if [ -z "$enable_proxy" ] || [ "$enable_proxy" = "1" ]; then
         append_options "all_proxy" "all_proxy_user" "all_proxy_passwd"
     fi
 
@@ -187,8 +217,6 @@ aria2_start() {
         else
             append_setting rpc-secret=""
         fi
-    else
-        _info "建议设置RPC密码。"
     fi
 
     if [ ."$rpc_secure" = ."true" ] && [ -n "$rpc_certificate" ]; then
@@ -234,49 +262,20 @@ aria2_start() {
     config_list_foreach "$section" "header" append_header
     config_list_foreach "$section" "extra_settings" append_setting
 
-    # Download_Pro_conf
-    if [ "$enable_pro" -eq "1" ]; then
-        cd $pro
-        if [ ! -s aria2.conf ]; then
-            for i in core aria2.conf clean.sh delete.sh tracker.sh dht.dat dht6.dat script.conf; do
-                wget -qN -t2 -T3 raw.githubusercontent.com/P3TERX/aria2.conf/master/$i || \
-                wget -qN -t2 -T3 cdn.jsdelivr.net/gh/P3TERX/aria2.conf/$i || \
-                curl -fsSLO p3terx.github.io/aria2.conf/$i
-                [ -s $i ] && _info " $i 下载成功 !" || _info " $i 下载失败 !"
-            done
-            sed -i "{
-                /033/d
-                s|^#!.*|#!/bin/sh|g
-                s|/root/.aria2|$pro|g
-                /CONF_DIR/{s/aria2.conf/$NAME.conf.$section/g}
-            }" *
-            chmod +x *.sh && sh ./tracker.sh
-            _info "Aria2加强配置下载完成！"
-        fi
-        [ x$rpc_secret = x ] && sed -i '/^rpc-secret/{s/^/#/g}' aria2.conf
-        sed -e '/^$/{N;/\n$/D};' aria2.conf >"$config_file"
-        echo -e "# 以下是系统生成，如和上面的配置有重复以下面为准。#" >>$config_file
-        while read p; do
-            d=$(grep "${p%%=*}" $config_file)
-            [ "${p#*=}" = "${d#*=}" ] || sed -i "s|.*${p%%=*}=.*|$p|" $config_file
-            [ x$d = x ] && echo $p >> $config_file
-        done <"$config_file_tmp"
+    if [ "$enable_pro" = "1" ]; then
+        [ ! -s "$config_file" ] && (pro_conf || cat "$config_file_tmp" >>"$config_file")
     else
         echo -e "#===以下是系统生成，对此文件修改将无法正常运行===#" >$config_file
-        sed '/^$/d' "$config_file_tmp" >>"$config_file"
+        cat "$config_file_tmp" >>"$config_file"
     fi
     rm -f "$config_file_tmp"
-    chmod 755 "$config_dir"
-    chmod 600 "$config_file"
 
     procd_open_instance "$NAME.$section"
     procd_set_param command "$PROG"
     procd_append_param command --conf-path="$config_file"
-
     procd_set_param respawn
     procd_set_param stdout 1
     procd_set_param stderr 1
-
     procd_set_param file "$config_file"
 
     if [ -n "$user" ]; then
@@ -293,7 +292,6 @@ aria2_start() {
     procd_add_jail_mount "$config_file"
     procd_add_jail_mount_rw "$dir" "$a" "$log"
     procd_close_instance
-
 }
 
 service_triggers() {

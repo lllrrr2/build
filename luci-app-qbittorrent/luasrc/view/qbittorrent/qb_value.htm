@@ -15,6 +15,6 @@
         ifattr(self.optional, "data-optional", self.optional or self.rmempty)         -- 是否可选
     %>/> 
     <input class="btn cbi-button cbi-button-apply" title="<%:Click to randomly generate port%>" type="button"
-        value="<%:Generate Randomly%>" <%= ifattr(self.onclick, "onclick", self.onclick) %> />
+        value="<%:Generate Randomly%>" onclick="randomPort()" />
 </div>
 <%+cbi/valuefooter%>

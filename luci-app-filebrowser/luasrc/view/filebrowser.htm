@@ -128,15 +128,15 @@
     }
 
     .swal2-styled.swal2-cancel {
-        background-color: rgb(255, 107, 107);
+        background-color: hsl(0, 100%, 71%);
     }
 
     .swal2-styled.swal2-confirm:hover {
-        background-color: hsl(195deg 95.63% 31.87%)
+        background-color: hsl(195, 97%, 34%)
     }
 
     .swal2-styled.swal2-cancel:hover {
-        background-color: rgb(161 32 32);
+        background-color: rgb(177, 35, 35);
     }
 
     .swal2-styled.swal2-cancel:hover,
@@ -145,12 +145,12 @@
         box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
     }
 
-    .swal2-popup.swal2-toast .swal2-html-container {
-        text-align: center;
+    .swal2-styled.swal2-confirm:focus {
+        box-shadow: 0 0 0 2px rgba(0, 136, 182, 0.527);
     }
 
-    .swal2-styled.swal2-confirm:focus {
-        box-shadow: 0 0 0 3px rgba(4, 135, 179, 0.527);
+    .swal2-popup.swal2-toast .swal2-html-container {
+        text-align: center;
     }
 
     div:where(.swal2-container) .swal2-select:focus,
@@ -278,7 +278,6 @@
     var getInitPath = () => new URLSearchParams(location.search).get('path') || '/';
     var concatPath = (path, filename = '') => `${path.replace(/\/*$/, '/')}${filename}`;
     var colorMessage = (name, color) => `<span style="color: ${color};">${name}</span>`;
-    var validateInput = value => /^[A-Za-z0-9._-]+$/.test(value) ? '' : '<%:The name contains a non-canonical string%>';
 
     function resolveFilePath(newname) {
         return /^&\//.test(newname)
@@ -429,10 +428,16 @@
                 didRender: () => {
                     setTimeout(() => {
                         var input = Swal.getInput();
-                        exists ? input?.select() : input?.setSelectionRange(0, oldname.lastIndexOf('.'))
-                    }, 0)
+                        if (input) {
+                            var selectionEnd = exists ? input.value.length : oldname.lastIndexOf('.');
+                            input.setSelectionRange(0, selectionEnd);
+                            input.addEventListener('mouseover', () => {
+                                input.focus(), input.setSelectionRange(0, selectionEnd);
+                            });
+                        }
+                    }, 0);
                 },
-                inputValidator: validateInput
+                inputValidator: (value) => !/^[A-Za-z0-9._-]+$/.test(value) && '<%:The name contains a non-canonical string%>'
             }).then((result) => {
                 let newname = (result.value || '').trim();
                 if (newname && newname !== oldname) {
@@ -511,7 +516,7 @@
                 var directorytip = document.getElementById('directorytip');
                 var createdirectoryCheckbox = document.getElementById('createdirectory');
                 createdirectoryCheckbox?.addEventListener('change', () => directorytip?.classList.toggle('hidden', !createdirectoryCheckbox.checked));
-            },
+            }
         }).then((result) => {
             if (!result.isConfirmed) return;
             let data = '';
