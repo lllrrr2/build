@@ -22,6 +22,9 @@ msgstr "返回上一级"
 msgid "Rename"
 msgstr "重命名"
 
+msgid "Confirm"
+msgstr "确定"
+
 msgid "Delete file (directory)"
 msgstr "删除文件(目录)"
 

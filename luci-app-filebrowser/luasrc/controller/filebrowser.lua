@@ -182,7 +182,7 @@ function to_mime(filename, download)
 end
 
 function checkdirectory()
-    local state, filepath = 1, http.formvalue("filepath")
+    local state, filepath = 1, http.formvalue("path")
     if lfs.isdirectory(filepath) then
         state = 0
     end

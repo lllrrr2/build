@@ -252,9 +252,9 @@
     var listElem = document.querySelector(".fb-container").appendChild(document.createElement("div"));
     listElem.id = "file-list";
     listElem.onclick = handleClick;
-    pathElem.addEventListener("keyup", event => event.key === "Enter" && godirectory());
+    pathElem.addEventListener("keyup", function (event) { event.key === "Enter" && godirectory() });
 
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', function() {
         let isFloating = false;
         var inputContainer = document.querySelector('.input-container');
         var originalPosition = document.querySelector('header').getBoundingClientRect().bottom + document.querySelector('h2').offsetHeight + window.scrollY;
@@ -265,7 +265,7 @@
             d = b || c || /webOS|BlackBerry|Opera Mini|Opera Mobi|IEMobile/i.test(a);
         d && (navHeight = navHeight === 0 ? 40 : navHeight < 40 ? navHeight * 10 : navHeight);
         var originalWidth = inputContainer.offsetWidth;
-        var floatInputContainer = () => {
+        function floatInputContainer() {
             var shouldFloat = window.pageYOffset > originalPosition;
             isFloating = shouldFloat !== isFloating ? shouldFloat : isFloating;
             inputContainer.style = `top: ${isFloating ? navHeight : 0}px; width: ${originalWidth}px`;
@@ -274,10 +274,11 @@
         window.addEventListener('scroll', floatInputContainer);
     });
 
-    var ensureString = (value) => typeof value === 'string' ? value.trim() : '';
-    var getInitPath = () => new URLSearchParams(location.search).get('path') || '/';
-    var concatPath = (path, filename = '') => `${path.replace(/\/*$/, '/')}${filename}`;
-    var colorMessage = (name, color) => `<span style="color: ${color};">${name}</span>`;
+    function ensureString(value) { return typeof value === 'string' ? value.trim() : ''; }
+    function getInitPath() { return new URLSearchParams(location.search).get('path') || '/'; }
+    function concatPath(path, filename = '') { return `${path.replace(/\/*$/, '/')}${filename}`; }
+    function colorMessage(name, color) { return `<span style="color: ${color};">${name}</span>`; }
+    function validateInput(value) { return /^[A-Za-z0-9._-]+$/.test(value) ? '' : '<%:The name contains a non-canonical string%>'; }
 
     function resolveFilePath(newname) {
         return /^&\//.test(newname)
@@ -296,13 +297,15 @@
         let octalValue = '';
         for (let i = 1; i < permissions.length; i += 3) {
             var segment = permissions.slice(i, i + 3);
-            var value = segment.split('').reduce((acc, curr) => acc + (map[curr] || 0), 0);
+            var value = segment.split('').reduce(function (acc, curr) {
+                return acc + (map[curr] || 0);
+            }, 0);
             octalValue += value.toString(8);
         }
         return octalValue;
     }
 
-    var alert = (msg) => {
+    function alert(msg) {
         var body = document.body;
         var alertMask = document.createElement('div');
         alertMask.className = 'alert-mask';
@@ -314,7 +317,9 @@
         alertContent.className = 'alert-content';
         alertContent.innerHTML = `<pre>\n${msg}\n\n</pre>`;
 
-        alertMask.onclick = ({ target }) => target === alertMask && body.removeChild(alertMask);
+        alertMask.onclick = function(event) {
+            event.target === alertMask && body.removeChild(alertMask);
+        };
         alertContainer.appendChild(alertContent);
         alertMask.appendChild(alertContainer);
         body.appendChild(alertMask);
@@ -325,8 +330,8 @@
         var units = ['B', 'KB', 'MB', 'GB'];
         var sizeFactor = { K: 1024, M: 1024 ** 2, G: 1024 ** 3 };
         let totalSize = filenames
-            .filter(line => !/^(d|l)/.test(line))
-            .reduce((total, line) => {
+            .filter(function (line) { return !/^(d|l)/.test(line); })
+            .reduce(function (total, line) {
                 var [, , , , size] = line.trim().split(/\s+/);
                 var suffix = size.slice(-1).toUpperCase();
                 var parsedSize = parseFloat(size) * (sizeFactor[suffix] || 1);
@@ -338,15 +343,15 @@
         return `${totalSize.toFixed(2)} ${units[unitIndex]}`;
     }
 
-    swalNotification = (html = '', icon = 'success') => {
+    function swalNotification(html = '', icon = 'success') {
         Swal.fire({
             html, toast: true, timerProgressBar: true,
             icon, timer: 2000, showConfirmButton: false,
-            didOpen: (toast) => {
-                toast.addEventListener('mouseenter', Swal.stopTimer)
-                toast.addEventListener('mouseleave', Swal.resumeTimer)
+            didOpen: function (toast) {
+                toast.addEventListener('mouseenter', Swal.stopTimer);
+                toast.addEventListener('mouseleave', Swal.resumeTimer);
             }
-        })
+        });
     }
 
     var swalConfig = {
@@ -355,104 +360,133 @@
         confirmButtonText: '<%:Confirm%>'
     };
 
+    function sendRequest(url, params, method, path) {
+        let requestOptions;
+        if (method === 'GET') {
+            url += `?path=${encodeURIComponent(params)}`;
+        } else {
+            requestOptions = { method: 'POST' };
+            if (params instanceof URLSearchParams) {
+                requestOptions.body = params.toString();
+                requestOptions.headers = {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                };
+            } else if (params instanceof FormData) {
+                requestOptions.body = params;
+            }
+        }
+
+        return fetch(url, requestOptions)
+            .then(function (res) {
+                return res.json();
+            });
+    }
+
     function godirectory(filePath = '') {
         let path;
         ensureString(filePath)
             ? path = filePath
-            : path = resolveFilePath(pathElem.value.trim())
-        checkdirectory(path).then(exists => exists
-            ? update_list(path)
-            : Swal.fire({
-                ...swalConfig, confirmButtonText: '<%:create%>',
-                text: '<%:Do you want to create this directory?%>',
-                title: `${colorMessage(path, 'red')} <%:The directory does not exist%>`
-            }).then(result => result.isConfirmed && createnewfile(path))
-        );
+            : path = resolveFilePath(pathElem.value.trim());
+        checkdirectory(path).then(function (exists) {
+            exists
+                ? update_list(path)
+                : Swal.fire({
+                    ...swalConfig, confirmButtonText: '<%:create%>',
+                    text: '<%:Do you want to create this directory?%>',
+                    title: `${colorMessage(path, 'red')} <%:The directory does not exist%>`
+                }).then(function (result) { result.isConfirmed && createnewfile(path) });
+        });
     }
 
     function update_list(path, opt = false, upload = false) {
         path = concatPath(path);
         if (currentPath === path && !upload) return;
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', `/cgi-bin/luci/admin/system/file_list?path=${encodeURIComponent(path)}`, true);
-        xhr.onreadystatechange = () => {
-            if (xhr.readyState === 4 && xhr.status === 200) {
-                var res = JSON.parse(xhr.responseText);
-                var isSuccess = res?.stat === 0;
+        sendRequest('<%=url("admin/system/file_list")%>', path, 'GET')
+            .then(function (res) {
+                var isSuccess = res.stat === 0;
                 refresh_list(isSuccess ? res.data : []);
                 if (isSuccess) currentPath = pathElem.value = path;
-            }
-        };
-        xhr.send();
+            });
         if (!opt) history.pushState({ path }, null, `?path=${path}`);
     }
 
     function deletefiles(filename = '', isdir = '') {
         [isdir, filename] = [ensureString(isdir), ensureString(filename)];
-        var deleteSingleFile = (name, dir) => {
+        function deleteSingleFile(name, dir) {
             let path = concatPath(currentPath, name);
-            XHR.post('/cgi-bin/luci/admin/system/deletefiles', { isdir: dir, path }, (_, res) => {
-                let isSuccess = res?.stat === 0;
-                let message = isSuccess
-                    ? `${colorMessage(name, 'blue')} <%:successfully deleted!%>`
-                    : `${colorMessage(name, 'red')} <%:deleted failed%>`;
-                swalNotification(message, isSuccess ? 'success' : 'error');
-                isSuccess && refresh_list(res.data);
-            });
+            let params = new URLSearchParams({ isdir: dir, path });
+            sendRequest('<%=url("admin/system/deletefiles")%>', params)
+                .then(function (res) {
+                    let isSuccess = res.stat === 0;
+                    let message = isSuccess
+                        ? `${colorMessage(name, 'blue')} <%:successfully deleted!%>`
+                        : `${colorMessage(name, 'red')} <%:deleted failed%>`;
+                    swalNotification(message, isSuccess ? 'success' : 'error');
+                    isSuccess && refresh_list(res.data);
+                });
+
         };
 
         if (filename || isdir) {
             return Swal.fire({
                 ...swalConfig, icon: 'warning', iconColor: 'red',
                 html: `<%:confirm deletion%> ${colorMessage(filename, 'red')} ?`
-            }).then((result) => result.isConfirmed && deleteSingleFile(filename, isdir));
+            }).then(function (result) { result.isConfirmed && deleteSingleFile(filename, isdir) });
         }
         let selectedFiles = Array.from(document.querySelectorAll('.file-checkbox:checked'))
-            .map((checkbox) => checkbox.closest('tr').dataset);
-        let selectedFileNames = selectedFiles.map((file) => {
+            .map(function (checkbox) { return checkbox.closest('tr').dataset; });
+        let selectedFileNames = selectedFiles.map(function (file) {
             return file.filename.length > 28 ? `${file.filename.slice(0, 20)}...${file.filename.slice(-8)}` : file.filename;
         });
         Swal.fire({
             ...swalConfig, icon: 'warning', iconColor: 'red',
             html: `<%:confirm deletion%> ?<br>${colorMessage(selectedFileNames.join('<br>'), 'red')}`
-        }).then(result => result.isConfirmed && selectedFiles.forEach(file => deleteSingleFile(file.filename, file.isdir)));
+        })
+            .then(function (result) {
+                if (result.isConfirmed) {
+                    selectedFiles.forEach(function (file) { deleteSingleFile(file.filename, file.isdir) });
+                }
+            });
     }
 
     function renamefile(oldname) {
         if (oldname.includes("->")) return swalNotification(`${colorMessage(oldname, 'red')} <%:Linked files are not allowed to be modified%>`, 'error');
-        checkdirectory(concatPath(currentPath, oldname)).then((exists) => {
-            Swal.fire({
-                ...swalConfig, inputValue: oldname, iconColor: 'red', input: 'text',
-                inputAttributes: { style: 'margin: 10px 100px; width: auto; height: 38px;' },
-                title: `${colorMessage(oldname, 'blue')} <%:Enter new name%>`, icon: 'warning',
-                didRender: () => {
-                    setTimeout(() => {
-                        var input = Swal.getInput();
-                        if (input) {
-                            var selectionEnd = exists ? input.value.length : oldname.lastIndexOf('.');
-                            input.setSelectionRange(0, selectionEnd);
-                            input.addEventListener('mouseover', () => {
-                                input.focus(), input.setSelectionRange(0, selectionEnd);
+        checkdirectory(concatPath(currentPath, oldname))
+            .then(function (exists) {
+                Swal.fire({
+                    ...swalConfig, inputValue: oldname, iconColor: 'red', input: 'text',
+                    inputAttributes: { style: 'margin: 10px 100px; width: auto; height: 38px;' },
+                    title: `${colorMessage(oldname, 'blue')} <%:Enter new name%>`, icon: 'warning',
+                    didRender: function () {
+                        setTimeout(function () {
+                            let input = Swal.getInput();
+                            exists ? input?.select() : input?.setSelectionRange(0, oldname.lastIndexOf('.'))
+                        }, 0)
+                    },
+                    inputValidator: validateInput
+                })
+                    .then(function (result) {
+                        let newname = (result.value || '').trim();
+                        if (newname && newname !== oldname) {
+                            let params = new URLSearchParams({
+                                newname: concatPath(currentPath, newname),
+                                oldname: concatPath(currentPath, oldname)
                             });
+                            sendRequest('<%=url("admin/system/renamefile")%>', params)
+                                .then(function (res) {
+                                    if (res.stat === 0) {
+                                        refresh_list(res.data);
+                                        swalNotification(`${colorMessage(oldname, 'blue')} <%:Renaming successful!%>`, 'success');
+                                    } else {
+                                        swalNotification(`${colorMessage(oldname, 'red')} <%:Renaming failed%>`, 'error');
+                                    }
+                                });
                         }
-                    }, 0);
-                },
-                inputValidator: (value) => !/^[A-Za-z0-9._-]+$/.test(value) && '<%:The name contains a non-canonical string%>'
-            }).then((result) => {
-                let newname = (result.value || '').trim();
-                if (newname && newname !== oldname) {
-                    XHR.post('/cgi-bin/luci/admin/system/renamefile', {
-                        newname: concatPath(currentPath, newname), oldname: concatPath(currentPath, oldname)
-                    }, (_, res) => {
-                        var isSuccess = res?.stat === 0;
-                        isSuccess
-                            ? (refresh_list(res.data), swalNotification(`${colorMessage(oldname, 'blue')} <%:Renaming successful!%>`, 'success'))
-                            : swalNotification(`${colorMessage(oldname, 'red')} <%:Renaming failed%>`, 'error');
-                        isSuccess && refresh_list(res.data);
-                    }, () => swalNotification(`${colorMessage(oldname, 'red')} <%:Renaming failed%>`, 'error'));
-                }
-            }).catch(() => swalNotification(`${colorMessage(oldname, 'red')} <%:Renaming failed%>`, 'error'));
-        }).catch(() => swalNotification(`${colorMessage('<%:Failed to check the directory%>', 'red')}`, 'error'));
+                    })
+                    .catch(function () {
+                        swalNotification(`${colorMessage(oldname, 'red')} <%:Renaming failed%>`, 'error');
+                    });
+            });
     }
 
     function modifypermissions(filepath, type) {
@@ -472,19 +506,21 @@
                 555: '<%:555 - All users have execute permissions, but only the file owner has read and write permissions%>',
                 444: '<%:444 - All users have read permissions but no write and execute permissions%>',
             }
-        }).then((result) => {
+        }).then(function(result) {
             let permissions = (result.value || '').trim();
             if (permissions && permissions !== oldPermissions) {
-                XHR.post('<%=url("admin/system/modifypermissions")%>', {
+                let params = new URLSearchParams({
                     permissions, path: concatPath(currentPath, filepath)
-                }, (_, res) => {
-                    let isSuccess = res?.stat === 0;
-                    let message = isSuccess 
-                        ? `${colorMessage(filepath, 'blue')} <%:Permissions modified successfully%>`
-                        : `${colorMessage(filepath, 'red')} <%:Permission modification failed%>`;
-                    swalNotification(message, isSuccess ? 'success' : 'error');
-                    isSuccess && refresh_list(res.data);
                 });
+                sendRequest('<%=url("admin/system/modifypermissions")%>', params)
+                    .then(function (res) {
+                        let isSuccess = res.stat === 0;
+                        let message = isSuccess
+                            ? `${colorMessage(filepath, 'blue')} <%:Permissions modified successfully%>`
+                            : `${colorMessage(filepath, 'red')} <%:Permission modification failed%>`;
+                        swalNotification(message, isSuccess ? 'success' : 'error');
+                        isSuccess && refresh_list(res.data);
+                    });
             }
         });
     }
@@ -499,7 +535,7 @@
                 <label for="createdirectory"><b><%:Create as directory%></b></label><br>
                 <span id="directorytip" class="hidden" style="font-size: smaller;"><%:If the path is the root directory, add '&' at the first character%></span>
             `,
-            didOpen: () => { //在弹出框打开后执行的操作。
+            didOpen: function() { //在弹出框打开后执行的操作。
                 if (filePath) {
                     document.getElementById('newname').value = filePath;
                     document.getElementById('createdirectory').checked = true;
@@ -507,17 +543,19 @@
                 }
                 document.getElementById("newname").focus();
             },
-            preConfirm: () => { //在用户点击确认按钮之前执行的操作。
+            preConfirm: function() { //在用户点击确认按钮之前执行的操作。
                 var newname = document.getElementById('newname').value;
                 var createdirectory = document.getElementById('createdirectory').checked;
                 return { newname, createdirectory };
             },
-            didRender: () => { //在弹出框渲染完成后执行的操作。
+            didRender: function() { //在弹出框渲染完成后执行的操作。
                 var directorytip = document.getElementById('directorytip');
                 var createdirectoryCheckbox = document.getElementById('createdirectory');
-                createdirectoryCheckbox?.addEventListener('change', () => directorytip?.classList.toggle('hidden', !createdirectoryCheckbox.checked));
-            }
-        }).then((result) => {
+                createdirectoryCheckbox?.addEventListener('change', function () {
+                    directorytip?.classList.toggle('hidden', !createdirectoryCheckbox.checked)
+                });
+            },
+        }).then(function(result) {
             if (!result.isConfirmed) return;
             let data = '';
             let { newname, createdirectory } = result.value;
@@ -532,38 +570,42 @@
                     ...swalConfig, title: '<%:Enter file content%>',
                     inputPlaceholder: '<%:Enter text here%>', input: 'textarea',
                     inputAttributes: { style: "margin: 10px 28px; width: auto;" },
-                }).then((result) => {
+                }).then(function(result) {
                     if (result.isConfirmed) { data = result.value; executeOrder(); }
                 });
             } else executeOrder();
 
             function executeOrder() {
-                XHR.post('<%=url("admin/system/createnewfile")%>', { data, newfile, createdirectory }, (_, res) => {
-                    if (res?.stat === 0) {
-                        createdirectory && update_list(newfile || '');
-                        refresh_list(res.data);
-                        swalNotification(`${colorMessage(newfile, 'blue')} <%:File created successfully!%>`, 'success');
-                    } else {
-                        swalNotification(`${colorMessage(newfile, 'red')} <%:File creation failed!%>`, 'error');
-                    }
-                });
+                let params = new URLSearchParams({ data, newfile, createdirectory });
+                sendRequest('<%=url("admin/system/createnewfile")%>', params)
+                    .then(function (res) {
+                        if (res.stat === 0) {
+                            createdirectory && update_list(newfile || '');
+                            refresh_list(res.data);
+                            swalNotification(`${colorMessage(newfile, 'blue')} <%:File created successfully!%>`, 'success');
+                        } else {
+                            swalNotification(`${colorMessage(newfile, 'red')} <%:File creation failed!%>`, 'error');
+                        }
+                    });
             }
         });
     }
 
     function installipk(filename) {
-        let filepath = concatPath(currentPath, filename)
+        let filepath = concatPath(currentPath, filename);
         Swal.fire({
             ...swalConfig, icon: 'info',
             html: `<%:Confirm installation%> ${colorMessage(filename, 'red')} ?`,
-            preConfirm: () => {
-                return XHR.post('/cgi-bin/luci/admin/system/installipk', { filepath }, (_, res) => {
-                    res?.stat === 0
-                        ? alert(res.data)
-                        : swalNotification(`${colorMessage(filename, 'red')} <%:installation failed%>`, 'error');
-                });
+            preConfirm: function () {
+                let params = new URLSearchParams({ filepath });
+                sendRequest('<%=url("admin/system/installipk")%>', params)
+                    .then(function (res) {
+                        res.stat === 0
+                            ? alert(res.data)
+                            : swalNotification(`${colorMessage(filename, 'red')} <%:installation failed%>`, 'error');
+                    });
             },
-            allowOutsideClick: () => !Swal.isLoading()
+            allowOutsideClick: function () { return !Swal.isLoading(); }
         });
     }
 
@@ -571,22 +613,21 @@
         Swal.fire({
             ...swalConfig, title: '<%:upload file%>', input: 'file',
             inputAttributes: { style: "margin: 10px 28px;", accept: '/*' }
-        }).then(({ value: file }) => {
+        }).then(function (response) {
+            var file = response.value;
             if (!file) return;
             var data = new FormData();
             data.append('file', file);
             data.append('filename', file.name);
             data.append('filedir', concatPath(currentPath));
-
-            fetch("/cgi-bin/luci/admin/system/uploadfile", { body: data, method: 'POST' })
-                .then(response => response.ok
-                    ? response.json()
-                    : Promise.reject(new Error('<%:upload failed%>')))
-                .then(res => {
+            sendRequest('<%=url("admin/system/uploadfile")%>', data)
+                .then(function (res) {
                     update_list(res.filedir, undefined, true);
                     swalNotification(`${colorMessage(res.filename, 'blue')} <%:File has been uploaded to%> ${res.filedir}`, 'success');
                 })
-                .catch(error => swalNotification(`${colorMessage(file.name, 'red')} <%:upload failed%>`, 'error'));
+                .catch(function (error) {
+                    swalNotification(`${colorMessage(file.name, 'red')} <%:upload failed%>`, 'error');
+                });
         });
     }
 
@@ -598,24 +639,34 @@
         Swal.fire({
             ...swalConfig, icon: 'info',
             title: `${confirmTitle} ${colorMessage(filename, 'blue')} ?`
-        }).then((result) => result.isConfirmed && window.open(url));
+        }).then(function (result) {
+            if (result.isConfirmed) {
+                window.open(url);
+            }
+        });
     }
-
+    
     function checkdirectory(filepath) {
-        return fetch(`/cgi-bin/luci/admin/system/checkdirectory?filepath=${filepath}`)
-            .then(response => response.json())
-            .then(json => Promise.resolve(json.stat === 0))
+        return sendRequest('<%=url("admin/system/checkdirectory")%>', filepath, 'GET')
+            .then(function (res) {
+                return Promise.resolve(res.stat === 0);
+            })
+            .catch(function () {
+                swalNotification(`${colorMessage('<%:Failed to check the directory%>', 'red')}`, 'error');
+            });
     }
 
     function handleClick(event) {
-        var getFileElem = (elem) => {
-            while (elem && !elem.className?.includes('-icon')) elem = elem.parentNode;
+        function getFileElem(elem) {
+            while (elem && !elem.className?.includes('-icon')) {
+                elem = elem.parentNode;
+            }
             return elem || '';
         }
         let targetElem = event.target;
         let fileElem = getFileElem(targetElem);
         let infoElem = targetElem.parentNode.parentNode.dataset;
-        let hasClass = (element, className) => element.classList.contains(className);
+        function hasClass(element, className) { return element.classList.contains(className); }
 
         if (hasClass(targetElem, 'button-rename')) renamefile(infoElem.filename);
         else if (hasClass(targetElem, 'button-install')) installipk(infoElem.filename);
@@ -629,26 +680,28 @@
                 let [, sourcefile, destinationfile] = infoElem.linktarget.match(/(.*) -> (.*)/) ?? [];
                 if (sourcefile && destinationfile) {
                     let filePath = destinationfile.replace(/^\/*/, '/');
-                    checkdirectory(filePath).then((exists) => {
-                        exists
-                            ? update_list(filePath)
-                            : (destinationfile.match(/\//g) || []).length > 1
-                                ? update_list(filePath.match(/(.+\/)(.+)/)[1])
-                                : swalNotification(`${colorMessage(sourcefile, 'red')} <%:It’s the current directory%> ${colorMessage(destinationfile, 'blue')}`, 'info');
-                    });
+                    checkdirectory(filePath)
+                        .then(function (exists) {
+                            exists
+                                ? update_list(filePath)
+                                : (destinationfile.match(/\//g) || []).length > 1
+                                    ? update_list(filePath.match(/(.+\/)(.+)/)[1])
+                                    : swalNotification(`${colorMessage(sourcefile, 'red')} <%:It’s the current directory%> ${colorMessage(destinationfile, 'blue')}`, 'info');
+                        });
                 }
             }
         }
     }
 
     function refresh_list(filenames) {
-        var regularFiles = filenames.filter(line => /^[^dl]/.test(line)).length;
+        var regularFiles = filenames.filter(function (line) { return /^[^dl]/.test(line) }).length;
         listElem.innerHTML = `
             <table class="table">
                 <tr>
                     <td colspan="7">
                         ${getInitPath() !== '/' ? '<button class="btn cbi-button cbi-button-apply back-root-icon display-none" style="margin-right: 10px;"><%:Go to root directory%></button>' : ''}
-                        <b><%:There are currently ${regularFiles} files,%> ${filenames.filter(line => line.startsWith('d')).length} <%:directory.%> <%:total file size%>：${calculateTotalSize(filenames)}</b>
+                        <b><%:There are currently ${regularFiles} files,%> ${filenames.filter(function(line) {return line.startsWith('d');
+}).length} <%:directory.%> <%:total file size%>：${calculateTotalSize(filenames)}</b>
                         ${getInitPath() !== '/' ? '<button class="btn cbi-button cbi-button-apply back-icon" style="margin-left: 10px;"><%:Back to previous%></button>' : ''}
                     </td>
                 </tr>
@@ -661,7 +714,7 @@
                     <th class="th cbi-titles"><%:owner%></th>
                     <th class="th cbi-titles" style="position: relative; text-align: center;"><%:File operations%></th>
                 </tr>
-                ${filenames.map(line => {
+                ${filenames.map(function(line) {
                     var [type, , owner, , size, month, day, , ...fullNameParts] = line.trim().split(/\s+/);
                     var fullName = fullNameParts.join(' ');
                     var isLink = ['z', 'l', 'x'].includes(type[0]);
@@ -689,9 +742,10 @@
             </table>
         `;
         var deleteButton = document.getElementById('selectedremove');
-        document.querySelectorAll('.file-checkbox').forEach(checkbox => {
-            checkbox.addEventListener('change', () =>
-                deleteButton.style.display = document.querySelectorAll('.file-checkbox:checked').length > 0 ? 'block' : 'none');
+        document.querySelectorAll('.file-checkbox').forEach(function (checkbox) {
+            checkbox.addEventListener('change', function () {
+                deleteButton.style.display = document.querySelectorAll('.file-checkbox:checked').length > 0 ? 'block' : 'none';
+            });
         });
         deleteButton.style.display = 'none';
     }
@@ -699,25 +753,28 @@
     function createCustomMenu(filename, targetElem) {
         removeCustomMenu();
         var menuItems = [
-            { label: "<%:Refresh Page%>", action: () => location.reload() },
-            { label: "<%:Rename%>", action: () => renamefile(filename) },
-            { label: "<%:Modify permissions%>", action: () => modifypermissions(filename, targetElem.type) },
-            { label: "<%:upload file%>", action: () => uploadfile() },
+            { label: "<%:Refresh Page%>", action: function () { location.reload(); } },
+            { label: "<%:Rename%>", action: function () { renamefile(filename); } },
+            { label: "<%:Modify permissions%>", action: function () { modifypermissions(filename, targetElem.type); } },
+            { label: "<%:upload file%>", action: function () { uploadfile(); } },
             ...((targetElem.isdir === '0')
-                ? [{ label: "<%:download file%>", action: () => dpfile(filename, currentPath, true) },
-                { label: "<%:open file%>", action: () => dpfile(filename, currentPath, 'open') }]
-                : [{ label: "<%:Download catalog%>", action: () => dpfile(filename, currentPath, true) },
-                { label: "<%:open Directory%>", action: () => update_list(concatPath(currentPath, filename)) }]
+                ? [{ label: "<%:download file%>", action: function () { dpfile(filename, currentPath, true); } },
+                { label: "<%:open file%>", action: function () { dpfile(filename, currentPath, 'open'); } }]
+                : [{ label: "<%:Download catalog%>", action: function () { dpfile(filename, currentPath, true); } },
+                { label: "<%:open Directory%>", action: function () { update_list(concatPath(currentPath, filename)); } }]
             ),
-            { label: "<%:Create file (directory)%>", action: () => createnewfile() },
-            { label: "<%:Delete file (directory)%>", action: () => deletefiles(filename, targetElem.isdir) },
+            { label: "<%:Create file (directory)%>", action: function () { createnewfile(); } },
+            { label: "<%:Delete file (directory)%>", action: function () { deletefiles(filename, targetElem.isdir); } },
             ...(currentPath.split('/').length > 2
-                ? [{ label: "<%:Back to previous%>", action: () => update_list(currentPath.replace(/\/[^/]*\/?$/, '/')) }] : []
+                ? [{ label: "<%:Back to previous%>", action: function () { update_list(currentPath.replace(/\/[^/]*\/?$/, '/')); } }]
+                : []
             )
         ];
         customMenu = document.createElement('ul');
         customMenu.className = 'custom-menu';
-        menuItems.forEach(({ label, action }) => {
+        menuItems.forEach(function (item) {
+            var label = item.label;
+            var action = item.action;
             var menuItemElem = Object.assign(document.createElement('div'), { className: 'menu-item', innerText: label });
             menuItemElem.addEventListener('click', action);
             customMenu.appendChild(menuItemElem);
@@ -732,7 +789,7 @@
         document.body.appendChild(customMenu);
     }
 
-    document.addEventListener('contextmenu', event => {
+    document.addEventListener('contextmenu', function(event) {
         var filenameElement = event.target.closest('[data-filename]');
         filenameElement
             ? (event.preventDefault(), createCustomMenu(filenameElement.dataset.filename, filenameElement.dataset))
