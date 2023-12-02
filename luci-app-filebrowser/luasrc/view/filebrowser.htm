@@ -360,32 +360,28 @@
         confirmButtonText: '<%:Confirm%>'
     };
 
-    function sendRequest(url, params, method = 'POST') {
-        let isGetMethod = method === 'GET';
+    function sendRequest(url, params, method = 'GET') {
+        var isGetMethod = method === 'GET';
+        if (isGetMethod) url += `?${params.toString()}`;
         if (typeof fetch === 'function') {
             var requestOptions = {
                 method: method,
-                body: isGetMethod
-                    ? undefined
-                    : params instanceof URLSearchParams ? params.toString() : params,
-                headers: isGetMethod || params instanceof FormData
-                    ? undefined
-                    : { 'Content-Type': 'application/x-www-form-urlencoded' }
+                body: isGetMethod ? undefined : params,
+                headers: isGetMethod
+                    ? { 'Content-Type': 'application/x-www-form-urlencoded' }
+                    : undefined
             };
-            if (isGetMethod) url += `?path=${encodeURIComponent(params)}`;
             return fetch(url, requestOptions).then(function (res) { return res.json() });
         } else {
             return new Promise(function (resolve, reject) {
                 var xhr = new XMLHttpRequest();
-                var requestData = !isGetMethod && params instanceof FormData ? params : params.toString();
-                if (isGetMethod) url += `?path=${encodeURIComponent(params)}`;
+                var requestData = isGetMethod || params instanceof FormData ? params : params.toString();
                 xhr.open(method, url, true);
                 xhr.onload = function () {
                     (xhr.status === 200 && xhr.readyState === 4)
                         ? resolve(JSON.parse(xhr.responseText))
                         : reject(new Error(xhr.statusText));
                 };
-                xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
                 params instanceof URLSearchParams && xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
                 xhr.send(requestData);
             });
@@ -393,10 +389,7 @@
     }
 
     function godirectory(filePath = '') {
-        let path;
-        ensureString(filePath)
-            ? path = filePath
-            : path = resolveFilePath(pathElem.value.trim());
+        var path = ensureString(filePath) ? filePath : resolveFilePath(pathElem.value.trim());
         checkdirectory(path).then(function (exists) {
             exists
                 ? update_list(path)
@@ -411,7 +404,8 @@
     function update_list(path, opt = false, upload = false) {
         path = concatPath(path);
         if (currentPath === path && !upload) return;
-        sendRequest('<%=url("admin/system/file_list")%>', path, 'GET').then(function (res) {
+        var params = new URLSearchParams({ path });
+        sendRequest('<%=url("admin/system/file_list")%>', params).then(function (res) {
             var isSuccess = res.stat === 0;
             refresh_list(isSuccess ? res.data : []);
             if (isSuccess) currentPath = pathElem.value = path;
@@ -555,10 +549,10 @@
                 createdirectoryCheckbox?.addEventListener('change', function () {
                     directorytip?.classList.toggle('hidden', !createdirectoryCheckbox.checked)
                 });
-            },
+            }
         }).then(function (result) {
             if (!result.isConfirmed) return;
-            let data = '';
+            var data;
             var { newname, createdirectory } = result.value;
             var newfile = (filePath && !createdirectory)
                 ? newname
@@ -578,7 +572,7 @@
 
             function executeOrder() {
                 var params = new URLSearchParams({ data, newfile, createdirectory });
-                sendRequest('<%=url("admin/system/createnewfile")%>', params).then(function (res) {
+                sendRequest('<%=url("admin/system/createnewfile")%>', params, 'POST').then(function (res) {
                     if (res.stat === 0) {
                         createdirectory && update_list(newfile || '');
                         refresh_list(res.data);
@@ -619,7 +613,7 @@
             data.append('file', file);
             data.append('filename', file.name);
             data.append('filedir', concatPath(currentPath));
-            sendRequest('<%=url("admin/system/uploadfile")%>', data).then(function (res) {
+            sendRequest('<%=url("admin/system/uploadfile")%>', data, 'POST').then(function (res) {
                 update_list(res.filedir, undefined, true);
                 swalNotification(`${colorMessage(res.filename, 'blue')} <%:File has been uploaded to%> ${res.filedir}`, 'success');
             }).catch(function (error) {
@@ -640,8 +634,9 @@
         });
     }
 
-    function checkdirectory(filepath) {
-        return sendRequest('<%=url("admin/system/checkdirectory")%>', filepath, 'GET').then(function (res) {
+    function checkdirectory(path) {
+        var params = new URLSearchParams({ path });
+        return sendRequest('<%=url("admin/system/checkdirectory")%>', params).then(function (res) {
             return Promise.resolve(res.stat === 0);
         }).catch(function () {
             swalNotification(`${colorMessage('<%:Failed to check the directory%>', 'red')}`, 'error');

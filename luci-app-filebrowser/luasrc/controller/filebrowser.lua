@@ -89,7 +89,7 @@ end
 
 function deletefiles()
     local path, isdir = http.formvalue("path"), http.formvalue("isdir")
-    stat = isdir and util.exec('rm -rf "%s"' %{path}) or nfs.remover(path)
+    stat = isdir == '1' and util.exec('rm -rf "%s"' %{path}) or nfs.remover(path)
     list_response(nfs.dirname(path), stat)
 end
 
