@@ -42,8 +42,8 @@
         background-color: #6efbff;
     }
 
-    .input-container #godirectory {
-        min-width: 70px;
+    .fb-container #current-path {
+        width: 100%;
     }
 
     .fb-container td[class$="-icon"] {
@@ -219,6 +219,10 @@
             text-overflow: ellipsis; /* 显示省略号 */
         }
 
+        .input-container input[type="text"] {
+            flex: 1;
+        }
+
         .menu-item {
             font-size: 12px;
             padding: 3px 8px;
@@ -233,14 +237,14 @@
 <h2 name="content"><%:File management%></h2>
 <fieldset class="fb-container">
     <div class="input-container">
-        <button id="createnewfile" class="cbi-button cbi-button-apply" style="margin-right: 6px;"><%:create new file%></button>
-        <input id="current-path" type="text" title="<%:If the path is the root directory, add '&' at the first character%>" style="width: 100%;" value="/" />
-        <button id="godirectory" type="button" class="btn cbi-button cbi-button-apply"><%:Go to directory%></button>
-        <button id="uploadfile" type="button" class="btn cbi-button cbi-button-apply" style="margin-left: 6px;"><%:Upload to current directory%></button>
-        <button id="selectedremove" class="cbi-button cbi-button-remove" style="margin-left: 6px;"><%:Delete%></button>
+        <input id="createnewfile" type="button" class="cbi-button cbi-button-apply" value="<%:Create%>" style="margin-right: 6px;">
+        <input id="current-path" type="text" title="<%:If the path is the root directory, add '&' at the first character%>" value="/" />
+        <input id="godirectory" type="button" class="btn cbi-button cbi-button-apply" value="<%:Go to directory%>">
+        <input id="uploadfile" type="button" class="btn cbi-button cbi-button-apply" style="margin-left: 6px;" value="<%:Upload%>">
+        <input id="selectedremove" type="button" class="cbi-button cbi-button-remove" style="margin-left: 6px;" value="<%:Delete%>">
     </div>
 </fieldset>
-<script>
+<script type="text/javascript">
 // console.log(Object.keys(Swal));
 (function () {
     let currentPath, customMenu = null;
@@ -363,16 +367,16 @@
     function sendRequest(url, params, method = 'GET') {
         var isGetMethod = method === 'GET';
         if (isGetMethod) url += `?${params.toString()}`;
-        if (typeof fetch === 'function') {
-            var requestOptions = {
-                method: method,
-                body: isGetMethod ? undefined : params,
-                headers: isGetMethod
-                    ? { 'Content-Type': 'application/x-www-form-urlencoded' }
-                    : undefined
-            };
-            return fetch(url, requestOptions).then(function (res) { return res.json() });
-        } else {
+        // if (typeof fetch === 'function') {
+        //     var requestOptions = {
+        //         method: method,
+        //         body: isGetMethod ? undefined : params,
+        //         headers: isGetMethod
+        //             ? { 'Content-Type': 'application/x-www-form-urlencoded' }
+        //             : undefined
+        //     };
+        //     return fetch(url, requestOptions).then(function (res) { return res.json() });
+        // } else {
             return new Promise(function (resolve, reject) {
                 var xhr = new XMLHttpRequest();
                 var requestData = isGetMethod || params instanceof FormData ? params : params.toString();
@@ -385,7 +389,7 @@
                 params instanceof URLSearchParams && xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
                 xhr.send(requestData);
             });
-        }
+        // }
     }
 
     function godirectory(filePath = '') {
@@ -394,7 +398,7 @@
             exists
                 ? update_list(path)
                 : Swal.fire({
-                    ...swalConfig, confirmButtonText: '<%:create%>',
+                    ...swalConfig, confirmButtonText: '<%:Create%>',
                     text: '<%:Do you want to create this directory?%>',
                     title: `${colorMessage(path, 'red')} <%:The directory does not exist%>`
                 }).then(function (result) { result.isConfirmed && createnewfile(path) });
@@ -622,9 +626,10 @@
         });
     }
 
-    function dpfile(filename, dirname = currentPath, download = '') {
-        if (filename.includes("->")) [, dirname, filename] = filename.match(/(.*) -> (.*)/) ?? [];
-        var url = `/cgi-bin/luci/admin/system/dpfile?path=${encodeURIComponent(dirname)}&filename=${encodeURIComponent(filename)}&download=${download}`;
+    function dpfile(filename, path = currentPath, download = '') {
+        if (filename.includes("->")) [, path, filename] = filename.match(/(.*) -> (.*)/) ?? [];
+        var params = new URLSearchParams({ path, filename, download });
+        var url = `<%=url("admin/system/dpfile")%>?${params.toString()}`;
         if (!download) return window.open(url);
         Swal.fire({
             ...swalConfig, icon: 'info',
@@ -683,21 +688,21 @@
         let numFolders = filePath.filter(function (line) {return line.startsWith('d');}).length;
         let regularFiles = filePath.filter(function (line) { return /^[^dl]/.test(line) }).length;
         listElem.innerHTML = `
-            <table class="table">
+            <table class="cbi-section-table">
                 <tr>
                     <td colspan="7">
-                        ${getInitPath() !== '/' ? '<button class="btn cbi-button cbi-button-apply back-root-icon display-none" style="margin-right: 10px;"><%:Go to root directory%></button>' : ''}
+                        ${getInitPath() !== '/' ? '<input type="button" class="btn cbi-button cbi-button-apply back-root-icon display-none" style="margin-right: 10px;" value="<%:Go to root directory%>">' : ''}
                         <b><%:There are currently ${regularFiles} files,%> ${numFolders} <%:directory.%> <%:total file size%>：${calculateTotalSize(filePath)}</b>
-                        ${getInitPath() !== '/' ? '<button class="btn cbi-button cbi-button-apply back-icon" style="margin-left: 10px;"><%:Back to previous%></button>' : ''}
+                        ${getInitPath() !== '/' ? '<input type="button" class="btn cbi-button cbi-button-apply back-icon" style="margin-left: 10px;" value="<%:Back to previous%>">' : ''}
                     </td>
                 </tr>
                 <tr class="tr table-titles">
-                    <th></th>
+                    <th class="display-none"></th>
                     <th class="th cbi-titles"><%:name%></th>
                     <th class="th cbi-titles"><%:size%></th>
-                    <th class="th cbi-titles"><%:Change the time%></th>
-                    <th class="th cbi-titles"><%:Rights%></th>
-                    <th class="th cbi-titles"><%:owner%></th>
+                    <th class="th cbi-titles display-none"><%:Change the time%></th>
+                    <th class="th cbi-titles display-none"><%:Rights%></th>
+                    <th class="th cbi-titles display-none"><%:owner%></th>
                     <th class="th cbi-titles" style="position: relative; text-align: center;"><%:File operations%></th>
                 </tr>
                 ${filePath.map(function (line) {
@@ -706,7 +711,7 @@
                     var isLink = ['z', 'l', 'x'].includes(type[0]);
                     var icon = type[0] === 'd' ? "folder-icon" : (isLink ? "link-icon" : "file-icon");
                     var truncatedName = fullName.length > 20 ? `${fullName.slice(0, 13)}...${fullName.slice(-7)}` : fullName;
-                    var installButtonHtml = fullName.endsWith(".ipk") ? `<button class="btn cbi-button cbi-button-apply button-install"><%:Install%></button>` : "";
+                    var installButtonHtml = fullName.endsWith(".ipk") ? `<input type="button" class="btn cbi-button cbi-button-apply button-install" value="<%:Install%>">` : "";
                     return `
                         <tr class="cbi-section-table-row" data-filename="${fullName}" data-isdir="${Number(type[0] === 'd' || type[0] === 'z')}" data-type="${type}" data-linktarget="${(/->.*/.test(fullName)) && fullName}">
                             <td class="display-none">
@@ -718,8 +723,8 @@
                             <td class="display-none"> [ ${convertPermissions(type)} ] ${type}</td>
                             <td class="display-none">${owner}</td>
                             <td class="cbi-section-table-cell">
-                                <button class="btn cbi-button cbi-button-apply button-rename"><%:Rename%></button>
-                                <button class="btn cbi-button cbi-button-remove button-remove"><%:Delete%></button>
+                                <input type="button" class="btn cbi-button cbi-button-apply button-rename" value="<%:Rename%>">
+                                <input type="button" class="btn cbi-button cbi-button-remove button-remove" value="<%:Delete%>">
                                 ${installButtonHtml}
                             </td>
                         </tr>
