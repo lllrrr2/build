@@ -365,31 +365,25 @@
     };
 
     function sendRequest(url, params, method = 'GET') {
-        var isGetMethod = method === 'GET';
-        if (isGetMethod) url += `?${params.toString()}`;
-        // if (typeof fetch === 'function') {
-        //     var requestOptions = {
-        //         method: method,
-        //         body: isGetMethod ? undefined : params,
-        //         headers: isGetMethod
-        //             ? { 'Content-Type': 'application/x-www-form-urlencoded' }
-        //             : undefined
-        //     };
-        //     return fetch(url, requestOptions).then(function (res) { return res.json() });
-        // } else {
+        var isGetParams = !(params instanceof FormData);
+        var urlWithParams = isGetParams ? url += `?${params.toString()}` : url;
+        if (typeof fetch === 'function') {
+            var requestOptions = {
+                method: method, body: isGetParams ? null : params
+            };
+            return fetch(urlWithParams, requestOptions).then(function (res) { return res.json() });
+        } else {
             return new Promise(function (resolve, reject) {
                 var xhr = new XMLHttpRequest();
-                var requestData = isGetMethod || params instanceof FormData ? params : params.toString();
-                xhr.open(method, url, true);
+                xhr.open(method, urlWithParams, true);
                 xhr.onload = function () {
-                    (xhr.status === 200 && xhr.readyState === 4)
+                    (xhr.readyState === 4 && xhr.status === 200)
                         ? resolve(JSON.parse(xhr.responseText))
                         : reject(new Error(xhr.statusText));
                 };
-                params instanceof URLSearchParams && xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-                xhr.send(requestData);
+                xhr.send(isGetParams ? null : params);
             });
-        // }
+        }
     }
 
     function godirectory(filePath = '') {
@@ -575,8 +569,11 @@
             } else executeOrder();
 
             function executeOrder() {
-                var params = new URLSearchParams({ data, newfile, createdirectory });
-                sendRequest('<%=url("admin/system/createnewfile")%>', params, 'POST').then(function (res) {
+                var formData = new FormData();
+                formData.append('data', data);
+                formData.append('newfile', newfile);
+                formData.append('createdirectory', createdirectory);
+                sendRequest('<%=url("admin/system/createnewfile")%>', formData, 'POST').then(function (res) {
                     if (res.stat === 0) {
                         createdirectory && update_list(newfile || '');
                         refresh_list(res.data);
