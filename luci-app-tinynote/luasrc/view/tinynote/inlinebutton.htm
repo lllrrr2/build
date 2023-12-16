@@ -1,0 +1,20 @@
+<div style="display: inline-block;">
+	<% if self:cfgvalue(section) ~= false then %>
+		<input class="cbi-button cbi-button-<%=self.inputstyle or 'apply'%>"
+		<%= attr("id", cbid) ..
+			attr("name", cbid) ..
+			attr("type", "button") ..
+			attr("value", self:cfgvalue(section) or self.default or self.inputtitle or self.title) ..
+			ifattr(self.title, "title", self.title) ..
+			ifattr(self.onclick, "onclick", self.onclick) ..
+			ifattr(self.readonly, "readonly", self.readonly) ..
+			ifattr(self.datatype, "data-type", self.datatype) ..
+			ifattr(self.maxlength, "maxlength", self.maxlength) ..
+			ifattr(self.onmouseover, "onmouseover", self.onmouseover) ..
+			ifattr(self.placeholder, "placeholder", self.placeholder) ..
+			ifattr(self.optional, "data-optional", self.optional or self.rmempty)
+			%> />
+	<% else %>
+		-
+	<% end %>
+</div>

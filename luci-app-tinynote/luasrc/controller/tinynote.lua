@@ -2,8 +2,10 @@ module("luci.controller.tinynote", package.seeall)
 local util = require "luci.util"
 
 function index()
-    entry({"admin", "nas", "tinynote"}, cbi("tinynote"), _("TinyNote"), 2).dependent = true
-    entry({"admin", "nas", "tinynote", "action_run"}, call("action_run"), nil).leaf = true
+    entry({ "admin", "nas", "tinynote" }, firstchild(), _("TinyNote"), 1).dependent = false
+    entry({ "admin", "nas", "tinynote", "tinynote" }, cbi("tinynote/tinynote"), _("TinyNote"), 1).leaf = true
+    entry({ "admin", "nas", "tinynote", "codetools" }, form("tinynote/codetools"), _("代码工具"), 2).leaf = true
+    entry({ "admin", "nas", "tinynote", "action_run" }, call("action_run"), nil).leaf = true
 end
 
 function send_json_response(output)
