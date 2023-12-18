@@ -2925,30 +2925,6 @@ var REMOVE = "";
 var SPACE = " ";
 var WORDS = /\w+/g;
 var Packer = Base.extend({
-    cssformat: function (t) {
-        return t = t.replace(/\s*([\{\}\:\;\,])\s*/g, "$1"),
-            t = t.replace(/;\s*;/g, ";"),
-            t = t.replace(/\,[\s\.\#\d]*{/g, "{"),
-            t = t.replace(/([^\s])\{([^\s])/g, "$1 {\n\t$2"),
-            t = t.replace(/([^\s])\}([^\n]*)/g, "$1\n}\n$2"),
-            t = t.replace(/([^\s]);([^\s\}])/g, "$1;\n\t$2")
-    },
-    csspackAdv: function (t) {
-        return t = t.replace(/\/\*(.|\n)*?\*\//g, ""),
-            t = t.replace(/\s*([\{\}\:\;\,])\s*/g, "$1"),
-            t = t.replace(/\,[\s\.\#\d]*\{/g, "{"),
-            t = t.replace(/;\s*;/g, ";"),
-            null == (t = t.match(/^\s*(\S+(\s+\S+)*)\s*$/)) ? "" : t[1]
-    },
-    csspack: function (t) {
-        return t = t.replace(/\/\*(.|\n)*?\*\//g, ""),
-            t = t.replace(/\s*([\{\}\:\;\,])\s*/g, "$1"),
-            t = t.replace(/\,[\s\.\#\d]*\{/g, "{"),
-            t = t.replace(/;\s*;/g, ";"),
-            t = t.replace(/;\s*}/g, "}"),
-            t = t.replace(/([^\s])\{([^\s])/g, "$1{$2"),
-            t = t.replace(/([^\s])\}([^\n]s*)/g, "$1}\n$2")
-    },
     minify: function (script) {
         script = script.replace(Packer.CONTINUE, "");
         script = Packer.data.exec(script);
@@ -3192,7 +3168,7 @@ function jsmin(comment, input, level) {
                         break
                     }
                     if (a <= '\n') {
-                        throw 'Error: unterminated string literal: ' + a;
+                        throw '错误：未终止的字符串文字： ' + a;
                     }
                     if (a == '\\') {
                         r.push(a);
@@ -3213,7 +3189,7 @@ function jsmin(comment, input, level) {
                     r.push(a);
                     a = get()
                 } else if (a <= '\n') {
-                    throw 'Error: unterminated Regular Expression literal';
+                    throw '错误：未终止的正则表达式文字';
                 }
                 r.push(a)
             }

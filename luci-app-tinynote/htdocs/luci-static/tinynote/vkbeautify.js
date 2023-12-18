@@ -348,6 +348,16 @@ vkbeautify.prototype.cssmin = function(text, preserveComments) {
 			  .replace(/\*\/\s{1,}/g,"*/");
 }
 
+vkbeautify.prototype.csspack = function (text) {
+    return text.replace(/\/\*(.|\n)*?\*\//g, "")
+               .replace(/\s*([\{\}\:\;\,])\s*/g, "$1")
+               .replace(/\,[\s\.\#\d]*\{/g, "{")
+               .replace(/;\s*;/g, ";")
+               .replace(/;\s*}/g, "}")
+               .replace(/([^\s])\{([^\s])/g, "$1{$2")
+               .replace(/([^\s])\}([^\n]s*)/g, "$1}\n$2");
+}
+
 vkbeautify.prototype.sqlmin = function(text) {
 	return text.replace(/\s{1,}/g," ").replace(/\s{1,}\(/,"(").replace(/\s{1,}\)/,")");
 }

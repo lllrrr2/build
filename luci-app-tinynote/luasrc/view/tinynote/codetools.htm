@@ -19,26 +19,26 @@
 <script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.0/addon/edit/matchbrackets.js"></script>
 <!-- <script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.0/addon/comment/comment.js"></script>
 <script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.0/addon/comment/continuecomment.js"></script>
-<script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.0/addon/selection/active-line.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.0/addon/selection/active-line.js"></script> -->
 <script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.0/addon/lint/lint.js"></script>
-<script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.0/addon/hint/show-hint.js"></script>
-<script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.0/addon/edit/closetag.js"></script>
-<script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.0/addon/lint/javascript-lint.js"></script>
-<script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.0/addon/display/autorefresh.js"></script>
+<!-- <script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.0/addon/hint/show-hint.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.0/addon/edit/closetag.js"></script> -->
+<!-- <script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.0/addon/lint/javascript-lint.js"></script> -->
+<!-- <script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.0/addon/display/autorefresh.js"></script>
 <script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.0/addon/edit/closebrackets.js"></script>
 <script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.0/addon/scroll/annotatescrollbar.js"></script> -->
+<script src="https://cdn.bootcdn.net/ajax/libs/clipboard.js/2.0.11/clipboard.min.js"></script>
 
 <script src="/luci-static/tinynote/format.js"></script>
+<script src="/luci-static/tinynote/vkbeautify.js"></script>
 <script src="/luci-static/tinynote/beautify.js"></script>
-<!-- <script src="/luci-static/tinynote/uglify.min.js"></script> -->
-<script src="/luci-static/tinynote/js-yaml.js"></script>
 <script src="/luci-static/tinynote/ObjTree.min.js"></script>
 <script src="/luci-static/tinynote/standalone.js"></script>
 <link rel="stylesheet" href="/luci-static/tinynote/bootstrap.css">
-<!-- <script src="https://cdn.bootcdn.net/ajax/libs/yamljs/0.3.0/yaml.min.js"></script> -->
-<!-- <script src="/luci-static/tinynote/b-lua-beautifier.min.js"></script> -->
-<button type="button" class="btn cbi-button cbi-button-apply" onclick="formatLua()">Lua 格式化</button>
-<button type="button" class="btn cbi-button cbi-button-apply" onclick="copycode(this)">复制代码</button>
+<script src="https://cdn.bootcdn.net/ajax/libs/yamljs/0.3.0/yaml.min.js"></script>
+<!-- <script src="https://cdn.bootcdn.net/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script> -->
+<!-- <button type="button" class="btn cbi-button cbi-button-apply" onclick="formatLua()">Lua 格式化</button> -->
+<button type="button" class="btn cbi-button cbi-button-apply" id="copycode">复制代码</button>
 <button type="button" class="btn cbi-button cbi-button-remove" onclick="clearAll()">清空</button>
 <select class="btn custom-select" style="height: 30px; font-size: 16px; width: 150px;" id="tabsize">
     <option value="1">1 个制表符缩进</option>
@@ -60,7 +60,7 @@
 }</textarea>
     </div>
     <div class="col-md-6">
-        <textarea placeholder="运行结果……" id="editor2"></textarea>
+        <textarea id="editor2" placeholder="运行结果……"></textarea>
     </div>
 </div>
 <style type="text/css">
@@ -123,30 +123,36 @@
         autoCloseBrackets: true,
         gutters: ["CodeMirror-foldgutter", "CodeMirror-linenumbers"]
     };
+    var tabSize = calculateTabSize();
+    $('#tabsize').on('change', function () {
+        tabSize = calculateTabSize();
+    });
+
     var editor1 = CodeMirror.fromTextArea($("#editor1")[0], options);
     var editor2 = CodeMirror.fromTextArea($("#editor2")[0], options);
-    // $('#tabsize').on('change', function () {
-    //     JsFormat(editor1.getValue());
-    // });
+
     function CSSFormat(a) {
         var content = editor1.getValue();
         if (!content.trim().length) return;
-        if (a === "packAdv") output = packer.csspackAdv(content);
-        else if (a === "pack") output = packer.csspack(content);
-        else if (a === "format") output = packer.cssformat(content);
-        $.getScript("https://cdn.bootcdn.net/ajax/libs/codemirror/5.48.4/mode/css/css.min.js", function () {
-            editor1.setOption("mode", 'text/css');
-            editor2.setOption("mode", 'text/css');
-        });
-        editor2.getDoc().setValue(output);
+        var scripts = [
+            "https://cdn.bootcdn.net/ajax/libs/codemirror/5.48.4/mode/css/css.min.js"
+        ];
+        loadScripts(scripts)
+            .then(function () {
+                if (a === "packAdv") output = vkbeautify.cssmin(content);
+                else if (a === "pack") output = vkbeautify.csspack(content);
+                else if (a === "format") output = vkbeautify.css(content, tabSize);
+                editor1.setOption("mode", 'text/css');
+                editor2.setOption("mode", 'text/css');
+                editor2.getDoc().setValue(output);
+            });
     }
 
     function jsonFormat(x) {
         var content = editor1.getValue();
         if (!content.trim().length) return;
         try {
-            var space = x ? x : $('#tabsize').val();
-            output = JSON.stringify($.parseJSON(content), null, parseInt(space));
+            output = x ? vkbeautify.jsonmin(content) : vkbeautify.json(content, tabSize);
             editor2.getDoc().setValue(output);
         } catch (e) {
             showErrorMessage("JSON 语法错误：" + e.message);
@@ -168,7 +174,6 @@
         var content = editor1.getValue();
         if (!content.trim().length) return;
         var scripts = [
-            "/luci-static/tinynote/vkbeautify.js",
             "https://cdn.bootcdn.net/ajax/libs/codemirror/5.48.4/mode/xml/xml.js"
         ];
         loadScripts(scripts)
@@ -176,7 +181,7 @@
                 try {
                     editor1.setOption("mode", 'text/html');
                     editor2.setOption("mode", 'text/html');
-                    output = a === "format" ? vkbeautify.xml(content, $('#tabsize').val()) : vkbeautify.xmlmin(content);
+                    output = a ? vkbeautify.xml(content, tabSize) : vkbeautify.xmlmin(content);
                     editor2.getDoc().setValue(output);
                 } catch (e) {
                     showErrorMessage("HTML 语法错误：" + e.message);
@@ -191,7 +196,7 @@
         var content = editor1.getValue();
         if (!content.trim().length) return;
         var scripts = [
-            "https://www.xuhuhu.com/dist/js/converttocsv-underscore-lib.js",
+            // "https://www.xuhuhu.com/dist/js/converttocsv-underscore-lib.js",
             "https://cdn.bootcdn.net/ajax/libs/jsonlint/1.6.0/jsonlint.min.js"
         ];
         loadScripts(scripts)
@@ -240,7 +245,7 @@
         if (!content.trim().length) return;
         try {
             var yaml = jsyaml.dump(JSON.parse(content), {
-                "indent": $('#tabsize').val(),
+                "indent": tabSize,
                 "quotingType": ""
             });
             $.getScript("https://cdn.bootcdn.net/ajax/libs/codemirror/5.48.4/mode/yaml/yaml.min.js", function () {
@@ -287,7 +292,6 @@
         var content = editor1.getValue();
         if (!content.trim().length) return;
         var scripts = [
-            "/luci-static/tinynote/vkbeautify.js",
             "https://cdn.bootcdn.net/ajax/libs/yamljs/0.3.0/yaml.min.js",
             "https://cdn.bootcdn.net/ajax/libs/codemirror/5.48.4/mode/yaml/yaml.min.js"
         ];
@@ -315,6 +319,72 @@
                 showErrorMessage("加载错误：" + e.message);
             });
     }
+
+    function FormatYAML(a) {
+        var content = editor1.getValue();
+        if (!content.trim().length) return;
+        var scripts = [
+            "https://cdn.bootcdn.net/ajax/libs/yamljs/0.3.0/yaml.min.js",
+            "https://cdn.bootcdn.net/ajax/libs/js-yaml/4.1.0/js-yaml.js",
+            "https://cdn.bootcdn.net/ajax/libs/codemirror/6.65.7/addon/lint/yaml-lint.js",
+            "https://cdn.bootcdn.net/ajax/libs/codemirror/5.48.4/mode/yaml/yaml.min.js"
+        ];
+        loadScripts(scripts)
+            .then(function () {
+                try {
+                    if (a === 'JSON') { // 转换json
+                        // content = vkbeautify.json(YAML.parse(content.trim()), tabSize);
+                        var result = jsyaml.load(content);
+                        content = JSON.stringify(result, null, tabSize)
+                    } else if (a === 'safeLoad') { //语法检查
+                        jsyaml.load(content);
+                        // content = jsyaml.load(content);
+                        return showSuccessMessage("YAML 语法通过");
+                    } else if (a === 'dump') { //格式化
+                        // var result = jsyaml.load(content);
+                        // content = JSON.stringify(result, null, 2)
+
+                        // schema：用于验证 YAML 文档是否符合规范的对象。
+                        // indent：缩进量，用于指定每个层级的缩进字符数。
+                        // noArrayIndent：布尔值，表示是否在数组元素前面增加额外的缩进。
+                        // skipInvalid：布尔值，表示是否跳过无效的节点。
+                        // flowLevel：整数，表示在何种嵌套深度下使用流样式（即用一行表示整个数据）。
+                        // styleMap：样式映射对象，用于指定节点的样式。
+                        // sortKeys：布尔值，表示是否按键名排序。
+                        // lineWidth：整数，表示每行最大字符数。
+                        // noRefs：布尔值，表示是否禁用引用功能。
+                        // noCompatMode：布尔值，表示是否禁用兼容模式。
+                        // condenseFlow：布尔值，表示是否压缩使用流样式时的空格。
+                        // quotingType：引号类型（双引号或单引号）。
+                        // forceQuotes：布尔值，表示是否强制使用引号。
+                        // replacer：替换函数，用于在序列化期间替换对象的值。
+                        // implicitTypes：隐式类型数组，用于解析 YAML 文档中的隐式类型。
+                        // explicitTypes：显式类型对象，用于解析 YAML 文档中的显式类型。
+                        // tag：当前节点的标签。
+                        // result：序列化结果字符串。
+                        // duplicates：重复键数组，用于检查 YAML 文档中是否存在重复键。
+                        // usedDuplicates：已使用重复键数组。
+
+                        content = jsyaml.dump(content, {
+                            'indent': tabSize,
+                            'sortKeys': true,
+                            'skipInvalid': true,
+                            'noArrayIndent': true
+                        });
+                    } else if (a === 'Minify') { // 压缩
+                        content = content.replace(/\s+/g, "");
+                    }
+                    editor2.setOption("mode", 'text/yaml');
+                    editor2.getDoc().setValue(content);
+                } catch (e) {
+                    showErrorMessage("YAML 语法错误：" + e.message);
+                }
+            })
+            .catch(function (e) {
+                showErrorMessage("加载错误：" + e.message);
+            });
+    }
+
     // function jsonTocsv() {
     //     var content = editor1.getValue();
     //     if (!content.trim().length) return;
@@ -604,7 +674,7 @@
     function JsFormat() {
         var content = editor1.getValue();
         if (!content.trim().length) return;
-        _indent_size = $('#tabsize').val();
+        _indent_size = tabSize;
         var result = js_beautify(content, {
             templating: ["auto"],
             indent_size: _indent_size,
@@ -614,6 +684,7 @@
             max_preserve_newlines: 1,
             indent_with_tabs: parseInt(_indent_size, 10) === 1,
         });
+        editor2.setOption("mode", 'text/javascript');
         editor2.getDoc().setValue(result);
     }
 
@@ -726,28 +797,49 @@
         return header.join(",") + "\n" + content.join(",") + "\n";
     }
 
-    function copycode(button) {
-        var code = editor2.getDoc().getValue();
-        var $textarea = $('<textarea>').val(code).css({
-            position: 'absolute',
-            left: '-9999px'
-        }).attr('readonly', '');
-        $('body').append($textarea);
-        $textarea.select();
-        document.execCommand('copy');
-        $textarea.remove();
-        $(button).text('已复制');
+    // function copycode(button) {
+    //     var code = editor2.getDoc().getValue();
+    //     if (!code.trim().length) {
+    //         return editor2.setValue('没有内容！');
+    //     };
+    //     var $textarea = $('<textarea>').val(code).css({
+    //         position: 'absolute',
+    //         left: '-9999px'
+    //     }).attr('readonly', '');
+    //     $('body').append($textarea);
+    //     $textarea.select();
+    //     document.execCommand('copy');
+    //     $textarea.remove();
+    //     $(button).text('已复制');
+    //     if (editor2) editor2.execCommand('selectAll');
+    //     setTimeout(function () {
+    //         $(button).text('复制代码');
+    //     }, 2000);
+    // }
+
+    new ClipboardJS('#copycode', {
+        text: function () {
+            return editor2.getDoc().getValue();
+        }
+    }).on('success', function (e) {
         if (editor2) editor2.execCommand('selectAll');
-        setTimeout(function () {
-            $(button).text('复制代码');
-        }, 2000);
-    }
+        showSuccessMessage("已复制");
+        e.clearSelection();
+    }).on('error', function (e) {
+        showErrorMessage('复制出错' + e.message)
+    });
 
     function clearAll() {
         if (editor1 && editor2) {
             editor1.setValue('');
             editor2.setValue('');
         }
+    }
+    
+    function calculateTabSize() {
+        var parsedValue = parseInt($('#tabsize').val(), 10);
+        if (parsedValue === 1) parsedValue = '\t';
+        return parsedValue;
     }
 
     function changeToFileContent(input) {
