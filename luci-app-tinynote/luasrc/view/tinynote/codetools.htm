@@ -2,7 +2,6 @@
     <link rel="stylesheet" href="/luci-static/tinynote/bootstrap.css"/>
     <script src="/luci-static/tinynote/codemirror/jquery.min.js"></script>
     <script src="/luci-static/tinynote/clipboard.min.js"></script>
-    <script src="/luci-static/tinynote/ObjTree.min.js"></script>
     <script src="/luci-static/tinynote/vkbeautify.js"></script>
     <script src="/luci-static/tinynote/converttocsv-underscore-lib.js"></script>
 
@@ -28,9 +27,7 @@
     </div>
     <div class="row">
         <div class="col-md-6">
-            <div id="editor1" style="height: 500px; width: 100%;">function runoob() {
-    console.log('Hello World!');
-}</div>
+            <div id="editor1" style="height: 500px; width: 100%;"></div>
         </div>
         <div class="col-md-6">
             <div id="editor2" style="height: 500px; width: 100%;"></div>
@@ -100,12 +97,10 @@
         wrap: true,
         showPrintMargin: true
     });
-
     var indent_size = calculateTabSize();
     $('#tabsize').on('change', function () {
         indent_size = calculateTabSize();
     });
-
     var indent_char;
     if (indent_size === '\t') {
         indent_size = '1';
@@ -132,7 +127,7 @@
                     operator_position: "before-newline",
                     indent_with_tabs: indent_size === '\t'
                 });
-                if (output) editor2.setValue(output);
+                editor2.setValue(output || '没有返回值');
             })
         });
     }
@@ -176,15 +171,15 @@
                 // space_around_combinator: 一个布尔值，表示在组合器（如 +、>）周围是否增加空格，如果未设置，则默认与space_around_selector_separator相同。
                 // brace_style: 一个字符串，表示大括号的样式，可选值为['collapse', 'expand', 'end-expand', 'none', 'preserve-inline']。默认为'collapse'。
                 if (a === "format") output = beautifier.css(content);
-                else if (a === "pack") output = vkbeautify.csspack(content);
                 else if (a === "min") output = vkbeautify.cssmin(content);
+                else if (a === "pack") output = vkbeautify.csspack(content);
                 editor1.getSession().setMode("ace/mode/css");
                 editor2.getSession().setMode("ace/mode/css");
-                editor2.setValue(output);
+                editor2.setValue(output || '没有返回值');
             });
     }
 
-    function jsonFormat(x) {
+    function jsonFormat(a) {
         var content = editor1.getValue();
         if (!content.trim().length) return;
         var scripts = [
@@ -195,14 +190,14 @@
             .then(function () {
                 editor1.getSession().setMode("ace/mode/json");
                 try {
-                    if (x === 'min') output = vkbeautify.jsonmin(content);
-                    else if (x === 'format') output = vkbeautify.json(content, indent_size);
-                    else if (x === 'safeLoad') {
+                    if (a === 'min') output = vkbeautify.jsonmin(content);
+                    else if (a === 'format') output = vkbeautify.json(content, indent_size);
+                    else if (a === 'safeLoad') {
                         jsonlint.parse(content);
                         return showSuccessMessage("JSON 语法通过");
                     }
                     editor2.getSession().setMode("ace/mode/json");
-                    editor2.setValue(output);
+                    editor2.setValue(output || '没有返回值');
                 } catch (e) {
                     showErrorMessage("JSON 语法错误：" + e.message);
                 }
@@ -217,13 +212,13 @@
         if (!content.trim().length) return;
         try {
             output = beautifyLua(content);
-            editor2.setValue(output);
+            editor2.setValue(output || '没有返回值');
         } catch (e) {
             showErrorMessage("Lua 语法错误：" + e.message);
         }
     }
 
-    function FormatHTML(a) {
+    function FormatHTML() {
         var content = editor1.getValue();
         if (!content.trim().length) return;
         var scripts = [
@@ -254,9 +249,9 @@
                     output = beautifier.html(content, {
                         indent_size,
                         indent_char,
-                        templating: ["auto"],
+                        templating: ["auto"]
                     });
-                    editor2.setValue(output);
+                    editor2.setValue(output || '没有返回值');
                 } catch (e) {
                     showErrorMessage("HTML 语法错误：" + e.message);
                 }
@@ -270,9 +265,9 @@
         var content = editor1.getValue();
         if (!content.trim().length) return;
         var scripts = [
+            "https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-yaml.js",
             "https://cdn.bootcdn.net/ajax/libs/js-yaml/4.1.0/js-yaml.js",
-            "https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-hjson.js",
-            "https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-yaml.js"
+            "https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-hjson.js"
         ];
         loadScripts(scripts)
             .then(function () {
@@ -294,11 +289,64 @@
                             quotingType: "",
                             indent: indent_size
                         });
+                        editor1.getSession().setMode("ace/mode/json");
                         editor2.getSession().setMode("ace/mode/yaml");
                     }
-                    editor2.setValue(output);
+                    editor2.setValue(output || '没有返回值');
                 } catch (e) {
                     showErrorMessage("YAML 语法错误：" + e.message);
+                }
+            })
+            .catch(function (e) {
+                showErrorMessage("加载错误：" + e.message);
+            });
+    }
+
+    function jsonTocsv() {
+        var content = editor1.getValue();
+        if (!content.trim().length) return;
+        var scripts = [
+            "https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-hjson.js",
+            "https://cdn.bootcdn.net/ajax/libs/jsonlint/1.6.0/jsonlint.min.js"
+        ];
+        loadScripts(scripts)
+            .then(function () {
+                try {
+                    var i = jsonlint.parse(content),
+                        n = jsonToCsv2(i, ",", !0, !1, !1);
+                    editor1.getSession().setMode("ace/mode/json");
+                    editor2.getSession().setMode("ace/mode/json");
+                    editor2.setValue(n || '没有返回值');
+                } catch (e) {
+                    showErrorMessage("JSON 语法错误：" + e.message);
+                }
+            })
+            .catch(function (e) {
+                showErrorMessage("加载错误：" + e.message);
+            });
+    }
+
+    function jsonToXML() {
+        var content = editor1.getValue();
+        if (!content.trim().length) return;
+        var scripts = [
+            "/luci-static/tinynote/ObjTree.min.js",
+            "https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-xml.js",
+            "https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-hjson.js",
+            "https://cdn.bootcdn.net/ajax/libs/jsonlint/1.6.0/jsonlint.min.js"
+        ];
+        loadScripts(scripts)
+            .then(function () {
+                try {
+                    var x = content.replace(/([ :$&]+)(?=[(\w* *]*":)/g, "_"),
+                        json = jsonlint.parse(x),
+                        xotree = new XML.ObjTree(),
+                        xml = xotree.writeXML(json);
+                    editor1.getSession().setMode("ace/mode/json");
+                    editor2.getSession().setMode("ace/mode/xml");
+                    editor2.setValue(vkbeautify.xml(xml) || '没有返回值');
+                } catch (e) {
+                    showErrorMessage("JSON 语法错误：" + e.message);
                 }
             })
             .catch(function (e) {
@@ -589,144 +637,10 @@
         }
     }
 
-    function jsonTocsv() {
-        var content = editor1.getValue();
-        if (!content.trim().length) return;
-        var scripts = [
-            "https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-hjson.js",
-            "https://cdn.bootcdn.net/ajax/libs/jsonlint/1.6.0/jsonlint.min.js"
-        ];
-        loadScripts(scripts)
-            .then(function () {
-                try {
-                    var i = jsonlint.parse(content),
-                        n = jsonToCsv2(i, ",", !0, !1, !1);
-                    editor1.getSession().setMode("ace/mode/json");
-                    editor2.getSession().setMode("ace/mode/json");
-                    editor2.setValue(n);
-                } catch (e) {
-                    showErrorMessage("JSON 语法错误：" + e.message);
-                }
-            })
-            .catch(function (e) {
-                showErrorMessage("加载错误：" + e.message);
-            });
-    }
-
-    function jsonToXML() {
-        var content = editor1.getValue();
-        if (!content.trim().length) return;
-        var scripts = [
-            "https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-hjson.js",
-            "https://cdn.bootcdn.net/ajax/libs/jsonlint/1.6.0/jsonlint.min.js"
-        ];
-        loadScripts(scripts)
-            .then(function () {
-                try {
-                    var x = content.replace(/([ :$&]+)(?=[(\w* *]*":)/g, "_"),
-                        json = jsonlint.parse(x),
-                        xotree = new XML.ObjTree(),
-                        xml = xotree.writeXML(json),
-                        formattedXml = formatXml(xml);
-                    editor1.getSession().setMode("ace/mode/json");
-                    editor2.setValue(formattedXml);
-                } catch (e) {
-                    showErrorMessage("JSON 语法错误：" + e.message);
-                }
-            })
-            .catch(function (e) {
-                showErrorMessage("加载错误：" + e.message);
-            });
-    }
-    function formatXml(xml) {
-        var formatted = '';
-        var reg = /(>)(<)(\/*)/g;
-        xml = xml.replace(reg, '$1\r\n$2$3');
-        var pad = 0;
-        xml.split('\r\n').forEach(function (node) {
-            var indent = 0;
-            if (node.match(/.+<\/\w[^>]*>$/)) {
-                indent = 0;
-            } else if (node.match(/^<\/\w/)) {
-                if (pad !== 0) {
-                    pad -= 1;
-                }
-            } else if (node.match(/^<\w[^>]*[^\/]>.*$/)) {
-                indent = 1;
-            }
-            var padding = ' '.repeat(pad * 2);
-            formatted += padding + node.trim() + '\r\n';
-            pad += indent;
-        });
-        return formatted.trim();
-    }
-    // function jsonToXml(jsonObj) {
-    //     var xmlStr = '';
-    //     for (var key in jsonObj) {
-    //         if (jsonObj.hasOwnProperty(key)) {
-    //             xmlStr += '<' + key + '>';
-    //             if (typeof (jsonObj[key]) === 'object') {
-    //                 xmlStr += jsonToXml(jsonObj[key]);
-    //             } else {
-    //                 xmlStr += jsonObj[key];
-    //             }
-    //             xmlStr += '</' + key + '>';
-    //         }
-    //     }
-    //     return xmlStr;
-    // }
-    function processJSON(data) {
-        $.each(data, function (k, data1) {
-            var type1 = typeof data1;
-            if (type1 == "object") {
-                flag = false;
-                processJSON(data1);
-                arr.push("end");
-            } else {
-                arr.push(k, data1);
-            }
-        });
-        return arr;
-    }
-
-    function jsonToCsvByJson(data) {
-        arr = [];
-        flag = true;
-        var header = [];
-        var content = [];
-        var headFlag = true;
-        try {
-            data = typeof data === "object" ? processJSON(data) : processJSON($.parseJSON(data));
-        } catch (e) {
-            throw new Error("JSON 语法错误：" + e.message);
-        }
-        $.each(data, function (k, value) {
-            if (k % 2 === 0) {
-                if (headFlag) {
-                    if (value !== "end") {
-                        header.push(value);
-                    } else {
-                        headFlag = false;
-                    }
-                }
-            } else {
-                if (value !== "end") {
-                    var temp = data[k - 1];
-                    if (header.includes(temp)) {
-                        content.push(value);
-                    }
-                } else {
-                    content.push("");
-                }
-            }
-        });
-        return header.join(",") + "\n" + content.join(",") + "\n";
-    }
-
     // function copycode(button) {
     //     var code = editor2.getValue();
     //     if (!code.trim().length) {
-    //         return editor2.setValue('没有内容！');
+    //         return editor2.setValue(output || '没有返回值');
     //     };
     //     var $textarea = $('<textarea>').val(code).css({
     //         position: 'absolute',
@@ -761,7 +675,7 @@
             editor2.setValue('');
         }
     }
-    
+
     function calculateTabSize() {
         var parsedValue = parseInt($('#tabsize').val(), 10);
         if (parsedValue === 1) parsedValue = '\t';

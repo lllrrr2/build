@@ -32,6 +32,11 @@ x.inputstyle = "apply"
 x.inputtitle = "加密压缩"
 x.onclick    = "JsCompression('pack');"
 x.template   = "tinynote/inlinebutton"
+x = f:taboption("JS", Button, "getExampleJavaScript")
+x.inputstyle = "apply"
+x.inputtitle = "示例"
+x.onclick    = "getExampleJavaScript();"
+x.template   = "tinynote/inlinebutton"
 
 x = f:taboption("HTML", Button, "FormatHTMLformat")
 x.inputstyle = "apply"
@@ -42,6 +47,11 @@ x = f:taboption("HTML", Button, "FormatHTMLmin")
 x.inputstyle = "apply"
 x.inputtitle = "压缩"
 x.onclick    = "FormatHTML('min');"
+x.template   = "tinynote/inlinebutton"
+x = f:taboption("HTML", Button, "getExampleHTML")
+x.inputstyle = "apply"
+x.inputtitle = "示例"
+x.onclick    = "getExampleHTML();"
 x.template   = "tinynote/inlinebutton"
 
 x = f:taboption("CSS", Button, "CSSFormat")
@@ -58,6 +68,11 @@ x = f:taboption("CSS", Button, "CSSFormatpackAdv")
 x.inputstyle = "apply"
 x.inputtitle = "极限压缩"
 x.onclick    = "CSSFormat('min');"
+x.template   = "tinynote/inlinebutton"
+x = f:taboption("CSS", Button, "getExampleCSS")
+x.inputstyle = "apply"
+x.inputtitle = "示例"
+x.onclick    = "getExampleCSS();"
 x.template   = "tinynote/inlinebutton"
 
 x = f:taboption("JSON", Button, "examineJSON")
@@ -92,7 +107,7 @@ x.onclick    = "jsonTocsv();"
 x.template   = "tinynote/inlinebutton"
 x = f:taboption("JSON", Button, "getExampleJson")
 x.inputstyle = "apply"
-x.inputtitle = "获取示例"
+x.inputtitle = "示例"
 x.onclick    = "getExampleJson();"
 x.template   = "tinynote/inlinebutton"
 
@@ -113,7 +128,7 @@ x.onclick    = "FormatYAML('json');"
 x.template   = "tinynote/inlinebutton"
 x = f:taboption("YAML", Button, "getExampleYaml")
 x.inputstyle = "apply"
-x.inputtitle = "获取示例"
+x.inputtitle = "示例"
 x.onclick    = "getExampleYaml();"
 x.template   = "tinynote/inlinebutton"
 

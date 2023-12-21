@@ -778,46 +778,33 @@ function getExampleFlat() {
 }
 
 function getExampleYaml() {
-    var output = `
--
- id: 1
- name: John Doe
- age: 30
- email: johndoe@example.com
- hobbies:
-  -
-   name: Reading
-   duration: 5
-  -
-   name: Cooking
-   duration: 3
--
- id: 2
- name: Jane Smith
- age: 25
- email: janesmith@example.com
- hobbies:
-  -
-   name: Painting
-   duration: 7
-  -
-   name: Hiking
-   duration: 4
--
- id: 3
- name: Bob Johnson
- age: 40
- email: bobjohnson@example.com
- hobbies:
-  -
-   name: Photography
-   duration: 6
-  -
-   name: Dancing
-   duration: 2
-`;
+    var output = '-\n  id: 1\n  name: John Doe\n  age: 30\n  email: johndoe@example.com\n  hobbies:\n    -\n      name: Reading\n      duration: 5\n    -\n      name: Cooking\n      duration: 3\n-\n  id: 2\n  name: Jane Smith\n  age: 25\n  email: janesmith@example.com\n  hobbies:\n    -\n      name: Painting\n      duration: 7\n    -\n      name: Hiking\n      duration: 4\n-\n  id: 3\n  name: Bob Johnson\n  age: 40\n  email: bobjohnson@example.com\n  hobbies:\n    -\n      name: Photography\n      duration: 6\n    -\n      name: Dancing\n      duration: 2\n';
     $.getScript("https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-yaml.js", function () {
         editor1.getSession().setMode("ace/mode/yaml");
+        editor1.setValue(output);
+    });
+}
+
+function getExampleJavaScript() {
+    var output = 'var name = "John";\nconsole.log("Hello, " + name + "!");\n\nvar numbers = [1, 2, 3, 4, 5];\nfor (var i = 0; i < numbers.length; i++) {\n    console.log(numbers[i]);\n}\n\nvar person = {\n    name: "John",\n    age: 30,\n    city: "New York"\n};\nconsole.log(person.name);\n';
+    $.getScript("https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-javascript.js", function () {
+        editor1.getSession().setMode("ace/mode/javascript");
+        editor1.setValue(output);
+    });
+}
+
+function getExampleCSS() {
+    var output = 'body {background-color: #e9ecef;font-family: Arial, sans-serif;}h1 {color: #333;font-size: 24px;}.container {width: 800px;margin: 0 auto;padding: 20px;}@media(min-width: 768px) {.container-md,.container-sm, .container {max-width: 720px;}}';
+    $.getScript("https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-css.js", function () {
+        editor1.getSession().setMode("ace/mode/css");
+        editor1.setValue(output);
+    });
+}
+
+function getExampleHTML() {
+    var output = '<!DOCTYPE html>\n<html><head>\n    <title>Sample Page</title>\n    <link rel="stylesheet" type="text/css" href="styles.css">\n</head>\n<body>\n    <header>\n        <h1>Welcome to My Website</h1>\n    </header>\n    <div class="container">\n        <p>This is a sample paragraph.</p>\n   <a href="#">Click here</a>\n    </div>\n    <script src="scripts.js"></script></body>\n</html>\n';
+    $.getScript("https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-html.js", function () {
+        editor1.getSession().setMode("ace/mode/html");
         editor1.setValue(output);
     });
 }
