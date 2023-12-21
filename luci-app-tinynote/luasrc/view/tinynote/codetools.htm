@@ -1,162 +1,215 @@
-<script src="/luci-static/tinynote/codemirror/jquery.min.js"></script>
-<script src="/luci-static/tinynote/codemirror/codemirror.min.js"></script>
-<link rel="stylesheet" href="/luci-static/tinynote/codemirror/codemirror.min.css">
-<link rel="stylesheet" href="/luci-static/tinynote/codemirror/theme/monokai.min.css">
-<link rel="stylesheet" href="/luci-static/tinynote/codemirror/addon/dialog/dialog.min.css">
-<link rel="stylesheet" href="/luci-static/tinynote/codemirror/addon/fold/foldgutter.min.css">
+<body>
+    <link rel="stylesheet" href="/luci-static/tinynote/bootstrap.css"/>
+    <script src="/luci-static/tinynote/codemirror/jquery.min.js"></script>
+    <script src="/luci-static/tinynote/clipboard.min.js"></script>
+    <script src="/luci-static/tinynote/ObjTree.min.js"></script>
+    <script src="/luci-static/tinynote/vkbeautify.js"></script>
+    <script src="/luci-static/tinynote/converttocsv-underscore-lib.js"></script>
 
-<script src="/luci-static/tinynote/codemirror/keymap/emacs.min.js"></script>
-<script src="/luci-static/tinynote/codemirror/keymap/sublime.min.js"></script>
-<script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.48.4/addon/mode/simple.min.js"></script>
-<script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.48.4/mode/javascript/javascript.min.js"></script>
-<script src="/luci-static/tinynote/codemirror/addon/fold/foldcode.min.js"></script>
-<script src="/luci-static/tinynote/codemirror/addon/dialog/dialog.min.js"></script>
-<script src="/luci-static/tinynote/codemirror/addon/search/search.min.js"></script>
-<script src="/luci-static/tinynote/codemirror/addon/fold/foldgutter.min.js"></script>
-<script src="/luci-static/tinynote/codemirror/addon/fold/brace-fold.min.js"></script>
-<script src="/luci-static/tinynote/codemirror/addon/search/searchcursor.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/ace.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-javascript.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/theme-monokai.js"></script>
 
-<script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.0/addon/edit/matchbrackets.js"></script>
-<!-- <script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.0/addon/comment/comment.js"></script>
-<script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.0/addon/comment/continuecomment.js"></script>
-<script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.0/addon/selection/active-line.js"></script> -->
-<script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.0/addon/lint/lint.js"></script>
-<!-- <script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.0/addon/hint/show-hint.js"></script>
-<script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.0/addon/edit/closetag.js"></script> -->
-<!-- <script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.0/addon/lint/javascript-lint.js"></script> -->
-<!-- <script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.0/addon/display/autorefresh.js"></script>
-<script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.0/addon/edit/closebrackets.js"></script>
-<script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.0/addon/scroll/annotatescrollbar.js"></script> -->
-<script src="https://cdn.bootcdn.net/ajax/libs/clipboard.js/2.0.11/clipboard.min.js"></script>
-
-<script src="/luci-static/tinynote/format.js"></script>
-<script src="/luci-static/tinynote/vkbeautify.js"></script>
-<script src="/luci-static/tinynote/beautify.js"></script>
-<script src="/luci-static/tinynote/ObjTree.min.js"></script>
-<script src="/luci-static/tinynote/standalone.js"></script>
-<link rel="stylesheet" href="/luci-static/tinynote/bootstrap.css">
-<script src="https://cdn.bootcdn.net/ajax/libs/yamljs/0.3.0/yaml.min.js"></script>
-<!-- <script src="https://cdn.bootcdn.net/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script> -->
-<!-- <button type="button" class="btn cbi-button cbi-button-apply" onclick="formatLua()">Lua 格式化</button> -->
-<button type="button" class="btn cbi-button cbi-button-apply" id="copycode">复制代码</button>
-<button type="button" class="btn cbi-button cbi-button-remove" onclick="clearAll()">清空</button>
-<select class="btn custom-select" style="height: 30px; font-size: 16px; width: 150px;" id="tabsize">
-    <option value="1">1 个制表符缩进</option>
-    <option value="2">2 个空格缩进</option>
-    <option value="3">3 个空格缩进</option>
-    <option value="4" selected="selected">4 个空格缩进</option>
-    <option value="8">8 个空格缩进</option>
-</select>
-<input type="file" onchange="changeToFileContent(this)">
-<div class="col-md-12" id="warning" style="display: none;">
-    <div class="alert alert-warning">
-        <a href="#" class="close" data-dismiss="alert">&times;</a>
+    <!-- <button type="button" class="btn cbi-button cbi-button-apply" onclick="formatLua()">Lua 格式化</button> -->
+    <button type="button" class="btn cbi-button cbi-button-apply" id="copycode">复制代码</button>
+    <button type="button" class="btn cbi-button cbi-button-remove" onclick="clearAll()">清空</button>
+    <select class="btn custom-select" style="height: 30px; font-size: 16px; width: 150px;" id="tabsize">
+        <option value="1">1 个制表符缩进</option>
+        <option value="2">2 个空格缩进</option>
+        <option value="3">3 个空格缩进</option>
+        <option value="4" selected="selected">4 个空格缩进</option>
+        <option value="8">8 个空格缩进</option>
+    </select>
+    <input type="file" onchange="changeToFileContent(this)"/>
+    <div class="col-md-12" id="warning" style="display: none;">
+        <div class="alert alert-warning">
+            <a href="#" class="close" data-dismiss="alert">&times;</a>
+        </div>
     </div>
-</div>
-<div class="row">
-    <div class="col-md-6">
-        <textarea id="editor1">function runoob() {
+    <div class="row">
+        <div class="col-md-6">
+            <div id="editor1" style="height: 500px; width: 100%;">function runoob() {
     console.log('Hello World!');
-}</textarea>
+}</div>
+        </div>
+        <div class="col-md-6">
+            <div id="editor2" style="height: 500px; width: 100%;"></div>
+        </div>
     </div>
-    <div class="col-md-6">
-        <textarea id="editor2" placeholder="运行结果……"></textarea>
-    </div>
-</div>
-<style type="text/css">
-    .CodeMirror {
-        height: 500px;
-        font-size: 14px;
-        line-height: 140%;
-        resize: both;
-        text-align: left;
-        font-family: Consolas, monospace;
-        border-top: 1px solid black;
-        border-bottom: 1px solid black;
-    }
-</style>
-<!--
-- `indent_size: 4`：缩进使用 4 个空格。
-- `indent_char: " "`：缩进字符为空格。
-- `indent_with_tabs: false`：不使用制表符进行缩进。
-- `editorconfig: false`：不应用 EditorConfig 配置。
-- `eol: "\n"`：换行符使用回车符。
-- `end_with_newline: false`：不在文件末尾添加空行。
-- `indent_level: 0`：初始缩进级别为 0。
-- `preserve_newlines: true`：保留原有的换行符。
-- `max_preserve_newlines: 10`：最大保留 10 个换行符。
-- `space_in_paren: false`：括号内不添加空格。
-- `space_in_empty_paren: false`：空括号内不添加空格。
-- `jslint_happy: false`：不按照 JSLint 的要求进行格式化。
-- `space_after_anon_function: false`：匿名函数后不添加空格。
-- `space_after_named_function: false`：命名函数后不添加空格。
-- `brace_style: "collapse"`：大括号样式为 "collapse"。
-- `unindent_chained_methods: false`：链式方法不取消缩进。
-- `break_chained_methods: false`：链式方法不换行。
-- `keep_array_indentation: false`：数组元素不保留缩进。
-- `unescape_strings: false`：字符串不进行反转义处理。
-- `wrap_line_length: 0`：不限制行长。
-- `e4x: false`：不支持 E4X 语法。
-- `comma_first: false`：逗号不放在行首。
-- `operator_position: "before-newline"`：运算符放在换行符之前。
-- `indent_empty_lines: false`：空行不进行缩进。
-- `templating: ["auto"]`：模板字符串的格式化方式为自动选择。
--->
+</body>
 <script type="text/javascript">
     var output;
-    var packer = new Packer();
-    var options = {
-        lint: true,
-        indentUnit: 4,
-        spellcheck: true,
-        foldGutter: true,
-        theme: "monokai",
-        keyMap: 'sublime',
-        smartIndent: true,
-        lineNumbers: true,
-        lineWrapping: true,
-        matchBrackets: true,
-        indentWithTabs: true,
-        styleActiveLine: true,
-        lineWiseCopyCut: true,
-        mode: "text/javascript",
-        autoCloseBrackets: true,
-        gutters: ["CodeMirror-foldgutter", "CodeMirror-linenumbers"]
-    };
-    var tabSize = calculateTabSize();
-    $('#tabsize').on('change', function () {
-        tabSize = calculateTabSize();
+    // customScrollbar: 自定义滚动条
+    // hScrollBarAlwaysVisible: 水平滚动条是否始终可见
+    // vScrollBarAlwaysVisible: 垂直滚动条是否始终可见
+    // highlightGutterLine: 是否高亮显示行号区域
+    // animatedScroll: 是否启用平滑滚动
+    // showInvisibles: 是否显示不可见字符
+    // showPrintMargin: 是否显示打印边距
+    // printMarginColumn: 设置打印边距的列数
+    // printMargin: 设置打印边距的显示方式
+    // fadeFoldWidgets: 是否淡化折叠小部件
+    // showFoldWidgets: 是否显示折叠小部件
+    // displayIndentGuides: 是否显示缩进指南
+    // highlightIndentGuides: 是否高亮显示缩进指南
+    // showGutter: 是否显示行号区域
+    // fontSize: 编辑器的字号
+    // fontFamily: 编辑器的字体
+    // maxLines: 编辑器的最大行数
+    // minLines: 编辑器的最小行数
+    // scrollPastEnd: 是否允许滚动超出内容末尾
+    // fixedWidthGutter: 是否固定行号区域的宽度
+    // theme: 编辑器的主题
+    // hasCssTransforms: 是否启用 CSS 变换
+    // maxPixelHeight: 编辑器的最大像素高度
+    // useTextareaForIME: 是否使用 textarea 处理输入法
+    // useResizeObserver: 是否使用 ResizeObserver 接口
+    // useSvgGutterIcons: 是否使用 SVG 图标作为行号区域的图标
+    // showFoldedAnnotations: 是否显示折叠的注解
+    // scrollSpeed: 滚动速度
+    // dragDelay: 拖拽延迟
+    // dragEnabled: 是否启用拖拽
+    // focusTimeout: 焦点超时
+    // tooltipFollowsMouse: 鼠标提示是否跟随鼠标移动
+    // firstLineNumber: 第一行的行号
+    // overwrite: 是否为覆盖模式
+    // newLineMode: 新行的模式
+    // useWorker: 是否启用后台工作线程
+    // useSoftTabs: 是否使用软制表符
+    // navigateWithinSoftTabs: 是否在软制表符内导航
+    // tabSize: 制表符的大小
+    // wrap: 是否启用自动换行
+    // indentedSoftWrap: 缩进自动换行
+    // foldStyle: 折叠样式
+    // mode: 编辑器的语言模式
+    var editor1 = ace.edit("editor1");
+    editor1.setOptions({
+        theme: "ace/theme/monokai",
+        mode: "ace/mode/javascript",
+        fontSize: "14px",
+        fontFamily: "Consolas, monospace",
+        wrap: true,
+        showPrintMargin: true
+    });
+    var editor2 = ace.edit("editor2");
+    editor2.setOptions({
+        theme: "ace/theme/monokai",
+        mode: "ace/mode/javascript",
+        fontSize: "14px",
+        fontFamily: "Consolas, monospace",
+        wrap: true,
+        showPrintMargin: true
     });
 
-    var editor1 = CodeMirror.fromTextArea($("#editor1")[0], options);
-    var editor2 = CodeMirror.fromTextArea($("#editor2")[0], options);
+    var indent_size = calculateTabSize();
+    $('#tabsize').on('change', function () {
+        indent_size = calculateTabSize();
+    });
+
+    var indent_char;
+    if (indent_size === '\t') {
+        indent_size = '1';
+        indent_char = '\t';
+    }
+
+    function JsCompression(a) {
+        var content = editor1.getValue();
+        if (!content.trim().length) return;
+        $.getScript("/luci-static/tinynote/format.js", function () {
+            $.getScript("/luci-static/tinynote/beautifier.js", function () {
+                var packer = new Packer();
+                if (a === "minify") output = packer.minify(content);
+                else if (a === "pack") output = packer.pack(content, true, true);
+                else if (a === "beautify") output = beautifier.js(content, {
+                    indent_size,
+                    indent_char,
+                    jslint_happy: true,
+                    wrap_line_length: 0,
+                    templating: ["auto"],
+                    end_with_newline: true,
+                    max_preserve_newlines: 1,
+                    space_in_empty_paren: true,
+                    operator_position: "before-newline",
+                    indent_with_tabs: indent_size === '\t'
+                });
+                if (output) editor2.setValue(output);
+            })
+        });
+    }
+
+    function examineJavaScript() {
+        var content = editor1.getValue();
+        if (!content.trim().length) return;
+
+        function checkSyntax() {
+            var result = JSHINT(content, { asi: true, esversion: 8 });
+            if (result) {
+                showSuccessMessage("JavaScript 语法通过");
+            } else {
+                var errorMessage = "";
+                JSHINT.errors.forEach(function (e) {
+                    var errorEvidence = e.evidence ? '"<b style="color: red;">' + e.evidence + '</b>"，' : '';
+                    errorMessage += '在第 ' + e.line + ' 行，第 ' + e.character + ' 列，' + errorEvidence + '错误代码：' + e.code + ' :' + getErrorMessage(e.code) + '<br>';
+                });
+                showErrorMessage("JavaScript 语法错误：<br>" + errorMessage);
+            }
+        }
+        if ("undefined" == typeof JSHINT) {
+            $.getScript("https://cdn.bootcdn.net/ajax/libs/jshint/2.13.6/jshint.js", checkSyntax);
+        } else {
+            checkSyntax();
+        }
+    }
 
     function CSSFormat(a) {
         var content = editor1.getValue();
         if (!content.trim().length) return;
         var scripts = [
-            "https://cdn.bootcdn.net/ajax/libs/codemirror/5.48.4/mode/css/css.min.js"
+            "/luci-static/tinynote/beautifier.js",
+            "https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-css.js"
         ];
         loadScripts(scripts)
             .then(function () {
-                if (a === "packAdv") output = vkbeautify.cssmin(content);
+                // selector_separator_newline: 一个布尔值，表示在选择器分隔符（如逗号）后是否换行，默认为true。
+                // newline_between_rules: 一个布尔值，表示在规则之间是否插入换行，默认为true。
+                // space_around_selector_separator: 一个布尔值，表示在选择器分隔符周围是否增加空格。
+                // space_around_combinator: 一个布尔值，表示在组合器（如 +、>）周围是否增加空格，如果未设置，则默认与space_around_selector_separator相同。
+                // brace_style: 一个字符串，表示大括号的样式，可选值为['collapse', 'expand', 'end-expand', 'none', 'preserve-inline']。默认为'collapse'。
+                if (a === "format") output = beautifier.css(content);
                 else if (a === "pack") output = vkbeautify.csspack(content);
-                else if (a === "format") output = vkbeautify.css(content, tabSize);
-                editor1.setOption("mode", 'text/css');
-                editor2.setOption("mode", 'text/css');
-                editor2.getDoc().setValue(output);
+                else if (a === "min") output = vkbeautify.cssmin(content);
+                editor1.getSession().setMode("ace/mode/css");
+                editor2.getSession().setMode("ace/mode/css");
+                editor2.setValue(output);
             });
     }
 
     function jsonFormat(x) {
         var content = editor1.getValue();
         if (!content.trim().length) return;
-        try {
-            output = x ? vkbeautify.jsonmin(content) : vkbeautify.json(content, tabSize);
-            editor2.getDoc().setValue(output);
-        } catch (e) {
-            showErrorMessage("JSON 语法错误：" + e.message);
-        }
+        var scripts = [
+            "https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-hjson.js",
+            "https://cdn.bootcdn.net/ajax/libs/jsonlint/1.6.0/jsonlint.min.js"
+        ];
+        loadScripts(scripts)
+            .then(function () {
+                editor1.getSession().setMode("ace/mode/json");
+                try {
+                    if (x === 'min') output = vkbeautify.jsonmin(content);
+                    else if (x === 'format') output = vkbeautify.json(content, indent_size);
+                    else if (x === 'safeLoad') {
+                        jsonlint.parse(content);
+                        return showSuccessMessage("JSON 语法通过");
+                    }
+                    editor2.getSession().setMode("ace/mode/json");
+                    editor2.setValue(output);
+                } catch (e) {
+                    showErrorMessage("JSON 语法错误：" + e.message);
+                }
+            })
+            .catch(function (e) {
+                showErrorMessage("加载错误：" + e.message);
+            });
     }
 
     function formatLua() {
@@ -164,7 +217,7 @@
         if (!content.trim().length) return;
         try {
             output = beautifyLua(content);
-            editor2.getDoc().setValue(output);
+            editor2.setValue(output);
         } catch (e) {
             showErrorMessage("Lua 语法错误：" + e.message);
         }
@@ -174,145 +227,38 @@
         var content = editor1.getValue();
         if (!content.trim().length) return;
         var scripts = [
-            "https://cdn.bootcdn.net/ajax/libs/codemirror/5.48.4/mode/xml/xml.js"
+            "/luci-static/tinynote/beautifier.js",
+            "https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-html.js"
         ];
         loadScripts(scripts)
             .then(function () {
+                // templating: 一个数组，表示模板引擎的选择。如果长度为1且值为'auto'，则默认使用['django', 'erb', 'handlebars', 'php']作为模板引擎。
+                // indent_inner_html: 一个布尔值，表示是否缩进内部HTML代码。
+                // indent_body_inner_html: 一个布尔值，表示是否缩进body标签内部的HTML代码，默认为true。
+                // indent_head_inner_html: 一个布尔值，表示是否缩进head标签内部的HTML代码，默认为true。
+                // indent_handlebars: 一个布尔值，表示是否缩进handlebars代码，默认为true。
+                // wrap_attributes: 一个字符串，表示如何包装HTML属性。可选值为['auto', 'force', 'force-aligned', 'force-expand-multiline', 'aligned-multiple', 'preserve', 'preserve-aligned']。
+                // wrap_attributes_min_attrs: 一个数字，表示多少个属性以上才会进行属性换行包装，默认为2。
+                // wrap_attributes_indent_size: 一个数字，表示属性包装时的缩进大小，默认与indent_size相同。
+                // extra_liners: 一个数组，表示额外的需要换行的标签，如['head', 'body', '/html']。
+                // inline: 一个数组，表示内联元素的列表。
+                // inline_custom_elements: 一个布尔值，表示是否内联自定义元素，默认为true。
+                // void_elements: 一个数组，表示空元素的列表。
+                // unformatted: 一个数组，表示不需要格式化的标签列表。
+                // content_unformatted: 一个数组，表示内部内容不需要格式化的标签列表。
+                // unformatted_content_delimiter: 一个字符串，表示内部不需要格式化的内容的分隔符。
+                // indent_scripts: 一个字符串，表示脚本标签的缩进方式。可选值为['normal', 'keep', 'separate']。
                 try {
-                    editor1.setOption("mode", 'text/html');
-                    editor2.setOption("mode", 'text/html');
-                    output = a ? vkbeautify.xml(content, tabSize) : vkbeautify.xmlmin(content);
-                    editor2.getDoc().setValue(output);
+                    editor1.getSession().setMode("ace/mode/html");
+                    editor2.getSession().setMode("ace/mode/html");
+                    output = beautifier.html(content, {
+                        indent_size,
+                        indent_char,
+                        templating: ["auto"],
+                    });
+                    editor2.setValue(output);
                 } catch (e) {
                     showErrorMessage("HTML 语法错误：" + e.message);
-                }
-            })
-            .catch(function (e) {
-                showErrorMessage("加载错误：" + e.message);
-            });
-    }
-
-    function jsonTocsv() {
-        var content = editor1.getValue();
-        if (!content.trim().length) return;
-        var scripts = [
-            // "https://www.xuhuhu.com/dist/js/converttocsv-underscore-lib.js",
-            "https://cdn.bootcdn.net/ajax/libs/jsonlint/1.6.0/jsonlint.min.js"
-        ];
-        loadScripts(scripts)
-            .then(function () {
-                try {
-                    var i = jsonlint.parse(content),
-                        n = jsonToCsv2(i, ",", !0, !1, !1);
-                    editor2.getDoc().setValue(n);
-                } catch (e) {
-                    showErrorMessage("JSON 语法错误：" + e.message);
-                }
-            })
-            .catch(function (e) {
-                showErrorMessage("加载错误：" + e.message);
-            });
-    }
-
-    function jsonToXML() {
-        var content = editor1.getValue();
-        if (!content.trim().length) return;
-        var scripts = [
-            "https://www.xuhuhu.com/dist/js/converttocsv-underscore-lib.js",
-            "https://cdn.bootcdn.net/ajax/libs/jsonlint/1.6.0/jsonlint.min.js"
-        ];
-        loadScripts(scripts)
-            .then(function () {
-                try {
-                    var x = content.replace(/([ :$&]+)(?=[(\w* *]*":)/g, "_"),
-                        json = jsonlint.parse(x),
-                        xotree = new XML.ObjTree(),
-                        xml = xotree.writeXML(json),
-                        formattedXml = formatXml(xml);
-                    editor2.setOption("mode", 'application/xml');
-                    editor2.getDoc().setValue(formattedXml);
-                } catch (e) {
-                    showErrorMessage("JSON 语法错误：" + e.message);
-                }
-            })
-            .catch(function (e) {
-                showErrorMessage("加载错误：" + e.message);
-            });
-    }
-
-    function jsonToYAML() {
-        var content = editor1.getValue();
-        if (!content.trim().length) return;
-        try {
-            var yaml = jsyaml.dump(JSON.parse(content), {
-                "indent": tabSize,
-                "quotingType": ""
-            });
-            $.getScript("https://cdn.bootcdn.net/ajax/libs/codemirror/5.48.4/mode/yaml/yaml.min.js", function () {
-                editor2.setOption("mode", 'text/yaml');
-            });
-            editor2.getDoc().setValue(yaml);
-        } catch (e) {
-            showErrorMessage("JSON 语法错误：" + e.message);
-        }
-    }
-
-    function examineJSON() {
-        var content = editor1.getValue();
-        if (!content.trim().length) return;
-        var scripts = [
-            "https://cdn.bootcdn.net/ajax/libs/jsonlint/1.6.0/jsonlint.min.js"
-        ];
-        loadScripts(scripts)
-            .then(function () {
-                try {
-                    jsonlint.parse(content);
-                    showSuccessMessage("JSON 语法通过");
-                } catch (e) {
-                    showErrorMessage("JSON 语法错误：" + e.message);
-                }
-            })
-            .catch(function (e) {
-                showErrorMessage("加载错误：" + e.message);
-            });
-    }
-
-    function loadScripts(scripts) {
-        var promises = scripts.map(function (script) {
-            return new Promise(function (resolve, reject) {
-                $.getScript(script)
-                    .done(resolve)
-                    .fail(reject);
-            });
-        });
-        return Promise.all(promises);
-    }
-
-    function examineYAML(Json) {
-        var content = editor1.getValue();
-        if (!content.trim().length) return;
-        var scripts = [
-            "https://cdn.bootcdn.net/ajax/libs/yamljs/0.3.0/yaml.min.js",
-            "https://cdn.bootcdn.net/ajax/libs/codemirror/5.48.4/mode/yaml/yaml.min.js"
-        ];
-        loadScripts(scripts)
-            .then(function () {
-                try {
-                    editor1.setOption("mode", 'text/yaml');
-                    editor2.setOption("mode", 'text/yaml');
-                    var json;
-                    if (Json === "JSON") {
-                        json = vkbeautify.json(YAML.parse(content.trim()));
-                        editor2.getDoc().setValue(json);
-                    } else if (Json === "Minify") {
-                        json = content.replace(/\s+/g, "");
-                        editor2.getDoc().setValue(json);
-                    } else {
-                        YAML.parse(content);
-                        showSuccessMessage("YAML 语法通过");
-                    }
-                } catch (e) {
-                    showErrorMessage("YAML 语法错误：" + e.message);
                 }
             })
             .catch(function (e) {
@@ -324,58 +270,33 @@
         var content = editor1.getValue();
         if (!content.trim().length) return;
         var scripts = [
-            "https://cdn.bootcdn.net/ajax/libs/yamljs/0.3.0/yaml.min.js",
             "https://cdn.bootcdn.net/ajax/libs/js-yaml/4.1.0/js-yaml.js",
-            "https://cdn.bootcdn.net/ajax/libs/codemirror/6.65.7/addon/lint/yaml-lint.js",
-            "https://cdn.bootcdn.net/ajax/libs/codemirror/5.48.4/mode/yaml/yaml.min.js"
+            "https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-hjson.js",
+            "https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-yaml.js"
         ];
         loadScripts(scripts)
             .then(function () {
                 try {
-                    if (a === 'JSON') { // 转换json
-                        // content = vkbeautify.json(YAML.parse(content.trim()), tabSize);
-                        var result = jsyaml.load(content);
-                        content = JSON.stringify(result, null, tabSize)
+                    editor1.getSession().setMode("ace/mode/yaml");
+                    if (a === 'json') { // 转换json
+                        output = vkbeautify.json(jsyaml.load(content), indent_size);
+                        editor2.getSession().setMode("ace/mode/json");
                     } else if (a === 'safeLoad') { //语法检查
-                        jsyaml.load(content);
-                        // content = jsyaml.load(content);
+                        jsyaml.load(content)
                         return showSuccessMessage("YAML 语法通过");
-                    } else if (a === 'dump') { //格式化
-                        // var result = jsyaml.load(content);
-                        // content = JSON.stringify(result, null, 2)
-
-                        // schema：用于验证 YAML 文档是否符合规范的对象。
-                        // indent：缩进量，用于指定每个层级的缩进字符数。
-                        // noArrayIndent：布尔值，表示是否在数组元素前面增加额外的缩进。
-                        // skipInvalid：布尔值，表示是否跳过无效的节点。
-                        // flowLevel：整数，表示在何种嵌套深度下使用流样式（即用一行表示整个数据）。
-                        // styleMap：样式映射对象，用于指定节点的样式。
-                        // sortKeys：布尔值，表示是否按键名排序。
-                        // lineWidth：整数，表示每行最大字符数。
-                        // noRefs：布尔值，表示是否禁用引用功能。
-                        // noCompatMode：布尔值，表示是否禁用兼容模式。
-                        // condenseFlow：布尔值，表示是否压缩使用流样式时的空格。
-                        // quotingType：引号类型（双引号或单引号）。
-                        // forceQuotes：布尔值，表示是否强制使用引号。
-                        // replacer：替换函数，用于在序列化期间替换对象的值。
-                        // implicitTypes：隐式类型数组，用于解析 YAML 文档中的隐式类型。
-                        // explicitTypes：显式类型对象，用于解析 YAML 文档中的显式类型。
-                        // tag：当前节点的标签。
-                        // result：序列化结果字符串。
-                        // duplicates：重复键数组，用于检查 YAML 文档中是否存在重复键。
-                        // usedDuplicates：已使用重复键数组。
-
-                        content = jsyaml.dump(content, {
-                            'indent': tabSize,
-                            'sortKeys': true,
-                            'skipInvalid': true,
-                            'noArrayIndent': true
+                    } else if (a === 'format') { //格式化
+                        output = jsyaml.dump(jsyaml.load(content), {
+                            indent: indent_size
                         });
-                    } else if (a === 'Minify') { // 压缩
-                        content = content.replace(/\s+/g, "");
+                        editor2.getSession().setMode("ace/mode/yaml");
+                    } else if (a === 'yaml') { //JSON 转 YAML
+                        output = jsyaml.dump(JSON.parse(content), {
+                            quotingType: "",
+                            indent: indent_size
+                        });
+                        editor2.getSession().setMode("ace/mode/yaml");
                     }
-                    editor2.setOption("mode", 'text/yaml');
-                    editor2.getDoc().setValue(content);
+                    editor2.setValue(output);
                 } catch (e) {
                     showErrorMessage("YAML 语法错误：" + e.message);
                 }
@@ -385,20 +306,6 @@
             });
     }
 
-    // function jsonTocsv() {
-    //     var content = editor1.getValue();
-    //     if (!content.trim().length) return;
-    //     try {
-    //         $.getScript("https://cdn.bootcdn.net/ajax/libs/codemirror/5.48.4/mode/textile/textile.min.js", function () {
-    //             editor1.setOption("mode", 'textile');
-    //             editor2.setOption("mode", 'textile');
-    //         });
-    //         var csv = jsonToCsvByJson(JSON.parse(content));
-    //         editor2.getDoc().setValue(csv);
-    //     } catch (e) {
-    //         showErrorMessage("JSON 语法错误：" + e.message);
-    //     }
-    // }
     function showSuccessMessage(message) {
         $("#warning").html('<div class="alert alert-success">' + message + '</div>').show().delay(3000).fadeOut();
     }
@@ -425,6 +332,25 @@
                 }, 5000);
             }
         }).trigger('mouseleave');
+    }
+
+    var loadedScripts = [];
+    function loadScripts(scripts) {
+        var promises = scripts.map(function (script) {
+            if (loadedScripts.indexOf(script) === -1) {
+                return new Promise(function (resolve, reject) {
+                    $.getScript(script)
+                        .done(function () {
+                            loadedScripts.push(script);
+                            resolve();
+                        })
+                        .fail(reject);
+                });
+            } else {
+                return Promise.resolve();
+            }
+        });
+        return Promise.all(promises);
     }
 
     function getErrorMessage(code) {
@@ -663,55 +589,55 @@
         }
     }
 
-    function JsCompression(a) {
+    function jsonTocsv() {
         var content = editor1.getValue();
         if (!content.trim().length) return;
-        if (a === "pack") output = packer.pack(content, true, true);
-        else if (a === "minify") output = packer.minify(content);
-        editor2.getDoc().setValue(output);
+        var scripts = [
+            "https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-hjson.js",
+            "https://cdn.bootcdn.net/ajax/libs/jsonlint/1.6.0/jsonlint.min.js"
+        ];
+        loadScripts(scripts)
+            .then(function () {
+                try {
+                    var i = jsonlint.parse(content),
+                        n = jsonToCsv2(i, ",", !0, !1, !1);
+                    editor1.getSession().setMode("ace/mode/json");
+                    editor2.getSession().setMode("ace/mode/json");
+                    editor2.setValue(n);
+                } catch (e) {
+                    showErrorMessage("JSON 语法错误：" + e.message);
+                }
+            })
+            .catch(function (e) {
+                showErrorMessage("加载错误：" + e.message);
+            });
     }
 
-    function JsFormat() {
+    function jsonToXML() {
         var content = editor1.getValue();
         if (!content.trim().length) return;
-        _indent_size = tabSize;
-        var result = js_beautify(content, {
-            templating: ["auto"],
-            indent_size: _indent_size,
-            jslint_happy: true,
-            end_with_newline: true,
-            space_in_empty_paren: true,
-            max_preserve_newlines: 1,
-            indent_with_tabs: parseInt(_indent_size, 10) === 1,
-        });
-        editor2.setOption("mode", 'text/javascript');
-        editor2.getDoc().setValue(result);
+        var scripts = [
+            "https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-hjson.js",
+            "https://cdn.bootcdn.net/ajax/libs/jsonlint/1.6.0/jsonlint.min.js"
+        ];
+        loadScripts(scripts)
+            .then(function () {
+                try {
+                    var x = content.replace(/([ :$&]+)(?=[(\w* *]*":)/g, "_"),
+                        json = jsonlint.parse(x),
+                        xotree = new XML.ObjTree(),
+                        xml = xotree.writeXML(json),
+                        formattedXml = formatXml(xml);
+                    editor1.getSession().setMode("ace/mode/json");
+                    editor2.setValue(formattedXml);
+                } catch (e) {
+                    showErrorMessage("JSON 语法错误：" + e.message);
+                }
+            })
+            .catch(function (e) {
+                showErrorMessage("加载错误：" + e.message);
+            });
     }
-
-    function examineJavaScript() {
-        var content = editor1.getValue();
-        if (!content.trim().length) return;
-
-        function checkSyntax() {
-            var result = JSHINT(content, { asi: true, esversion: 8 });
-            if (result) {
-                showSuccessMessage("JavaScript 语法通过");
-            } else {
-                var errorMessage = "";
-                JSHINT.errors.forEach(function (e) {
-                    var errorEvidence = e.evidence ? '"<b style="color: red;">' + e.evidence + '</b>"，' : '';
-                    errorMessage += '在第 ' + e.line + ' 行，第 ' + e.character + ' 列，' + errorEvidence + '错误代码：' + e.code + ' :' + getErrorMessage(e.code) + '<br>';
-                });
-                showErrorMessage("JavaScript 语法错误：<br>" + errorMessage);
-            }
-        }
-        if ("undefined" == typeof JSHINT) {
-            $.getScript("https://cdn.bootcdn.net/ajax/libs/jshint/2.13.6/jshint.js", checkSyntax);
-        } else {
-            checkSyntax();
-        }
-    }
-
     function formatXml(xml) {
         var formatted = '';
         var reg = /(>)(<)(\/*)/g;
@@ -798,7 +724,7 @@
     }
 
     // function copycode(button) {
-    //     var code = editor2.getDoc().getValue();
+    //     var code = editor2.getValue();
     //     if (!code.trim().length) {
     //         return editor2.setValue('没有内容！');
     //     };
@@ -819,7 +745,7 @@
 
     new ClipboardJS('#copycode', {
         text: function () {
-            return editor2.getDoc().getValue();
+            return editor2.getValue();
         }
     }).on('success', function (e) {
         if (editor2) editor2.execCommand('selectAll');

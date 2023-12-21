@@ -3142,7 +3142,7 @@ function jsmin(comment, input, level) {
                         }
                         break;
                     case EOF:
-                        throw 'Error: Unterminated comment.';
+                            throw '错误：未终止的注释。';
                     }
                 }
                 break;
