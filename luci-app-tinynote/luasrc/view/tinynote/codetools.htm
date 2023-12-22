@@ -250,7 +250,7 @@
         }
     }
 
-    function FormatHTML() {
+    function FormatHTML(a) {
         var content = editor1.getValue();
         if (!content.trim().length) return;
         var scripts = [
@@ -278,11 +278,12 @@
                 try {
                     editor1.getSession().setMode("ace/mode/html");
                     editor2.getSession().setMode("ace/mode/html");
-                    output = beautifier.html(content, {
+                    if (a === "format") output = beautifier.html(content, {
                         indent_size,
                         indent_char,
                         templating: ["auto"]
                     });
+                    else if (a === "min") output = vkbeautify.xmlmin(content);
                     editor2.setValue(output || '没有返回值');
                 } catch (e) {
                     showErrorMessage("HTML 语法错误：" + e.message);
