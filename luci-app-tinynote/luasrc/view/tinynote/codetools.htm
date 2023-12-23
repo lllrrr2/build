@@ -3,12 +3,12 @@
     <script src="/luci-static/tinynote/codemirror/jquery.min.js"></script>
     <script src="/luci-static/tinynote/lib.js"></script>
     <script src="/luci-static/tinynote/vkbeautify.js"></script>
+    <script src="/luci-static/tinynote/screenfull.js"></script>
     <script src="/luci-static/tinynote/clipboard.min.js"></script>
 
     <script src="https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/ace.js"></script>
     <script src="https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-javascript.js"></script>
     <script src="https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/theme-monokai.js"></script>
-    <script src="https://cdn.bootcdn.net/ajax/libs/screenfull.js/5.2.0/screenfull.js"></script>
 
     <!-- <button type="button" class="btn cbi-button cbi-button-apply" onclick="formatLua()">Lua 格式化</button> -->
     <button type="button" class="btn cbi-button cbi-button-apply" id="copycode">复制代码</button>
@@ -100,31 +100,6 @@
         wrap: true,
         showPrintMargin: true
     });
-
-    $(document).on("keydown", function (event) {
-        if (event.key === "F11") {
-            event.preventDefault();
-            toggleFullScreen(editorUU);
-        }
-    });
-
-    $("#editor1screenfull").on("click", function () {
-        toggleFullScreen(document.getElementById("editor1"));
-    });
-
-    $("#editor2screenfull").on("click", function () {
-        toggleFullScreen(document.getElementById("editor2"));
-    });
-
-    function toggleFullScreen(editor) {
-        if (screenfull.isEnabled) {
-            if (screenfull.isFullscreen) {
-                screenfull.exit();
-            } else {
-                screenfull.request(editor);
-            }
-        }
-    }
 
     var indent_size = calculateTabSize();
     $('#tabsize').on('change', function () {
@@ -387,17 +362,49 @@
             });
     }
 
-    $("#copycode").click(function () { var code = editor2.getValue(); if (!code.trim().length) return; var $button = $(this), $textarea = $('<textarea>').val(code).css({ position: 'absolute', left: '-9999px' }).attr('readonly', ''); $('body').append($textarea); $textarea.select(); document.execCommand('copy'); $textarea.remove(); $button.text('已复制'); if (editor2) editor2.execCommand('selectAll'); setTimeout(function () { $button.text('复制代码') }, 2000) });
-
-    // new ClipboardJS('#copycode', {
-    //     text: function () {
-    //         return editor2.getValue();
-    //     }
-    // }).on('success', function (e) {
+    // $("#copycode").click(function () {
+    //     var code = editor2.getValue();
+    //     if (!code.trim().length) return;
+    //     var $button = $(this),
+    //         $textarea = $('<textarea>').val(code).css({
+    //             position: 'absolute',
+    //             left: '-9999px'
+    //         }).attr('readonly', '');
+    //     $('body').append($textarea);
+    //     $textarea.select();
+    //     document.execCommand('copy');
+    //     $textarea.remove();
+    //     $button.text('已复制');
     //     if (editor2) editor2.execCommand('selectAll');
-    //     showSuccessMessage("已复制");
-    //     e.clearSelection();
-    // }).on('error', function (e) {
-    //     showErrorMessage('复制出错' + e.message)
+    //     setTimeout(function () {
+    //         $button.text('复制代码')
+    //     }, 2000)
     // });
+
+    new ClipboardJS('#copycode', {
+        text: function () {
+            return editor2.getValue();
+        }
+    }).on('success', function (e) {
+        if (editor2) editor2.execCommand('selectAll');
+        showSuccessMessage("已复制");
+        e.clearSelection();
+    }).on('error', function (e) {
+        showErrorMessage((editor2.getValue().trim() === '') ? '内容为空' : '复制出错' + e.action);
+    });
+
+    $('#editor1screenfull').on('click', function () {
+        toggleFullScreen($('#editor1')[0]);
+    });
+
+    $('#editor2screenfull').on('click', function () {
+        toggleFullScreen($('#editor2')[0]);
+    });
+
+    $(document).on("keydown", function (event) {
+        if (event.key === "F11") {
+            event.preventDefault();
+            toggleFullScreen($('#editor2')[0]);
+        }
+    });
 </script>
