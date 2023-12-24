@@ -1,5 +1,124 @@
 <body>
-    <link rel="stylesheet" href="/luci-static/tinynote/bootstrap.css"/>
+    <style>
+        @font-face {
+            font-family: 'Material Icons';
+            font-style: normal;
+            font-weight: 400;
+            src: url(https://fonts.gstatic.com/s/materialicons/v55/flUhRq6tzZclQEJ-Vdg-IuiaDsNc.woff2) format('woff2');
+        }
+
+        .material-icons {
+            font-family: 'Material Icons';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            cursor: pointer;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-feature-settings: 'liga';
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .aceEditorBorder .aceEditorMenu {
+            background-color: #363636;
+            border-bottom: 1px solid #363636;
+            padding: 6px;
+        }
+
+        .aceEditorBorder .ace_scroller {
+            background-color: #282a36
+        }
+
+        .aceEditorBorder .ace_gutter {
+            background: #282a36;
+            color: rgb(144, 145, 148);
+        }
+
+        .aceEditorBorder .ace_gutter-active-line {
+            background-color: #44475a;
+        }
+
+        .aceEditorBorder .ace_marker-layer .ace_active-line {
+            background-color: #44475a;
+        }
+
+        .jsoneditor .jsoneditor-statusbar {
+            line-height: 26px;
+            height: 26px;
+            color: rgb(144, 145, 148);
+            background-color: #44475a;
+            border-top: 1px solid rgb(144, 145, 148);
+        }
+
+        div.jsoneditor-menu {
+            background-color: #363636;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .jsoneditor-manual div.jsoneditor {
+            border: 1px solid #363636;
+        }
+
+        .aceEditorBorder .ace_text-layer {
+            color: gray;
+        }
+
+        .aceEditorBorder .ace_variable {
+            color: #50fa7b;
+        }
+
+        .aceEditorBorder .ace_variable {
+            color: #50fa7b;
+        }
+
+        .ace-tm .ace_constant.ace_numeric {
+            color: #f1fa8c;
+        }
+
+        .ace-tm .ace_storage,
+        .ace-tm .ace_keyword {
+            color: #f1fa8c;
+        }
+
+        .ace-tm .ace_support.ace_function {
+            color: #50fa7b;
+        }
+
+        .aceEditorBorder .ace_string {
+            color: #f1fa8c;
+        }
+
+        .ace-tm .ace_constant {
+            color: #fff;
+        }
+
+        .column .button {
+            background-color: #4f5d73;
+            color: #fff;
+            border: 0px;
+        }
+
+        .column .button:hover {
+            background-color: #727d8f;
+            color: #fff;
+            border: 0px;
+        }
+
+        .ace-tm .ace_marker-layer .ace_selection {
+            background-color: #333;
+        }
+
+        .ace-tm .ace_meta.ace_tag {
+            color: #50fa7b;
+        }
+    </style>
+    <link rel="stylesheet" href="/luci-static/tinynote/minifier.css" />
+    <!-- <link rel="stylesheet" href="/luci-static/tinynote/bootstrap.css"/> -->
     <script src="/luci-static/tinynote/codemirror/jquery.min.js"></script>
     <script src="/luci-static/tinynote/lib.js"></script>
     <script src="/luci-static/tinynote/vkbeautify.js"></script>
@@ -11,22 +130,23 @@
     <script src="https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/theme-monokai.js"></script>
 
     <!-- <button type="button" class="btn cbi-button cbi-button-apply" onclick="formatLua()">Lua 格式化</button> -->
-    <button type="button" class="btn cbi-button cbi-button-apply" id="copycode">复制代码</button>
-    <button type="button" class="btn cbi-button cbi-button-remove" onclick="clearAll()">清空</button>
-    <select class="btn custom-select" style="height: 30px; font-size: 16px; width: 150px;" id="tabsize">
+    <!-- <button type="button" class="btn cbi-button cbi-button-apply" id="copycode">复制代码</button> -->
+    <!-- <button type="button" class="btn cbi-button cbi-button-remove" onclick="clearAll()">清空全部</button> -->
+<!--     <select class="btn custom-select" style="height: 30px; font-size: 16px; width: 150px;" id="tabsize">
         <option value="1">1 个制表符缩进</option>
         <option value="2">2 个空格缩进</option>
         <option value="3">3 个空格缩进</option>
         <option value="4" selected="selected">4 个空格缩进</option>
         <option value="8">8 个空格缩进</option>
     </select>
-    <input type="file" onchange="changeToFileContent(this)"/>
+    <input type="file" onchange="changeToFileContent(this)"/> -->
     <div class="col-md-12" id="warning" style="display: none;">
         <div class="alert alert-warning">
             <a href="#" class="close" data-dismiss="alert">&times;</a>
         </div>
     </div>
-    <div class="row">
+    <br>
+<!--     <div class="row">
         <div class="col-md-6">
             <button type="button" class="btn cbi-button cbi-button-add" id="editor1screenfull" style="display: block; margin: 0 auto;">全屏</button>
             <div id="editor1" style="height: 500px; width: 100%;"></div>
@@ -34,6 +154,138 @@
         <div class="col-md-6">
             <button type="button" class="btn cbi-button cbi-button-add" id="editor2screenfull" style="display: block; margin: 0 auto;">全屏</button>
             <div id="editor2" style="height: 500px; width: 100%;"></div>
+        </div>
+    </div> -->
+    <div class="container is-fluid">
+        <div class="columns mb-0 is-desktop">
+            <div class="column">
+                <div id="inputDiv" class="aceEditorBorder">
+                    <div class="aceEditorMenu">
+                        <a style="float:left; cursor: default;">
+                            <i>输入</i>
+                        </a>
+                        <div class="editortoolbar btn-group-sm">
+                            <a class="icon" onclick="setFromLocalStorage()" title="从本地存储加载以前的数据">
+                                <i class="material-icons">history</i>
+                            </a>
+                            <a id="fileopen" class="icon" title="打开文件">
+                                <i class="material-icons">folder_open</i>
+                            </a>
+                            <a class="icon" title="保存" onclick="openSaveModal(true)">
+                                <i class="material-icons">save</i>
+                            </a>
+                            <a class="icon" title="清除" onclick="cleanInputEditor()">
+                                <i class="material-icons">delete_outline</i>
+                            </a>
+                            <a id="copyeditor1" class="icon" title="复制到剪贴板">
+                                <i class="material-icons">content_copy</i>
+                            </a>
+                            <a id="inputFullScreen" class="icon is-hidden-mobile" onclick="addFullScreen('input');" title="全屏">
+                                <i class="material-icons">open_in_full</i>
+                            </a>
+                            <a id="inputCloseScreen" style="display:none" class="icon" onclick="closeFullScreen('input');" title="关闭全屏">
+                                <i class="material-icons">close_fullscreen</i>
+                            </a>
+                        </div>
+                    </div>
+                    <div id="editor1" class="twoEditor"></div>
+                    <div class="columns m-0 is-mobile" id="inputACEStatusBar">
+                        <span class="column p-0 pl-1" id="inputAceLineColumn">Ln: 1 Col: 0</span>
+                        <span class="column p-0 has-text-centered" id="inputTextSize"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="column is-12-mobile is-2-desktop box has-text-centered">
+                <div class="field" style="display:none">
+                    <label class="checkbox">
+                        <input class="mt-4" type="checkbox" id="isAuto" checked="" />
+                    </label>
+                </div>
+                <div class="columns mb-0">
+                    <div class="column">
+                        <label class="button is-fullwidth" title="上传文件" for="fileInput">
+                            <input id="fileInput" class="file-input" type="file" onchange="changeToFileContent(this)" style="display: none;" />
+                            <span class="icon is-hidden-desktop-only">
+                                <i class="material-icons">publish</i>
+                            </span>
+                            <span>文件</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="field">
+                    <p class="control">
+                        <button type="button" class="button is-fullwidth" onclick="downloadFile();">
+                            <span class="icon">
+                                <i class="material-icons">cloud_download</i>
+                            </span>
+                            <span>下载</span>
+                        </button>
+                    </p>
+                </div>
+                <div class="field">
+                    <p class="control">
+                        <button type="button" class="button is-fullwidth" onclick="clearAll()">
+                            <span class="icon">
+                                <i class="material-icons">delete_outline</i>
+                            </span>
+                            <span>清空全部</span>
+                        </button>
+                    </p>
+                </div>
+                <div class="field">
+                    <p class="control">
+                        <select id="tabsize" class="select is-medium is-fullwidth is-multiple">
+                            <option value="1">1 个制表符缩进</option>
+                            <option value="2">2 个空格缩进</option>
+                            <option value="3">3 个空格缩进</option>
+                            <option value="4" selected="selected">4 个空格缩进</option>
+                            <option value="8">8 个空格缩进</option>
+                        </select>
+                    </p>
+                </div>
+            </div>
+            <div class="column">
+                <div id="outputDiv" class="aceEditorBorder">
+                    <div class="aceEditorMenu">
+                        <a style="float:left;cursor: default;">
+                            <i>输出</i>
+                        </a>
+                        <div class="editortoolbar btn-group-sm">
+                            <a class="icon" title="保存" onclick="openSaveModal(true)">
+                                <i class="material-icons">save</i>
+                            </a>
+                            <a class="icon" title="清除" onclick="cleanOutputEditor();">
+                                <i class="material-icons">delete_outline</i>
+                            </a>
+                            <a  id="copyeditor2" class="icon" title="复制到剪贴板">
+                                <i class="material-icons">content_copy</i>
+                            </a>
+                            <a class="icon" title="下载" onclick="downloadFile();">
+                                <i class="material-icons">cloud_download</i>
+                            </a>
+                            <a id="outputFullScreen" class="icon is-hidden-mobile" onclick="addFullScreen('output');" title="全屏">
+                                <i class="material-icons">open_in_full</i>
+                            </a>
+                            <a id="outputCloseScreen" style="display:none" class="icon" onclick="closeFullScreen('output');" title="关闭全屏">
+                                <i class="material-icons">close_fullscreen</i>
+                            </a>
+                        </div>
+                    </div>
+                    <div id="editor2" class="twoEditor"></div>
+                    <div class="columns m-0 is-mobile" id="outputACEStatusBar">
+                        <span class="column p-0 pl-1" id="outputAceLineColumn">Ln: 1 Col: 0</span>
+                        <span class="column p-0 has-text-centered" id="outputTextSize"></span>
+<!--                         <span class="column p-0" id="inputFontSize">
+                            <a id="outputFontSizeI" title="全屏" class="icon is-pulled-right">
+                                <i class="material-icons">title</i>
+                            </a>
+                            <a id="outputFontSizeD" title="全屏" class="icon is-pulled-right">
+                                <i class="material-icons md-15">title</i>
+                            </a>
+                        </span> -->
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </body>
@@ -91,6 +343,7 @@
         wrap: true,
         showPrintMargin: true
     });
+
     var editor2 = ace.edit("editor2");
     editor2.setOptions({
         theme: "ace/theme/monokai",
@@ -101,11 +354,55 @@
         showPrintMargin: true
     });
 
+    // 进入全屏编辑模式
+    function addFullScreen(mode) {
+        if (mode === 'input') {
+            // 处理输入编辑器全屏模式的逻辑
+            document.getElementById('inputDiv').className = 'fullScreen'; // 改变输入编辑器的样式
+            document.getElementById('editor1').classList.add('fullScreenMode'); // 添加全屏模式样式
+            document.getElementById('inputACEStatusBar').classList.add('hidden'); // 隐藏输入编辑器的状态栏
+            document.getElementById('inputCloseScreen').style.display = 'inline-block'; // 显示关闭全屏按钮
+            editor1.focus(); // 输入编辑器获取焦点
+        } else if (mode === 'output') {
+            // 处理输出编辑器全屏模式的逻辑
+            document.getElementById('outputDiv').className = 'fullScreen'; // 改变输出编辑器的样式
+            document.getElementById('editor2').classList.add('fullScreenMode'); // 添加全屏模式样式
+            document.getElementById('outputACEStatusBar').classList.add('hidden'); // 隐藏输出编辑器的状态栏
+            document.getElementById('outputCloseScreen').style.display = 'inline-block'; // 显示关闭全屏按钮
+            editor2.focus(); // 输出编辑器获取焦点
+        }
+        isFullScreen = true;
+        document.body.style.overflow = 'hidden'; // 隐藏滚动条
+        document.body.style.position = 'fixed'; // 固定页面位置
+    }
+
+    // 退出全屏编辑模式
+    function closeFullScreen(mode) {
+        if (mode === 'input') {
+            // 处理输入编辑器退出全屏模式的逻辑
+            document.getElementById('inputDiv').className = 'normalMode'; // 恢复输入编辑器的样式
+            document.getElementById('editor1').classList.remove('fullScreenMode'); // 移除全屏模式样式
+            document.getElementById('inputACEStatusBar').classList.remove('hidden'); // 显示输入编辑器的状态栏
+            document.getElementById('inputCloseScreen').style.display = 'none'; // 隐藏关闭全屏按钮
+            editor1.focus(); // 输入编辑器获取焦点
+        } else if (mode === 'output') {
+            // 处理输出编辑器退出全屏模式的逻辑
+            document.getElementById('outputDiv').className = 'normalMode'; // 恢复输出编辑器的样式
+            document.getElementById('editor2').classList.remove('fullScreenMode'); // 移除全屏模式样式
+            document.getElementById('outputACEStatusBar').classList.remove('hidden'); // 显示输出编辑器的状态栏
+            document.getElementById('outputCloseScreen').style.display = 'none'; // 隐藏关闭全屏按钮
+            editor2.focus(); // 输出编辑器获取焦点
+        }
+        document.body.style.overflow = ''; // 恢复滚动条
+        document.body.style.position = ''; // 恢复页面位置
+        isFullScreen = false;
+    }
+
     var indent_size = calculateTabSize();
     $('#tabsize').on('change', function () {
         indent_size = calculateTabSize();
     });
-    var indent_char;
+    var indent_char = ' ';
     if (indent_size === '\t') {
         indent_size = '1';
         indent_char = '\t';
@@ -381,7 +678,7 @@
     //     }, 2000)
     // });
 
-    new ClipboardJS('#copycode', {
+    new ClipboardJS('#copyeditor2', {
         text: function () {
             return editor2.getValue();
         }
@@ -392,6 +689,32 @@
     }).on('error', function (e) {
         showErrorMessage((editor2.getValue().trim() === '') ? '内容为空' : '复制出错' + e.action);
     });
+
+    new ClipboardJS('#copyeditor1', {
+        text: function () {
+            return editor1.getValue();
+        }
+    }).on('success', function (e) {
+        if (editor1) editor1.execCommand('selectAll');
+        showSuccessMessage("已复制");
+        e.clearSelection();
+    }).on('error', function (e) {
+        showErrorMessage((editor1.getValue().trim() === '') ? '内容为空' : '复制出错' + e.action);
+    });
+
+    // function copyToClipboard(editor) {
+    //     new ClipboardJS('.copy-btn', {
+    //         text: function () {
+    //             return editor.getValue();
+    //         }
+    //     }).on('success', function (e) {
+    //         if (editor) editor.execCommand('selectAll');
+    //         showSuccessMessage("已复制");
+    //         e.clearSelection();
+    //     }).on('error', function (e) {
+    //         showErrorMessage((editor.getValue().trim() === '') ? '内容为空' : '复制出错' + e.action);
+    //     });
+    // }
 
     $('#editor1screenfull').on('click', function () {
         toggleFullScreen($('#editor1')[0]);
@@ -407,4 +730,23 @@
             toggleFullScreen($('#editor2')[0]);
         }
     });
+
+    function downloadFile() {
+        var htmlContent = (editor2 && editor2.getValue) ? editor2.getValue() : '';
+
+        if (htmlContent) {
+            $.getScript("https://cdn.bootcdn.net/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js", function () {
+                var blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
+                var url = window.URL.createObjectURL(blob);
+                var a = $('<a />', {
+                    href: url,
+                    download: 'custom_filename.html'
+                }).appendTo('body').get(0);
+                a.click();
+                window.URL.revokeObjectURL(url);
+            });
+        } else {
+            showErrorMessage("内容为空");
+        }
+    }
 </script>

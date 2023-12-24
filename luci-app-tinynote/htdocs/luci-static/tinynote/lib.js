@@ -101,6 +101,14 @@ function clearAll() {
     }
 }
 
+function cleanInputEditor() {
+    return editor1.setValue('');
+}
+
+function cleanOutputEditor() {
+    return editor2.setValue('');
+}
+
 function calculateTabSize() {
     var parsedValue = parseInt($('#tabsize').val(), 10);
     if (parsedValue === 1) parsedValue = '\t';
