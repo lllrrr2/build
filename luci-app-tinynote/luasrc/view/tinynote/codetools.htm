@@ -118,7 +118,6 @@
         }
     </style>
     <link rel="stylesheet" href="/luci-static/tinynote/minifier.css" />
-    <!-- <link rel="stylesheet" href="/luci-static/tinynote/bootstrap.css"/> -->
     <script src="/luci-static/tinynote/codemirror/jquery.min.js"></script>
     <script src="/luci-static/tinynote/lib.js"></script>
     <script src="/luci-static/tinynote/vkbeautify.js"></script>
@@ -129,33 +128,12 @@
     <script src="https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-javascript.js"></script>
     <script src="https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/theme-monokai.js"></script>
 
-    <!-- <button type="button" class="btn cbi-button cbi-button-apply" onclick="formatLua()">Lua 格式化</button> -->
-    <!-- <button type="button" class="btn cbi-button cbi-button-apply" id="copycode">复制代码</button> -->
-    <!-- <button type="button" class="btn cbi-button cbi-button-remove" onclick="clearAll()">清空全部</button> -->
-<!--     <select class="btn custom-select" style="height: 30px; font-size: 16px; width: 150px;" id="tabsize">
-        <option value="1">1 个制表符缩进</option>
-        <option value="2">2 个空格缩进</option>
-        <option value="3">3 个空格缩进</option>
-        <option value="4" selected="selected">4 个空格缩进</option>
-        <option value="8">8 个空格缩进</option>
-    </select>
-    <input type="file" onchange="changeToFileContent(this)"/> -->
     <div class="col-md-12" id="warning" style="display: none;">
         <div class="alert alert-warning">
             <a href="#" class="close" data-dismiss="alert">&times;</a>
         </div>
     </div>
     <br>
-<!--     <div class="row">
-        <div class="col-md-6">
-            <button type="button" class="btn cbi-button cbi-button-add" id="editor1screenfull" style="display: block; margin: 0 auto;">全屏</button>
-            <div id="editor1" style="height: 500px; width: 100%;"></div>
-        </div>
-        <div class="col-md-6">
-            <button type="button" class="btn cbi-button cbi-button-add" id="editor2screenfull" style="display: block; margin: 0 auto;">全屏</button>
-            <div id="editor2" style="height: 500px; width: 100%;"></div>
-        </div>
-    </div> -->
     <div class="container is-fluid">
         <div class="columns mb-0 is-desktop">
             <div class="column">
@@ -275,14 +253,6 @@
                     <div class="columns m-0 is-mobile" id="outputACEStatusBar">
                         <span class="column p-0 pl-1" id="outputAceLineColumn">Ln: 1 Col: 0</span>
                         <span class="column p-0 has-text-centered" id="outputTextSize"></span>
-<!--                         <span class="column p-0" id="inputFontSize">
-                            <a id="outputFontSizeI" title="全屏" class="icon is-pulled-right">
-                                <i class="material-icons">title</i>
-                            </a>
-                            <a id="outputFontSizeD" title="全屏" class="icon is-pulled-right">
-                                <i class="material-icons md-15">title</i>
-                            </a>
-                        </span> -->
                     </div>
                 </div>
             </div>
@@ -354,50 +324,6 @@
         showPrintMargin: true
     });
 
-    // 进入全屏编辑模式
-    function addFullScreen(mode) {
-        if (mode === 'input') {
-            // 处理输入编辑器全屏模式的逻辑
-            document.getElementById('inputDiv').className = 'fullScreen'; // 改变输入编辑器的样式
-            document.getElementById('editor1').classList.add('fullScreenMode'); // 添加全屏模式样式
-            document.getElementById('inputACEStatusBar').classList.add('hidden'); // 隐藏输入编辑器的状态栏
-            document.getElementById('inputCloseScreen').style.display = 'inline-block'; // 显示关闭全屏按钮
-            editor1.focus(); // 输入编辑器获取焦点
-        } else if (mode === 'output') {
-            // 处理输出编辑器全屏模式的逻辑
-            document.getElementById('outputDiv').className = 'fullScreen'; // 改变输出编辑器的样式
-            document.getElementById('editor2').classList.add('fullScreenMode'); // 添加全屏模式样式
-            document.getElementById('outputACEStatusBar').classList.add('hidden'); // 隐藏输出编辑器的状态栏
-            document.getElementById('outputCloseScreen').style.display = 'inline-block'; // 显示关闭全屏按钮
-            editor2.focus(); // 输出编辑器获取焦点
-        }
-        isFullScreen = true;
-        document.body.style.overflow = 'hidden'; // 隐藏滚动条
-        document.body.style.position = 'fixed'; // 固定页面位置
-    }
-
-    // 退出全屏编辑模式
-    function closeFullScreen(mode) {
-        if (mode === 'input') {
-            // 处理输入编辑器退出全屏模式的逻辑
-            document.getElementById('inputDiv').className = 'normalMode'; // 恢复输入编辑器的样式
-            document.getElementById('editor1').classList.remove('fullScreenMode'); // 移除全屏模式样式
-            document.getElementById('inputACEStatusBar').classList.remove('hidden'); // 显示输入编辑器的状态栏
-            document.getElementById('inputCloseScreen').style.display = 'none'; // 隐藏关闭全屏按钮
-            editor1.focus(); // 输入编辑器获取焦点
-        } else if (mode === 'output') {
-            // 处理输出编辑器退出全屏模式的逻辑
-            document.getElementById('outputDiv').className = 'normalMode'; // 恢复输出编辑器的样式
-            document.getElementById('editor2').classList.remove('fullScreenMode'); // 移除全屏模式样式
-            document.getElementById('outputACEStatusBar').classList.remove('hidden'); // 显示输出编辑器的状态栏
-            document.getElementById('outputCloseScreen').style.display = 'none'; // 隐藏关闭全屏按钮
-            editor2.focus(); // 输出编辑器获取焦点
-        }
-        document.body.style.overflow = ''; // 恢复滚动条
-        document.body.style.position = ''; // 恢复页面位置
-        isFullScreen = false;
-    }
-
     var indent_size = calculateTabSize();
     $('#tabsize').on('change', function () {
         indent_size = calculateTabSize();
@@ -409,8 +335,8 @@
     }
 
     function JsCompression(a) {
-        var content = editor1.getValue();
-        if (!content.trim().length) return;
+        var content = $.trim(editor1.getValue());
+        if (!content) return;
         $.getScript("/luci-static/tinynote/format.js", function () {
             $.getScript("/luci-static/tinynote/beautifier.js", function () {
                 var packer = new Packer();
@@ -436,8 +362,8 @@
     }
 
     function examineJavaScript() {
-        var content = editor1.getValue();
-        if (!content.trim().length) return;
+        var content = $.trim(editor1.getValue());
+        if (!content) return;
 
         function checkSyntax() {
             var result = JSHINT(content, { asi: true, esversion: 8 });
@@ -460,8 +386,8 @@
     }
 
     function CSSFormat(a) {
-        var content = editor1.getValue();
-        if (!content.trim().length) return;
+        var content = $.trim(editor1.getValue());
+        if (!content) return;
         var scripts = [
             "/luci-static/tinynote/beautifier.js",
             "https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-css.js"
@@ -483,8 +409,8 @@
     }
 
     function jsonFormat(a) {
-        var content = editor1.getValue();
-        if (!content.trim().length) return;
+        var content = $.trim(editor1.getValue());
+        if (!content) return;
         var scripts = [
             "https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-hjson.js",
             "https://cdn.bootcdn.net/ajax/libs/jsonlint/1.6.0/jsonlint.min.js"
@@ -512,8 +438,8 @@
     }
 
     function formatLua() {
-        var content = editor1.getValue();
-        if (!content.trim().length) return;
+        var content = $.trim(editor1.getValue());
+        if (!content) return;
         try {
             output = beautifyLua(content);
             editor2.setValue(output || '没有返回值');
@@ -523,8 +449,8 @@
     }
 
     function FormatHTML(a) {
-        var content = editor1.getValue();
-        if (!content.trim().length) return;
+        var content = $.trim(editor1.getValue());
+        if (!content) return;
         var scripts = [
             "/luci-static/tinynote/beautifier.js",
             "https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-html.js"
@@ -567,8 +493,8 @@
     }
 
     function FormatYAML(a) {
-        var content = editor1.getValue();
-        if (!content.trim().length) return;
+        var content = $.trim(editor1.getValue());
+        if (!content) return;
         var scripts = [
             "https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-yaml.js",
             "https://cdn.bootcdn.net/ajax/libs/js-yaml/4.1.0/js-yaml.js",
@@ -608,8 +534,8 @@
     }
 
     function jsonTocsv() {
-        var content = editor1.getValue();
-        if (!content.trim().length) return;
+        var content = $.trim(editor1.getValue());
+        if (!content) return;
         var scripts = [
             "https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-hjson.js",
             "https://cdn.bootcdn.net/ajax/libs/jsonlint/1.6.0/jsonlint.min.js"
@@ -632,8 +558,8 @@
     }
 
     function jsonToXML() {
-        var content = editor1.getValue();
-        if (!content.trim().length) return;
+        var content = $.trim(editor1.getValue());
+        if (!content) return;
         var scripts = [
             "/luci-static/tinynote/ObjTree.min.js",
             "https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-xml.js",
@@ -732,21 +658,92 @@
     });
 
     function downloadFile() {
-        var htmlContent = (editor2 && editor2.getValue) ? editor2.getValue() : '';
-
-        if (htmlContent) {
+        var content = $.trim(editor2.getValue());
+        if (content !== '') {
             $.getScript("https://cdn.bootcdn.net/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js", function () {
-                var blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
-                var url = window.URL.createObjectURL(blob);
-                var a = $('<a />', {
-                    href: url,
-                    download: 'custom_filename.html'
-                }).appendTo('body').get(0);
-                a.click();
-                window.URL.revokeObjectURL(url);
+                blob = new Blob(["" + content + ""], {
+                    type: "text/plain; charset=utf-8"
+                });
+                saveAs(blob, "data.txt");
             });
         } else {
             showErrorMessage("内容为空");
         }
+    }
+
+    editor1.on("input", function () {
+        updateDisplay(editor1, $("#inputTextSize"), $("#inputAceLineColumn"));
+    });
+
+    editor2.on("input", function () {
+        updateDisplay(editor2, $("#outputTextSize"), $("#outputAceLineColumn"));
+    });
+
+    function updateDisplay(editor, sizeOutput, lineColumnOutput) {
+        var content = editor.getValue();
+        var sizes = ["Bytes", "KB", "MB", "GB", "TB"];
+        var sizeInBytes = 0;
+
+        if (content) {
+            var blob = new Blob([content]);
+            sizeInBytes = blob.size;
+            var i = Math.floor(Math.log(sizeInBytes) / Math.log(1024));
+            sizeOutput.html("Size: " + (sizeInBytes / Math.pow(1024, i)).toFixed(2) + " " + sizes[i]);
+        } else {
+            sizeOutput.html("Size: 0 Byte");
+        }
+
+        var session = editor.getSession();
+        var lineCount = session.getLength();
+        var lineNumber = editor.selection.getCursor().row + 1;
+        var maxColumnCount = 0;
+
+        for (var i = 0; i < lineCount; i++) {
+            maxColumnCount = Math.max(maxColumnCount, session.getLine(i).length);
+        }
+
+        lineColumnOutput.html("Ln: " + lineNumber + "; Max Col: " + maxColumnCount);
+    }
+
+    function addFullScreen(mode) {
+        if (mode === 'input') {
+            document.getElementById('inputDiv').className = 'fullScreen'; // 改变输入编辑器的样式
+            document.getElementById('editor1').classList.add('fullScreenMode'); // 添加全屏模式样式
+            document.getElementById('inputACEStatusBar').classList.add('hidden'); // 隐藏输入编辑器的状态栏
+            document.getElementById('inputCloseScreen').style.display = 'inline-block'; // 显示关闭全屏按钮
+            editor1.focus(); // 输入编辑器获取焦点
+        } else if (mode === 'output') {
+            // 处理输出编辑器全屏模式的逻辑
+            document.getElementById('outputDiv').className = 'fullScreen'; // 改变输出编辑器的样式
+            document.getElementById('editor2').classList.add('fullScreenMode'); // 添加全屏模式样式
+            document.getElementById('outputACEStatusBar').classList.add('hidden'); // 隐藏输出编辑器的状态栏
+            document.getElementById('outputCloseScreen').style.display = 'inline-block'; // 显示关闭全屏按钮
+            editor2.focus(); // 输出编辑器获取焦点
+        }
+        isFullScreen = true;
+        document.body.style.overflow = 'hidden'; // 隐藏滚动条
+        document.body.style.position = 'fixed'; // 固定页面位置
+    }
+
+    // 退出全屏编辑模式
+    function closeFullScreen(mode) {
+        if (mode === 'input') {
+            // 处理输入编辑器退出全屏模式的逻辑
+            document.getElementById('inputDiv').className = 'normalMode'; // 恢复输入编辑器的样式
+            document.getElementById('editor1').classList.remove('fullScreenMode'); // 移除全屏模式样式
+            document.getElementById('inputACEStatusBar').classList.remove('hidden'); // 显示输入编辑器的状态栏
+            document.getElementById('inputCloseScreen').style.display = 'none'; // 隐藏关闭全屏按钮
+            editor1.focus(); // 输入编辑器获取焦点
+        } else if (mode === 'output') {
+            // 处理输出编辑器退出全屏模式的逻辑
+            document.getElementById('outputDiv').className = 'normalMode'; // 恢复输出编辑器的样式
+            document.getElementById('editor2').classList.remove('fullScreenMode'); // 移除全屏模式样式
+            document.getElementById('outputACEStatusBar').classList.remove('hidden'); // 显示输出编辑器的状态栏
+            document.getElementById('outputCloseScreen').style.display = 'none'; // 隐藏关闭全屏按钮
+            editor2.focus(); // 输出编辑器获取焦点
+        }
+        document.body.style.overflow = ''; // 恢复滚动条
+        document.body.style.position = ''; // 恢复页面位置
+        isFullScreen = false;
     }
 </script>

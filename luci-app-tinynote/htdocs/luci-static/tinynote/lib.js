@@ -1,3 +1,4 @@
+
 function getExampleCsv() {
     return 'id,name,amount,Remark\n1,"Johnson, Smith, and Jones Co.",345.33,Pays on time\n2,"Sam ""Mad Dog"" Smith",993.44,\n3,"Barney & Company",0,"Great to work with\nand always pays with cash."\n4,Johnson\'s Automotive,2344,\n'
 }
@@ -361,79 +362,6 @@ function getErrorMessage(code) {
     } else {
         return "未知错误。";
     }
-}
-
-function createEditor(e, t) {
-    // 检查参数 e 是否为空
-    if (null != e && null != e) {
-        // 创建 editor1 编辑器实例并设置属性
-        editor1 = ace.edit("editor1"); // 创建编辑器1
-        editor1.getSession().setMode("ace/mode/" + e); // 设置编辑模式
-        editor1.getSession().setUseWrapMode(!0); // 设置换行模式
-        editor1.setOptions({
-            theme: "ace/theme/monokai", // 设置主题
-            fontSize: "14px", // 设置字体大小
-            fontFamily: "Consolas, monospace", // 设置字体
-            wrap: true, // 设置是否换行
-            showPrintMargin: true // 显示打印边距
-        });
-        editor1.on("change", (function () {
-            var e = editor1.getValue(),
-                t = e.trim().replace(/\s+/gi, " ").split(" ").length;
-            $("#editor1TC").text(e.length); // 更新字符数统计
-            $("#editor1TW").text(t); // 更新单词数统计
-            var i = e.split(/\r\n|\r|\n/).length;
-            $("#editor1TL").text(i); // 更新行数统计
-            var n = countBytes(e);
-            $("#editor1Size").text(formateByteCount(n)); // 更新字节大小统计
-            if ("tableizer" == $("#viewName").val()) {
-                hideTableizer(); // 隐藏 tableizer
-            }
-            savetoLocalStorage(e); // 保存到本地存储
-        }));
-        $(".editorCounterSection").show(); // 显示编辑器统计信息区域
-    }
-
-    // 检查参数 t 是否为空
-    if (null != t && null != t) {
-        // 创建 editor2 编辑器实例并设置属性
-        editor2 = ace.edit("editor2"); // 创建编辑器2
-        editor2.getSession().setMode("ace/mode/" + t); // 设置编辑模式
-        editor2.getSession().setUseWrapMode(!0); // 设置换行模式
-        editor2.setOptions({
-            theme: "ace/theme/monokai", // 设置主题
-            fontSize: "14px", // 设置字体大小
-            fontFamily: "Consolas, monospace", // 设置字体
-            wrap: true, // 设置是否换行
-            showPrintMargin: true // 显示打印边距
-        });
-        editor2.on("change", (function () {
-            var e = editor2.getValue(),
-                t = e.trim().replace(/\s+/gi, " ").split(" ").length;
-            $("#editor2TC").text(e.length); // 更新字符数统计
-            $("#editor2TW").text(t); // 更新单词数统计
-            var i = e.split(/\r\n|\r|\n/).length;
-            $("#editor2TL").text(i); // 更新行数统计
-            var n = countBytes(e);
-            $("#editor2Size").text(formateByteCount(n)); // 更新字节大小统计
-        }));
-        $(".editorCounterSection").show(); // 显示编辑器统计信息区域
-    }
-}
-
-function countBytes(e, t) {
-    (t = t || {}).lineBreaks = t.lineBreaks || 1,
-        t.ignoreWhitespace = t.ignoreWhitespace || !1;
-    var i = e.length,
-        n = i - e.replace(/[\u0100-\uFFFF]/g, "").length,
-        o = i - e.replace(/(\r?\n|\r)/g, "").length;
-    return t.ignoreWhitespace ? (e = e.replace(/(\r?\n|\r|\s+)/g, "")).length + n : i + n + Math.max(0, t.lineBreaks * (o - 1))
-}
-function formateByteCount(e) {
-    for (var t = 0; e > 1024;)
-        e /= 1024,
-            t++;
-    return (e = Math.round(100 * e) / 100) + " " + (t = ["", "K", "M", "G", "T"][t]) + "B"
 }
 
 function toggleFullScreen(editor) {
