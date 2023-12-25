@@ -49,12 +49,12 @@ function getExampleJson(e) {
 }
 
 function showSuccessMessage(message) {
-    $("#warning").html('<div class="alert alert-success">' + message + '</div>').show().delay(3000).fadeOut();
+    $("#success").html('<div class="alert alert-success">' + message + '</div>').show().delay(3000).fadeOut();
 }
 
 function showErrorMessage(message) {
     clearTimeout(window.hideTimer);
-    $("#warning").html('<div class="alert alert-danger" style="position: relative;"><button id="customButton" type="button" style="position: absolute; top: 5px; right: 5px; font-size: 24px;">&#x2716</button>' + message + '</div>').fadeIn();
+    $("#warning").html('<div class="alert alert-danger"><button id="customButton" type="button" style="position: absolute; top: 5px; right: 5px;"><i class="material-icons">close</i></button>' + message + '</div>').fadeIn();
     $("#customButton").on("click", function () {
         $("#warning").fadeOut();
     });
@@ -95,19 +95,14 @@ function loadScripts(scripts) {
     return Promise.all(promises);
 }
 
-function clearAll() {
-    if (editor1 && editor2) {
+function clearAll(event, a) {
+    event.preventDefault();
+    if (a) {
+        return a.setValue('');
+    } else if (editor1 && editor2) {
         editor1.setValue('');
         editor2.setValue('');
     }
-}
-
-function cleanInputEditor() {
-    return editor1.setValue('');
-}
-
-function cleanOutputEditor() {
-    return editor2.setValue('');
 }
 
 function calculateTabSize() {
@@ -368,4 +363,18 @@ function toggleFullScreen(editor) {
     if (screenfull.isEnabled) {
         screenfull.toggle(editor);
     }
+}
+
+function setupClipboard(editor, buttonId) {
+    return new ClipboardJS('#' + buttonId, {
+        text: function () {
+            return editor.getValue();
+        }
+    }).on('success', function (e) {
+        if (editor) editor.execCommand('selectAll');
+        showSuccessMessage("已复制");
+        e.clearSelection();
+    }).on('error', function (e) {
+        showErrorMessage((editor.getValue().trim() === '') ? '内容为空' : '复制出错' + e.action);
+    });
 }

@@ -23,101 +23,8 @@
             -webkit-font-feature-settings: 'liga';
             -webkit-font-smoothing: antialiased;
         }
-
-        .aceEditorBorder .aceEditorMenu {
-            background-color: #363636;
-            border-bottom: 1px solid #363636;
-            padding: 6px;
-        }
-
-        .aceEditorBorder .ace_scroller {
-            background-color: #282a36
-        }
-
-        .aceEditorBorder .ace_gutter {
-            background: #282a36;
-            color: rgb(144, 145, 148);
-        }
-
-        .aceEditorBorder .ace_gutter-active-line {
-            background-color: #44475a;
-        }
-
-        .aceEditorBorder .ace_marker-layer .ace_active-line {
-            background-color: #44475a;
-        }
-
-        .jsoneditor .jsoneditor-statusbar {
-            line-height: 26px;
-            height: 26px;
-            color: rgb(144, 145, 148);
-            background-color: #44475a;
-            border-top: 1px solid rgb(144, 145, 148);
-        }
-
-        div.jsoneditor-menu {
-            background-color: #363636;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-        }
-
-        .jsoneditor-manual div.jsoneditor {
-            border: 1px solid #363636;
-        }
-
-        .aceEditorBorder .ace_text-layer {
-            color: gray;
-        }
-
-        .aceEditorBorder .ace_variable {
-            color: #50fa7b;
-        }
-
-        .aceEditorBorder .ace_variable {
-            color: #50fa7b;
-        }
-
-        .ace-tm .ace_constant.ace_numeric {
-            color: #f1fa8c;
-        }
-
-        .ace-tm .ace_storage,
-        .ace-tm .ace_keyword {
-            color: #f1fa8c;
-        }
-
-        .ace-tm .ace_support.ace_function {
-            color: #50fa7b;
-        }
-
-        .aceEditorBorder .ace_string {
-            color: #f1fa8c;
-        }
-
-        .ace-tm .ace_constant {
-            color: #fff;
-        }
-
-        .column .button {
-            background-color: #4f5d73;
-            color: #fff;
-            border: 0px;
-        }
-
-        .column .button:hover {
-            background-color: #727d8f;
-            color: #fff;
-            border: 0px;
-        }
-
-        .ace-tm .ace_marker-layer .ace_selection {
-            background-color: #333;
-        }
-
-        .ace-tm .ace_meta.ace_tag {
-            color: #50fa7b;
-        }
     </style>
-    <link rel="stylesheet" href="/luci-static/tinynote/minifier.css" />
+    <link rel="stylesheet" href="/luci-static/tinynote/bulma.css" />
     <script src="/luci-static/tinynote/codemirror/jquery.min.js"></script>
     <script src="/luci-static/tinynote/lib.js"></script>
     <script src="/luci-static/tinynote/vkbeautify.js"></script>
@@ -128,12 +35,7 @@
     <script src="https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-javascript.js"></script>
     <script src="https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/theme-monokai.js"></script>
 
-    <div class="col-md-12" id="warning" style="display: none;">
-        <div class="alert alert-warning">
-            <a href="#" class="close" data-dismiss="alert">&times;</a>
-        </div>
-    </div>
-    <br>
+    <br><div id="warning" style="display: none;"></div>
     <div class="container is-fluid">
         <div class="columns mb-0 is-desktop">
             <div class="column">
@@ -152,7 +54,7 @@
                             <a class="icon" title="保存" onclick="openSaveModal(true)">
                                 <i class="material-icons">save</i>
                             </a>
-                            <a class="icon" title="清除" onclick="cleanInputEditor()">
+                            <a class="icon" title="清除" onclick="clearAll(event, editor1);">
                                 <i class="material-icons">delete_outline</i>
                             </a>
                             <a id="copyeditor1" class="icon" title="复制到剪贴板">
@@ -161,24 +63,20 @@
                             <a id="inputFullScreen" class="icon is-hidden-mobile" onclick="addFullScreen('input');" title="全屏">
                                 <i class="material-icons">open_in_full</i>
                             </a>
-                            <a id="inputCloseScreen" style="display:none" class="icon" onclick="closeFullScreen('input');" title="关闭全屏">
+                            <a id="inputCloseScreen" style="display:none" class="icon" onclick="removeFullScreen('input');" title="关闭全屏">
                                 <i class="material-icons">close_fullscreen</i>
                             </a>
                         </div>
                     </div>
                     <div id="editor1" class="twoEditor"></div>
-                    <div class="columns m-0 is-mobile" id="inputACEStatusBar">
-                        <span class="column p-0 pl-1" id="inputAceLineColumn">Ln: 1 Col: 0</span>
-                        <span class="column p-0 has-text-centered" id="inputTextSize"></span>
+                    <div class="columns is-mobile m-0 aceStatusBar" id="inputStatusBar">
+                        <div class="column is-two-thirds p-0 pl-0 status-left" id="inputAceLineColumn">Ln: 1 Col: 0; Max Col: 0</div>
+                        <div class="column is-one-thirds p-0 has-text-centered status-right" id="inputTextSize">Size: 0 Byte</div>
                     </div>
                 </div>
             </div>
             <div class="column is-12-mobile is-2-desktop box has-text-centered">
-                <div class="field" style="display:none">
-                    <label class="checkbox">
-                        <input class="mt-4" type="checkbox" id="isAuto" checked="" />
-                    </label>
-                </div>
+                <div id="success" style="display: none;"></div>
                 <div class="columns mb-0">
                     <div class="column">
                         <label class="button is-fullwidth" title="上传文件" for="fileInput">
@@ -192,7 +90,7 @@
                 </div>
                 <div class="field">
                     <p class="control">
-                        <button type="button" class="button is-fullwidth" onclick="downloadFile();">
+                        <button class="button is-fullwidth" onclick="downloadFile(event);">
                             <span class="icon">
                                 <i class="material-icons">cloud_download</i>
                             </span>
@@ -202,7 +100,7 @@
                 </div>
                 <div class="field">
                     <p class="control">
-                        <button type="button" class="button is-fullwidth" onclick="clearAll()">
+                        <button class="button is-fullwidth" onclick="clearAll();">
                             <span class="icon">
                                 <i class="material-icons">delete_outline</i>
                             </span>
@@ -212,7 +110,7 @@
                 </div>
                 <div class="field">
                     <p class="control">
-                        <select id="tabsize" class="select is-medium is-fullwidth is-multiple">
+                        <select id="tabsize" class="select is-fullwidth">
                             <option value="1">1 个制表符缩进</option>
                             <option value="2">2 个空格缩进</option>
                             <option value="3">3 个空格缩进</option>
@@ -232,27 +130,27 @@
                             <a class="icon" title="保存" onclick="openSaveModal(true)">
                                 <i class="material-icons">save</i>
                             </a>
-                            <a class="icon" title="清除" onclick="cleanOutputEditor();">
+                            <a class="icon" title="清除" onclick="clearAll(event, editor2);">
                                 <i class="material-icons">delete_outline</i>
                             </a>
                             <a  id="copyeditor2" class="icon" title="复制到剪贴板">
                                 <i class="material-icons">content_copy</i>
                             </a>
-                            <a class="icon" title="下载" onclick="downloadFile();">
+                            <a class="icon" title="下载" onclick="downloadFile(event);">
                                 <i class="material-icons">cloud_download</i>
                             </a>
                             <a id="outputFullScreen" class="icon is-hidden-mobile" onclick="addFullScreen('output');" title="全屏">
                                 <i class="material-icons">open_in_full</i>
                             </a>
-                            <a id="outputCloseScreen" style="display:none" class="icon" onclick="closeFullScreen('output');" title="关闭全屏">
+                            <a id="outputCloseScreen" class="icon" style="display:none" onclick="removeFullScreen('output');" title="关闭全屏">
                                 <i class="material-icons">close_fullscreen</i>
                             </a>
                         </div>
                     </div>
                     <div id="editor2" class="twoEditor"></div>
-                    <div class="columns m-0 is-mobile" id="outputACEStatusBar">
-                        <span class="column p-0 pl-1" id="outputAceLineColumn">Ln: 1 Col: 0</span>
-                        <span class="column p-0 has-text-centered" id="outputTextSize"></span>
+                    <div class="columns is-mobile m-0 aceStatusBar" id="outputStatusBar">
+                        <div class="column is-two-thirds p-0 pl-0 status-left" id="outputAceLineColumn">Ln: 1 Col: 0; Max Col: 0</div>
+                        <div class="column is-one-thirds p-0 has-text-centered status-right" id="outputTextSize">Size: 0 Byte</div>
                     </div>
                 </div>
             </div>
@@ -585,62 +483,22 @@
             });
     }
 
-    // $("#copycode").click(function () {
-    //     var code = editor2.getValue();
-    //     if (!code.trim().length) return;
-    //     var $button = $(this),
-    //         $textarea = $('<textarea>').val(code).css({
-    //             position: 'absolute',
-    //             left: '-9999px'
-    //         }).attr('readonly', '');
-    //     $('body').append($textarea);
-    //     $textarea.select();
-    //     document.execCommand('copy');
-    //     $textarea.remove();
-    //     $button.text('已复制');
-    //     if (editor2) editor2.execCommand('selectAll');
-    //     setTimeout(function () {
-    //         $button.text('复制代码')
-    //     }, 2000)
-    // });
+    function setupClipboard(editor, buttonId) {
+        return new ClipboardJS('#' + buttonId, {
+            text: function () {
+                return editor.getValue();
+            }
+        }).on('success', function (e) {
+            if (editor) editor.execCommand('selectAll');
+            showSuccessMessage("已复制");
+            e.clearSelection();
+        }).on('error', function (e) {
+            showErrorMessage((editor.getValue().trim() === '') ? '内容为空' : '复制出错' + e.action);
+        });
+    }
 
-    new ClipboardJS('#copyeditor2', {
-        text: function () {
-            return editor2.getValue();
-        }
-    }).on('success', function (e) {
-        if (editor2) editor2.execCommand('selectAll');
-        showSuccessMessage("已复制");
-        e.clearSelection();
-    }).on('error', function (e) {
-        showErrorMessage((editor2.getValue().trim() === '') ? '内容为空' : '复制出错' + e.action);
-    });
-
-    new ClipboardJS('#copyeditor1', {
-        text: function () {
-            return editor1.getValue();
-        }
-    }).on('success', function (e) {
-        if (editor1) editor1.execCommand('selectAll');
-        showSuccessMessage("已复制");
-        e.clearSelection();
-    }).on('error', function (e) {
-        showErrorMessage((editor1.getValue().trim() === '') ? '内容为空' : '复制出错' + e.action);
-    });
-
-    // function copyToClipboard(editor) {
-    //     new ClipboardJS('.copy-btn', {
-    //         text: function () {
-    //             return editor.getValue();
-    //         }
-    //     }).on('success', function (e) {
-    //         if (editor) editor.execCommand('selectAll');
-    //         showSuccessMessage("已复制");
-    //         e.clearSelection();
-    //     }).on('error', function (e) {
-    //         showErrorMessage((editor.getValue().trim() === '') ? '内容为空' : '复制出错' + e.action);
-    //     });
-    // }
+    setupClipboard(editor1, 'copyeditor1');
+    setupClipboard(editor2, 'copyeditor2');
 
     $('#editor1screenfull').on('click', function () {
         toggleFullScreen($('#editor1')[0]);
@@ -657,7 +515,8 @@
         }
     });
 
-    function downloadFile() {
+    function downloadFile(event) {
+        event.preventDefault();
         var content = $.trim(editor2.getValue());
         if (content !== '') {
             $.getScript("https://cdn.bootcdn.net/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js", function () {
@@ -688,62 +547,64 @@
             var blob = new Blob([content]);
             sizeInBytes = blob.size;
             var i = Math.floor(Math.log(sizeInBytes) / Math.log(1024));
-            sizeOutput.html("Size: " + (sizeInBytes / Math.pow(1024, i)).toFixed(2) + " " + sizes[i]);
+            var size = (sizeInBytes / Math.pow(1024, i)).toFixed(2);
+            sizeOutput.html("Size: " + parseInt(size) + " " + sizes[i]);
         } else {
             sizeOutput.html("Size: 0 Byte");
         }
 
+        var cursor = editor.selection.getCursor();
+        var lineNumber = cursor.row + 1;
+        var columnNumber = cursor.column + 1;
         var session = editor.getSession();
         var lineCount = session.getLength();
-        var lineNumber = editor.selection.getCursor().row + 1;
         var maxColumnCount = 0;
 
         for (var i = 0; i < lineCount; i++) {
             maxColumnCount = Math.max(maxColumnCount, session.getLine(i).length);
         }
 
-        lineColumnOutput.html("Ln: " + lineNumber + "; Max Col: " + maxColumnCount);
+        lineColumnOutput.html("Ln: " + lineNumber + "; Col: " + columnNumber + "; Max Col: " + maxColumnCount);
     }
 
+    var editor1Height, editor2Height;
     function addFullScreen(mode) {
         if (mode === 'input') {
-            document.getElementById('inputDiv').className = 'fullScreen'; // 改变输入编辑器的样式
-            document.getElementById('editor1').classList.add('fullScreenMode'); // 添加全屏模式样式
-            document.getElementById('inputACEStatusBar').classList.add('hidden'); // 隐藏输入编辑器的状态栏
-            document.getElementById('inputCloseScreen').style.display = 'inline-block'; // 显示关闭全屏按钮
-            editor1.focus(); // 输入编辑器获取焦点
+            $('#inputDiv').addClass('fullScreen');
+            // $('#inputStatusBar').hide();
+            $('#inputFullScreen').hide();
+            $('#inputCloseScreen').show();
+            editor1.focus();
+            editor1Height = $('#editor1').height();
+            $('#editor1').css('height', 'calc(100% - 65px)');
         } else if (mode === 'output') {
-            // 处理输出编辑器全屏模式的逻辑
-            document.getElementById('outputDiv').className = 'fullScreen'; // 改变输出编辑器的样式
-            document.getElementById('editor2').classList.add('fullScreenMode'); // 添加全屏模式样式
-            document.getElementById('outputACEStatusBar').classList.add('hidden'); // 隐藏输出编辑器的状态栏
-            document.getElementById('outputCloseScreen').style.display = 'inline-block'; // 显示关闭全屏按钮
-            editor2.focus(); // 输出编辑器获取焦点
+            $('#outputDiv').addClass('fullScreen');
+            // $('#outputStatusBar').hide();
+            $('#outputFullScreen').hide();
+            $('#outputCloseScreen').show();
+            editor2.focus();
+            editor2Height = $('#editor2').height();
+            $('#editor2').css('height', 'calc(100% - 65px)');
         }
-        isFullScreen = true;
-        document.body.style.overflow = 'hidden'; // 隐藏滚动条
-        document.body.style.position = 'fixed'; // 固定页面位置
+        $('body').css({ overflow: 'hidden', position: 'fixed' });
     }
 
-    // 退出全屏编辑模式
-    function closeFullScreen(mode) {
+    function removeFullScreen(mode) {
         if (mode === 'input') {
-            // 处理输入编辑器退出全屏模式的逻辑
-            document.getElementById('inputDiv').className = 'normalMode'; // 恢复输入编辑器的样式
-            document.getElementById('editor1').classList.remove('fullScreenMode'); // 移除全屏模式样式
-            document.getElementById('inputACEStatusBar').classList.remove('hidden'); // 显示输入编辑器的状态栏
-            document.getElementById('inputCloseScreen').style.display = 'none'; // 隐藏关闭全屏按钮
-            editor1.focus(); // 输入编辑器获取焦点
+            $('#inputDiv').removeClass('fullScreen');
+            // $('#inputStatusBar').show();
+            $('#inputFullScreen').show();
+            $('#inputCloseScreen').hide();
+            editor1.focus();
+            $('#editor1').css('height', editor1Height);
         } else if (mode === 'output') {
-            // 处理输出编辑器退出全屏模式的逻辑
-            document.getElementById('outputDiv').className = 'normalMode'; // 恢复输出编辑器的样式
-            document.getElementById('editor2').classList.remove('fullScreenMode'); // 移除全屏模式样式
-            document.getElementById('outputACEStatusBar').classList.remove('hidden'); // 显示输出编辑器的状态栏
-            document.getElementById('outputCloseScreen').style.display = 'none'; // 隐藏关闭全屏按钮
-            editor2.focus(); // 输出编辑器获取焦点
+            $('#outputDiv').removeClass('fullScreen');
+            // $('#outputStatusBar').show();
+            $('#outputFullScreen').show();
+            $('#outputCloseScreen').hide();
+            editor2.focus();
+            $('#editor2').css('height', editor2Height);
         }
-        document.body.style.overflow = ''; // 恢复滚动条
-        document.body.style.position = ''; // 恢复页面位置
-        isFullScreen = false;
+        $('body').css({ overflow: '', position: '' });
     }
 </script>
