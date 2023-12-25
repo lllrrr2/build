@@ -12002,6 +12002,10 @@ a.has-text-danger-dark:hover, a.has-text-danger-dark:focus {
     color: #0a3622;
     background-color: #d1e7dd;
     border-color: #a3cfbb;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .alert-info {
