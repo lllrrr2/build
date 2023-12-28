@@ -37,6 +37,9 @@ address1:value("163.com", translate("网易"))
 address1:value("baidu.com", translate("百度"))
 address1:value("sina.com.cn", translate("新浪"))
 address1:value("qq.com", translate("腾讯"))
+sys.net.ipv4_hints(function(ip, name)
+    address1:value(ip, translatef("%s (%s)", ip, name))
+end)
 
 local address2 = s:option(Value, "address2", translate("网站2（IP/域名）"))
 address2.default = "223.5.5.5"
@@ -44,6 +47,9 @@ address2:value("223.5.5.5", translate("阿里云DNS"))
 address2:value("183.60.83.19", translate("腾讯云DNS"))
 address2:value("180.76.76.76", translate("百度云DNS"))
 address2:value("8.8.8.8", translate("GoogleDNS"))
+sys.net.ipv4_hints(function(ip, name)
+    address2:value(ip, translatef("%s (%s)", ip, name))
+end)
 
 local sum = s:option(Value, "sum", translate("发送包数"))
 sum.default  = 3

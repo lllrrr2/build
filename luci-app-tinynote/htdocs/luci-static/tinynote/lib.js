@@ -1,6 +1,18 @@
 
+function getExampleLua() {
+    var output = `function blahblahblah(x)\n  --local table = {asd = 123, x = 0.34,  }\n  if x ~= 3 then\n    print(x)\n  elseif x == "string" then\n    my_custom_function(0x34)\n  else\n    unknown_function("some string")\n  end\n  --single line comment\nend\n\nfunction blablabla3()\n  for k, v in ipairs(table) do\n    --abcde..\n    y = [=[\n  x=[[\n      x is a multi line string\n   ]]\n  but its definition is iside a highest level string!\n  ]=]\n    print("  ")\n\n    s = math.sin(x)\n  end\nend`;
+    editor1.session.setMode("ace/mode/lua");
+    editor1.setValue(output);
+}
+
 function getExampleCsv() {
     return 'id,name,amount,Remark\n1,"Johnson, Smith, and Jones Co.",345.33,Pays on time\n2,"Sam ""Mad Dog"" Smith",993.44,\n3,"Barney & Company",0,"Great to work with\nand always pays with cash."\n4,Johnson\'s Automotive,2344,\n'
+}
+
+function getExampleSH() {
+    var output = `#!/bin/bash\n\nfor n in {1..$RANDOM}; do\n    str="";\n    if ((n % 3 == 0)); then\n        str="fizz";\n    fi\n    if [ $((n % 5)) == 0 ]; then\n        str="$strbuzz";\n    fi\n    if [ ! $str ]; then\n        str="$n";\n    fi\n    echo "$str";\ndone\n\n## Example: ShellCheck can detect some higher level semantic problems\nwhile getopts "nf:" param; do\n    case "$param" in\n        f)\n            file="$OPTARG"\n            ;;\n        v)\n            set -x\n            ;;\n    esac\ndone\ncase "$file" in\n    *.gz)\n        gzip -d "$file"\n        ;;\n    *.zip)\n        unzip "$file"\n        ;;\n    *.tar.gz)\n        tar xzf "$file"\n        ;;\n    *)\n        echo "Unknown filetype"\n        ;;\nesac\n\nif [[ "$$(uname)" == "Linux" ]]; then\n    echo "Using Linux"\nfi\n\n## Example: ShellCheck can detect many different kinds of quoting issues\nif ! grep -q backup=true.* "~/.myconfig"; then\n    echo 'Backup not enabled in $HOME/.myconfig, exiting'\n    exit 1\nfi\n\nif [[ $1 =~ "-v(erbose)?" ]]; then\n    verbose='-printf "Copying %f\n"' \nfi\n\nfind backups/ \\\n    -iname *.tar.gz \\\n    $verbose \\\n    -exec scp {} "myhost:backups" +\n`
+    editor1.session.setMode("ace/mode/sh");
+    editor1.setValue(output);
 }
 
 function getExampleXml(e) {
@@ -10,70 +22,122 @@ function getExampleXml(e) {
 
 function getExampleYaml() {
     var output = '-\n  id: 1\n  name: John Doe\n  age: 30\n  email: johndoe@example.com\n  hobbies:\n    -\n      name: Reading\n      duration: 5\n    -\n      name: Cooking\n      duration: 3\n-\n  id: 2\n  name: Jane Smith\n  age: 25\n  email: janesmith@example.com\n  hobbies:\n    -\n      name: Painting\n      duration: 7\n    -\n      name: Hiking\n      duration: 4\n-\n  id: 3\n  name: Bob Johnson\n  age: 40\n  email: bobjohnson@example.com\n  hobbies:\n    -\n      name: Photography\n      duration: 6\n    -\n      name: Dancing\n      duration: 2\n';
-    $.getScript("https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-yaml.js", function () {
-        editor1.getSession().setMode("ace/mode/yaml");
-        editor1.setValue(output);
-    });
+    editor1.session.setMode("ace/mode/yaml");
+    editor1.setValue(output);
 }
 
 function getExampleJavaScript() {
     var output = 'var name = "John";\nconsole.log("Hello, " + name + "!");\n\nvar numbers = [1, 2, 3, 4, 5];\nfor (var i = 0; i < numbers.length; i++) {\n    console.log(numbers[i]);\n}\n\nvar person = {\n    name: "John",\n    age: 30,\n    city: "New York"\n};\nconsole.log(person.name);\n';
-    $.getScript("https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-javascript.js", function () {
-        editor1.getSession().setMode("ace/mode/javascript");
-        editor1.setValue(output);
-    });
+    editor1.session.setMode("ace/mode/javascript");
+    editor1.setValue(output);
 }
 
 function getExampleCSS() {
     var output = 'body {background-color: #e9ecef;font-family: Arial, sans-serif;}h1 {color: #333;font-size: 24px;}.container {width: 800px;margin: 0 auto;padding: 20px;}@media(min-width: 768px) {.container-md,.container-sm, .container {max-width: 720px;}}';
-    $.getScript("https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-css.js", function () {
-        editor1.getSession().setMode("ace/mode/css");
-        editor1.setValue(output);
-    });
+    editor1.session.setMode("ace/mode/css");
+    editor1.setValue(output);
 }
 
 function getExampleHTML() {
     var output = '<!DOCTYPE html>\n<html><head>\n    <title>Sample Page</title>\n    <link rel="stylesheet" type="text/css" href="styles.css">\n</head>\n<body>\n    <header>\n        <h1>Welcome to My Website</h1>\n    </header>\n    <div class="container">\n        <p>This is a sample paragraph.</p>\n   <a href="#">Click here</a>\n    </div>\n    <script src="scripts.js"></script></body>\n</html>\n';
-    $.getScript("https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-html.js", function () {
-        editor1.getSession().setMode("ace/mode/html");
-        editor1.setValue(output);
-    });
+    editor1.session.setMode("ace/mode/html");
+    editor1.setValue(output);
 }
 
 function getExampleJson(e) {
     var output = ['[\n  {\n    "id":1,    "name":"Johnson, Smith, and Jones Co.",\n    "amount":345.33,    "Remark":"Pays on time"\n  },\n  {\n    "id":2,    "name":"Sam \\"Mad Dog\\" Smith",\n    "amount":993.44,    "Remark":""\n  },\n  {\n    "id":3,    "name":"Barney & Company",\n    "amount":0,    "Remark":"Great to work with\\nand always pays with cash."\n  },\n  {\n    "id":4,    "name":"Johnson\'s Automotive",\n    "amount":2344,    "Remark":""\n  }\n]\n', '{ "data" : [\n  {    "id":1,    "name":"Johnson, Smith, and Jones Co."  },\n  {    "id":2,    "name":"Sam \\"Mad Dog\\" Smith"  },\n  {    "id":3,    "name":"Barney & Company"  },\n  {    "id":4,    "name":"Johnson\'s Automotive"  }\n] }\n', '{ "race" : \n { "entries" : [\n  {    "id":11,    "name":"Johnson, Smith, and Jones Co."  },\n  {    "id":22,    "name":"Sam \\"Mad Dog\\" Smith"  },\n  {    "id":33,    "name":"Barney & Company"  },\n  {    "id":44,    "name":"Johnson\'s Automotive"  }\n] }\n}\n', '{\n    "id":1,    "name":"Johnson, Smith, and Jones Co.",    "amount":345.33,    "Remark":"Pays on time"\n}\n', '[\n    [      1,      "Johnson, Smith, and Jones Co.",      345.33    ],\n    [      99,      "Acme Food Inc.",      2993.55    ]\n]'][e = (e || 1) - 1];
-    $.getScript("https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-hjson.js", function () {
-        editor1.getSession().setMode("ace/mode/json");
-        editor1.setValue(output);
-    });
+    editor1.session.setMode("ace/mode/json");
+    editor1.setValue(output);
 }
 
-function showSuccessMessage(message) {
-    $("#success").html('<div class="alert alert-success">' + message + '</div>').show().delay(3000).fadeOut();
+function createShiftArr(indent_size) {
+    if (typeof indent_size !== 'number') return '\t';
+    var space = ' ';
+    var shift = space.repeat(indent_size);
+    return shift;
 }
 
-function showErrorMessage(message) {
-    clearTimeout(window.hideTimer);
-    $("#warning").html('<div class="alert alert-danger"><button id="customButton" type="button" style="position: absolute; top: 5px; right: 5px;"><i class="material-icons">close</i></button>' + message + '</div>').fadeIn();
-    $("#customButton").on("click", function () {
-        $("#warning").fadeOut();
-    });
-    var mouseEntered = false;
-    $("#warning").on({
-        mouseenter: function () {
-            mouseEntered = true;
-            if (window.hideTimer) {
-                clearTimeout(window.hideTimer);
+function formatLua(a) {
+    var content = $.trim(editor1.getValue());
+    if (!content) return;
+    var scripts = [
+        "/luci-static/tinynote/luaparse.js",
+        "/luci-static/tinynote/lua-fmt-lib.js",
+        "/luci-static/tinynote/luamin.min.js"
+    ];
+    loadScripts(scripts)
+        .then(function () {
+            try {
+                editor1.session.setMode("ace/mode/lua");
+                editor2.session.setMode("ace/mode/lua");
+                output = a === undefined ? beautifyLuaCode(content, createShiftArr(indent_size)) : luamin.minify(content);
+                if (a === 'examine' && output) return showSuccessMessage("语法通过");
+                editor2.setValue(output || '没有返回值');
+            } catch (e) {
+                showErrorMessage(e.message);
             }
-        },
-        mouseleave: function () {
-            window.hideTimer = setTimeout(function () {
-                if (!mouseEntered) {
-                    $("#warning").fadeOut();
+        })
+        .catch(function (e) {
+            showErrorMessage("加载错误", true);
+        });
+}
+
+function updateDisplay(editor, sizeOutput, lineColumnOutput) {
+    var content = editor.getValue();
+    var sizes = ["Bytes", "KB", "MB", "GB", "TB"];
+    var sizeInBytes = 0;
+
+    if (content) {
+        var blob = new Blob([content]);
+        sizeInBytes = blob.size;
+        var i = Math.floor(Math.log(sizeInBytes) / Math.log(1024));
+        var size = (sizeInBytes / Math.pow(1024, i)).toFixed(2);
+        sizeOutput.html("Size: " + parseInt(size) + " " + sizes[i]);
+    } else {
+        sizeOutput.html("Size: 0 Byte");
+    }
+
+    var lineNumber = editor.session.getLength();
+    var columnNumber = editor.selection.getCursor().column + 1;
+    var maxColumnCount = 0;
+
+    for (var i = 0; i < lineNumber; i++) {
+        maxColumnCount = Math.max(maxColumnCount, editor.session.getLine(i).length);
+    }
+
+    lineColumnOutput.html("Ln: " + lineNumber + "; Col: " + columnNumber + "; Max Col: " + maxColumnCount);
+}
+
+function showSuccessMessage(message, a) {
+    var backgroundColor = a && "style='background-color: red;'" || "";
+    $("#success").html('<div class="button is-info is-hovered is-fullwidth" ' + backgroundColor + '>' + message + '</div>').show().delay(3000).fadeOut();
+}
+
+function showErrorMessage(message, a) {
+    if (a === undefined) {
+        clearTimeout(window.hideTimer);
+        $("#warning").html('<div class="alert alert-danger"><button id="customButton" type="button" style="position: absolute; top: 5px; right: 5px;"><i class="material-icons" style="font-size: 18px;">close</i></button><b style="color: red;">语法错误：</b><br>' + message + '</div>').fadeIn();
+        $("#customButton").on("click", function () {
+            $("#warning").fadeOut();
+        });
+        var mouseEntered = false;
+        $("#warning").on({
+            mouseenter: function () {
+                mouseEntered = true;
+                if (window.hideTimer) {
+                    clearTimeout(window.hideTimer);
                 }
-            }, 5000);
-        }
-    }).trigger('mouseleave');
+            },
+            mouseleave: function () {
+                window.hideTimer = setTimeout(function () {
+                    if (!mouseEntered) {
+                        $("#warning").fadeOut();
+                    }
+                }, 5000);
+            }
+        }).trigger('mouseleave');
+    }
+    else showSuccessMessage(message, true);
 }
 
 var loadedScripts = [];
@@ -368,13 +432,18 @@ function toggleFullScreen(editor) {
 function setupClipboard(editor, buttonId) {
     return new ClipboardJS('#' + buttonId, {
         text: function () {
-            return editor.getValue();
+            var value = editor.getValue().trim();
+            if (value) return value;
         }
     }).on('success', function (e) {
         if (editor) editor.execCommand('selectAll');
         showSuccessMessage("已复制");
         e.clearSelection();
     }).on('error', function (e) {
-        showErrorMessage((editor.getValue().trim() === '') ? '内容为空' : '复制出错' + e.action);
+        e.clearSelection();
+        if (editor.getValue().trim() === '') {
+            showErrorMessage('内容为空', true)
+        }
+        else showErrorMessage('复制出错' + e.action);
     });
 }

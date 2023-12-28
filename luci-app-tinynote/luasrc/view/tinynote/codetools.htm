@@ -32,17 +32,15 @@
     <script src="/luci-static/tinynote/clipboard.min.js"></script>
 
     <script src="https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/ace.js"></script>
-    <script src="https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-javascript.js"></script>
-    <script src="https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/theme-monokai.js"></script>
-
-    <br><div id="warning" style="display: none;"></div>
+    <br>
     <div class="container is-fluid">
+        <div class="columns is-centered" id="warning" style="display: none;"></div>
         <div class="columns mb-0 is-desktop">
             <div class="column">
                 <div id="inputDiv" class="aceEditorBorder">
                     <div class="aceEditorMenu">
-                        <a style="float:left; cursor: default;">
-                            <i>输入</i>
+                        <a style="float:left;">
+                            <i class="is-size-6 is-family-primary">输入</i>
                         </a>
                         <div class="editortoolbar btn-group-sm">
                             <a class="icon" onclick="setFromLocalStorage()" title="从本地存储加载以前的数据">
@@ -76,7 +74,7 @@
                 </div>
             </div>
             <div class="column is-12-mobile is-2-desktop box has-text-centered">
-                <div id="success" style="display: none;"></div>
+                <div id="success" class="field" style="display: none;"></div>
                 <div class="columns mb-0">
                     <div class="column">
                         <label class="button is-fullwidth" title="上传文件" for="fileInput">
@@ -123,8 +121,8 @@
             <div class="column">
                 <div id="outputDiv" class="aceEditorBorder">
                     <div class="aceEditorMenu">
-                        <a style="float:left;cursor: default;">
-                            <i>输出</i>
+                        <a style="float:left;">
+                            <i class="is-size-6 is-family-primary" style="margin: 0;">输出</i>
                         </a>
                         <div class="editortoolbar btn-group-sm">
                             <a class="icon" title="保存" onclick="openSaveModal(true)">
@@ -232,9 +230,15 @@
         indent_char = '\t';
     }
 
+    function FormatSH(type) {
+        var content = $.trim(editor1.getValue());
+        if (!content) return showErrorMessage('内容为空', true);
+        editor2.setValue(content || '没有返回值');
+        editor2.session.setMode("ace/mode/sh");
+    }
     function JsCompression(a) {
         var content = $.trim(editor1.getValue());
-        if (!content) return;
+        if (!content) return showErrorMessage('内容为空', true);
         $.getScript("/luci-static/tinynote/format.js", function () {
             $.getScript("/luci-static/tinynote/beautifier.js", function () {
                 var packer = new Packer();
@@ -252,8 +256,8 @@
                     operator_position: "before-newline",
                     indent_with_tabs: indent_size === '\t'
                 });
-                editor1.getSession().setMode("ace/mode/javascript");
-                editor2.getSession().setMode("ace/mode/javascript");
+                editor1.session.setMode("ace/mode/javascript");
+                editor2.session.setMode("ace/mode/javascript");
                 editor2.setValue(output || '没有返回值');
             })
         });
@@ -261,19 +265,19 @@
 
     function examineJavaScript() {
         var content = $.trim(editor1.getValue());
-        if (!content) return;
+        if (!content) return showErrorMessage('内容为空', true);
 
         function checkSyntax() {
             var result = JSHINT(content, { asi: true, esversion: 8 });
             if (result) {
-                showSuccessMessage("JavaScript 语法通过");
+                showSuccessMessage("语法通过");
             } else {
                 var errorMessage = "";
                 JSHINT.errors.forEach(function (e) {
                     var errorEvidence = e.evidence ? '"<b style="color: red;">' + e.evidence + '</b>"，' : '';
                     errorMessage += '在第 ' + e.line + ' 行，第 ' + e.character + ' 列，' + errorEvidence + '错误代码：' + e.code + ' :' + getErrorMessage(e.code) + '<br>';
                 });
-                showErrorMessage("JavaScript 语法错误：<br>" + errorMessage);
+                showErrorMessage(errorMessage);
             }
         }
         if ("undefined" == typeof JSHINT) {
@@ -285,10 +289,9 @@
 
     function CSSFormat(a) {
         var content = $.trim(editor1.getValue());
-        if (!content) return;
+        if (!content) return showErrorMessage('内容为空', true);
         var scripts = [
-            "/luci-static/tinynote/beautifier.js",
-            "https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-css.js"
+            "/luci-static/tinynote/beautifier.js"
         ];
         loadScripts(scripts)
             .then(function () {
@@ -300,58 +303,45 @@
                 if (a === "format") output = beautifier.css(content);
                 else if (a === "min") output = vkbeautify.cssmin(content);
                 else if (a === "pack") output = vkbeautify.csspack(content);
-                editor1.getSession().setMode("ace/mode/css");
-                editor2.getSession().setMode("ace/mode/css");
+                editor1.session.setMode("ace/mode/css");
+                editor2.session.setMode("ace/mode/css");
                 editor2.setValue(output || '没有返回值');
             });
     }
 
     function jsonFormat(a) {
         var content = $.trim(editor1.getValue());
-        if (!content) return;
+        if (!content) return showErrorMessage('内容为空', true);
         var scripts = [
-            "https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-hjson.js",
             "https://cdn.bootcdn.net/ajax/libs/jsonlint/1.6.0/jsonlint.min.js"
         ];
         loadScripts(scripts)
             .then(function () {
-                editor1.getSession().setMode("ace/mode/json");
+                editor1.session.setMode("ace/mode/json");
                 try {
                     if (a === 'min') output = vkbeautify.jsonmin(content);
                     else if (a === 'format') output = vkbeautify.json(content, indent_size);
                     // output = JSON.stringify($.parseJSON(content), null, indent_size);
                     else if (a === 'safeLoad') {
                         jsonlint.parse(content);
-                        return showSuccessMessage("JSON 语法通过");
+                        return showSuccessMessage("语法通过");
                     }
-                    editor2.getSession().setMode("ace/mode/json");
+                    editor2.session.setMode("ace/mode/json");
                     editor2.setValue(output || '没有返回值');
                 } catch (e) {
-                    showErrorMessage("JSON 语法错误：" + e.message);
+                    showErrorMessage(e.message);
                 }
             })
             .catch(function (e) {
-                showErrorMessage("加载错误：" + e.message);
+                showErrorMessage("加载错误", true);
             });
-    }
-
-    function formatLua() {
-        var content = $.trim(editor1.getValue());
-        if (!content) return;
-        try {
-            output = beautifyLua(content);
-            editor2.setValue(output || '没有返回值');
-        } catch (e) {
-            showErrorMessage("Lua 语法错误：" + e.message);
-        }
     }
 
     function FormatHTML(a) {
         var content = $.trim(editor1.getValue());
-        if (!content) return;
+        if (!content) return showErrorMessage('内容为空', true);
         var scripts = [
-            "/luci-static/tinynote/beautifier.js",
-            "https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-html.js"
+            "/luci-static/tinynote/beautifier.js"
         ];
         loadScripts(scripts)
             .then(function () {
@@ -372,8 +362,8 @@
                 // unformatted_content_delimiter: 一个字符串，表示内部不需要格式化的内容的分隔符。
                 // indent_scripts: 一个字符串，表示脚本标签的缩进方式。可选值为['normal', 'keep', 'separate']。
                 try {
-                    editor1.getSession().setMode("ace/mode/html");
-                    editor2.getSession().setMode("ace/mode/html");
+                    editor1.session.setMode("ace/mode/html");
+                    editor2.session.setMode("ace/mode/html");
                     if (a === "format") output = beautifier.html(content, {
                         indent_size,
                         indent_char,
@@ -382,60 +372,57 @@
                     else if (a === "min") output = vkbeautify.xmlmin(content);
                     editor2.setValue(output || '没有返回值');
                 } catch (e) {
-                    showErrorMessage("HTML 语法错误：" + e.message);
+                    showErrorMessage(e.message);
                 }
             })
             .catch(function (e) {
-                showErrorMessage("加载错误：" + e.message);
+                showErrorMessage("加载错误", true);
             });
     }
 
     function FormatYAML(a) {
         var content = $.trim(editor1.getValue());
-        if (!content) return;
+        if (!content) return showErrorMessage('内容为空', true);
         var scripts = [
-            "https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-yaml.js",
-            "https://cdn.bootcdn.net/ajax/libs/js-yaml/4.1.0/js-yaml.js",
-            "https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-hjson.js"
+            "https://cdn.bootcdn.net/ajax/libs/js-yaml/4.1.0/js-yaml.js"
         ];
         loadScripts(scripts)
             .then(function () {
                 try {
-                    editor1.getSession().setMode("ace/mode/yaml");
+                    editor1.session.setMode("ace/mode/yaml");
                     if (a === 'json') { // 转换json
                         output = vkbeautify.json(jsyaml.load(content), indent_size);
-                        editor2.getSession().setMode("ace/mode/json");
+                        editor2.session.setMode("ace/mode/json");
                     } else if (a === 'safeLoad') { //语法检查
                         jsyaml.load(content)
-                        return showSuccessMessage("YAML 语法通过");
+                        return showSuccessMessage("语法通过");
                     } else if (a === 'format') { //格式化
                         output = jsyaml.dump(jsyaml.load(content), {
                             indent: indent_size
                         });
-                        editor2.getSession().setMode("ace/mode/yaml");
+                        editor2.session.setMode("ace/mode/yaml");
                     } else if (a === 'yaml') { //JSON 转 YAML
                         output = jsyaml.dump(JSON.parse(content), {
                             quotingType: "",
                             indent: indent_size
                         });
-                        editor1.getSession().setMode("ace/mode/json");
-                        editor2.getSession().setMode("ace/mode/yaml");
+                        editor1.session.setMode("ace/mode/json");
+                        editor2.session.setMode("ace/mode/yaml");
                     }
                     editor2.setValue(output || '没有返回值');
                 } catch (e) {
-                    showErrorMessage("YAML 语法错误：" + e.message);
+                    showErrorMessage(e.message);
                 }
             })
             .catch(function (e) {
-                showErrorMessage("加载错误：" + e.message);
+                showErrorMessage("加载错误", true);
             });
     }
 
     function jsonTocsv() {
         var content = $.trim(editor1.getValue());
-        if (!content) return;
+        if (!content) return showErrorMessage('内容为空', true);
         var scripts = [
-            "https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-hjson.js",
             "https://cdn.bootcdn.net/ajax/libs/jsonlint/1.6.0/jsonlint.min.js"
         ];
         loadScripts(scripts)
@@ -443,25 +430,23 @@
                 try {
                     var i = jsonlint.parse(content),
                         n = jsonToCsv2(i, ",", !0, !1, !1);
-                    editor1.getSession().setMode("ace/mode/json");
-                    editor2.getSession().setMode("ace/mode/json");
+                    editor1.session.setMode("ace/mode/json");
+                    editor2.session.setMode("ace/mode/json");
                     editor2.setValue(n || '没有返回值');
                 } catch (e) {
-                    showErrorMessage("JSON 语法错误：" + e.message);
+                    showErrorMessage(e.message);
                 }
             })
             .catch(function (e) {
-                showErrorMessage("加载错误：" + e.message);
+                showErrorMessage("加载错误", true);
             });
     }
 
     function jsonToXML() {
         var content = $.trim(editor1.getValue());
-        if (!content) return;
+        if (!content) return showErrorMessage('内容为空', true);
         var scripts = [
             "/luci-static/tinynote/ObjTree.min.js",
-            "https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-xml.js",
-            "https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/mode-hjson.js",
             "https://cdn.bootcdn.net/ajax/libs/jsonlint/1.6.0/jsonlint.min.js"
         ];
         loadScripts(scripts)
@@ -471,30 +456,16 @@
                         json = jsonlint.parse(x),
                         xotree = new XML.ObjTree(),
                         xml = xotree.writeXML(json);
-                    editor1.getSession().setMode("ace/mode/json");
-                    editor2.getSession().setMode("ace/mode/xml");
+                    editor1.session.setMode("ace/mode/json");
+                    editor2.session.setMode("ace/mode/xml");
                     editor2.setValue(vkbeautify.xml(xml) || '没有返回值');
                 } catch (e) {
-                    showErrorMessage("JSON 语法错误：" + e.message);
+                    showErrorMessage(e.message);
                 }
             })
             .catch(function (e) {
-                showErrorMessage("加载错误：" + e.message);
+                showErrorMessage("加载错误", true);
             });
-    }
-
-    function setupClipboard(editor, buttonId) {
-        return new ClipboardJS('#' + buttonId, {
-            text: function () {
-                return editor.getValue();
-            }
-        }).on('success', function (e) {
-            if (editor) editor.execCommand('selectAll');
-            showSuccessMessage("已复制");
-            e.clearSelection();
-        }).on('error', function (e) {
-            showErrorMessage((editor.getValue().trim() === '') ? '内容为空' : '复制出错' + e.action);
-        });
     }
 
     setupClipboard(editor1, 'copyeditor1');
@@ -526,7 +497,7 @@
                 saveAs(blob, "data.txt");
             });
         } else {
-            showErrorMessage("内容为空");
+            showErrorMessage("内容为空", 'a');
         }
     }
 
@@ -538,40 +509,10 @@
         updateDisplay(editor2, $("#outputTextSize"), $("#outputAceLineColumn"));
     });
 
-    function updateDisplay(editor, sizeOutput, lineColumnOutput) {
-        var content = editor.getValue();
-        var sizes = ["Bytes", "KB", "MB", "GB", "TB"];
-        var sizeInBytes = 0;
-
-        if (content) {
-            var blob = new Blob([content]);
-            sizeInBytes = blob.size;
-            var i = Math.floor(Math.log(sizeInBytes) / Math.log(1024));
-            var size = (sizeInBytes / Math.pow(1024, i)).toFixed(2);
-            sizeOutput.html("Size: " + parseInt(size) + " " + sizes[i]);
-        } else {
-            sizeOutput.html("Size: 0 Byte");
-        }
-
-        var cursor = editor.selection.getCursor();
-        var lineNumber = cursor.row + 1;
-        var columnNumber = cursor.column + 1;
-        var session = editor.getSession();
-        var lineCount = session.getLength();
-        var maxColumnCount = 0;
-
-        for (var i = 0; i < lineCount; i++) {
-            maxColumnCount = Math.max(maxColumnCount, session.getLine(i).length);
-        }
-
-        lineColumnOutput.html("Ln: " + lineNumber + "; Col: " + columnNumber + "; Max Col: " + maxColumnCount);
-    }
-
     var editor1Height, editor2Height;
     function addFullScreen(mode) {
         if (mode === 'input') {
             $('#inputDiv').addClass('fullScreen');
-            // $('#inputStatusBar').hide();
             $('#inputFullScreen').hide();
             $('#inputCloseScreen').show();
             editor1.focus();
@@ -579,7 +520,6 @@
             $('#editor1').css('height', 'calc(100% - 65px)');
         } else if (mode === 'output') {
             $('#outputDiv').addClass('fullScreen');
-            // $('#outputStatusBar').hide();
             $('#outputFullScreen').hide();
             $('#outputCloseScreen').show();
             editor2.focus();
@@ -592,14 +532,12 @@
     function removeFullScreen(mode) {
         if (mode === 'input') {
             $('#inputDiv').removeClass('fullScreen');
-            // $('#inputStatusBar').show();
             $('#inputFullScreen').show();
             $('#inputCloseScreen').hide();
             editor1.focus();
             $('#editor1').css('height', editor1Height);
         } else if (mode === 'output') {
             $('#outputDiv').removeClass('fullScreen');
-            // $('#outputStatusBar').show();
             $('#outputFullScreen').show();
             $('#outputCloseScreen').hide();
             editor2.focus();

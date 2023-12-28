@@ -11,6 +11,8 @@ f:tab("HTML", translate("HTML"))
 f:tab("CSS", translate("CSS"))
 f:tab("JSON", translate("JSON"))
 f:tab("YAML", translate("YAML"))
+f:tab("Lua", translate("Lua"))
+f:tab("SH", translate("SH"))
 
 x = f:taboption("JS", Button, "examineJavaScript")
 x.inputtitle = "语法检查"
@@ -34,11 +36,43 @@ x.inputtitle = "示例"
 x.onclick    = "getExampleJavaScript();"
 x.template   = "tinynote/inlinebutton"
 
-x = f:taboption("HTML", Button, "FormatHTMLformat")
+x = f:taboption("Lua", Button, "examineLua")
+x.inputtitle = "语法检查"
+x.onclick    = "formatLua('examine');"
+x.template   = "tinynote/inlinebutton"
+x = f:taboption("Lua", Button, "Luaformat")
+x.inputtitle = "美化/格式化"
+x.onclick    = "formatLua();"
+x.template   = "tinynote/inlinebutton"
+x = f:taboption("Lua", Button, "Luaminify")
+x.inputtitle = "压缩"
+x.onclick    = "formatLua('minify');"
+x.template   = "tinynote/inlinebutton"
+x = f:taboption("Lua", Button, "getExampleLua")
+x.inputstyle = 'add'
+x.inputtitle = "示例"
+x.onclick    = "getExampleLua();"
+x.template   = "tinynote/inlinebutton"
+
+x = f:taboption("SH", Button, "SHformat")
+x.inputtitle = "美化/格式化"
+x.onclick    = "FormatSH('format');"
+x.template   = "tinynote/inlinebutton"
+x = f:taboption("SH", Button, "SHmin")
+x.inputtitle = "压缩"
+x.onclick    = "FormatSH('min');"
+x.template   = "tinynote/inlinebutton"
+x = f:taboption("SH", Button, "getExampleSH")
+x.inputstyle = 'add'
+x.inputtitle = "示例"
+x.onclick    = "getExampleSH();"
+x.template   = "tinynote/inlinebutton"
+
+x = f:taboption("HTML", Button, "HTMLformat")
 x.inputtitle = "美化/格式化"
 x.onclick    = "FormatHTML('format');"
 x.template   = "tinynote/inlinebutton"
-x = f:taboption("HTML", Button, "FormatHTMLmin")
+x = f:taboption("HTML", Button, "HTMLmin")
 x.inputtitle = "压缩"
 x.onclick    = "FormatHTML('min');"
 x.template   = "tinynote/inlinebutton"
