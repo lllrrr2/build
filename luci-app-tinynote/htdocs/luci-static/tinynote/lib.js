@@ -1,4 +1,20 @@
 
+function Progress(action) {
+    $('#ajaxProgressBar')[action]();
+}
+
+function loadCSS(url, callback) {
+  var link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = url;
+
+  if (callback && typeof callback === 'function') {
+    link.onload = callback;
+  }
+
+  document.head.appendChild(link);
+}
+
 function getExampleLua() {
     var output = `function blahblahblah(x)\n  --local table = {asd = 123, x = 0.34,  }\n  if x ~= 3 then\n    print(x)\n  elseif x == "string" then\n    my_custom_function(0x34)\n  else\n    unknown_function("some string")\n  end\n  --single line comment\nend\n\nfunction blablabla3()\n  for k, v in ipairs(table) do\n    --abcde..\n    y = [=[\n  x=[[\n      x is a multi line string\n   ]]\n  but its definition is iside a highest level string!\n  ]=]\n    print("  ")\n\n    s = math.sin(x)\n  end\nend`;
     editor1.session.setMode("ace/mode/lua");
@@ -66,7 +82,12 @@ function formatLua(a) {
         "/luci-static/tinynote/luamin.min.js"
     ];
     loadScripts(scripts)
-        .then(function () {
+    // $.when(
+    //         $.getScript('/luci-static/tinynote/luaparse.js'),
+    //         $.getScript('/luci-static/tinynote/luamin.min.js'),
+    //         $.getScript('/luci-static/tinynote/lua-fmt-lib.js'),
+    //     )
+    .then(function () {
             try {
                 editor1.session.setMode("ace/mode/lua");
                 editor2.session.setMode("ace/mode/lua");
@@ -116,7 +137,7 @@ function showSuccessMessage(message, a) {
 function showErrorMessage(message, a) {
     if (a === undefined) {
         clearTimeout(window.hideTimer);
-        $("#warning").html('<div class="alert alert-danger"><button id="customButton" type="button" style="position: absolute; top: 5px; right: 5px;"><i class="material-icons" style="font-size: 18px;">close</i></button><b style="color: red;">语法错误：</b><br>' + message + '</div>').fadeIn();
+        $("#warning").html('<div class="alert alert-danger"><button id="customButton" type="button" style="position: absolute; top: 5px; right: 5px; background: none; border: none;"><i class="material-icons md-18" style="color: black; text-shadow: 0 0 0 transparent;">close</i></button><b style="color: red;">语法错误：</b><br>' + message + '</div>').fadeIn();
         $("#customButton").on("click", function () {
             $("#warning").fadeOut();
         });
@@ -150,12 +171,15 @@ function loadScripts(scripts) {
                         loadedScripts.push(script);
                         resolve();
                     })
-                    .fail(reject);
+                    .fail(function (error) {
+                        reject(error);
+                    });
             });
         } else {
             return Promise.resolve();
         }
     });
+
     return Promise.all(promises);
 }
 

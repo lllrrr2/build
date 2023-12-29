@@ -1924,7 +1924,7 @@ fieldset[disabled] .button {
   }
 }
 
-.container {
+/*.container {
   flex-grow: 1;
   margin: 0 auto;
   position: relative;
@@ -1936,9 +1936,9 @@ fieldset[disabled] .button {
   padding-left: 32px;
   padding-right: 32px;
   width: 100%;
-}
+}*/
 
-@media screen and (min-width: 1024px) {
+/*@media screen and (min-width: 1024px) {
   .container {
     max-width: 960px;
   }
@@ -1966,7 +1966,7 @@ fieldset[disabled] .button {
   .container:not(.is-max-desktop):not(.is-max-widescreen) {
     max-width: 1344px;
   }
-}
+}*/
 
 .content li + li {
   margin-top: 0.25em;
@@ -11850,10 +11850,35 @@ a.has-text-danger-dark:hover, a.has-text-danger-dark:focus {
   padding: 3rem 1.5rem 6rem;
 }
 
+
 .menu-list a.is-active {
     background-color: #d3d3d3;
     color: #363636;
     font-weight: 700
+}
+
+@font-face {
+    font-family: 'Material Icons';
+    font-style: normal;
+    font-weight: 400;
+    src: url(https://fonts.gstatic.com/s/materialicons/v55/flUhRq6tzZclQEJ-Vdg-IuiaDsNc.woff2) format('woff2');
+}
+        
+.material-icons {
+    font-family: 'Material Icons';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
 }
 
 .material-icons.md-15 {
@@ -11906,53 +11931,6 @@ a.has-text-danger-dark:hover, a.has-text-danger-dark:focus {
 .twoEditor {
     height: 60vh;
     width: 100%
-}
-
-.container {
-    --bs-gutter-x: 1.5rem;
-    --bs-gutter-y: 0;
-    width: 100%;
-    padding-right: calc(var(--bs-gutter-x) * 0.5);
-    padding-left: calc(var(--bs-gutter-x) * 0.5);
-    margin-right: auto;
-    margin-left: auto;
-}
-
-.container.is-fluid {
-    max-width: none !important;
-    padding-left: 32px;
-    padding-right: 32px;
-    width: 100%
-}
-
-@media (min-width: 576px) {
-    .container {
-        max-width: 540px;
-    }
-}
-
-@media (min-width: 768px) {
-    .container {
-        max-width: 720px;
-    }
-}
-
-@media (min-width: 992px) {
-    .container {
-        max-width: 960px;
-    }
-}
-
-@media (min-width: 1200px) {
-    .container {
-        max-width: 1140px;
-    }
-}
-
-@media (min-width: 1400px) {
-    .container {
-        max-width: 1320px;
-    }
 }
 
 .alert {

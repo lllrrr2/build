@@ -1,155 +1,126 @@
 <body>
-    <style>
-        @font-face {
-            font-family: 'Material Icons';
-            font-style: normal;
-            font-weight: 400;
-            src: url(https://fonts.gstatic.com/s/materialicons/v55/flUhRq6tzZclQEJ-Vdg-IuiaDsNc.woff2) format('woff2');
-        }
-
-        .material-icons {
-            font-family: 'Material Icons';
-            font-weight: normal;
-            font-style: normal;
-            font-size: 24px;
-            line-height: 1;
-            cursor: pointer;
-            letter-spacing: normal;
-            text-transform: none;
-            display: inline-block;
-            white-space: nowrap;
-            word-wrap: normal;
-            direction: ltr;
-            -webkit-font-feature-settings: 'liga';
-            -webkit-font-smoothing: antialiased;
-        }
-    </style>
     <link rel="stylesheet" href="/luci-static/tinynote/bulma.css" />
-    <script src="/luci-static/tinynote/codemirror/jquery.min.js"></script>
+    <script src="/luci-static/tinynote/jquery.min.js"></script>
     <script src="/luci-static/tinynote/lib.js"></script>
     <script src="/luci-static/tinynote/vkbeautify.js"></script>
     <script src="/luci-static/tinynote/screenfull.js"></script>
     <script src="/luci-static/tinynote/clipboard.min.js"></script>
-
-    <script src="https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/ace.js"></script>
-    <br>
-    <div class="container is-fluid">
-        <div class="columns is-centered" id="warning" style="display: none;"></div>
-        <div class="columns mb-0 is-desktop">
-            <div class="column">
-                <div id="inputDiv" class="aceEditorBorder">
-                    <div class="aceEditorMenu">
-                        <a style="float:left;">
-                            <i class="is-size-6 is-family-primary">输入</i>
+    <script src="https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/ace.min.js"></script><br>
+    <div class="columns is-centered" id="warning" style="display: none;"></div>
+    <div class="columns mb-0 is-desktop">
+        <div class="column">
+            <div id="inputDiv" class="aceEditorBorder">
+                <div class="aceEditorMenu">
+                    <a style="float:left;">
+                        <i class="is-size-6 is-family-primary">输入</i>
+                    </a>
+                    <div class="editortoolbar btn-group-sm">
+                        <a class="icon" onclick="setFromLocalStorage()" title="从本地存储加载以前的数据">
+                            <i class="material-icons">history</i>
                         </a>
-                        <div class="editortoolbar btn-group-sm">
-                            <a class="icon" onclick="setFromLocalStorage()" title="从本地存储加载以前的数据">
-                                <i class="material-icons">history</i>
-                            </a>
-                            <a id="fileopen" class="icon" title="打开文件">
-                                <i class="material-icons">folder_open</i>
-                            </a>
-                            <a class="icon" title="保存" onclick="openSaveModal(true)">
-                                <i class="material-icons">save</i>
-                            </a>
-                            <a class="icon" title="清除" onclick="clearAll(event, editor1);">
-                                <i class="material-icons">delete_outline</i>
-                            </a>
-                            <a id="copyeditor1" class="icon" title="复制到剪贴板">
-                                <i class="material-icons">content_copy</i>
-                            </a>
-                            <a id="inputFullScreen" class="icon is-hidden-mobile" onclick="addFullScreen('input');" title="全屏">
-                                <i class="material-icons">open_in_full</i>
-                            </a>
-                            <a id="inputCloseScreen" style="display:none" class="icon" onclick="removeFullScreen('input');" title="关闭全屏">
-                                <i class="material-icons">close_fullscreen</i>
-                            </a>
-                        </div>
+                        <a id="fileopen" class="icon" title="打开文件">
+                            <i class="material-icons">folder_open</i>
+                        </a>
+                        <a class="icon" title="保存" onclick="openSaveModal(true)">
+                            <i class="material-icons">save</i>
+                        </a>
+                        <a class="icon" title="清除" onclick="clearAll(event, editor1);">
+                            <i class="material-icons">delete_outline</i>
+                        </a>
+                        <a id="copyeditor1" class="icon" title="复制到剪贴板">
+                            <i class="material-icons">content_copy</i>
+                        </a>
+                        <a id="inputFullScreen" class="icon is-hidden-mobile" onclick="addFullScreen('input');" title="全屏">
+                            <i class="material-icons">open_in_full</i>
+                        </a>
+                        <a id="inputCloseScreen" style="display:none" class="icon" onclick="removeFullScreen('input');" title="关闭全屏">
+                            <i class="material-icons">close_fullscreen</i>
+                        </a>
                     </div>
-                    <div id="editor1" class="twoEditor"></div>
-                    <div class="columns is-mobile m-0 aceStatusBar" id="inputStatusBar">
-                        <div class="column is-two-thirds p-0 pl-0 status-left" id="inputAceLineColumn">Ln: 1 Col: 0; Max Col: 0</div>
-                        <div class="column is-one-thirds p-0 has-text-centered status-right" id="inputTextSize">Size: 0 Byte</div>
-                    </div>
+                </div>
+                <div id="editor1" class="twoEditor"></div>
+                <div class="columns is-mobile m-0 aceStatusBar" id="inputStatusBar">
+                    <div class="column is-two-thirds p-0 pl-0 status-left" id="inputAceLineColumn">Ln: 1 Col: 0; Max Col: 0</div>
+                    <div class="column is-one-thirds p-0 has-text-centered status-right" id="inputTextSize">Size: 0 Byte</div>
                 </div>
             </div>
-            <div class="column is-12-mobile is-2-desktop box has-text-centered">
-                <div id="success" class="field" style="display: none;"></div>
-                <div class="columns mb-0">
-                    <div class="column">
-                        <label class="button is-fullwidth" title="上传文件" for="fileInput">
-                            <input id="fileInput" class="file-input" type="file" onchange="changeToFileContent(this)" style="display: none;" />
-                            <span class="icon is-hidden-desktop-only">
-                                <i class="material-icons">publish</i>
-                            </span>
-                            <span>文件</span>
-                        </label>
-                    </div>
-                </div>
-                <div class="field">
-                    <p class="control">
-                        <button class="button is-fullwidth" title="下载文件" onclick="downloadFile(event);">
-                            <span class="icon">
-                                <i class="material-icons">cloud_download</i>
-                            </span>
-                            <span>下载</span>
-                        </button>
-                    </p>
-                </div>
-                <div class="field">
-                    <p class="control">
-                        <button class="button is-fullwidth" title="清空全部" onclick="clearAll(event);">
-                            <span class="icon">
-                                <i class="material-icons">delete_outline</i>
-                            </span>
-                            <span>清空全部</span>
-                        </button>
-                    </p>
-                </div>
-                <div class="field">
-                    <p class="control">
-                        <select id="tabsize" class="select is-fullwidth">
-                            <option value="1">1 个制表符缩进</option>
-                            <option value="2">2 个空格缩进</option>
-                            <option value="3">3 个空格缩进</option>
-                            <option value="4" selected="selected">4 个空格缩进</option>
-                            <option value="8">8 个空格缩进</option>
-                        </select>
-                    </p>
+        </div>
+        <div class="column is-12-mobile is-2-desktop has-text-centered">
+            <div id="success" class="field" style="display: none;"></div>
+            <div class="columns mb-0">
+                <div class="column">
+                    <label class="button is-fullwidth" title="上传文件" for="fileInput">
+                        <input id="fileInput" class="file-input" type="file" onchange="changeToFileContent(this)" style="display: none;" />
+                        <span class="icon is-hidden-desktop-only">
+                            <i class="material-icons">publish</i>
+                        </span>
+                        <span>文件</span>
+                    </label>
                 </div>
             </div>
-            <div class="column">
-                <div id="outputDiv" class="aceEditorBorder">
-                    <div class="aceEditorMenu">
-                        <a style="float:left;">
-                            <i class="is-size-6 is-family-primary" style="margin: 0;">输出</i>
+            <div class="field">
+                <p class="control">
+                    <button class="button is-fullwidth" title="下载文件" onclick="downloadFile(event);">
+                        <span class="icon">
+                            <i class="material-icons">cloud_download</i>
+                        </span>
+                        <span>下载</span>
+                    </button>
+                </p>
+            </div>
+            <div class="field">
+                <p class="control">
+                    <button class="button is-fullwidth" title="清空全部" onclick="clearAll(event);">
+                        <span class="icon">
+                            <i class="material-icons">delete_outline</i>
+                        </span>
+                        <span>清空全部</span>
+                    </button>
+                </p>
+            </div>
+            <div class="field">
+                <p class="control">
+                    <select id="tabsize" class="select is-fullwidth">
+                        <option value="1">1 个制表符缩进</option>
+                        <option value="2">2 个空格缩进</option>
+                        <option value="3">3 个空格缩进</option>
+                        <option value="4" selected="selected">4 个空格缩进</option>
+                        <option value="8">8 个空格缩进</option>
+                    </select>
+                </p>
+            </div>
+        </div>
+        <div class="column">
+            <div id="outputDiv" class="aceEditorBorder">
+                <div class="aceEditorMenu">
+                    <a style="float:left;">
+                        <i class="is-size-6 is-family-primary" style="margin: 0;">输出</i>
+                    </a>
+                    <div class="editortoolbar btn-group-sm">
+                        <a class="icon" title="保存" onclick="openSaveModal(true)">
+                            <i class="material-icons">save</i>
                         </a>
-                        <div class="editortoolbar btn-group-sm">
-                            <a class="icon" title="保存" onclick="openSaveModal(true)">
-                                <i class="material-icons">save</i>
-                            </a>
-                            <a class="icon" title="清除" onclick="clearAll(event, editor2);">
-                                <i class="material-icons">delete_outline</i>
-                            </a>
-                            <a  id="copyeditor2" class="icon" title="复制到剪贴板">
-                                <i class="material-icons">content_copy</i>
-                            </a>
-                            <a class="icon" title="下载" onclick="downloadFile(event);">
-                                <i class="material-icons">cloud_download</i>
-                            </a>
-                            <a id="outputFullScreen" class="icon is-hidden-mobile" onclick="addFullScreen('output');" title="全屏">
-                                <i class="material-icons">open_in_full</i>
-                            </a>
-                            <a id="outputCloseScreen" class="icon" style="display:none" onclick="removeFullScreen('output');" title="关闭全屏">
-                                <i class="material-icons">close_fullscreen</i>
-                            </a>
-                        </div>
+                        <a class="icon" title="清除" onclick="clearAll(event, editor2);">
+                            <i class="material-icons">delete_outline</i>
+                        </a>
+                        <a  id="copyeditor2" class="icon" title="复制到剪贴板">
+                            <i class="material-icons">content_copy</i>
+                        </a>
+                        <a class="icon" title="下载" onclick="downloadFile(event);">
+                            <i class="material-icons">cloud_download</i>
+                        </a>
+                        <a id="outputFullScreen" class="icon is-hidden-mobile" onclick="addFullScreen('output');" title="全屏">
+                            <i class="material-icons">open_in_full</i>
+                        </a>
+                        <a id="outputCloseScreen" class="icon" style="display:none" onclick="removeFullScreen('output');" title="关闭全屏">
+                            <i class="material-icons">close_fullscreen</i>
+                        </a>
                     </div>
-                    <div id="editor2" class="twoEditor"></div>
-                    <div class="columns is-mobile m-0 aceStatusBar" id="outputStatusBar">
-                        <div class="column is-two-thirds p-0 pl-0 status-left" id="outputAceLineColumn">Ln: 1 Col: 0; Max Col: 0</div>
-                        <div class="column is-one-thirds p-0 has-text-centered status-right" id="outputTextSize">Size: 0 Byte</div>
-                    </div>
+                </div>
+                <div id="editor2" class="twoEditor"></div>
+                <div class="columns is-mobile m-0 aceStatusBar" id="outputStatusBar">
+                    <div class="column is-two-thirds p-0 pl-0 status-left" id="outputAceLineColumn">Ln: 1 Col: 0; Max Col: 0</div>
+                    <div class="column is-one-thirds p-0 has-text-centered status-right" id="outputTextSize">Size: 0 Byte</div>
                 </div>
             </div>
         </div>
@@ -203,7 +174,6 @@
     var editor1 = ace.edit("editor1");
     editor1.setOptions({
         theme: "ace/theme/monokai",
-        mode: "ace/mode/javascript",
         fontSize: "14px",
         fontFamily: "Consolas, monospace",
         wrap: true,
@@ -213,7 +183,6 @@
     var editor2 = ace.edit("editor2");
     editor2.setOptions({
         theme: "ace/theme/monokai",
-        mode: "ace/mode/javascript",
         fontSize: "14px",
         fontFamily: "Consolas, monospace",
         wrap: true,
@@ -266,6 +235,7 @@
     function examineJavaScript() {
         var content = $.trim(editor1.getValue());
         if (!content) return showErrorMessage('内容为空', true);
+        editor1.session.setMode("ace/mode/javascript");
 
         function checkSyntax() {
             var result = JSHINT(content, { asi: true, esversion: 8 });
@@ -312,6 +282,8 @@
     function jsonFormat(a) {
         var content = $.trim(editor1.getValue());
         if (!content) return showErrorMessage('内容为空', true);
+        editor1.session.setMode("ace/mode/javascript");
+        editor2.session.setMode("ace/mode/javascript");
         var scripts = [
             "https://cdn.bootcdn.net/ajax/libs/jsonlint/1.6.0/jsonlint.min.js"
         ];
