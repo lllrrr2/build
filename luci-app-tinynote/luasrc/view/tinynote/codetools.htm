@@ -1,12 +1,13 @@
 <body>
-    <link rel="stylesheet" href="/luci-static/tinynote/bulma.css" />
+    <link rel="stylesheet" href="/luci-static/tinynote/bulma.css"/>
     <script src="/luci-static/tinynote/jquery.min.js"></script>
-    <script src="/luci-static/tinynote/lib.js"></script>
+    <!-- <script src="https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/ace.min.js"></script> -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.3/ace.min.js"></script>
     <script src="/luci-static/tinynote/vkbeautify.js"></script>
     <script src="/luci-static/tinynote/screenfull.js"></script>
-    <script src="/luci-static/tinynote/clipboard.min.js"></script>
-    <script src="https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/ace.min.js"></script><br>
+    <script src="/luci-static/tinynote/clipboard.min.js"></script><br>
     <div class="columns is-centered" id="warning" style="display: none;"></div>
+    <progress id="ajaxProgressBar" class="progress is-success is-small" max="100" style="display:none" >50%</progress>
     <div class="columns mb-0 is-desktop">
         <div class="column">
             <div id="inputDiv" class="aceEditorBorder">
@@ -27,7 +28,7 @@
                         <a class="icon" title="清除" onclick="clearAll(event, editor1);">
                             <i class="material-icons">delete_outline</i>
                         </a>
-                        <a id="copyeditor1" class="icon" title="复制到剪贴板">
+                        <a id='copyeditor1' class="icon" title="复制输入代码">
                             <i class="material-icons">content_copy</i>
                         </a>
                         <a id="inputFullScreen" class="icon is-hidden-mobile" onclick="addFullScreen('input');" title="全屏">
@@ -38,7 +39,7 @@
                         </a>
                     </div>
                 </div>
-                <div id="editor1" class="twoEditor"></div>
+                <div id="editor1" style="height: 60vh; width: 100%"></div>
                 <div class="columns is-mobile m-0 aceStatusBar" id="inputStatusBar">
                     <div class="column is-two-thirds p-0 pl-0 status-left" id="inputAceLineColumn">Ln: 1 Col: 0; Max Col: 0</div>
                     <div class="column is-one-thirds p-0 has-text-centered status-right" id="inputTextSize">Size: 0 Byte</div>
@@ -50,7 +51,7 @@
             <div class="columns mb-0">
                 <div class="column">
                     <label class="button is-fullwidth" title="上传文件" for="fileInput">
-                        <input id="fileInput" class="file-input" type="file" onchange="changeToFileContent(this)" style="display: none;" />
+                        <input id="fileInput" class="file-input" type="file" onchange="changeToFileContent(this)" style="display: none;"/>
                         <span class="icon is-hidden-desktop-only">
                             <i class="material-icons">publish</i>
                         </span>
@@ -103,7 +104,7 @@
                         <a class="icon" title="清除" onclick="clearAll(event, editor2);">
                             <i class="material-icons">delete_outline</i>
                         </a>
-                        <a  id="copyeditor2" class="icon" title="复制到剪贴板">
+                        <a  id="copyeditor2" class="icon" title="复制输出代码">
                             <i class="material-icons">content_copy</i>
                         </a>
                         <a class="icon" title="下载" onclick="downloadFile(event);">
@@ -117,7 +118,7 @@
                         </a>
                     </div>
                 </div>
-                <div id="editor2" class="twoEditor"></div>
+                <div id="editor2" style="height: 60vh; width: 100%"></div>
                 <div class="columns is-mobile m-0 aceStatusBar" id="outputStatusBar">
                     <div class="column is-two-thirds p-0 pl-0 status-left" id="outputAceLineColumn">Ln: 1 Col: 0; Max Col: 0</div>
                     <div class="column is-one-thirds p-0 has-text-centered status-right" id="outputTextSize">Size: 0 Byte</div>
@@ -189,59 +190,50 @@
         showPrintMargin: true
     });
 
-    var indent_size = calculateTabSize();
-    $('#tabsize').on('change', function () {
-        indent_size = calculateTabSize();
-    });
-    var indent_char = ' ';
-    if (indent_size === '\t') {
-        indent_size = '1';
-        indent_char = '\t';
-    }
-
     function FormatSH(type) {
-        var content = $.trim(editor1.getValue());
-        if (!content) return showErrorMessage('内容为空', true);
+        var content = getContentIfNotEmpty();
+        if (!content) return;
         editor2.setValue(content || '没有返回值');
         editor2.session.setMode("ace/mode/sh");
     }
+
     function JsCompression(a) {
-        var content = $.trim(editor1.getValue());
-        if (!content) return showErrorMessage('内容为空', true);
-        $.getScript("/luci-static/tinynote/format.js", function () {
-            $.getScript("/luci-static/tinynote/beautifier.js", function () {
-                var packer = new Packer();
-                if (a === "minify") output = packer.minify(content);
-                else if (a === "pack") output = packer.pack(content, true, true);
-                else if (a === "beautify") output = beautifier.js(content, {
-                    indent_size,
-                    indent_char,
-                    jslint_happy: true,
-                    wrap_line_length: 0,
-                    templating: ["auto"],
-                    end_with_newline: true,
-                    max_preserve_newlines: 1,
-                    space_in_empty_paren: true,
-                    operator_position: "before-newline",
-                    indent_with_tabs: indent_size === '\t'
-                });
-                editor1.session.setMode("ace/mode/javascript");
-                editor2.session.setMode("ace/mode/javascript");
-                editor2.setValue(output || '没有返回值');
-            })
+        var content = getContentIfNotEmpty();
+        if (!content) return;
+        $.when(
+            $.getScript("/luci-static/tinynote/format.js"),
+            $.getScript("/luci-static/tinynote/beautifier.js"),
+        ).then(function () {
+            var packer = new Packer();
+            if (a === "minify") output = packer.minify(content);
+            else if (a === "pack") output = packer.pack(content, true, true);
+            else if (a === "beautify") output = beautifier.js(content, {
+                indent_size,
+                indent_char,
+                jslint_happy: true,
+                wrap_line_length: 0,
+                templating: ["auto"],
+                end_with_newline: true,
+                max_preserve_newlines: 1,
+                space_in_empty_paren: true,
+                operator_position: "before-newline",
+                indent_with_tabs: indent_size === '\t'
+            });
+            editor1.session.setMode("ace/mode/javascript");
+            editor2.session.setMode("ace/mode/javascript");
+            editor2.setValue(output || '没有返回值');
         });
     }
 
     function examineJavaScript() {
-        var content = $.trim(editor1.getValue());
-        if (!content) return showErrorMessage('内容为空', true);
+        var content = getContentIfNotEmpty();
+        if (!content) return;
         editor1.session.setMode("ace/mode/javascript");
 
-        function checkSyntax() {
+        $.getScript("https://cdn.bootcdn.net/ajax/libs/jshint/2.13.6/jshint.js", function () {
             var result = JSHINT(content, { asi: true, esversion: 8 });
-            if (result) {
-                showSuccessMessage("语法通过");
-            } else {
+            if (result) showSuccessMessage("语法通过");
+            else {
                 var errorMessage = "";
                 JSHINT.errors.forEach(function (e) {
                     var errorEvidence = e.evidence ? '"<b style="color: red;">' + e.evidence + '</b>"，' : '';
@@ -249,21 +241,13 @@
                 });
                 showErrorMessage(errorMessage);
             }
-        }
-        if ("undefined" == typeof JSHINT) {
-            $.getScript("https://cdn.bootcdn.net/ajax/libs/jshint/2.13.6/jshint.js", checkSyntax);
-        } else {
-            checkSyntax();
-        }
+        });
     }
 
     function CSSFormat(a) {
-        var content = $.trim(editor1.getValue());
-        if (!content) return showErrorMessage('内容为空', true);
-        var scripts = [
-            "/luci-static/tinynote/beautifier.js"
-        ];
-        loadScripts(scripts)
+        var content = getContentIfNotEmpty();
+        if (!content) return;
+        loadScripts(["/luci-static/tinynote/beautifier.js"])
             .then(function () {
                 // selector_separator_newline: 一个布尔值，表示在选择器分隔符（如逗号）后是否换行，默认为true。
                 // newline_between_rules: 一个布尔值，表示在规则之间是否插入换行，默认为true。
@@ -280,14 +264,11 @@
     }
 
     function jsonFormat(a) {
-        var content = $.trim(editor1.getValue());
-        if (!content) return showErrorMessage('内容为空', true);
+        var content = getContentIfNotEmpty();
+        if (!content) return;
         editor1.session.setMode("ace/mode/javascript");
         editor2.session.setMode("ace/mode/javascript");
-        var scripts = [
-            "https://cdn.bootcdn.net/ajax/libs/jsonlint/1.6.0/jsonlint.min.js"
-        ];
-        loadScripts(scripts)
+        loadScripts(["https://cdn.bootcdn.net/ajax/libs/jsonlint/1.6.0/jsonlint.min.js"])
             .then(function () {
                 editor1.session.setMode("ace/mode/json");
                 try {
@@ -304,18 +285,15 @@
                     showErrorMessage(e.message);
                 }
             })
-            .catch(function (e) {
+            .catch(function () {
                 showErrorMessage("加载错误", true);
             });
     }
 
     function FormatHTML(a) {
-        var content = $.trim(editor1.getValue());
-        if (!content) return showErrorMessage('内容为空', true);
-        var scripts = [
-            "/luci-static/tinynote/beautifier.js"
-        ];
-        loadScripts(scripts)
+        var content = getContentIfNotEmpty();
+        if (!content) return;
+        loadScripts(["/luci-static/tinynote/beautifier.js"])
             .then(function () {
                 // templating: 一个数组，表示模板引擎的选择。如果长度为1且值为'auto'，则默认使用['django', 'erb', 'handlebars', 'php']作为模板引擎。
                 // indent_inner_html: 一个布尔值，表示是否缩进内部HTML代码。
@@ -337,67 +315,57 @@
                     editor1.session.setMode("ace/mode/html");
                     editor2.session.setMode("ace/mode/html");
                     if (a === "format") output = beautifier.html(content, {
-                        indent_size,
-                        indent_char,
-                        templating: ["auto"]
+                        indent_size, indent_char, templating: ["auto"]
                     });
                     else if (a === "min") output = vkbeautify.xmlmin(content);
                     editor2.setValue(output || '没有返回值');
-                } catch (e) {
+                }
+                catch (e) {
                     showErrorMessage(e.message);
                 }
             })
-            .catch(function (e) {
+            .catch(function () {
                 showErrorMessage("加载错误", true);
             });
     }
 
     function FormatYAML(a) {
-        var content = $.trim(editor1.getValue());
-        if (!content) return showErrorMessage('内容为空', true);
-        var scripts = [
-            "https://cdn.bootcdn.net/ajax/libs/js-yaml/4.1.0/js-yaml.js"
-        ];
-        loadScripts(scripts)
-            .then(function () {
-                try {
-                    editor1.session.setMode("ace/mode/yaml");
-                    if (a === 'json') { // 转换json
-                        output = vkbeautify.json(jsyaml.load(content), indent_size);
-                        editor2.session.setMode("ace/mode/json");
-                    } else if (a === 'safeLoad') { //语法检查
-                        jsyaml.load(content)
-                        return showSuccessMessage("语法通过");
-                    } else if (a === 'format') { //格式化
-                        output = jsyaml.dump(jsyaml.load(content), {
-                            indent: indent_size
-                        });
-                        editor2.session.setMode("ace/mode/yaml");
-                    } else if (a === 'yaml') { //JSON 转 YAML
-                        output = jsyaml.dump(JSON.parse(content), {
-                            quotingType: "",
-                            indent: indent_size
-                        });
-                        editor1.session.setMode("ace/mode/json");
-                        editor2.session.setMode("ace/mode/yaml");
-                    }
-                    editor2.setValue(output || '没有返回值');
-                } catch (e) {
-                    showErrorMessage(e.message);
+        var content = getContentIfNotEmpty();
+        if (!content) return;
+        loadScripts(["https://cdn.bootcdn.net/ajax/libs/js-yaml/4.1.0/js-yaml.js"])
+        .then(function () {
+            try {
+                editor1.session.setMode("ace/mode/yaml");
+                editor2.session.setMode("ace/mode/yaml");
+                if (a === 'json') {
+                    output = vkbeautify.json(jsyaml.load(content), indent_size);
+                    editor2.session.setMode("ace/mode/json")
+                } else if (a === 'safeLoad') {
+                    if (jsyaml.load(content)) return showSuccessMessage("语法通过");
+                } else if (a === 'format') {
+                    output = jsyaml.dump(jsyaml.load(content), {
+                        indent: indent_size
+                    });
+                } else if (a === 'yaml') {
+                    output = jsyaml.dump(JSON.parse(content), {
+                        quotingType: "", indent: indent_size
+                    });
+                    editor1.session.setMode("ace/mode/json");
                 }
-            })
-            .catch(function (e) {
-                showErrorMessage("加载错误", true);
-            });
+                editor2.setValue(output || '没有返回值')
+            } catch (e) {
+                showErrorMessage(e.message)
+            }
+        })
+        .catch(function () {
+            showErrorMessage("加载错误", true)
+        })
     }
 
     function jsonTocsv() {
-        var content = $.trim(editor1.getValue());
-        if (!content) return showErrorMessage('内容为空', true);
-        var scripts = [
-            "https://cdn.bootcdn.net/ajax/libs/jsonlint/1.6.0/jsonlint.min.js"
-        ];
-        loadScripts(scripts)
+        var content = getContentIfNotEmpty();
+        if (!content) return;
+        loadScripts(["https://cdn.bootcdn.net/ajax/libs/jsonlint/1.6.0/jsonlint.min.js"])
             .then(function () {
                 try {
                     var i = jsonlint.parse(content),
@@ -409,112 +377,34 @@
                     showErrorMessage(e.message);
                 }
             })
-            .catch(function (e) {
+            .catch(function () {
                 showErrorMessage("加载错误", true);
             });
     }
 
     function jsonToXML() {
-        var content = $.trim(editor1.getValue());
-        if (!content) return showErrorMessage('内容为空', true);
-        var scripts = [
-            "/luci-static/tinynote/ObjTree.min.js",
-            "https://cdn.bootcdn.net/ajax/libs/jsonlint/1.6.0/jsonlint.min.js"
-        ];
-        loadScripts(scripts)
-            .then(function () {
-                try {
-                    var x = content.replace(/([ :$&]+)(?=[(\w* *]*":)/g, "_"),
-                        json = jsonlint.parse(x),
-                        xotree = new XML.ObjTree(),
-                        xml = xotree.writeXML(json);
-                    editor1.session.setMode("ace/mode/json");
-                    editor2.session.setMode("ace/mode/xml");
-                    editor2.setValue(vkbeautify.xml(xml) || '没有返回值');
-                } catch (e) {
-                    showErrorMessage(e.message);
-                }
-            })
-            .catch(function (e) {
-                showErrorMessage("加载错误", true);
-            });
-    }
-
-    setupClipboard(editor1, 'copyeditor1');
-    setupClipboard(editor2, 'copyeditor2');
-
-    $('#editor1screenfull').on('click', function () {
-        toggleFullScreen($('#editor1')[0]);
-    });
-
-    $('#editor2screenfull').on('click', function () {
-        toggleFullScreen($('#editor2')[0]);
-    });
-
-    $(document).on("keydown", function (event) {
-        if (event.key === "F11") {
-            event.preventDefault();
-            toggleFullScreen($('#editor2')[0]);
-        }
-    });
-
-    function downloadFile(event) {
-        event.preventDefault();
-        var content = $.trim(editor2.getValue());
-        if (content !== '') {
-            $.getScript("https://cdn.bootcdn.net/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js", function () {
-                blob = new Blob(["" + content + ""], {
-                    type: "text/plain; charset=utf-8"
-                });
-                saveAs(blob, "data.txt");
-            });
-        } else {
-            showErrorMessage("内容为空", 'a');
-        }
-    }
-
-    editor1.on("input", function () {
-        updateDisplay(editor1, $("#inputTextSize"), $("#inputAceLineColumn"));
-    });
-
-    editor2.on("input", function () {
-        updateDisplay(editor2, $("#outputTextSize"), $("#outputAceLineColumn"));
-    });
-
-    var editor1Height, editor2Height;
-    function addFullScreen(mode) {
-        if (mode === 'input') {
-            $('#inputDiv').addClass('fullScreen');
-            $('#inputFullScreen').hide();
-            $('#inputCloseScreen').show();
-            editor1.focus();
-            editor1Height = $('#editor1').height();
-            $('#editor1').css('height', 'calc(100% - 65px)');
-        } else if (mode === 'output') {
-            $('#outputDiv').addClass('fullScreen');
-            $('#outputFullScreen').hide();
-            $('#outputCloseScreen').show();
-            editor2.focus();
-            editor2Height = $('#editor2').height();
-            $('#editor2').css('height', 'calc(100% - 65px)');
-        }
-        $('body').css({ overflow: 'hidden', position: 'fixed' });
-    }
-
-    function removeFullScreen(mode) {
-        if (mode === 'input') {
-            $('#inputDiv').removeClass('fullScreen');
-            $('#inputFullScreen').show();
-            $('#inputCloseScreen').hide();
-            editor1.focus();
-            $('#editor1').css('height', editor1Height);
-        } else if (mode === 'output') {
-            $('#outputDiv').removeClass('fullScreen');
-            $('#outputFullScreen').show();
-            $('#outputCloseScreen').hide();
-            editor2.focus();
-            $('#editor2').css('height', editor2Height);
-        }
-        $('body').css({ overflow: '', position: '' });
+        var content = getContentIfNotEmpty();
+        if (!content) return;
+        $.when(
+            $.getScript('/luci-static/tinynote/ObjTree.min.js'),
+            $.getScript('https://cdn.bootcdn.net/ajax/libs/jsonlint/1.6.0/jsonlint.min.js')
+        )
+        .then(function () {
+            try {
+                var x = content.replace(/([ :$&]+)(?=[(\w* *]*":)/g, "_"),
+                    json = jsonlint.parse(x),
+                    xotree = new XML.ObjTree(),
+                    xml = xotree.writeXML(json);
+                editor1.session.setMode("ace/mode/json");
+                editor2.session.setMode("ace/mode/xml");
+                editor2.setValue(vkbeautify.xml(xml) || '没有返回值')
+            } catch (e) {
+                showErrorMessage(e.message)
+            }
+        })
+        .catch(function () {
+            showErrorMessage("加载错误", true)
+        })
     }
 </script>
+<script src="/luci-static/tinynote/lib.js"></script>
