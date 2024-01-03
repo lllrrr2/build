@@ -92,15 +92,15 @@ function timeEnd(start) {
 }
 
 function FormatSH(type) {
-    var content = getContentIfNotEmpty().content;
+    var content = getContent().content;
     if (!content) return;
     editor2.setValue(content || '没有返回值');
     editor2.session.setMode("ace/mode/sh");
-    state(getContentIfNotEmpty().time);
+    state(getContent().time);
 }
 
 function JsCompression(a) {
-    var content = getContentIfNotEmpty().content;
+    var content = getContent().content;
     if (!content) return;
     loadScripts(["/luci-static/tinynote/format.js", "/luci-static/tinynote/beautifier.js"])
         .then(function() {
@@ -111,12 +111,12 @@ function JsCompression(a) {
                 output = beautifier.js(content, {
                     indent_size,
                     indent_char,
+                    jslint_happy: true,
                     wrap_line_length: 0,
                     templating: ["auto"],
+                    end_with_newline: true,
+                    max_preserve_newlines: 1,
                     space_in_empty_paren: true,
-                    // break_chained_methods: true,
-                    // keep_array_indentation: true,
-                    // unindent_chained_methods: false,
                     operator_position: "before-newline",
                     indent_with_tabs: indent_size === '\t'
                 });
@@ -125,11 +125,11 @@ function JsCompression(a) {
             editor2.session.setMode("ace/mode/javascript");
             editor2.setValue(output || '没有返回值');
         });
-        state(getContentIfNotEmpty().time);
+        state(getContent().time);
 }
 
 function examineJavaScript() {
-    var content = getContentIfNotEmpty().content;
+    var content = getContent().content;
     if (!content) return;
     editor1.session.setMode("ace/mode/javascript");
     loadScripts("https://cdn.bootcdn.net/ajax/libs/jshint/2.13.6/jshint.js")
@@ -145,11 +145,11 @@ function examineJavaScript() {
                 showErrorMessage(errorMessage);
             }
         });
-        state(getContentIfNotEmpty().time);
+        state(getContent().time);
 }
 
 function CSSFormat(a) {
-    var content = getContentIfNotEmpty().content;
+    var content = getContent().content;
     if (!content) return;
     loadScripts(["/luci-static/tinynote/vkbeautify.js", "/luci-static/tinynote/beautifier.js"])
         .then(function() {
@@ -165,11 +165,11 @@ function CSSFormat(a) {
             editor2.session.setMode("ace/mode/css");
             editor2.setValue(output || '没有返回值');
         });
-        state(getContentIfNotEmpty().time);
+        state(getContent().time);
 }
 
 function formatLua(a) {
-    var content = getContentIfNotEmpty().content;
+    var content = getContent().content;
     if (!content) return;
     loadScripts(["/luci-static/tinynote/luaparse.js", "/luci-static/tinynote/lua-fmt-lib.js", "/luci-static/tinynote/luamin.min.js"])
         .then(function() {
@@ -188,11 +188,11 @@ function formatLua(a) {
         .catch(function() {
             showErrorMessage("加载错误", true);
         });
-        state(getContentIfNotEmpty().time);
+        state(getContent().time);
 }
 
 function jsonFormat(a) {
-    var content = getContentIfNotEmpty().content;
+    var content = getContent().content;
     if (!content) return;
     editor1.session.setMode("ace/mode/javascript");
     editor2.session.setMode("ace/mode/javascript");
@@ -218,11 +218,11 @@ function jsonFormat(a) {
         .catch(function() {
             showErrorMessage("加载错误", true);
         });
-        state(getContentIfNotEmpty().time);
+        state(getContent().time);
 }
 
 function FormatHTML(a) {
-    var content = getContentIfNotEmpty().content;
+    var content = getContent().content;
     if (!content) return;
     loadScripts(["/luci-static/tinynote/vkbeautify.js", "/luci-static/tinynote/beautifier.js"])
         .then(function() {
@@ -246,9 +246,7 @@ function FormatHTML(a) {
                 editor1.session.setMode("ace/mode/html");
                 editor2.session.setMode("ace/mode/html");
                 if (a === "format") output = beautifier.html(content, {
-                    indent_size,
-                    indent_char,
-                    templating: ["auto"]
+                    indent_size, indent_char, templating: ["auto"]
                 });
                 else if (a === "min") output = vkbeautify.xmlmin(content);
                 editor2.setValue(output || '没有返回值');
@@ -259,11 +257,11 @@ function FormatHTML(a) {
         .catch(function() {
             showErrorMessage("加载错误", true);
         });
-        state(getContentIfNotEmpty().time);
+        state(getContent().time);
 }
 
 function FormatYAML(a) {
-    var content = getContentIfNotEmpty().content;
+    var content = getContent().content;
     if (!content) return;
     loadScripts(["/luci-static/tinynote/vkbeautify.js", "https://cdn.bootcdn.net/ajax/libs/js-yaml/4.1.0/js-yaml.js"])
         .then(function() {
@@ -291,11 +289,11 @@ function FormatYAML(a) {
         .catch(function() {
             showErrorMessage("加载错误", true)
         });
-        state(getContentIfNotEmpty().time);
+        state(getContent().time);
 }
                 
 function jsonTocsv() {
-    var content = getContentIfNotEmpty().content;
+    var content = getContent().content;
     if (!content) return;
     loadScripts("https://cdn.bootcdn.net/ajax/libs/jsonlint/1.6.0/jsonlint.min.js")
         .then(function() {
@@ -312,11 +310,11 @@ function jsonTocsv() {
         .catch(function() {
             showErrorMessage("加载错误", true);
         });
-        state(getContentIfNotEmpty().time);
+        state(getContent().time);
 }
 
 function jsonToXML() {
-    var content = getContentIfNotEmpty().content;
+    var content = getContent().content;
     if (!content) return;
     loadScripts(["/luci-static/tinynote/vkbeautify.js", '/luci-static/tinynote/ObjTree.min.js', 'https://cdn.bootcdn.net/ajax/libs/jsonlint/1.6.0/jsonlint.min.js'])
         .then(function() {
@@ -335,12 +333,12 @@ function jsonToXML() {
         .catch(function() {
             showErrorMessage("加载错误", true);
         });
-        state(getContentIfNotEmpty().time);
+        state(getContent().time);
 }
 
 function downloadFile(event) {
     event.preventDefault();
-    var content = getContentIfNotEmpty(editor2).content;
+    var content = getContent(editor2).content;
     if (!content) return;
     loadScripts("/luci-static/tinynote/FileSaver.js")
         .then(function() {
@@ -392,8 +390,7 @@ function addFullScreen(mode) {
         $('#editor2').css('height', 'calc(100% - 65px)'); // 修改输出编辑器的高度为浏览器窗口高度减去一个固定值
     }
     $('body').css({
-        overflow: 'hidden',
-        position: 'fixed'
+        overflow: 'hidden', position: 'fixed'
     }); // 将页面的滚动和定位属性进行设置，使页面内容固定不动
 }
 // 退出全屏模式的函数，根据mode参数决定是将输入编辑器还是输出编辑器从全屏状态切换回普通状态
@@ -412,13 +409,12 @@ function removeFullScreen(mode) {
         $('#editor2').css('height', editor2Height); // 恢复输出编辑器的高度为进入全屏前记录的高度值
     }
     $('body').css({
-        overflow: '',
-        position: ''
+        overflow: '', position: ''
     }); // 恢复页面的滚动和定位属性
 }
 
 function Progress(action) {
-    $('#ajaxProgressBar')[action]();
+    $('.progress.is-success.is-small')[action]();
 }
 
 function createShiftArr(indent_size) {
@@ -428,7 +424,7 @@ function createShiftArr(indent_size) {
     return shift;
 }
 
-function getContentIfNotEmpty(editor) {
+function getContent(editor) {
     var time = timeStart(),
         content = $.trim((editor ? editor : editor1).getValue());
     if (content === '') {
@@ -529,18 +525,18 @@ function setupClipboard(editor, buttonId) {
 }
 
 function showSuccessMessage(message, a) {
-    var backgroundColor = a && "style='background-color: red;'" || "";
-    $(".field.success").html('<div class="button is-info is-hovered is-fullwidth" ' + backgroundColor + '>' + message + '</div>').show().delay(3000).fadeOut();
+    var backgroundColor = "style='background:" + (a ? 'red' : '#3488ce') + ";'";
+    $(".field.success").html('<div class="button is-fullwidth alert-message"' + backgroundColor + '>' + message + '</div>').show().delay(3000).fadeOut();
 }
 
 function state(time) {
-    $(".field.state").html('<div class="button is-dark is-hovered is-fullwidth" style="color:black; background-color:#bcd8ed;">用时: ' + timeEnd(time) + 'ms</div>').show().delay(3000).fadeOut();
+    $(".field.state").html('<div class="button is-fullwidth alert-message" style="color:black;">用时: ' + timeEnd(time) + 'ms</div>').show().delay(3000).fadeOut();
 }
 
 function showErrorMessage(message, a) {
     if (a === undefined) {
         clearTimeout(window.hideTimer);
-        $(".columns.is-centered").html('<div class="notification is-danger" style="color:black; background-color:#f8d7da;"><p class="subtitle" style="color: red;">语法错误：</p><p class="content">' + message + '</p><button class="is-medium delete"></button></div>').fadeIn();
+        $(".columns.is-centered").html('<div class="notification alert-message" style="color:black; border:0px; background:#f8d7da;"><p class="subtitle" style="color:red;">语法错误：</p><p>' + message + '</p><button class="is-medium delete"></button></div>').fadeIn();
         $(".delete").on("click", function(event) {
             event.preventDefault();
             $(".columns.is-centered").fadeOut();

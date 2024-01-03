@@ -5,7 +5,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.3/ace.js"></script>
     <link rel="stylesheet" href="/luci-static/tinynote/bulma.css"/><br>
     <div class="columns is-centered" style="display: none;"></div>
-    <progress id="ajaxProgressBar" class="progress is-success is-small" max="100" style="display:none">50%</progress>
+    <progress class="progress is-success is-small" max="100" style="display:none">50%</progress>
     <div class="columns mb-0 is-desktop">
         <div class="column">
             <div id="inputDiv" class="aceEditorBorder">
@@ -45,8 +45,8 @@
             </div>
         </div>
         <div class="column is-12-mobile is-2-desktop has-text-centered">
-            <div class="field success" style="display: none;"></div>
             <div class="field state" style="display: none;"></div>
+            <div class="field success" style="display: none;"></div>
             <div class="columns mb-0">
                 <div class="column">
                     <label class="button is-fullwidth" title="上传文件" for="fileInput">
