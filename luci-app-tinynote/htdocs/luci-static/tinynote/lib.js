@@ -1,4 +1,3 @@
-
 var output;
 // customScrollbar: 自定义滚动条
 // hScrollBarAlwaysVisible: 水平滚动条是否始终可见
@@ -43,8 +42,8 @@ var output;
 // indentedSoftWrap: 缩进自动换行
 // foldStyle: 折叠样式
 // mode: 编辑器的语言模式
-var editor1 = ace.edit("editor1");
-var editor2 = ace.edit("editor2");
+var editor1 = ace.edit("editor1"),
+    editor2 = ace.edit("editor2");
 editor1.setOptions({
     theme: "ace/theme/monokai",
     fontSize: "14px",
@@ -62,7 +61,7 @@ editor2.setOptions({
 });
 
 var indent_size = calculateTabSize();
-$('#tabsize').on('change', function () {
+$('#tabsize').on('change', function() {
     indent_size = calculateTabSize();
 });
 
@@ -80,66 +79,80 @@ function decodeSpecialCharacter(e) {
             .replace(/\&quot;/g, '"'); // 替换 &quot; 为 "
 }
 
+function currentTimeMilli() {
+    return window.performance.now();
+}
+
+function timeStart() {
+    return currentTimeMilli();
+}
+
+function timeEnd(start) {
+    return (currentTimeMilli() - start).toFixed(3);
+}
+
 function FormatSH(type) {
-    var content = getContentIfNotEmpty();
+    var content = getContentIfNotEmpty().content;
     if (!content) return;
     editor2.setValue(content || '没有返回值');
     editor2.session.setMode("ace/mode/sh");
+    state(getContentIfNotEmpty().time);
 }
 
 function JsCompression(a) {
-    var content = getContentIfNotEmpty();
+    var content = getContentIfNotEmpty().content;
     if (!content) return;
     loadScripts(["/luci-static/tinynote/format.js", "/luci-static/tinynote/beautifier.js"])
-        .then(function () {
+        .then(function() {
             var packer = new Packer();
             if (a === "minify") output = packer.minify(content);
             else if (a === "pack") output = packer.pack(content, true, true);
-            else if (a === "beautify") output = beautifier.js(content, {
-                indent_size,
-                indent_char,
-                jslint_happy: true,
-                wrap_line_length: 0,
-                templating: ["auto"],
-                end_with_newline: true,
-                max_preserve_newlines: 1,
-                space_in_empty_paren: true,
-                operator_position: "before-newline",
-                indent_with_tabs: indent_size === '\t'
-            });
+            else if (a === "beautify") {
+                output = beautifier.js(content, {
+                    indent_size,
+                    indent_char,
+                    wrap_line_length: 0,
+                    templating: ["auto"],
+                    space_in_empty_paren: true,
+                    // break_chained_methods: true,
+                    // keep_array_indentation: true,
+                    // unindent_chained_methods: false,
+                    operator_position: "before-newline",
+                    indent_with_tabs: indent_size === '\t'
+                });
+            }
             editor1.session.setMode("ace/mode/javascript");
             editor2.session.setMode("ace/mode/javascript");
             editor2.setValue(output || '没有返回值');
         });
+        state(getContentIfNotEmpty().time);
 }
 
 function examineJavaScript() {
-    var content = getContentIfNotEmpty();
+    var content = getContentIfNotEmpty().content;
     if (!content) return;
     editor1.session.setMode("ace/mode/javascript");
     loadScripts("https://cdn.bootcdn.net/ajax/libs/jshint/2.13.6/jshint.js")
-        .then(function () {
-            var result = JSHINT(content, {
-                asi: true,
-                esversion: 8
-            });
-            if (result) showSuccessMessage("语法通过");
+        .then(function() {
+            var output = JSHINT(content, { asi: true, esversion: 8 });
+            if (output) showSuccessMessage("语法通过");
             else {
                 var errorMessage = "";
-                JSHINT.errors.forEach(function (e) {
+                JSHINT.errors.forEach(function(e) {
                     var errorEvidence = e.evidence ? '"<b style="color: red;">' + e.evidence + '</b>"，' : '';
                     errorMessage += '在第 ' + e.line + ' 行，第 ' + e.character + ' 列，' + errorEvidence + '错误代码：' + e.code + ' :' + getErrorMessage(e.code) + '<br>';
                 });
                 showErrorMessage(errorMessage);
             }
         });
+        state(getContentIfNotEmpty().time);
 }
 
 function CSSFormat(a) {
-    var content = getContentIfNotEmpty();
+    var content = getContentIfNotEmpty().content;
     if (!content) return;
     loadScripts(["/luci-static/tinynote/vkbeautify.js", "/luci-static/tinynote/beautifier.js"])
-        .then(function () {
+        .then(function() {
             // selector_separator_newline: 一个布尔值，表示在选择器分隔符（如逗号）后是否换行，默认为true。
             // newline_between_rules: 一个布尔值，表示在规则之间是否插入换行，默认为true。
             // space_around_selector_separator: 一个布尔值，表示在选择器分隔符周围是否增加空格。
@@ -152,35 +165,39 @@ function CSSFormat(a) {
             editor2.session.setMode("ace/mode/css");
             editor2.setValue(output || '没有返回值');
         });
+        state(getContentIfNotEmpty().time);
 }
 
 function formatLua(a) {
-    var content = getContentIfNotEmpty();
+    var content = getContentIfNotEmpty().content;
     if (!content) return;
     loadScripts(["/luci-static/tinynote/luaparse.js", "/luci-static/tinynote/lua-fmt-lib.js", "/luci-static/tinynote/luamin.min.js"])
-    .then(function () {
-        try {
-            editor1.session.setMode("ace/mode/lua");
-            editor2.session.setMode("ace/mode/lua");
-            output = a === undefined ? beautifyLuaCode(content, createShiftArr(indent_size)) : luamin.minify(content);
-            if (a === 'examine' && output) return showSuccessMessage("语法通过");
-            editor2.setValue(output || '没有返回值')
-        } catch (e) {
-            showErrorMessage(e.message)
-        }
-    })
-    .catch(function () {
-        showErrorMessage("加载错误", true)
-    });
+        .then(function() {
+            try {
+                editor1.session.setMode("ace/mode/lua");
+                output = a === undefined ? beautifyLuaCode(content, createShiftArr(indent_size)) : luamin.minify(content);
+                if (a === 'examine' && output) showSuccessMessage("语法通过");
+                if (a !== 'examine') {
+                    editor2.session.setMode("ace/mode/lua");
+                    editor2.setValue(output || '没有返回值');
+                }
+            } catch (e) {
+                showErrorMessage(e.message);
+            }
+        })
+        .catch(function() {
+            showErrorMessage("加载错误", true);
+        });
+        state(getContentIfNotEmpty().time);
 }
 
 function jsonFormat(a) {
-    var content = getContentIfNotEmpty();
+    var content = getContentIfNotEmpty().content;
     if (!content) return;
     editor1.session.setMode("ace/mode/javascript");
     editor2.session.setMode("ace/mode/javascript");
     loadScripts(["/luci-static/tinynote/vkbeautify.js", "https://cdn.bootcdn.net/ajax/libs/jsonlint/1.6.0/jsonlint.min.js"])
-        .then(function () {
+        .then(function() {
             editor1.session.setMode("ace/mode/json");
             try {
                 if (a === 'min') output = vkbeautify.jsonmin(content);
@@ -188,24 +205,27 @@ function jsonFormat(a) {
                 // output = JSON.stringify($.parseJSON(content), null, indent_size);
                 else if (a === 'safeLoad') {
                     jsonlint.parse(content);
-                    return showSuccessMessage("语法通过");
+                    showSuccessMessage("语法通过");
                 }
-                editor2.session.setMode("ace/mode/json");
-                editor2.setValue(output || '没有返回值');
+                if (a !== 'safeLoad') {
+                    editor2.session.setMode("ace/mode/json");
+                    editor2.setValue(output || '没有返回值');
+                }
             } catch (e) {
                 showErrorMessage(e.message);
             }
         })
-        .catch(function () {
+        .catch(function() {
             showErrorMessage("加载错误", true);
         });
+        state(getContentIfNotEmpty().time);
 }
 
 function FormatHTML(a) {
-    var content = getContentIfNotEmpty();
+    var content = getContentIfNotEmpty().content;
     if (!content) return;
     loadScripts(["/luci-static/tinynote/vkbeautify.js", "/luci-static/tinynote/beautifier.js"])
-        .then(function () {
+        .then(function() {
             // templating: 一个数组，表示模板引擎的选择。如果长度为1且值为'auto'，则默认使用['django', 'erb', 'handlebars', 'php']作为模板引擎。
             // indent_inner_html: 一个布尔值，表示是否缩进内部HTML代码。
             // indent_body_inner_html: 一个布尔值，表示是否缩进body标签内部的HTML代码，默认为true。
@@ -236,50 +256,49 @@ function FormatHTML(a) {
                 showErrorMessage(e.message);
             }
         })
-        .catch(function () {
+        .catch(function() {
             showErrorMessage("加载错误", true);
         });
+        state(getContentIfNotEmpty().time);
 }
 
 function FormatYAML(a) {
-    var content = getContentIfNotEmpty();
+    var content = getContentIfNotEmpty().content;
     if (!content) return;
     loadScripts(["/luci-static/tinynote/vkbeautify.js", "https://cdn.bootcdn.net/ajax/libs/js-yaml/4.1.0/js-yaml.js"])
-        .then(function () {
+        .then(function() {
             try {
                 editor1.session.setMode("ace/mode/yaml");
                 editor2.session.setMode("ace/mode/yaml");
                 if (a === 'json') {
                     output = vkbeautify.json(jsyaml.load(content), indent_size);
-                    editor2.session.setMode("ace/mode/json")
+                    editor2.session.setMode("ace/mode/json");
                 } else if (a === 'safeLoad') {
-                    if (jsyaml.load(content)) return showSuccessMessage("语法通过");
+                    if (jsyaml.load(content)) showSuccessMessage("语法通过");
                 } else if (a === 'format') {
-                    output = jsyaml.dump(jsyaml.load(content), {
-                        indent: indent_size
-                    });
+                    output = jsyaml.dump(jsyaml.load(content), { indent: indent_size });
                 } else if (a === 'yaml') {
                     output = jsyaml.dump(JSON.parse(content), {
-                        quotingType: "",
-                        indent: indent_size
+                        quotingType: "", indent: indent_size
                     });
                     editor1.session.setMode("ace/mode/json");
                 }
-                editor2.setValue(output || '没有返回值')
+                if (a !== 'safeLoad') editor2.setValue(output || '没有返回值');
             } catch (e) {
-                showErrorMessage(e.message)
+                showErrorMessage(e.message);
             }
         })
-        .catch(function () {
+        .catch(function() {
             showErrorMessage("加载错误", true)
         });
+        state(getContentIfNotEmpty().time);
 }
-
+                
 function jsonTocsv() {
-    var content = getContentIfNotEmpty();
+    var content = getContentIfNotEmpty().content;
     if (!content) return;
     loadScripts("https://cdn.bootcdn.net/ajax/libs/jsonlint/1.6.0/jsonlint.min.js")
-        .then(function () {
+        .then(function() {
             try {
                 var i = jsonlint.parse(content),
                     n = jsonToCsv2(i, ",", !0, !1, !1);
@@ -290,16 +309,17 @@ function jsonTocsv() {
                 showErrorMessage(e.message);
             }
         })
-        .catch(function () {
+        .catch(function() {
             showErrorMessage("加载错误", true);
         });
+        state(getContentIfNotEmpty().time);
 }
 
 function jsonToXML() {
-    var content = getContentIfNotEmpty();
+    var content = getContentIfNotEmpty().content;
     if (!content) return;
     loadScripts(["/luci-static/tinynote/vkbeautify.js", '/luci-static/tinynote/ObjTree.min.js', 'https://cdn.bootcdn.net/ajax/libs/jsonlint/1.6.0/jsonlint.min.js'])
-        .then(function () {
+        .then(function() {
             try {
                 var x = content.replace(/([ :$&]+)(?=[(\w* *]*":)/g, "_"),
                     json = jsonlint.parse(x),
@@ -307,22 +327,23 @@ function jsonToXML() {
                     xml = xotree.writeXML(json);
                 editor1.session.setMode("ace/mode/json");
                 editor2.session.setMode("ace/mode/xml");
-                editor2.setValue(vkbeautify.xml(xml) || '没有返回值')
+                editor2.setValue(vkbeautify.xml(xml) || '没有返回值');
             } catch (e) {
-                showErrorMessage(e.message)
+                showErrorMessage(e.message);
             }
         })
-        .catch(function () {
-            showErrorMessage("加载错误", true)
+        .catch(function() {
+            showErrorMessage("加载错误", true);
         });
+        state(getContentIfNotEmpty().time);
 }
 
 function downloadFile(event) {
     event.preventDefault();
-    var content = getContentIfNotEmpty(editor2);
+    var content = getContentIfNotEmpty(editor2).content;
     if (!content) return;
     loadScripts("/luci-static/tinynote/FileSaver.js")
-        .then(function () {
+        .then(function() {
             var blob = new Blob(["" + content], {
                 type: "text/plain; charset=utf-8"
             });
@@ -330,15 +351,15 @@ function downloadFile(event) {
         });
 }
 
-editor1.on("input", function () {
+editor1.on("input", function() {
     updateDisplay(editor1, $("#inputTextSize"), $("#inputAceLineColumn"));
 });
 
-editor2.on("input", function () {
+editor2.on("input", function() {
     updateDisplay(editor2, $("#outputTextSize"), $("#outputAceLineColumn"));
 });
 
-$(document).on("keydown", function (event) {
+$(document).on("keydown", function(event) {
     if (event.key === "F11") {
         event.preventDefault();
         toggleFullScreen($('#editor2')[0]);
@@ -347,12 +368,13 @@ $(document).on("keydown", function (event) {
 
 function toggleFullScreen(editor) {
     loadScripts("/luci-static/tinynote/screenfull.js")
-        .then(function () {
+        .then(function() {
             if (screenfull.isEnabled) screenfull.toggle(editor);
         });
 }
 
 var editor1Height, editor2Height;
+
 function addFullScreen(mode) {
     if (mode === 'input') { // 如果是输入编辑器
         $('#inputDiv').addClass('fullScreen'); // 给输入编辑器的div添加fullScreen类，实现全屏效果
@@ -406,31 +428,25 @@ function createShiftArr(indent_size) {
     return shift;
 }
 
-function getContentIfNotEmpty(a) {
-    var content = $.trim((a ? editor : editor1).getValue());
+function getContentIfNotEmpty(editor) {
+    var time = timeStart(),
+        content = $.trim((editor ? editor : editor1).getValue());
     if (content === '') {
         showErrorMessage('内容为空', true)
         return false;
     }
-    return content;
+    return { content, time };
 }
 
 function updateDisplay(editor, sizeOutput, lineColumnOutput) {
-    var content = editor.getValue(),
-        sizes = ["Bytes", "KB", "MB", "GB", "TB"],
-        sizeInBytes = 0;
-    if (content) {
-        var blob = new Blob([content]);
-        sizeInBytes = blob.size;
-        var i = Math.floor(Math.log(sizeInBytes) / Math.log(1024));
-        var size = (sizeInBytes / Math.pow(1024, i)).toFixed(2);
-        sizeOutput.html("Size: " + parseInt(size) + " " + sizes[i]);
-    } else {
-        sizeOutput.html("Size: 0 Byte");
-    }
-    var lineNumber = editor.session.getLength();
-    var columnNumber = editor.selection.getCursor().column + 1;
-    var maxColumnCount = 0;
+    var content = $.trim(editor.getValue());
+    if (!content) return;
+    var size = content.length;
+    sizeOutput.html("Size: " + (size < 1024 ? size + " Bytes" : (size / 1024).toFixed(2) + " KB"));
+
+    var lineNumber = editor.session.getLength(),
+        columnNumber = editor.selection.getCursor().column + 1,
+        maxColumnCount = 0;
     for (var i = 0; i < lineNumber; i++) {
         maxColumnCount = Math.max(maxColumnCount, editor.session.getLine(i).length);
     }
@@ -438,15 +454,16 @@ function updateDisplay(editor, sizeOutput, lineColumnOutput) {
 }
 
 var loadedScripts = [];
+
 function loadScripts(scripts) {
     scripts = typeof scripts === 'string' ? [scripts] : scripts;
-    var promises = scripts.map(function (script) {
+    var promises = scripts.map(function(script) {
         if (loadedScripts.indexOf(script) === -1) {
-            return new Promise(function (resolve, reject) {
-                $.getScript(script).done(function () {
+            return new Promise(function(resolve, reject) {
+                $.getScript(script).done(function() {
                     loadedScripts.push(script);
                     resolve();
-                }).fail(function (error) {
+                }).fail(function(error) {
                     reject(error);
                 });
             });
@@ -478,71 +495,71 @@ function changeToFileContent(input) {
     if (file) {
         var reader = new FileReader();
         reader.readAsText(file, "UTF-8");
-        reader.onload = function (event) {
+        reader.onload = function(event) {
             if (editor1) editor1.setValue(event.target.result);
         };
         input.value = "";
     }
 }
 
-$(".editortoolbar #copyeditor1").click(function () {
+$("#copyeditor1").click(function() {
     setupClipboard(editor1, 'copyeditor1');
 });
 
-$(".editortoolbar #copyeditor2").click(function () {
+$("#copyeditor2").click(function() {
     setupClipboard(editor2, 'copyeditor2');
 });
 
 function setupClipboard(editor, buttonId) {
-    loadScripts("/luci-static/tinynote/clipboard.min.js")
-        .then(function () {
-            return new ClipboardJS('#' + buttonId, {
-                text: function () {
-                    var value = editor.getValue().trim();
-                    if (value) return value;
-                }
-            }).on('success', function (e) {
-                if (editor) editor.execCommand('selectAll');
-                showSuccessMessage("已复制");
-                e.clearSelection();
-            }).on('error', function (e) {
-                e.clearSelection();
-                if (editor.getValue().trim() === '') {
-                    showErrorMessage('内容为空', true)
-                } else showErrorMessage('复制出错' + e.action);
-            });
-        });
+    return new ClipboardJS('#' + buttonId, {
+        text: function() {
+            var value = editor.getValue().trim();
+            if (value) return value;
+        }
+    }).on('success', function(e) {
+        if (editor) editor.execCommand('selectAll');
+        showSuccessMessage("已复制");
+        e.clearSelection();
+    }).on('error', function(e) {
+        e.clearSelection();
+        if (editor.getValue().trim() === '') {
+            showErrorMessage('内容为空', true)
+        } else showErrorMessage('复制出错' + e.action);
+    });
 }
 
 function showSuccessMessage(message, a) {
     var backgroundColor = a && "style='background-color: red;'" || "";
-    $("#success").html('<div class="button is-info is-hovered is-fullwidth" ' + backgroundColor + '>' + message + '</div>').show().delay(3000).fadeOut();
+    $(".field.success").html('<div class="button is-info is-hovered is-fullwidth" ' + backgroundColor + '>' + message + '</div>').show().delay(3000).fadeOut();
+}
+
+function state(time) {
+    $(".field.state").html('<div class="button is-dark is-hovered is-fullwidth" style="color:black; background-color:#bcd8ed;">用时: ' + timeEnd(time) + 'ms</div>').show().delay(3000).fadeOut();
 }
 
 function showErrorMessage(message, a) {
     if (a === undefined) {
         clearTimeout(window.hideTimer);
-        $("#warning").html('<div class="notification is-danger" style="color:#58151c; background-color:#f8d7da; border-color:#f8d7da;"><button id="customButton" type="button" style="position: absolute; top: 5px; right: 5px; background: none; border: none;"><i class="material-icons md-18" style="color: black; text-shadow: 0 0 0 transparent;">close</i></button><b style="color: red;">语法错误：</b><br>' + message + '</div>').fadeIn();
-        $("#customButton").on("click", function () {
-            $("#warning").fadeOut();
+        $(".columns.is-centered").html('<div class="notification is-danger" style="color:black; background-color:#f8d7da;"><p class="subtitle" style="color: red;">语法错误：</p><p class="content">' + message + '</p><button class="is-medium delete"></button></div>').fadeIn();
+        $(".delete").on("click", function(event) {
+            event.preventDefault();
+            $(".columns.is-centered").fadeOut();
         });
         var mouseEntered = false;
-        $("#warning").on({
-            mouseenter: function () {
+        $(".columns.is-centered").on({
+            mouseenter: function() {
                 mouseEntered = true;
-                if (window.hideTimer) {
-                    clearTimeout(window.hideTimer);
-                }
+                if (window.hideTimer) clearTimeout(window.hideTimer);
             },
-            mouseleave: function () {
-                window.hideTimer = setTimeout(function () {
-                    if (!mouseEntered) {
-                        $("#warning").fadeOut();
-                    }
+            mouseleave: function() {
+                window.hideTimer = setTimeout(function() {
+                    if (!mouseEntered) $(".columns.is-centered").fadeOut();
                 }, 5000);
             }
         }).trigger('mouseleave');
-    } else showSuccessMessage(message, true);
+    } else {
+        showSuccessMessage(message, true);
+    }
 }
 
 function getExampleLua() {

@@ -1,9 +1,11 @@
 <body>
     <script type="text/javascript" src="/luci-static/tinynote/jquery.min.js"></script>
-    <script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/ace/1.24.2/ace.min.js"></script>
+    <script type="text/javascript" src="/luci-static/tinynote/clipboard.min.js"></script>
+    <!-- <script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/ace/1.32.3/ace.min.js"></script> -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.3/ace.js"></script>
     <link rel="stylesheet" href="/luci-static/tinynote/bulma.css"/><br>
-    <div class="columns is-centered" id="warning" style="display: none;"></div>
-    <progress id="ajaxProgressBar" class="progress is-success is-small" max="100" style="display:none" >50%</progress>
+    <div class="columns is-centered" style="display: none;"></div>
+    <progress id="ajaxProgressBar" class="progress is-success is-small" max="100" style="display:none">50%</progress>
     <div class="columns mb-0 is-desktop">
         <div class="column">
             <div id="inputDiv" class="aceEditorBorder">
@@ -12,13 +14,13 @@
                         <i class="is-size-6 is-family-primary">输入</i>
                     </a>
                     <div class="editortoolbar btn-group-sm">
-                        <a class="icon" onclick="setFromLocalStorage()" title="从本地存储加载以前的数据">
+                        <a  class="icon is-hidden-mobile" onclick="setFromLocalStorage()" title="从本地存储加载以前的数据">
                             <i class="material-icons">history</i>
                         </a>
                         <a id="fileopen" class="icon" title="打开文件">
                             <i class="material-icons">folder_open</i>
                         </a>
-                        <a class="icon" title="保存" onclick="openSaveModal(true)">
+                        <a  class="icon is-hidden-mobile" title="保存" onclick="openSaveModal(true)">
                             <i class="material-icons">save</i>
                         </a>
                         <a class="icon" title="清除" onclick="clearAll(event, editor1);">
@@ -43,11 +45,12 @@
             </div>
         </div>
         <div class="column is-12-mobile is-2-desktop has-text-centered">
-            <div id="success" class="field" style="display: none;"></div>
+            <div class="field success" style="display: none;"></div>
+            <div class="field state" style="display: none;"></div>
             <div class="columns mb-0">
                 <div class="column">
                     <label class="button is-fullwidth" title="上传文件" for="fileInput">
-                        <input id="fileInput" class="file-input" type="file" onchange="changeToFileContent(this)" style="display: none;"/>
+                        <input id="fileInput" class="file-input" type="file" onchange="changeToFileContent(this)" style="display: none;" />
                         <span class="icon is-hidden-desktop-only">
                             <i class="material-icons">publish</i>
                         </span>
