@@ -153,12 +153,22 @@ function CSSFormat(a) {
     if (!content) return;
     loadScripts(["/luci-static/tinynote/vkbeautify.js", "/luci-static/tinynote/beautifier.js"])
         .then(function() {
-            // selector_separator_newline: 一个布尔值，表示在选择器分隔符（如逗号）后是否换行，默认为true。
-            // newline_between_rules: 一个布尔值，表示在规则之间是否插入换行，默认为true。
-            // space_around_selector_separator: 一个布尔值，表示在选择器分隔符周围是否增加空格。
-            // space_around_combinator: 一个布尔值，表示在组合器（如 +、>）周围是否增加空格，如果未设置，则默认与space_around_selector_separator相同。
-            // brace_style: 一个字符串，表示大括号的样式，可选值为['collapse', 'expand', 'end-expand', 'none', 'preserve-inline']。默认为'collapse'。
-            if (a === "format") output = beautifier.css(content);
+            if (a === "format") output = beautifier.css(content, {
+                // indent_size: 指定每一级缩进的空格数，默认值为4。
+                // indent_char: 指定用于缩进的字符，默认为一个空格。
+                // selector_separator_newline: 布尔值，表示是否在选择器分隔符后换行，默认为true。
+                // end_with_newline: 布尔值，表示是否在CSS文件末尾添加一个空行，默认为false。
+                // newline_between_rules: 布尔值，表示是否在每个规则之间添加一个空行，默认为true。
+                // space_around_combinator: 布尔值，表示是否在组合器（如空格、加号等）周围添加空格，默认为false。
+                // preserve_newlines: 布尔值，表示是否保留原始CSS代码中的所有换行符，默认为false。
+                // max_preserve_newlines: 数字，表示最多保留原始CSS代码中的几个换行符，默认为10。
+                indent_size,
+                indent_char,
+                end_with_newline: true,
+                preserve_newlines: false,
+                selector_separator_newline: true,
+                indent_with_tabs: indent_size === '\t'
+            });
             else if (a === "min") output = vkbeautify.cssmin(content);
             else if (a === "pack") output = vkbeautify.csspack(content);
             editor1.session.setMode("ace/mode/css");
@@ -194,8 +204,6 @@ function formatLua(a) {
 function jsonFormat(a) {
     var content = getContent().content;
     if (!content) return;
-    editor1.session.setMode("ace/mode/javascript");
-    editor2.session.setMode("ace/mode/javascript");
     loadScripts(["/luci-static/tinynote/vkbeautify.js", "https://cdn.bootcdn.net/ajax/libs/jsonlint/1.6.0/jsonlint.min.js"])
         .then(function() {
             editor1.session.setMode("ace/mode/json");
@@ -226,27 +234,27 @@ function FormatHTML(a) {
     if (!content) return;
     loadScripts(["/luci-static/tinynote/vkbeautify.js", "/luci-static/tinynote/beautifier.js"])
         .then(function() {
-            // templating: 一个数组，表示模板引擎的选择。如果长度为1且值为'auto'，则默认使用['django', 'erb', 'handlebars', 'php']作为模板引擎。
-            // indent_inner_html: 一个布尔值，表示是否缩进内部HTML代码。
-            // indent_body_inner_html: 一个布尔值，表示是否缩进body标签内部的HTML代码，默认为true。
-            // indent_head_inner_html: 一个布尔值，表示是否缩进head标签内部的HTML代码，默认为true。
-            // indent_handlebars: 一个布尔值，表示是否缩进handlebars代码，默认为true。
-            // wrap_attributes: 一个字符串，表示如何包装HTML属性。可选值为['auto', 'force', 'force-aligned', 'force-expand-multiline', 'aligned-multiple', 'preserve', 'preserve-aligned']。
-            // wrap_attributes_min_attrs: 一个数字，表示多少个属性以上才会进行属性换行包装，默认为2。
-            // wrap_attributes_indent_size: 一个数字，表示属性包装时的缩进大小，默认与indent_size相同。
-            // extra_liners: 一个数组，表示额外的需要换行的标签，如['head', 'body', '/html']。
-            // inline: 一个数组，表示内联元素的列表。
-            // inline_custom_elements: 一个布尔值，表示是否内联自定义元素，默认为true。
-            // void_elements: 一个数组，表示空元素的列表。
-            // unformatted: 一个数组，表示不需要格式化的标签列表。
-            // content_unformatted: 一个数组，表示内部内容不需要格式化的标签列表。
-            // unformatted_content_delimiter: 一个字符串，表示内部不需要格式化的内容的分隔符。
-            // indent_scripts: 一个字符串，表示脚本标签的缩进方式。可选值为['normal', 'keep', 'separate']。
             try {
                 editor1.session.setMode("ace/mode/html");
                 editor2.session.setMode("ace/mode/html");
                 if (a === "format") output = beautifier.html(content, {
-                    indent_size, indent_char, templating: ["auto"]
+                    // templating: 一个数组，表示模板引擎的选择。如果长度为1且值为'auto'，则默认使用['django', 'erb', 'handlebars', 'php']作为模板引擎。
+                    // indent_inner_html: 一个布尔值，表示是否缩进内部HTML代码。
+                    // indent_body_inner_html: 一个布尔值，表示是否缩进body标签内部的HTML代码，默认为true。
+                    // indent_head_inner_html: 一个布尔值，表示是否缩进head标签内部的HTML代码，默认为true。
+                    // indent_handlebars: 一个布尔值，表示是否缩进handlebars代码，默认为true。
+                    // wrap_attributes: 一个字符串，表示如何包装HTML属性。可选值为['auto', 'force', 'force-aligned', 'force-expand-multiline', 'aligned-multiple', 'preserve', 'preserve-aligned']。
+                    // wrap_attributes_min_attrs: 一个数字，表示多少个属性以上才会进行属性换行包装，默认为2。
+                    // wrap_attributes_indent_size: 一个数字，表示属性包装时的缩进大小，默认与indent_size相同。
+                    // extra_liners: 一个数组，表示额外的需要换行的标签，如['head', 'body', '/html']。
+                    // inline: 一个数组，表示内联元素的列表。
+                    // inline_custom_elements: 一个布尔值，表示是否内联自定义元素，默认为true。
+                    // void_elements: 一个数组，表示空元素的列表。
+                    // unformatted: 一个数组，表示不需要格式化的标签列表。
+                    // content_unformatted: 一个数组，表示内部内容不需要格式化的标签列表。
+                    // unformatted_content_delimiter: 一个字符串，表示内部不需要格式化的内容的分隔符。
+                    // indent_scripts: 一个字符串，表示脚本标签的缩进方式。可选值为['normal', 'keep', 'separate']。
+                    indent_size, indent_char, templating: ["auto"], indent_with_tabs: indent_size === '\t'
                 });
                 else if (a === "min") output = vkbeautify.xmlmin(content);
                 editor2.setValue(output || '没有返回值');
@@ -271,17 +279,17 @@ function FormatYAML(a) {
                 if (a === 'json') {
                     output = vkbeautify.json(jsyaml.load(content), indent_size);
                     editor2.session.setMode("ace/mode/json");
-                } else if (a === 'safeLoad') {
-                    if (jsyaml.load(content)) showSuccessMessage("语法通过");
                 } else if (a === 'format') {
                     output = jsyaml.dump(jsyaml.load(content), { indent: indent_size });
                 } else if (a === 'yaml') {
+                    editor1.session.setMode("ace/mode/json");
                     output = jsyaml.dump(JSON.parse(content), {
                         quotingType: "", indent: indent_size
                     });
-                    editor1.session.setMode("ace/mode/json");
+                } else if (a === 'safeLoad') {
+                    if (jsyaml.load(content)) showSuccessMessage("语法通过");
                 }
-                if (a !== 'safeLoad') editor2.setValue(output || '没有返回值');
+                if (a !== 'safeLoad') editor2.setValue(output ? output : '没有返回值');
             } catch (e) {
                 showErrorMessage(e.message);
             }
@@ -360,7 +368,8 @@ editor2.on("input", function() {
 $(document).on("keydown", function(event) {
     if (event.key === "F11") {
         event.preventDefault();
-        toggleFullScreen($('#editor2')[0]);
+        var activeEditor = editor1.isFocused() ? editor1 : editor2.isFocused() ? editor2 : null;
+        if (activeEditor) toggleFullScreen(activeEditor.container);
     }
 });
 

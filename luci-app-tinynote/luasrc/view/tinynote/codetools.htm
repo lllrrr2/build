@@ -29,7 +29,7 @@
                         <a id='copyeditor1' class="icon" title="复制输入代码">
                             <i class="material-icons">content_copy</i>
                         </a>
-                        <a id="inputFullScreen" class="icon is-hidden-mobile" onclick="addFullScreen('input');" title="全屏">
+                        <a id="inputFullScreen" class="icon" onclick="addFullScreen('input');" title="全屏">
                             <i class="material-icons">open_in_full</i>
                         </a>
                         <a id="inputCloseScreen" style="display:none" class="icon" onclick="removeFullScreen('input');" title="关闭全屏">
@@ -45,8 +45,6 @@
             </div>
         </div>
         <div class="column is-12-mobile is-2-desktop has-text-centered">
-            <div class="field state" style="display: none;"></div>
-            <div class="field success" style="display: none;"></div>
             <div class="columns mb-0">
                 <div class="column">
                     <label class="button is-fullwidth" title="上传文件" for="fileInput">
@@ -89,6 +87,8 @@
                     </select>
                 </p>
             </div>
+            <div class="field state" style="display: none;"></div>
+            <div class="field success" style="display: none;"></div>
         </div>
         <div class="column">
             <div id="outputDiv" class="aceEditorBorder">
