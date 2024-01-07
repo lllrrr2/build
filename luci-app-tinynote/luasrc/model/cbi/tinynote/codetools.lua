@@ -1,4 +1,4 @@
-m = SimpleForm("tinynote", translate(""))
+m = SimpleForm("logview")
 m.submit = false
 m.reset = false
 f = m:section(TypedSection)
@@ -27,7 +27,7 @@ x.inputtitle = "常规压缩"
 x.onclick    = "JsCompression('minify');"
 x.template   = "tinynote/inlinebutton"
 x = f:taboption("JS", Button, "JsCompressionminify")
-x.inputtitle = "加密压缩"
+x.inputtitle = "混淆压缩"
 x.onclick    = "JsCompression('pack');"
 x.template   = "tinynote/inlinebutton"
 x = f:taboption("JS", Button, "getExampleJavaScript")

@@ -257,9 +257,17 @@ local note_suffix = f:taboption("note", ListValue, "note_suffix",
 note_suffix.default = "txt"
 addValues(note_suffix, 'txt', 'sh', 'lua', 'py', 'js')
 
+-- local enable = f:taboption("note", Flag, "enable",
+--     translate("Enable CodeMirror Support"))
+-- enable.default = '0'
+
 local enable = f:taboption("note", Flag, "enable",
     translate("Enable CodeMirror Support"))
-enable.default = '0'
+enable:depends("aceenable", 0)
+
+local aceenable = f:taboption("note", Flag, "aceenable",
+    translate("ace 支持"))
+aceenable:depends("enable", 0)
 
 local theme = f:taboption("codemirror", ListValue, "theme",
     translate("Design"))
@@ -309,6 +317,7 @@ s.addremove = false
 local con         = uci:get_all("luci", "tinynote")
 local note_sum    = con.note_sum    or "1"
 local code_enable = con.enable      or nil
+local code_aceenable = con.aceenable or nil
 local note_suffix = con.note_suffix or "txt"
 local note_path   = con.note_path   or "/etc/tinynote"
 
@@ -354,6 +363,10 @@ for sum_str = 1, note_sum do
 
         local a = s:taboption(note, TextValue, "note" .. sum)
         a.template = "cbi/tvalue"
+        if code_enable or code_aceenable then
+            a.id = "note" .. sum
+            a.template = "tinynote/tvalue"
+        end
         a.rows = 20
         a.wrap = "off"
 
@@ -408,6 +421,8 @@ end
 
 if code_enable then
     m:append(Template("tinynote/codemirror"))
+elseif code_aceenable then
+    m:append(Template("tinynote/ace"))
 end
 
 return m

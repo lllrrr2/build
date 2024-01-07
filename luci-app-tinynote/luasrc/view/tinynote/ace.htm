@@ -1,0 +1,56 @@
+<script src="/luci-static/tinynote/jquery.min.js"></script>
+<link rel="stylesheet" href="/luci-static/tinynote/bulma.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.3/ace.js"></script>
+
+<script>
+    function renderAceEditor(id, model, theme = 'monokai') {
+        // 通过id选择器获取元素，并添加多个样式类名
+        $(".cbi-value#cbi-luci-tinynote-" + id).addClass("columns mb-0 is-desktop");
+        
+        const $textarea = $('#' + id);
+        const $editorContainer = $('<div>').css({
+            height: '60vh',
+            width: '100%'
+        }).insertBefore($textarea.hide());
+        
+        const editor = ace.edit($editorContainer[0]);
+        editor.getSession().setValue($textarea.val());
+        editor.setOptions({
+            mode: 'ace/mode/' + model,
+            theme: "ace/theme/" + theme,
+            fontSize: "14px",
+            fontFamily: "Consolas, monospace",
+            printMarginColumn: -1,
+            wrap: true,
+            showPrintMargin: true
+        });      
+        editor.getSession().on('change', function() {
+            $textarea.val(editor.getValue());
+        });
+        
+        $textarea.on('input', function() {
+            editor.setValue($textarea.val());
+        });
+    }
+    
+    $(document).ready(function() {
+        <% 
+            local uci = require "luci.model.uci".cursor()
+            local con = uci:get_all("luci", "tinynote")
+
+            for sum_str = 1, con.note_sum do
+                local sum = string.format("%02d", sum_str)
+                local only = con.only or con['only_note' .. sum] or false
+                local model = con['model_note' .. sum] or con.note_suffix
+                local id = string.format('note%s', sum)
+
+                if model == 'shell' or model == 'py' then
+                    model = model == 'shell' and 'sh' or 'python'
+                end
+                
+                -- 调用函数对每个元素进行操作
+                %> renderAceEditor('<%=id%>', '<%=model%>'); <%
+            end
+        %>
+    });
+</script>

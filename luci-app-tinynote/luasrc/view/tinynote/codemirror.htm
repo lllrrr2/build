@@ -24,7 +24,7 @@
 </style>
 <!-- theme -->
 <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.13/theme/<%=con.theme%>.min.css">
-
+<link rel="stylesheet" href="/luci-static/tinynote/bulma.css" />
 <link rel="stylesheet" href="/luci-static/tinynote/codemirror/codemirror.min.css">
 <link rel="stylesheet" href="/luci-static/tinynote/codemirror/theme/monokai.min.css">
 <link rel="stylesheet" href="/luci-static/tinynote/codemirror/addon/dialog/dialog.min.css">
@@ -181,7 +181,7 @@ for sum_str = 1, con.note_sum do
     local sum   = string.format("%02d", sum_str)
     local only  = con.only or con['only_note'  .. sum] or false
     local model = con['model_note' .. sum] or con.note_suffix
-    local id    = string.format('cbid.luci.tinynote.note%s', sum)
+    local id    = string.format('note%s', sum)
     if model == 'sh' or model == 'py' then
       model = model == 'sh' and 'shell' or 'python'
     end
