@@ -1,11 +1,144 @@
 
+function renderAceEditor(id, model, only, theme = 'monokai') {
+    var htmlCode = 
+        '<div class="aceEditorMenu">' +
+            '<a style="float:left;">' +
+                '<i class="is-size-6 is-family-primary">输入</i>' +
+            '</a>' +
+            '<div class="editortoolbar btn-group-sm">' +
+                '<a id="fileInput' + id + '"  class="icon is-hidden-mobile" title="上传文件">' +
+                    '<i class="material-icons">publish</i>' +
+                '</a>' +
+                '<a  class="icon is-hidden-mobile" title="保存" onclick="cbi_submit(this, \'cbi.save\')">' +
+                    '<i class="material-icons">save</i>' +
+                '</a>' +
+                '<a id="down' + id + '" class="icon" title="下载">' +
+                    '<i class="material-icons">cloud_download</i>' +
+                '</a>' +
+                '<a id="clear' + id + '" class="icon" title="清除">' +
+                    '<i class="material-icons">delete_outline</i>' +
+                '</a>' +
+                '<a id="copy' + id + '" class="icon" title="复制输入代码">' +
+                    '<i class="material-icons">content_copy</i>' +
+                '</a>' +
+                '<a id="' + id + 'FullScreen" class="icon" onclick="addFullScreen(\'' + id + '\');" title="全屏">' +
+                    '<i class="material-icons">open_in_full</i>' +
+                '</a>' +
+                '<a id="' + id + 'CloseScreen" style="display:none" class="icon" onclick="removeFullScreen(\'' + id + '\');" title="关闭全屏">' +
+                    '<i class="material-icons">close_fullscreen</i>' +
+                '</a>' +
+            '</div>' +
+        '</div>';
+
+    var statusBarHtml = '<div class="columns is-mobile m-0 aceStatusBar" id="StatusBar">' +
+        '<div class="column is-two-thirds p-0 pl-0 status-left" id="' + id + 'AceLineColumn">Ln: 1 Col: 0; Max Col: 0</div>' +
+        '<div class="column is-one-thirds p-0 has-text-centered status-right" id="' + id + 'TextSize">Size: 0 Byte</div>' +
+        '</div>';
+
+    var wrapperContent = '\
+        <div class="columns is-centered" style="display: none;"></div>' +
+        '<div class="field state" style="display: none;"></div>' +
+        '<div class="field success" style="display: none;"></div>';
+
+    $(".cbi-value#cbi-luci-tinynote-" + id)
+        .prepend(htmlCode)
+        .append(statusBarHtml)
+        .addClass('column')
+        .wrapInner($('<div class=\'aceEditorBorder\' id=\'ace' + id + '\'></div>'))
+        .before(wrapperContent);
+
+    var $textarea = $('#' + id);
+    var $editorContainer = $('<div>').css({
+        height: '70vh',
+        width: '100%',
+    }).insertBefore($textarea.hide());
+
+    var xid = id;
+    var id = ace.edit($editorContainer[0]);
+    id.getSession().setValue($textarea.val());
+    id.setOptions({
+        readOnly: only,
+        mode: 'ace/mode/' + model,
+        theme: "ace/theme/" + theme,
+        fontSize: "14px",
+        fontFamily: "Consolas, monospace",
+        printMarginColumn: -1,
+        wrap: true,
+        showPrintMargin: true,
+    });
+
+    id.on("input", function () {
+        $textarea.val(id.getValue());
+        updateDisplay(id, $("#" + xid + "TextSize"), $("#" + xid + "AceLineColumn"));
+    });
+
+    $('#copy' + xid).click(function () {
+        setupClipboard(id, 'copy' + xid);
+    });
+
+    $('#clear' + xid).click(function () {
+        clearValue(id);
+    });
+
+    $('#down' + xid).click(function () {
+        downloadFile(id);
+    });
+
+    $('#fileInput' + xid).click(function () {
+        var fileInput = $('<input type="file" class="file-input">').on('change', function (event) {
+            changeToFileContent(event.target, id);
+        });
+        fileInput.click();
+    });
+
+    $(document).on("keydown", function (event) {
+        if (event.key === "F11") {
+            event.preventDefault();
+            if (id) toggleFullScreen(id);
+        }
+    });
+}
+
+function changeToFileContent(input, id) {
+    var file = input.files[0];
+    if (!file) return;
+
+    var reader = new FileReader();
+    reader.readAsText(file, "UTF-8");
+    reader.onload = function (event) {
+        var fileContent = event.target.result;
+        if (id) id.setValue(fileContent);
+    };
+
+    input.value = "";
+}
+
+function getContent(editor) {
+    var content = $.trim((editor).getValue());
+    if (content === '') {
+        showErrorMessage('内容为空', true)
+        return false;
+    }
+    return content;
+}
+
+function downloadFile(id) {
+    var content = getContent(id);
+    if (!content) return;
+    loadScripts("/luci-static/tinynote/FileSaver.js")
+        .then(function () {
+            var blob = new Blob(["" + content], {
+                type: "text/plain; charset=utf-8"
+            });
+            saveAs(blob, "data.txt");
+        });
+}
 
 function updateDisplay(editor, sizeOutput, lineColumnOutput) {
     var content = $.trim(editor.getValue());
     if (!content) return;
     var size = content.length;
     sizeOutput.html("Size: " + (size < 1024 ? size + " Bytes" : (size / 1024).toFixed(2) + " KB"));
-
     var lineNumber = editor.session.getLength(),
         columnNumber = editor.selection.getCursor().column + 1,
         maxColumnCount = 0;
@@ -16,9 +149,9 @@ function updateDisplay(editor, sizeOutput, lineColumnOutput) {
 }
 
 function addFullScreen(id) {
-    $(`#ace${id}.aceEditorBorder`).addClass('fullScreen');
-    $(`#${id}FullScreen`).hide();
-    $(`#${id}CloseScreen`).show();
+    $("#ace" + id + ".aceEditorBorder").addClass('fullScreen');
+    $("#" + id + "FullScreen").hide();
+    $("#" + id + "CloseScreen").show();
     $('.ace_editor').css('height', 'calc(100% - 65px)');
     $('body').css({
         overflow: 'hidden',
@@ -27,9 +160,9 @@ function addFullScreen(id) {
 }
 
 function removeFullScreen(id) {
-    $(`#ace${id}.aceEditorBorder`).removeClass('fullScreen');
-    $(`#${id}FullScreen`).show();
-    $(`#${id}CloseScreen`).hide();
+    $("#ace" + id + ".aceEditorBorder").removeClass('fullScreen');
+    $("#" + id + "FullScreen").show();
+    $("#" + id + "CloseScreen").hide();
     $('.ace_editor').css('height', '60vh');
     $('body').css({
         overflow: '',
@@ -94,4 +227,35 @@ function showErrorMessage(message, a) {
     } else {
         showSuccessMessage(message, true);
     }
+}
+var loadedScripts = [];
+
+function loadScripts(scripts) {
+    scripts = typeof scripts === 'string' ? [scripts] : scripts;
+    var promises = scripts.map(function (script) {
+        if (loadedScripts.indexOf(script) === -1) {
+            return new Promise(function (resolve, reject) {
+                $.getScript(script).done(function () {
+                    loadedScripts.push(script);
+                    resolve();
+                }).fail(function (error) {
+                    reject(error);
+                });
+            });
+        } else {
+            return Promise.resolve();
+        }
+    });
+    return Promise.all(promises);
+}
+
+function toggleFullScreen(id) {
+    loadScripts("/luci-static/tinynote/screenfull.js")
+        .then(function () {
+            if (screenfull.isEnabled) {
+                if (id.isFocused()) {
+                    screenfull.toggle(id.container);
+                }
+            }
+        });
 }
