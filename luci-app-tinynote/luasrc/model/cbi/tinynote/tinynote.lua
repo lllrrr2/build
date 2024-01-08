@@ -210,6 +210,54 @@ local note_mode_array = {
     { "z80",              "z80"        }
 }
 
+local ace_theme_array = {
+    { "ambiance",                 "Ambiance"                },
+    { "chaos",                    "Chaos"                   },
+    { "chrome",                   "Chrome"                  },
+    { "cloud9_day",               "Cloud9 Day"              },
+    { "cloud9_night",             "Cloud9 Night"            },
+    { "cloud9_night_low_color",   "Cloud9 Night Low Color"  },
+    { "clouds",                   "Clouds"                  },
+    { "clouds_midnight",          "Clouds Midnight"         },
+    { "cobalt",                   "Cobalt"                  },
+    { "crimson_editor",           "Crimson Editor"          },
+    { "dawn",                     "Dawn"                    },
+    { "dracula",                  "Dracula"                 },
+    { "dreamweaver",              "Dreamweaver"             },
+    { "eclipse",                  "Eclipse"                 },
+    { "github",                   "GitHub"                  },
+    { "github_dark",              "GitHub Dark"             },
+    { "gob",                      "Gob"                     },
+    { "gruvbox",                  "Gruvbox"                 },
+    { "gruvbox_dark_hard",        "Gruvbox Dark Hard"       },
+    { "gruvbox_light_hard",       "Gruvbox Light Hard"      },
+    { "idle_fingers",             "Idle Fingers"            },
+    { "iplastic",                 "IPlastic"                },
+    { "katzenmilch",              "Katzenmilch"             },
+    { "kr_theme",                 "KR Theme"                },
+    { "kuroir",                   "Kuroir"                  },
+    { "merbivore",                "Merbivore"               },
+    { "merbivore_soft",           "Merbivore Soft"          },
+    { "mono_industrial",          "Mono Industrial"         },
+    { "monokai",                  "Monokai"                 },
+    { "nord_dark",                "Nord Dark"               },
+    { "one_dark",                 "One Dark"                },
+    { "pastel_on_dark",           "Pastel on Dark"          },
+    { "solarized_dark",           "Solarized Dark"          },
+    { "solarized_light",          "Solarized Light"         },
+    { "sqlserver",                "SQL Server"              },
+    { "terminal",                 "Terminal"                },
+    { "textmate",                 "TextMate"                },
+    { "tomorrow",                 "Tomorrow"                },
+    { "tomorrow_night",           "Tomorrow Night"          },
+    { "tomorrow_night_blue",      "Tomorrow Night Blue"     },
+    { "tomorrow_night_bright",    "Tomorrow Night Bright"   },
+    { "tomorrow_night_eighties",  "Tomorrow Night Eighties" },
+    { "twilight",                 "Twilight"                },
+    { "vibrant_ink",              "Vibrant Ink"             },
+    { "xcode",                    "Xcode"                   }
+}
+
 local function addValues(option, ...)
     for _, value in ipairs({...}) do
         option:value(value, translate(value))
@@ -242,6 +290,31 @@ f:tab("codemirror", translate("CodeMirror Support"),
     translate("Theme Demo") .. [[</a></b>]]
 )
 
+f:tab("ace", translate("act Support"),
+    translate("CodeMirror supports syntax highlighting, line number display, automatic indentation, etc.<br><b>") ..
+    [[<a href='https://www.bootcdn.cn/ace/' target='_blank'>]] ..
+    translate("BootCDN Resources") ..
+    [[</a><span style="white-space: pre;">     </span><a href='https://discuss.codemirror.net/t/user-manual-in-chinese/1436/' target='_blank'>]] ..
+    translate("User manual in Chinese") ..
+    [[</a><span style="white-space: pre;">     </span><a href='https://codemirror.net/5/demo/theme.html' target='_blank'>]] ..
+    translate("Theme Demo") .. [[</a></b>]]
+)
+
+local aceonly = f:taboption("ace", Flag, "aceonly",
+    translate("Read-Only Mode"), translate("maximum authority"))
+aceonly.enabled = 'true'
+aceonly.disabled = 'false'
+aceonly.default = aceonly.disabled
+aceonly:depends("aceenable", 1)
+
+local acetheme = f:taboption("ace", ListValue, "acetheme",
+    translate("Design"))
+acetheme.default = "monokai"
+for _, k in ipairs(ace_theme_array) do
+    acetheme:value(k[1], k[2])
+end
+acetheme:depends("aceenable", 1)
+
 local note_path = f:taboption("note", Value, "note_path",
     translate("Save Path"))
 note_path.default = "/etc/tinynote"
@@ -256,10 +329,6 @@ local note_suffix = f:taboption("note", ListValue, "note_suffix",
     translate("Text Type"))
 note_suffix.default = "txt"
 addValues(note_suffix, 'txt', 'sh', 'lua', 'py', 'js')
-
--- local enable = f:taboption("note", Flag, "enable",
---     translate("Enable CodeMirror Support"))
--- enable.default = '0'
 
 local enable = f:taboption("note", Flag, "enable",
     translate("Enable CodeMirror Support"))
@@ -362,10 +431,9 @@ for sum_str = 1, note_sum do
         note_only.default  = 'false'
 
         local a = s:taboption(note, TextValue, "note" .. sum)
-        a.template = "cbi/tvalue"
+        a.template = "tinynote/tvalue"
         if code_enable or code_aceenable then
             a.id = "note" .. sum
-            a.template = "tinynote/tvalue"
         end
         a.rows = 20
         a.wrap = "off"

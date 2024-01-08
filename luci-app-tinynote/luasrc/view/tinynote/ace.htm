@@ -1,56 +1,114 @@
 <script src="/luci-static/tinynote/jquery.min.js"></script>
-<link rel="stylesheet" href="/luci-static/tinynote/bulma.css" />
+<script src="/luci-static/tinynote/screenfull.js"></script>
+<link rel="stylesheet" href="/luci-static/tinynote/bulma.css"/>
+<script type="text/javascript" src="/luci-static/tinynote/clipboard.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.3/ace.js"></script>
-
 <script>
-    function renderAceEditor(id, model, theme = 'monokai') {
-        // 通过id选择器获取元素，并添加多个样式类名
-        $(".cbi-value#cbi-luci-tinynote-" + id).addClass("columns mb-0 is-desktop");
-        
-        const $textarea = $('#' + id);
-        const $editorContainer = $('<div>').css({
+    function renderAceEditor(id, model, only, theme = 'monokai') {
+        var xid = id;
+        var htmlCode = `
+                <div class="aceEditorMenu">
+                    <a style="float:left;">
+                        <i class="is-size-6 is-family-primary">输入</i>
+                    </a>
+                    <div class="editortoolbar btn-group-sm">
+                        <a  class="icon is-hidden-mobile" onclick="setFromLocalStorage()" title="从本地存储加载以前的数据">
+                            <i class="material-icons">history</i>
+                        </a>
+                        <a id="fileopen" class="icon" title="打开文件">
+                            <i class="material-icons">folder_open</i>
+                        </a>
+                        <a  class="icon is-hidden-mobile" title="保存" onclick="cbi_submit(this)">
+                            <i class="material-icons">save</i>
+                        </a>
+                        <a id='clear${id}' class="icon" title="清除">
+                            <i class="material-icons">delete_outline</i>
+                        </a>
+                        <a id='copy${id}' class="icon" title="复制输入代码">
+                            <i class="material-icons">content_copy</i>
+                        </a>
+                        <a id="${id}FullScreen" class="icon" onclick="addFullScreen('${id}');" title="全屏">
+                            <i class="material-icons">open_in_full</i>
+                        </a>
+                        <a id="${id}CloseScreen" style="display:none" class="icon" onclick="removeFullScreen('${id}');" title="关闭全屏">
+                            <i class="material-icons">close_fullscreen</i>
+                        </a>
+                    </div>
+                </div>
+        `;
+
+        var statusBarHtml = `
+                <div class="columns is-mobile m-0 aceStatusBar" id="StatusBar">
+                    <div class="column is-two-thirds p-0 pl-0 status-left" id="${id}AceLineColumn">Ln: 1 Col: 0; Max Col: 0</div>
+                    <div class="column is-one-thirds p-0 has-text-centered status-right" id="${id}TextSize">Size: 0 Byte</div>
+                </div>
+        `;
+
+        var wrapperContent = `
+                <div class="columns is-centered" style="display: none;"></div>
+                <div class="field state" style="display: none;"></div>
+                <div class="field success" style="display: none;"></div>
+        `;
+
+        $(".cbi-value#cbi-luci-tinynote-" + id)
+            .prepend(htmlCode)
+            .append(statusBarHtml)
+            .addClass('column')
+            .wrapInner($(`<div class='aceEditorBorder' id='ace${id}'></div>`))
+            .before('<div class="field success" style="display: none;"></div>');
+
+        var $textarea = $('#' + id);
+        var $editorContainer = $('<div>').css({
             height: '60vh',
-            width: '100%'
+            width: '100%',
         }).insertBefore($textarea.hide());
-        
-        const editor = ace.edit($editorContainer[0]);
-        editor.getSession().setValue($textarea.val());
-        editor.setOptions({
+
+
+        // 初始化 Ace 编辑器实例
+        var id = ace.edit($editorContainer[0]);
+        id.getSession().setValue($textarea.val());
+        id.setOptions({
+            readOnly: only,
             mode: 'ace/mode/' + model,
             theme: "ace/theme/" + theme,
             fontSize: "14px",
             fontFamily: "Consolas, monospace",
             printMarginColumn: -1,
             wrap: true,
-            showPrintMargin: true
-        });      
-        editor.getSession().on('change', function() {
-            $textarea.val(editor.getValue());
+            showPrintMargin: true,
         });
-        
-        $textarea.on('input', function() {
-            editor.setValue($textarea.val());
+
+        id.on("input", function () {
+            $textarea.val(id.getValue());
+            updateDisplay(id, $(`#${xid}TextSize`), $(`#${xid}AceLineColumn`));
         });
+
+        $('#copy' + xid).click(function () {
+            setupClipboard(id, 'copy' + xid);
+        });
+
+        $('#clear' + xid).click(function () {
+            clearValue(id);
+        });
+
     }
     
     $(document).ready(function() {
-        <% 
-            local uci = require "luci.model.uci".cursor()
-            local con = uci:get_all("luci", "tinynote")
+        <%  local con = require "luci.model.uci".cursor():get_all("luci", "tinynote")
 
             for sum_str = 1, con.note_sum do
                 local sum = string.format("%02d", sum_str)
-                local only = con.only or con['only_note' .. sum] or false
-                local model = con['model_note' .. sum] or con.note_suffix
+                local theme = con.acetheme or false
                 local id = string.format('note%s', sum)
+                local only = con.aceonly or con['only_note' .. sum] or false
+                local model = con['model_note' .. sum] or con.note_suffix
 
                 if model == 'shell' or model == 'py' then
                     model = model == 'shell' and 'sh' or 'python'
                 end
-                
-                -- 调用函数对每个元素进行操作
-                %> renderAceEditor('<%=id%>', '<%=model%>'); <%
-            end
         %>
+            renderAceEditor('<%=id%>', '<%=model%>', '<%=only%>', '<%=theme%>');
+        <%end%>
     });
 </script>
+<script src="/luci-static/tinynote/acelib.js"></script>
