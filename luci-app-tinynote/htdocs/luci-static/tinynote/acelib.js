@@ -1,5 +1,5 @@
 
-function renderAceEditor(id, model, only, theme = 'monokai') {
+function renderAceEditor(id, model, only, theme = 'monokai', font_size, height) {
     var htmlCode = 
         '<div class="aceEditorMenu">' +
             '<a style="float:left;">' +
@@ -49,8 +49,8 @@ function renderAceEditor(id, model, only, theme = 'monokai') {
 
     var $textarea = $('#' + id);
     var $editorContainer = $('<div>').css({
-        height: '70vh',
-        width: '100%',
+        height: height + 'px',
+        width: 'auto',
     }).insertBefore($textarea.hide());
 
     var xid = id;
@@ -60,13 +60,13 @@ function renderAceEditor(id, model, only, theme = 'monokai') {
         readOnly: only,
         mode: 'ace/mode/' + model,
         theme: "ace/theme/" + theme,
-        fontSize: "14px",
+        fontSize: font_size + "px",
         fontFamily: "Consolas, monospace",
         printMarginColumn: -1,
         wrap: true,
         showPrintMargin: true,
     });
-
+    
     id.on("input", function () {
         $textarea.val(id.getValue());
         updateDisplay(id, $("#" + xid + "TextSize"), $("#" + xid + "AceLineColumn"));

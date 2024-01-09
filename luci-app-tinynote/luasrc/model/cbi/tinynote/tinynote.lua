@@ -310,10 +310,30 @@ aceonly:depends("aceenable", 1)
 local acetheme = f:taboption("ace", ListValue, "acetheme",
     translate("Design"))
 acetheme.default = "monokai"
-for _, k in ipairs(ace_theme_array) do
+for _, k in ipairs(note_theme_array) do
     acetheme:value(k[1], k[2])
 end
 acetheme:depends("aceenable", 1)
+
+local acefont_size = f:taboption("ace", Value, "acefont_size",
+    translate("Font Size"))
+acefont_size.default = "14"
+addValues(acefont_size, 10, 12, 14, 16)
+acefont_size.datatype = "uinteger"
+acefont_size:depends("aceenable", 1)
+
+local aceline_spacing = f:taboption("ace", Value, "aceline_spacing",
+    translate("Line Spacing"))
+aceline_spacing.default = "140"
+addValues(aceline_spacing, 100, 140, 150)
+aceline_spacing.datatype = "uinteger"
+aceline_spacing:depends("aceenable", 1)
+
+local aceheight = f:taboption("ace", Value, "aceheight",
+    translate("Display Height"))
+aceheight.default = "500"
+addValues(aceheight, 'auto', 300, 400, 500, 600)
+aceheight:depends("aceenable", 1)
 
 local note_path = f:taboption("note", Value, "note_path",
     translate("Save Path"))
@@ -466,7 +486,6 @@ for sum_str = 1, note_sum do
 
         local clear_button = s:taboption(note, Button,  sum .. "_clear_note")
         clear_button.inputstyle = "reset"
-        clear_button.template   = "tinynote/clear_button"
         clear_button.inputtitle = translatef("Reset Notes %s", sum)
         clear_button.write = function(self, section)
             new_write_file(file, note_suffix)
@@ -475,6 +494,7 @@ for sum_str = 1, note_sum do
         local run_button = s:taboption(note, Button, sum .. "_run_note",
             translatef("Run Note %s", sum))
         run_button.file_path  = file
+        run_button.sum        = sum
         run_button.inputstyle = "apply"
         run_button.template   = "tinynote/run_button"
     end

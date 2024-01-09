@@ -1,3 +1,37 @@
+<div id="<%=self.sum%>btn" style="display: inline-block; margin-right: 20px;">
+    <label for="<%=self.sum%>_requestType">
+        <select id="<%=self.sum%>_requestType" style="width: 60px; margin-right: 15px;" title="<%:Select request type%>">
+            <option value="xhr">xhr</option>
+            <option value="jQuery">jQuery</option>
+            <option value="fetch">fetch</option>
+        </select>
+    </label>
+    <label for="<%=self.sum%>_commandSelect"><%:Enter command to run:%>
+        <input id="<%=self.sum%>_commandInput" list="commands" style="width: 70px;" title="<%:Enter or select the running command of the script on the current page, and leave blank to set the default command.%>">
+        <datalist id="commands">
+            <option value="lua">lua</option>
+            <option value="sh">sh</option>
+            <option value="python">python</option>
+            <option value="bash">bash</option>
+        </datalist>
+    </label>
+    <% if self:cfgvalue(section) ~=false then %>
+    <input type="button" class="btn cbi-button cbi-button-apply" style="margin-right: 10px; margin-left: 10px;" onclick="handleCommandRequest(
+                '<%=self.file_path%>',
+                getElementBy_Id('<%=self.sum%>_commandInput'),
+                getElementBy_Id('<%=self.sum%>_requestType')
+            );" <% if self.disable then %>disabled<% end %> <%=attr("name", cbid) .. attr("id", cbid) .. attr("value", self.inputtitle or self.title)%> />
+    <% else %> - <% end %>
+    <label for="<%=self.sum%>_shellInput"><%:Enter shell command:%>
+        <input id="<%=self.sum%>_shellInput" style="width: 150px; margin-right: 10px;" title="<%:Enter a shell command that can be run%>">
+        <button type="button" class="btn cbi-button cbi-button-apply" onclick="
+            handleCommandRequest(
+                undefined,
+                getElementBy_Id('<%=self.sum%>_shellInput'),
+                getElementBy_Id('<%=self.sum%>_requestType')
+            );"><%:Execute Command%></button>
+    </label>
+</div>
 <style>
     .alert-content {
         max-height: calc(70vh - 100px);           /* 减去按钮高度和上下边距的高度 */
@@ -261,42 +295,10 @@
     function getElementBy_Id(id) {
         return document.getElementById(id).value;
     }
-</script>
 
-<div style="display: inline-block; margin-right: 20px;">
-    <label for="<%=cbid%>_requestType">
-        <select id="<%=cbid%>_requestType" style="width: 60px; margin-right: 15px;" title="<%:Select request type%>">
-            <option value="xhr">xhr</option>
-            <option value="jQuery">jQuery</option>
-            <option value="fetch">fetch</option>
-        </select>
-    </label>
-    <label for="<%=cbid%>_commandSelect"><%:Enter command to run:%>
-        <input id="<%=cbid%>_commandInput" list="commands" style="width: 70px;"
-            title="<%:Enter or select the running command of the script on the current page, and leave blank to set the default command.%>">
-        <datalist id="commands">
-            <option value="lua">lua</option>
-            <option value="sh">sh</option>
-            <option value="python">python</option>
-            <option value="bash">bash</option>
-        </datalist>
-    </label>
-    <% if self:cfgvalue(section) ~=false then %>
-        <input type="button" class="btn cbi-button cbi-button-apply" style="margin-right: 10px; margin-left: 10px;" onclick="handleCommandRequest(
-                '<%=self.file_path%>',
-                getElementBy_Id('<%=cbid%>_commandInput'),
-                getElementBy_Id('<%=cbid%>_requestType')
-            );" <% if self.disable then %>disabled<% end %>
-            <%=attr("name", cbid) .. attr("id", cbid) .. attr("value", self.inputtitle or self.title)%>/>
-    <% else %> - <% end %>
-    <label for="<%=cbid%>_shellInput"><%:Enter shell command:%>
-        <input id="<%=cbid%>_shellInput" style="width: 150px; margin-right: 10px;"
-            title="<%:Enter a shell command that can be run%>">
-        <button type="button" class="btn cbi-button cbi-button-apply" onclick="
-            handleCommandRequest(
-                undefined,
-                getElementBy_Id('<%=cbid%>_shellInput'),
-                getElementBy_Id('<%=cbid%>_requestType')
-            );"><%:Execute Command%></button>
-    </label>
-</div>
+    var targetElement = document.getElementById("<%=self.sum%>btn");
+    var elementToMove = document.getElementById("cbid.luci.tinynote.<%=self.sum%>_clear_note");
+    targetElement.insertBefore(elementToMove, targetElement.firstChild);
+    document.getElementById("cbi-luci-tinynote-<%=self.sum%>_clear_note").remove();
+
+</script>

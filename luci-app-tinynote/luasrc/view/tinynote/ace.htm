@@ -7,8 +7,10 @@
         <%  local con = require "luci.model.uci".cursor():get_all("luci", "tinynote")
             for sum_str = 1, con.note_sum do
                 local sum = string.format("%02d", sum_str)
-                local theme = con.acetheme or false
                 local id = string.format('note%s', sum)
+                local theme = con.acetheme or false
+                local height = con.aceheight or false
+                local font_size = con.acefont_size or false
                 local only = con.aceonly or con['only_note' .. sum] or false
                 local model = con['model_note' .. sum] or con.note_suffix
 
@@ -16,7 +18,7 @@
                     model = model == 'shell' and 'sh' or 'python'
                 end
         %>
-            renderAceEditor('<%=id%>', '<%=model%>', '<%=only%>', '<%=theme%>');
+            renderAceEditor('<%=id%>', '<%=model%>', '<%=only%>', '<%=theme%>', '<%=font_size%>', '<%=height%>');
         <%end%>
     });
 </script>
