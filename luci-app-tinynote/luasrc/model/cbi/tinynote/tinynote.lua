@@ -310,7 +310,7 @@ aceonly:depends("aceenable", 1)
 local acetheme = f:taboption("ace", ListValue, "acetheme",
     translate("Design"))
 acetheme.default = "monokai"
-for _, k in ipairs(note_theme_array) do
+for _, k in ipairs(ace_theme_array) do
     acetheme:value(k[1], k[2])
 end
 acetheme:depends("aceenable", 1)
