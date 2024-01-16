@@ -79,24 +79,85 @@ function decodeSpecialCharacter(e) {
             .replace(/\&quot;/g, '"'); // 替换 &quot; 为 "
 }
 
-function currentTimeMilli() {
+function timeStart() {
     return window.performance.now();
 }
 
-function timeStart() {
-    return currentTimeMilli();
-}
-
 function timeEnd(start) {
-    return (currentTimeMilli() - start).toFixed(3);
+    return (window.performance.now() - start).toFixed(3);
 }
 
-function FormatSH(type) {
+function FormatSH() {
     var content = getContent().content;
     if (!content) return;
-    editor2.setValue(content || '没有返回值');
+    output = formatShCode(content, indent_size);
+    editor2.setValue(output || '没有返回值');
+    editor1.session.setMode("ace/mode/sh");
     editor2.session.setMode("ace/mode/sh");
     state(getContent().time);
+}
+
+function formatShCode(code, indentSize) {
+    // 将代码按行分割并初始化缩进等级、格式化后的代码及是否在if语句中、是否在函数中
+    var lines = code.split('\n');
+    var indentLevel = 0, // 当前缩进等级
+        formattedCode = '', // 格式化后的代码
+        isInIfStatement = false, // 是否在if语句中
+        isInFunction = false; // 是否在函数中
+
+    for (var i = 0; i < lines.length; i++) {
+        // 获取当前行，并删除两端的空格
+        var line = lines[i].trim();
+
+        // 判断当前行是否为'}'、'esac'、'fi'或'done'，若是，则缩进等级减1
+        if (line.startsWith('}') || line.startsWith('esac') || line.startsWith('fi') || line.startsWith('done')) {
+            indentLevel--;
+            // 缩进等级不能小于0
+            if (indentLevel < 0) {
+                indentLevel = 0;
+            }
+        }
+
+        // 判断是否为函数定义或结束
+        if (line.startsWith('function') || line.includes('() {')) {
+            isInFunction = true;
+        } else if (line === '}') {
+            isInFunction = false;
+        }
+
+        // 计算当前行需要的缩进空格数
+        var spaces = ' '.repeat(Math.max(0, indentSize * indentLevel));
+
+        // 判断是否在if语句中且当前行不是'else'、'elif'或'then'，若是，则在当前行前添加缩进空格
+        if (isInIfStatement && !line.startsWith('else') && !line.startsWith('elif') && !line.startsWith('then')) {
+            formattedCode += spaces + line.trimLeft() + '\n';
+        } else {
+            formattedCode += spaces + line + '\n';
+        }
+
+        // 判断当前行是否以'if'或'elif'开头，若是，则设置isInIfStatement为true
+        if (line.startsWith('if') || line.startsWith('elif')) {
+            isInIfStatement = true;
+        }
+
+        // 判断当前行是否以'{'或'('结尾，若是，则缩进等级加1
+        if (line.endsWith('{') || line.endsWith('(')) {
+            indentLevel++;
+        }
+
+        // 如果当前行以'{'或'('结尾，且不是以'}'开头，则在格式化后的代码中添加一个空行
+        if ((line.endsWith('{') || line.endsWith('(')) && !line.startsWith('}')) {
+            formattedCode += '\n';
+        }
+
+        // 如果当前行以'case'、'if'、'while'或'for'开头，则缩进等级加1
+        if (line.startsWith('case') || line.startsWith('if') || line.startsWith('while') || line.startsWith('for')) {
+            indentLevel++;
+        }
+    }
+
+    // 返回格式化后的代码
+    return formattedCode;
 }
 
 function JsCompression(a) {
@@ -578,7 +639,7 @@ function getExampleCsv() {
 }
 
 function getExampleSH() {
-    var output = `#!/bin/bash\n\nfor n in {1..$RANDOM}; do\n    str="";\n    if ((n % 3 == 0)); then\n        str="fizz";\n    fi\n    if [ $((n % 5)) == 0 ]; then\n        str="$strbuzz";\n    fi\n    if [ ! $str ]; then\n        str="$n";\n    fi\n    echo "$str";\ndone\n\n## Example: ShellCheck can detect some higher level semantic problems\nwhile getopts "nf:" param; do\n    case "$param" in\n        f)\n            file="$OPTARG"\n            ;;\n        v)\n            set -x\n            ;;\n    esac\ndone\ncase "$file" in\n    *.gz)\n        gzip -d "$file"\n        ;;\n    *.zip)\n        unzip "$file"\n        ;;\n    *.tar.gz)\n        tar xzf "$file"\n        ;;\n    *)\n        echo "Unknown filetype"\n        ;;\nesac\n\nif [[ "$$(uname)" == "Linux" ]]; then\n    echo "Using Linux"\nfi\n\n## Example: ShellCheck can detect many different kinds of quoting issues\nif ! grep -q backup=true.* "~/.myconfig"; then\n    echo 'Backup not enabled in $HOME/.myconfig, exiting'\n    exit 1\nfi\n\nif [[ $1 =~ "-v(erbose)?" ]]; then\n    verbose='-printf "Copying %f\n"' \nfi\n\nfind backups/ \\\n    -iname *.tar.gz \\\n    $verbose \\\n    -exec scp {} "myhost:backups" +\n`
+    var output = 'case "$0" in\n*halt)\nmessage="The system will be halted immediately."\ncase `/bin/uname -m` in\ni?86)\ncommand="halt"\nif test -e /proc/apm -o -e /proc/acpi -o -e /proc/sys/acpi ; then\ncommand="halt -p"\nelse\nread cmdline < /proc/cmdline\ncase "$cmdline" in\n*apm=smp-power-off*|*apm=power-off*)\ncommand="halt -p"\nesac\nfi\n;;\n*)\ncommand="halt -p"\n;;\nesac\n;;\n*reboot)\nmessage="Please stand by while rebooting the system..."\ncommand="reboot"\n;;\n*)\necho "$0: call me as \"halt\" or \"reboot\" please!"\nexit 1\n;;\nesac';
     editor1.session.setMode("ace/mode/sh");
     editor1.setValue(output);
 }
