@@ -48,6 +48,7 @@ editor1.setOptions({
     theme: "ace/theme/monokai",
     fontSize: "14px",
     fontFamily: "Consolas, monospace",
+    printMarginColumn: -1,
     wrap: true,
     showPrintMargin: true
 });
@@ -56,6 +57,7 @@ editor2.setOptions({
     theme: "ace/theme/monokai",
     fontSize: "14px",
     fontFamily: "Consolas, monospace",
+    printMarginColumn: -1,
     wrap: true,
     showPrintMargin: true
 });
@@ -87,35 +89,33 @@ function timeEnd(start) {
     return (window.performance.now() - start).toFixed(3);
 }
 
-function FormatSH() {
+function FormatSH(a) {
     var content = getContent().content;
     if (!content) return;
-    output = formatShCode(content, indent_size);
+    output = a === 'format' ? formatShCode(content, indent_size, indent_char) : undefined;
     editor2.setValue(output || '没有返回值');
     editor1.session.setMode("ace/mode/sh");
     editor2.session.setMode("ace/mode/sh");
     state(getContent().time);
 }
 
-function formatShCode(code, indentSize) {
-    // 将代码按行分割并初始化缩进等级、格式化后的代码及是否在if语句中、是否在函数中
-    var lines = code.split('\n');
-    var indentLevel = 0, // 当前缩进等级
+function formatShCode(code, indentSize, indent_char) {
+    var isInFunction, // 是否在函数中;
+        isInIfStatement, // 是否在if语句中
+        isInCaseStatement,
+        ifIndent = '',
+        indentLevel = 0, // 当前缩进等级
         formattedCode = '', // 格式化后的代码
-        isInIfStatement = false, // 是否在if语句中
-        isInFunction = false; // 是否在函数中
+        lines = code.split('\n');
 
     for (var i = 0; i < lines.length; i++) {
-        // 获取当前行，并删除两端的空格
         var line = lines[i].trim();
 
         // 判断当前行是否为'}'、'esac'、'fi'或'done'，若是，则缩进等级减1
-        if (line.startsWith('}') || line.startsWith('esac') || line.startsWith('fi') || line.startsWith('done')) {
+        if (/^(}|esac|fi|done)/.test(line)) {
             indentLevel--;
             // 缩进等级不能小于0
-            if (indentLevel < 0) {
-                indentLevel = 0;
-            }
+            if (indentLevel < 0) indentLevel = 0;
         }
 
         // 判断是否为函数定义或结束
@@ -125,35 +125,43 @@ function formatShCode(code, indentSize) {
             isInFunction = false;
         }
 
-        // 计算当前行需要的缩进空格数
-        var spaces = ' '.repeat(Math.max(0, indentSize * indentLevel));
+        if (line.startsWith('case') && line.endsWith('in')) {
+            isInCaseStatement = true;
+        } else if (line.endsWith(';;')) {
+            isInCaseStatement = false;
+        }
 
-        // 判断是否在if语句中且当前行不是'else'、'elif'或'then'，若是，则在当前行前添加缩进空格
-        if (isInIfStatement && !line.startsWith('else') && !line.startsWith('elif') && !line.startsWith('then')) {
-            formattedCode += spaces + line.trimLeft() + '\n';
+        // 计算当前行需要的缩进空格数
+        var spaces = indent_char.repeat(indentSize * indentLevel);
+        // if (isInCaseStatement) {
+        //     if (line.endsWith(')')) indentLevel++;
+        // }
+
+        if (isInIfStatement) {
+            if (/^(else|elif)\b/.test(line)) {
+                formattedCode += ifIndent + line + '\n';
+            } else {
+                formattedCode += spaces + line.trimLeft() + '\n';
+            }
         } else {
             formattedCode += spaces + line + '\n';
         }
 
-        // 判断当前行是否以'if'或'elif'开头，若是，则设置isInIfStatement为true
-        if (line.startsWith('if') || line.startsWith('elif')) {
+        // 判断当前行是否以'if'开头设置isInIfStatement为true
+        if (line.match(/^(if)/)) {
             isInIfStatement = true;
+            ifIndent = spaces;
+        } else if (line.match(/^(fi)/)) {
+            isInIfStatement = false;
         }
 
-        // 判断当前行是否以'{'或'('结尾，若是，则缩进等级加1
-        if (line.endsWith('{') || line.endsWith('(')) {
-            indentLevel++;
-        }
-
+        //以 { 或 ( 结尾，或以 case、if、while、until 或 for 开头的字符串缩进等级加1
+        if (/^(case|if|while|until|for)|[({]$/.test(line)) indentLevel++;
         // 如果当前行以'{'或'('结尾，且不是以'}'开头，则在格式化后的代码中添加一个空行
-        if ((line.endsWith('{') || line.endsWith('(')) && !line.startsWith('}')) {
+        if ((line.endsWith('{') || line.endsWith('(')) && !line.startsWith('}') && !isInFunction) {
             formattedCode += '\n';
         }
 
-        // 如果当前行以'case'、'if'、'while'或'for'开头，则缩进等级加1
-        if (line.startsWith('case') || line.startsWith('if') || line.startsWith('while') || line.startsWith('for')) {
-            indentLevel++;
-        }
     }
 
     // 返回格式化后的代码
@@ -639,7 +647,7 @@ function getExampleCsv() {
 }
 
 function getExampleSH() {
-    var output = 'case "$0" in\n*halt)\nmessage="The system will be halted immediately."\ncase `/bin/uname -m` in\ni?86)\ncommand="halt"\nif test -e /proc/apm -o -e /proc/acpi -o -e /proc/sys/acpi ; then\ncommand="halt -p"\nelse\nread cmdline < /proc/cmdline\ncase "$cmdline" in\n*apm=smp-power-off*|*apm=power-off*)\ncommand="halt -p"\nesac\nfi\n;;\n*)\ncommand="halt -p"\n;;\nesac\n;;\n*reboot)\nmessage="Please stand by while rebooting the system..."\ncommand="reboot"\n;;\n*)\necho "$0: call me as \"halt\" or \"reboot\" please!"\nexit 1\n;;\nesac';
+    var output = 'case "$0" in\n*halt)\nmessage="The system will be halted immediately."\ncase `/bin/uname -m` in\ni?86)\ncommand="halt"\nif test -e /proc/apm -o -e /proc/acpi -o -e /proc/sys/acpi ; then\ncommand="halt -p"\nelse\nread cmdline < /proc/cmdline\ncase "$cmdline" in\n*apm=smp-power-off*|*apm=power-off*)\ncommand="halt -p"\nesac\nfi\n;;\n*)\ncommand="halt -p"\n;;\nesac\n;;\n*reboot)\nmessage="Please stand by while rebooting the system..."\ncommand="reboot"\n;;\n*)\necho "$0: call me as \"halt\" or \"reboot\" please!"\nexit 1\n;;\nesac\nif [ $a -gt 10 ]; then\nif [ $b - gt 20 ]; then\necho "a is greater than 10 and b is greater than 20"\nfi\nfi\nreload_service() {\nstop\nwhile running "${NAME}.main"; do\nsleep 1\ndone\nstart\n} ';
     editor1.session.setMode("ace/mode/sh");
     editor1.setValue(output);
 }
