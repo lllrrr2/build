@@ -92,33 +92,35 @@ function timeEnd(start) {
 function FormatSH(a) {
     var content = getContent().content;
     if (!content) return;
-    output = a === 'format' ? formatShCode(content, indent_size, indent_char) : undefined;
+    output = a === 'format' ? formatShCode(content, indent_size) : undefined;
     editor2.setValue(output || '没有返回值');
     editor1.session.setMode("ace/mode/sh");
     editor2.session.setMode("ace/mode/sh");
     state(getContent().time);
 }
 
-function formatShCode(code, indentSize, indent_char) {
-    var isInFunction, // 是否在函数中;
-        isInIfStatement, // 是否在if语句中
-        isInCaseStatement,
-        ifIndent = '',
-        indentLevel = 0, // 当前缩进等级
-        formattedCode = '', // 格式化后的代码
+function createIndentation(indentSize, indentLevel = 1) {
+    return isNaN(parseInt(indentSize)) ? '\t'.repeat(indentLevel) : ' '.repeat(indentSize * indentLevel)  // 创建缩进字符串
+}
+
+function formatShCode(code, indentSize) {
+    var ifIndent = '',
+        indentLevel = 0,
+        formattedCode = '',
+        isInFunction = false,
+        isInIfStatement = false,
+        isInsideCaseStatement = false,
+        isInsideCaseExpression = false,
         lines = code.split('\n');
 
-    for (var i = 0; i < lines.length; i++) {
-        var line = lines[i].trim();
-
-        // 判断当前行是否为'}'、'esac'、'fi'或'done'，若是，则缩进等级减1
-        if (/^(}|esac|fi|done)/.test(line)) {
+    lines.forEach(function (line) {
+        line = line.trim();
+        if (/^(\}|esac|fi|done)/.test(line)) {
             indentLevel--;
-            // 缩进等级不能小于0
             if (indentLevel < 0) indentLevel = 0;
         }
+        var spaces = createIndentation(indentSize, indentLevel);
 
-        // 判断是否为函数定义或结束
         if (line.startsWith('function') || line.includes('() {')) {
             isInFunction = true;
         } else if (line === '}') {
@@ -126,28 +128,19 @@ function formatShCode(code, indentSize, indent_char) {
         }
 
         if (line.startsWith('case') && line.endsWith('in')) {
-            isInCaseStatement = true;
-        } else if (line.endsWith(';;')) {
-            isInCaseStatement = false;
+            isInsideCaseStatement = true;
         }
 
-        // 计算当前行需要的缩进空格数
-        var spaces = indent_char.repeat(indentSize * indentLevel);
-        // if (isInCaseStatement) {
-        //     if (line.endsWith(')')) indentLevel++;
-        // }
-
-        if (isInIfStatement) {
-            if (/^(else|elif)\b/.test(line)) {
-                formattedCode += ifIndent + line + '\n';
-            } else {
+        if (isInsideCaseStatement) {
+            if (line.endsWith(')')) {
+                isInsideCaseExpression = true;
                 formattedCode += spaces + line.trimLeft() + '\n';
+                return;
+            } else if (line.endsWith(';;')) {
+                isInsideCaseExpression = false;
             }
-        } else {
-            formattedCode += spaces + line + '\n';
         }
 
-        // 判断当前行是否以'if'开头设置isInIfStatement为true
         if (line.match(/^(if)/)) {
             isInIfStatement = true;
             ifIndent = spaces;
@@ -155,16 +148,27 @@ function formatShCode(code, indentSize, indent_char) {
             isInIfStatement = false;
         }
 
-        //以 { 或 ( 结尾，或以 case、if、while、until 或 for 开头的字符串缩进等级加1
-        if (/^(case|if|while|until|for)|[({]$/.test(line)) indentLevel++;
-        // 如果当前行以'{'或'('结尾，且不是以'}'开头，则在格式化后的代码中添加一个空行
+        if (isInsideCaseExpression) {
+            if (line.match(/^(else|elif)\b/)) {
+                formattedCode += ifIndent + createIndentation(indentSize) + line + '\n';
+            } else {
+                formattedCode += spaces + createIndentation(indentSize) + line.trim() + '\n';
+            }
+        } else {
+            formattedCode += spaces + line + '\n';
+        }
+
+        if (line === 'esac') {
+            isInsideCaseStatement = false;
+        }
+
+        var regex = /^(case|if|while|until|for)|[({]$/;
+        if (regex.test(line)) indentLevel++;
         if ((line.endsWith('{') || line.endsWith('(')) && !line.startsWith('}') && !isInFunction) {
             formattedCode += '\n';
         }
+    });
 
-    }
-
-    // 返回格式化后的代码
     return formattedCode;
 }
 
@@ -346,7 +350,7 @@ function FormatYAML(a) {
                 editor1.session.setMode("ace/mode/yaml");
                 editor2.session.setMode("ace/mode/yaml");
                 if (a === 'json') {
-                    output = vkbeautify.json(jsyaml.load(content), indent_size);
+                    output = vkbeautify.json(content, indent_size);
                     editor2.session.setMode("ace/mode/json");
                 } else if (a === 'format') {
                     output = jsyaml.dump(jsyaml.load(content), { indent: indent_size });
@@ -647,7 +651,7 @@ function getExampleCsv() {
 }
 
 function getExampleSH() {
-    var output = 'case "$0" in\n*halt)\nmessage="The system will be halted immediately."\ncase `/bin/uname -m` in\ni?86)\ncommand="halt"\nif test -e /proc/apm -o -e /proc/acpi -o -e /proc/sys/acpi ; then\ncommand="halt -p"\nelse\nread cmdline < /proc/cmdline\ncase "$cmdline" in\n*apm=smp-power-off*|*apm=power-off*)\ncommand="halt -p"\nesac\nfi\n;;\n*)\ncommand="halt -p"\n;;\nesac\n;;\n*reboot)\nmessage="Please stand by while rebooting the system..."\ncommand="reboot"\n;;\n*)\necho "$0: call me as \"halt\" or \"reboot\" please!"\nexit 1\n;;\nesac\nif [ $a -gt 10 ]; then\nif [ $b - gt 20 ]; then\necho "a is greater than 10 and b is greater than 20"\nfi\nfi\nreload_service() {\nstop\nwhile running "${NAME}.main"; do\nsleep 1\ndone\nstart\n} ';
+    var output = 'case "$0" in\n*halt)\nmessage="The system will be halted immediately."\ncase `/bin/uname -m` in\ni?86)\ncommand="halt"\nif test -e /proc/apm -o -e /proc/acpi -o -e /proc/sys/acpi ; then\ncommand="halt -p"\nelse\nread cmdline < /proc/cmdline\ncase "$cmdline" in\n*apm=smp-power-off*|*apm=power-off*)\ncommand="halt -p"\n;;\nesac\nfi\n;;\n*)\ncommand="halt -p"\n;;\nesac\n;;\n*reboot)\nmessage="Please stand by while rebooting the system..."\ncommand="reboot"\n;;\n*)\necho "$0: call me as \'halt\' or \'reboot\' please!"\nexit 1\n;;\nesac\nif [ $a -gt 10 ]; then\nif [ $b - gt 20 ]; then\necho "a is greater than 10 and b is greater than 20"\nfi\nfi\nreload_service() {\nstop\nwhile running "${NAME}.main"; do\nsleep 1\ndone\nstart\n} ';
     editor1.session.setMode("ace/mode/sh");
     editor1.setValue(output);
 }
