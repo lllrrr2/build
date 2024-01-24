@@ -100,73 +100,118 @@ function FormatSH(a) {
 }
 
 function createIndentation(indentSize, indentLevel = 1) {
-    return isNaN(parseInt(indentSize)) ? '\t'.repeat(indentLevel) : ' '.repeat(indentSize * indentLevel)  // 创建缩进字符串
+    return isNaN(parseInt(indentSize)) ? '\t'.repeat(indentLevel) : ' '.repeat(indentSize * indentLevel)
 }
 
-function formatShCode(code, indentSize) {
-    var ifIndent = '',
+class Stack {
+    constructor() {
+        this.items = []; // 用于存储堆栈元素的数组
+    }
+
+    /**
+     * 向堆栈顶部添加一个元素
+     * @param {any} item 要添加的元素
+     */
+    push(item) {
+        this.items.push(item);
+    }
+
+    /**
+     * 从堆栈顶部移除元素，直到遇到指定的字符串为止
+     * @param {string} target 指定的字符串
+     */
+    popUntil(target) {
+        while (this.items.length > 0) {
+            var item = this.pop();
+            if (item === target) {
+                break;
+            }
+        }
+    }
+
+    /**
+     * 从堆栈顶部移除并返回元素
+     * @returns {any} 移除的元素，如果堆栈为空，则返回 null
+     */
+    pop() {
+        if (this.size() > 0) {
+            return this.items.pop();
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * 返回堆栈顶部的元素，但不移除它
+     * @returns {any} 堆栈顶部的元素，如果堆栈为空，则返回 null
+     */
+    peek() {
+        if (this.size() > 0) {
+            return this.items[this.size() - 1];
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * 判断堆栈是否为空
+     * @returns {boolean} 如果堆栈为空，则返回 true，否则返回 false
+     */
+    isEmpty() {
+        return this.size() === 0;
+    }
+
+    /**
+     * 返回堆栈中元素的数量
+     * @returns {number} 堆栈中元素的数量
+     */
+    size() {
+        return this.items.length;
+    }
+
+    /**
+     * 清空堆栈，将所有元素移除
+     */
+    clear() {
+        this.items.length = 0;
+    }
+}
+
+function formatShCode(content, indentSize) {
+    var casestack = [],
         indentLevel = 0,
         formattedCode = '',
         isInFunction = false,
-        isInIfStatement = false,
-        isInsideCaseStatement = false,
-        isInsideCaseExpression = false,
-        lines = code.split('\n');
+        lines = content.split('\n'),
+        caseregex = /^case\s+(.+)\s+in$/,
+        functionRegex = /^(\w+)\s*\([^)]*\)\s*{/,
+        endBlockRegex = /^(esac|fi|done|elif|else|\})/,
+        keywordRegex = /^(case|while|until|for|if|elif|else)|[({]$/;
 
     lines.forEach(function (line) {
-        line = line.trim();
-        if (/^(\}|esac|fi|done)/.test(line)) {
+        line = line.trim()
+                   .replace(/(\s*#.*)/g, '');
+
+        if (!line) return;
+        if (endBlockRegex.test(line)) {
             indentLevel--;
             if (indentLevel < 0) indentLevel = 0;
         }
         var spaces = createIndentation(indentSize, indentLevel);
 
-        if (line.startsWith('function') || line.includes('() {')) {
-            isInFunction = true;
-        } else if (line === '}') {
-            isInFunction = false;
+        if (line.match(functionRegex)) isInFunction = true;
+        else if (isInFunction && line === '}') isInFunction = false;
+
+        if (caseregex.test(line)) casestack.push('case');
+        else if (line.startsWith('esac')) casestack.pop();
+        else if (casestack.length) {
+            if (line.endsWith(')')) indentLevel++;
+            else if (line.endsWith(';;')) indentLevel--;
         }
 
-        if (line.startsWith('case') && line.endsWith('in')) {
-            isInsideCaseStatement = true;
-        }
-
-        if (isInsideCaseStatement) {
-            if (line.endsWith(')')) {
-                isInsideCaseExpression = true;
-                formattedCode += spaces + line.trimLeft() + '\n';
-                return;
-            } else if (line.endsWith(';;')) {
-                isInsideCaseExpression = false;
-            }
-        }
-
-        if (line.match(/^(if)/)) {
-            isInIfStatement = true;
-            ifIndent = spaces;
-        } else if (line.match(/^(fi)/)) {
-            isInIfStatement = false;
-        }
-
-        if (isInsideCaseExpression) {
-            if (line.match(/^(else|elif)\b/)) {
-                formattedCode += ifIndent + createIndentation(indentSize) + line + '\n';
-            } else {
-                formattedCode += spaces + createIndentation(indentSize) + line.trim() + '\n';
-            }
-        } else {
-            formattedCode += spaces + line + '\n';
-        }
-
-        if (line === 'esac') {
-            isInsideCaseStatement = false;
-        }
-
-        var regex = /^(case|if|while|until|for)|[({]$/;
-        if (regex.test(line)) indentLevel++;
-        if ((line.endsWith('{') || line.endsWith('(')) && !line.startsWith('}') && !isInFunction) {
-            formattedCode += '\n';
-        }
+        formattedCode += spaces + line + '\n';
+        if (keywordRegex.test(line)) indentLevel++;
+        if (/^[^{]*[({]$/.test(line) && !isInFunction) formattedCode += '\n';
     });
 
     return formattedCode;
@@ -651,7 +696,7 @@ function getExampleCsv() {
 }
 
 function getExampleSH() {
-    var output = 'case "$0" in\n*halt)\nmessage="The system will be halted immediately."\ncase `/bin/uname -m` in\ni?86)\ncommand="halt"\nif test -e /proc/apm -o -e /proc/acpi -o -e /proc/sys/acpi ; then\ncommand="halt -p"\nelse\nread cmdline < /proc/cmdline\ncase "$cmdline" in\n*apm=smp-power-off*|*apm=power-off*)\ncommand="halt -p"\n;;\nesac\nfi\n;;\n*)\ncommand="halt -p"\n;;\nesac\n;;\n*reboot)\nmessage="Please stand by while rebooting the system..."\ncommand="reboot"\n;;\n*)\necho "$0: call me as \'halt\' or \'reboot\' please!"\nexit 1\n;;\nesac\nif [ $a -gt 10 ]; then\nif [ $b - gt 20 ]; then\necho "a is greater than 10 and b is greater than 20"\nfi\nfi\nreload_service() {\nstop\nwhile running "${NAME}.main"; do\nsleep 1\ndone\nstart\n} ';
+    var output = 'case "$1" in\n1)\necho "1"\n;;\n2)\ncase "$2" in\na)\necho "2a"\n;;\nb)\ncase "$3" in\nx)\necho "2bx"\n;;\ny)\necho "2by"\n;;\nesac\n;;\nesac\n;;\n*)\necho "default"\n;;\nesac\nif [[ $a -eq 1 ]]; then\necho "a is 1"\nelif [[ $a -eq 2 ]]; then\nif [[ $b -eq 3 ]]; then\necho "a is 2 and b is 3"\nelif [[ $b -eq 4 ]]; then\necho "a is 2 and b is 4"\nelse\necho "a is 2 and b is not 3 or 4"\nfi\nelse\necho "a is not 1 or 2"\nfi\nreload_service() {\nstop\nwhile running "${NAME}.main"; do\nsleep 1\ndone\nstart\n}';
     editor1.session.setMode("ace/mode/sh");
     editor1.setValue(output);
 }
