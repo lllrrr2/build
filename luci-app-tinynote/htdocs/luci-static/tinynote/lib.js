@@ -180,17 +180,20 @@ class Stack {
 function formatShCode(content, indentSize) {
     var casestack = [],
         indentLevel = 0,
+        identifier = '',
         formattedCode = '',
+        isInCat = false,
+        isSameLine = false,
         isInFunction = false,
-        lines = content.split('\n'),
+        catregex = /<<-?\\?\s*(\w+)>?/,
         caseregex = /^case\s+(.+)\s+in$/,
         functionRegex = /^(\w+)\s*\([^)]*\)\s*{/,
         endBlockRegex = /^(esac|fi|done|elif|else|\})/,
         keywordRegex = /^(case|while|until|for|if|elif|else)|[({]$/;
 
-    lines.forEach(function (line) {
-        line = line.trim()
-                   .replace(/(\s*#.*)/g, '');
+    content.split('\n').forEach(function (line) {
+        line = line.trim();
+        if (identifier == '') line = line.replace(/(^|\n)\s*#.*(\n|$)/g, '');
 
         if (!line) return;
         if (endBlockRegex.test(line)) {
@@ -203,11 +206,23 @@ function formatShCode(content, indentSize) {
         else if (isInFunction && line === '}') isInFunction = false;
 
         if (caseregex.test(line)) casestack.push('case');
-        else if (line.startsWith('esac')) casestack.pop();
+        else if (line.search(/^esac\s+/) === 0) casestack.pop();
         else if (casestack.length) {
-            if (line.endsWith(')')) indentLevel++;
-            else if (line.endsWith(';;')) indentLevel--;
+            if (line.endsWith(')')) {
+                indentLevel++;
+                isSameLine = true;
+            } else if (line.search(/^;;$/) > -1) {
+                if (isSameLine) indentLevel--;
+            }
         }
+
+        var isCat = (line.search(/^cat\s+/) === 0) ? line.match(catregex) : null;
+        if (isCat) {
+            isInCat = true;
+            identifier = isCat[1];
+        }
+        else if (line.startsWith(identifier)) isInCat = false;
+        else if (isInCat) spaces = createIndentation('\t');
 
         formattedCode += spaces + line + '\n';
         if (keywordRegex.test(line)) indentLevel++;
@@ -696,7 +711,7 @@ function getExampleCsv() {
 }
 
 function getExampleSH() {
-    var output = 'case "$1" in\n1)\necho "1"\n;;\n2)\ncase "$2" in\na)\necho "2a"\n;;\nb)\ncase "$3" in\nx)\necho "2bx"\n;;\ny)\necho "2by"\n;;\nesac\n;;\nesac\n;;\n*)\necho "default"\n;;\nesac\nif [[ $a -eq 1 ]]; then\necho "a is 1"\nelif [[ $a -eq 2 ]]; then\nif [[ $b -eq 3 ]]; then\necho "a is 2 and b is 3"\nelif [[ $b -eq 4 ]]; then\necho "a is 2 and b is 4"\nelse\necho "a is 2 and b is not 3 or 4"\nfi\nelse\necho "a is not 1 or 2"\nfi\nreload_service() {\nstop\nwhile running "${NAME}.main"; do\nsleep 1\ndone\nstart\n}';
+    var output = 'cat >>.config <<-EOF\nCONFIG_KERNEL_BUILD_USER="win3gp"\nCONFIG_KERNEL_BUILD_DOMAIN="OpenWrt"\n## CONFIG_PACKAGE_luci-app-ssr-plus is not set\n# CONFIG_PACKAGE_luci-app-zerotier is not set\nEOF\ncase "$1" in\n1)\necho "1"\n;;\n2)\ncase "$2" in\na)\necho "2a"\n;;\nb)\ncase "$3" in\nx)\necho "2bx"\n;;\ny)\necho "2by"\n;;\nesac\n;;\nesac\n;;\n*)\necho "default"\n;;\nesac\nif [[ $a -eq 1 ]]; then\necho "a is 1"\nelif [[ $a -eq 2 ]]; then\nif [[ $b -eq 3 ]]; then\necho "a is 2 and b is 3"\nelif [[ $b -eq 4 ]]; then\necho "a is 2 and b is 4"\nelse\necho "a is 2 and b is not 3 or 4"\nfi\nelse\necho "a is not 1 or 2"\nfi\nreload_service() {\nstop\nwhile running "${NAME}.main"; do\nsleep 1\ndone\nstart\n}';
     editor1.session.setMode("ace/mode/sh");
     editor1.setValue(output);
 }
