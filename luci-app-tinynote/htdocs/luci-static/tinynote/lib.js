@@ -182,41 +182,33 @@ function formatShCode(content, indentSize) {
         indentLevel = 0,
         identifier = '',
         formattedCode = '',
-        isInCat = false,
-        isSameLine = false,
-        isInFunction = false,
-        catregex = /<<-?\\?\s*(\w+)>?/,
+        isInCat, isSameLine, isInFunction,
         caseregex = /^case\s+(.+)\s+in$/,
+        catregex = /^cat.*<<-?\\?\s*(\w+)>?/,
         functionRegex = /^(\w+)\s*\([^)]*\)\s*{/,
         endBlockRegex = /^(esac|fi|done|elif|else|\})/,
         keywordRegex = /^(case|while|until|for|if|elif|else)|[({]$/;
 
     content.split('\n').forEach(function (line) {
         line = line.trim();
-        if (identifier == '') line = line.replace(/(^|\n)\s*#.*(\n|$)/g, '');
+        if (!identifier) line = line.replace(/(^|\n)\s*#.*(\n|$)/g, '');
 
         if (!line) return;
-        if (endBlockRegex.test(line)) {
-            indentLevel--;
-            if (indentLevel < 0) indentLevel = 0;
-        }
+        if (endBlockRegex.test(line)) indentLevel = (indentLevel > 0) ? indentLevel - 1 : 0;
         var spaces = createIndentation(indentSize, indentLevel);
 
         if (line.match(functionRegex)) isInFunction = true;
         else if (isInFunction && line === '}') isInFunction = false;
 
         if (caseregex.test(line)) casestack.push('case');
-        else if (line.search(/^esac\s+/) === 0) casestack.pop();
-        else if (casestack.length) {
-            if (line.endsWith(')')) {
-                indentLevel++;
-                isSameLine = true;
-            } else if (line.search(/^;;$/) > -1) {
-                if (isSameLine) indentLevel--;
-            }
+        else if (line.startsWith('esac')) casestack.pop();
+        else if (casestack.length && line.endsWith(')')) {
+            indentLevel++;
+            isSameLine = true;
         }
+        else if (casestack.length && line === ';;') indentLevel--;
 
-        var isCat = (line.search(/^cat\s+/) === 0) ? line.match(catregex) : null;
+        var isCat = line.match(catregex);
         if (isCat) {
             isInCat = true;
             identifier = isCat[1];

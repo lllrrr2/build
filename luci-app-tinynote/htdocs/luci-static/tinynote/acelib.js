@@ -9,7 +9,7 @@ function renderAceEditor(id, model, only, theme = 'monokai', font_size, height) 
                 '<a id="fileInput' + id + '"  class="icon is-hidden-mobile" title="上传文件">' +
                     '<i class="material-icons">publish</i>' +
                 '</a>' +
-                '<a  class="icon is-hidden-mobile" title="保存" onclick="cbi_submit(this, \'cbi.save\')">' +
+                '<a  class="icon" title="保存" onclick="cbi_submit(this, \'cbi.save\')">' +
                     '<i class="material-icons">save</i>' +
                 '</a>' +
                 '<a id="down' + id + '" class="icon" title="下载">' +
