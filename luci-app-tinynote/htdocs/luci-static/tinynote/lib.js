@@ -182,16 +182,18 @@ function formatShCode(content, indentSize) {
         indentLevel = 0,
         identifier = '',
         formattedCode = '',
-        isInCat, isSameLine, isInFunction,
+        isInCat, isInFunction,
         caseregex = /^case\s+(.+)\s+in$/,
         catregex = /^cat.*<<-?\\?\s*(\w+)>?/,
         functionRegex = /^(\w+)\s*\([^)]*\)\s*{/,
         endBlockRegex = /^(esac|fi|done|elif|else|\})/,
         keywordRegex = /^(case|while|until|for|if|elif|else)|[({]$/;
 
-    content.split('\n').forEach(function (line) {
+    content.replace(/(.*\))\s*(case\s+.*\s+in)/g, '$1\n$2')
+           .split('\n').forEach(function (line) {
+
+        if (!isInCat) line = line.replace(/(^|\s+)#.*/g, '$1');
         line = line.trim();
-        if (!identifier) line = line.replace(/(^|\n)\s*#.*(\n|$)/g, '');
 
         if (!line) return;
         if (endBlockRegex.test(line)) indentLevel = (indentLevel > 0) ? indentLevel - 1 : 0;
@@ -202,11 +204,8 @@ function formatShCode(content, indentSize) {
 
         if (caseregex.test(line)) casestack.push('case');
         else if (line.startsWith('esac')) casestack.pop();
-        else if (casestack.length && line.endsWith(')')) {
-            indentLevel++;
-            isSameLine = true;
-        }
-        else if (casestack.length && line === ';;') indentLevel--;
+        else if (casestack.length && line.match(/\)$/)) indentLevel++;
+        else if (casestack.length && line.match(/^;;$/) && indentLevel > 0) indentLevel--;
 
         var isCat = line.match(catregex);
         if (isCat) {
@@ -221,6 +220,7 @@ function formatShCode(content, indentSize) {
         if (/^[^{]*[({]$/.test(line) && !isInFunction) formattedCode += '\n';
     });
 
+    formattedCode = formattedCode.replace(/(\w+\))\n\s*(case\s+.*\s+in)/g, '$1 $2');
     return formattedCode;
 }
 
