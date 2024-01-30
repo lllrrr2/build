@@ -14,9 +14,13 @@
                 local only = con.aceonly or con['only_note' .. sum] or false
                 local model = con['model_note' .. sum] or con.note_suffix
 
-                if model == 'shell' or model == 'py' then
-                    model = model == 'shell' and 'sh' or 'python'
-                end
+                local models = {
+                    ['shell'] = 'sh',
+                    ['py'] = 'python',
+                    ['htmlmixed'] = 'html'
+                }
+
+                model = models[model] or model
         %>
             renderAceEditor('<%=id%>', '<%=model%>', '<%=only%>', '<%=theme%>', '<%=font_size%>', '<%=height%>');
         <%end%>

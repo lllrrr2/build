@@ -73,14 +73,6 @@ if (indent_size === '\t') {
     indent_char = '\t';
 }
 
-function decodeSpecialCharacter(e) {
-    // 使用正则表达式替换特殊字符
-    return e.replace(/\&amp;/g, "&")  // 替换 &amp; 为 &
-            .replace(/\&gt;/g, ">")   // 替换 &gt; 为 >
-            .replace(/\&lt;/g, "<")   // 替换 &lt; 为 <
-            .replace(/\&quot;/g, '"'); // 替换 &quot; 为 "
-}
-
 function timeStart() {
     return window.performance.now();
 }
@@ -396,25 +388,23 @@ function FormatHTML(a) {
 function FormatYAML(a) {
     var content = getContent().content;
     if (!content) return;
-    loadScripts(["/luci-static/tinynote/vkbeautify.js", "https://cdn.bootcdn.net/ajax/libs/js-yaml/4.1.0/js-yaml.js"])
+    loadScripts(["/luci-static/tinynote/vkbeautify.js", "https://cdn.bootcdn.net/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"])
         .then(function() {
             try {
                 editor1.session.setMode("ace/mode/yaml");
                 editor2.session.setMode("ace/mode/yaml");
                 if (a === 'json') {
-                    output = vkbeautify.json(content, indent_size);
                     editor2.session.setMode("ace/mode/json");
+                    output = vkbeautify.json(jsyaml.load(content), indent_size);
                 } else if (a === 'format') {
-                    output = jsyaml.dump(jsyaml.load(content), { indent: indent_size });
+                    output = jsyaml.dump(jsyaml.load(content), { indent: indent_size, lineWidth: -1 });
                 } else if (a === 'yaml') {
                     editor1.session.setMode("ace/mode/json");
-                    output = jsyaml.dump(JSON.parse(content), {
-                        quotingType: "", indent: indent_size
-                    });
+                    output = jsyaml.dump(JSON.parse(content), { indent: indent_size, quotingType: "" });
                 } else if (a === 'safeLoad') {
                     if (jsyaml.load(content)) showSuccessMessage("语法通过");
                 }
-                if (a !== 'safeLoad') editor2.setValue(output ? output : '没有返回值');
+                if (a !== 'safeLoad') editor2.setValue(output || '没有返回值');
             } catch (e) {
                 showErrorMessage(e.message);
             }
@@ -424,7 +414,24 @@ function FormatYAML(a) {
         });
         state(getContent().time);
 }
-                
+
+function yamlToxml() {
+    var content = getContent().content;
+    if (!content) return;
+    loadScripts(["/luci-static/tinynote/ObjTree.min.js", "/luci-static/tinynote/vkbeautify.js", "https://cdn.bootcdn.net/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"])
+        .then(function () {
+            var xmlData = (new XML.ObjTree).writeXML(jsyaml.load(content));
+            xmlData = xmlData.substr(0, 39) + "<root>" + xmlData.substr(39) + "</root>";
+            output = vkbeautify.xml(xmlData);
+            editor2.session.setMode("ace/mode/xml");
+            editor2.setValue(output || '没有返回值');
+        })
+        .catch(function () {
+            showErrorMessage("加载错误", true)
+        });
+    state(getContent().time);
+}
+
 function jsonTocsv() {
     var content = getContent().content;
     if (!content) return;
@@ -703,7 +710,7 @@ function getExampleCsv() {
 }
 
 function getExampleSH() {
-    var output = 'cat >>.config <<-EOF\nCONFIG_KERNEL_BUILD_USER="win3gp"\nCONFIG_KERNEL_BUILD_DOMAIN="OpenWrt"\n## CONFIG_PACKAGE_luci-app-ssr-plus is not set\n# CONFIG_PACKAGE_luci-app-zerotier is not set\nEOF\ncase "$1" in\n1)\necho "1"\n;;\n2)\ncase "$2" in\na)\necho "2a"\n;;\nb)\ncase "$3" in\nx)\necho "2bx"\n;;\ny)\necho "2by"\n;;\nesac\n;;\nesac\n;;\n*)\necho "default"\n;;\nesac\nif [[ $a -eq 1 ]]; then\necho "a is 1"\nelif [[ $a -eq 2 ]]; then\nif [[ $b -eq 3 ]]; then\necho "a is 2 and b is 3"\nelif [[ $b -eq 4 ]]; then\necho "a is 2 and b is 4"\nelse\necho "a is 2 and b is not 3 or 4"\nfi\nelse\necho "a is not 1 or 2"\nfi\nreload_service() {\nstop\nwhile running "${NAME}.main"; do\nsleep 1\ndone\nstart\n}';
+    var output = 'cat >>.config <<-EOF\nCONFIG_KERNEL_BUILD_USER="win3gp"\nCONFIG_KERNEL_BUILD_DOMAIN="OpenWrt"\n## CONFIG_PACKAGE_luci-app-ssr-plus is not set\n# CONFIG_PACKAGE_luci-app-zerotier is not set\nEOF\ncase "$1" in\n1)\necho "1"\n;;\n2)\ncase "$2" in\na)\necho "2a"\n;;\nb)\ncase "$3" in\nx)\necho "2bx"\n;;\ny)\necho "2by"\n;;\nesac\n;;\nesac\n;;\n*)\necho "default"\n;;\nesac\ncase "$0" in\n*halt)\nmessage="The system will be halted immediately."\ncase `/bin/uname -m` in\ni?86)\ncommand="halt"\nif test -e /proc/apm -o -e /proc/acpi -o -e /proc/sys/acpi ; then\ncommand="halt -p"\nelse\nread cmdline < /proc/cmdline\ncase "$cmdline" in\n*apm=smp-power-off*|*apm=power-off*)\ncommand="halt -p"\n;;\nesac\nfi\n;;\n*)\ncommand="halt -p"\n;;\nesac\n;;\n*reboot)\nmessage="Please stand by while rebooting the system..."\ncommand="reboot"\n;;\n*)\necho "$0: call me as \'halt\' or \'reboot\' please!"\nexit 1\n;;\nesac\nif [[ $a -eq 1 ]]; then\necho "a is 1"\nelif [[ $a -eq 2 ]]; then\nif [[ $b -eq 3 ]]; then\necho "a is 2 and b is 3"\nelif [[ $b -eq 4 ]]; then\necho "a is 2 and b is 4"\nelse\necho "a is 2 and b is not 3 or 4"\nfi\nelse\necho "a is not 1 or 2"\nfi\nreload_service() {\nstop\nwhile running "${NAME}.main"; do\nsleep 1\ndone\nstart\n}';
     editor1.session.setMode("ace/mode/sh");
     editor1.setValue(output);
 }

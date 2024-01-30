@@ -298,10 +298,10 @@
 
     var targetElement = document.getElementById("<%=self.sum%>btn");
     var elementToMove = document.getElementById("cbid.luci.tinynote.<%=self.sum%>_clear_note");
-    var parentElement = document.getElementById("cbi-luci-tinynote-enablenote<%=self.sum%>");
+    //var parentElement = document.getElementById("cbi-luci-tinynote-enablenote<%=self.sum%>");
 
     targetElement.insertBefore(elementToMove, targetElement.firstChild);
-    parentElement.insertAdjacentElement('afterend', targetElement);
+    //parentElement.insertAdjacentElement('afterend', targetElement);
     document.getElementById("cbi-luci-tinynote-<%=self.sum%>_clear_note").remove();
 
 </script>
