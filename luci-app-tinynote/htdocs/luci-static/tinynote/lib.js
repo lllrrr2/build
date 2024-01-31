@@ -1,4 +1,3 @@
-var output;
 // customScrollbar: 自定义滚动条
 // hScrollBarAlwaysVisible: 水平滚动条是否始终可见
 // vScrollBarAlwaysVisible: 垂直滚动条是否始终可见
@@ -62,12 +61,13 @@ editor2.setOptions({
     showPrintMargin: true
 });
 
-var indent_size = calculateTabSize();
+var output = '',
+    indent_char = ' ',
+    indent_size = calculateTabSize();
 $('#tabsize').on('change', function() {
     indent_size = calculateTabSize();
 });
 
-var indent_char = ' ';
 if (indent_size === '\t') {
     indent_size = '1';
     indent_char = '\t';
@@ -89,10 +89,6 @@ function FormatSH(a) {
     editor1.session.setMode("ace/mode/sh");
     editor2.session.setMode("ace/mode/sh");
     state(getContent().time);
-}
-
-function createIndentation(indentSize, indentLevel = 1) {
-    return isNaN(parseInt(indentSize)) ? '\t'.repeat(indentLevel) : ' '.repeat(indentSize * indentLevel)
 }
 
 class Stack {
@@ -170,6 +166,10 @@ class Stack {
 }
 
 function formatShCode(content, indentSize) {
+    function createIndentation(indentSize, indentLevel = 1) {
+        return isNaN(parseInt(indentSize)) ? '\t'.repeat(indentLevel) : ' '.repeat(indentSize * indentLevel)
+    }
+
     var casestack = [],
         indentLevel = 0,
         identifier = '',
@@ -181,10 +181,10 @@ function formatShCode(content, indentSize) {
         endBlockRegex = /^(esac|fi|done|elif|else|\})/,
         keywordRegex = /^(case|while|until|for|if|elif|else)|[({]$/;
 
-    content.replace(/(.*\))\s*(case\s+.*\s+in)/g, '$1\n$2')
+    content.replace(/(.*\))\s+(case\s+.*\s+in)/g, '$1\n$2')
            .split('\n').forEach(function (line) {
 
-        if (!isInCat) line = line.replace(/(^|\s+)#.*/g, '$1');
+        if (!isInCat) line = line.replace(/(?!#!.*)#.*/g, '');
         line = line.trim();
 
         if (!line) return;
@@ -200,10 +200,7 @@ function formatShCode(content, indentSize) {
         else if (casestack.length && line.match(/^;;$/) && indentLevel > 0) indentLevel--;
 
         var isCat = line.match(catregex);
-        if (isCat) {
-            isInCat = true;
-            identifier = isCat[1];
-        }
+        if (isCat) isInCat = true, identifier = isCat[1];
         else if (line.startsWith(identifier)) isInCat = false;
         else if (isInCat) spaces = createIndentation('\t');
 
@@ -212,7 +209,7 @@ function formatShCode(content, indentSize) {
         if (/^[^{]*[({]$/.test(line) && !isInFunction) formattedCode += '\n';
     });
 
-    formattedCode = formattedCode.replace(/(\w+\))\n\s*(case\s+.*\s+in)/g, '$1 $2');
+    // formattedCode = formattedCode.replace(/(.*\))\n\s+(case\s+.*\s+in)/g, '$1 $2');
     return formattedCode;
 }
 
@@ -435,37 +432,57 @@ function yamlToxml() {
 function jsonTocsv() {
     var content = getContent().content;
     if (!content) return;
-    loadScripts("https://cdn.bootcdn.net/ajax/libs/jsonlint/1.6.0/jsonlint.min.js")
-        .then(function() {
-            try {
-                var i = jsonlint.parse(content),
-                    n = jsonToCsv2(i, ",", !0, !1, !1);
-                editor1.session.setMode("ace/mode/json");
-                editor2.session.setMode("ace/mode/json");
-                editor2.setValue(n || '没有返回值');
-            } catch (e) {
-                showErrorMessage(e.message);
+
+    var data = JSON.parse(content);
+
+    function traverse(jsonObj, prefix) {
+        var keys = [];
+        for (var key in jsonObj) {
+            if (jsonObj.hasOwnProperty(key)) {
+                var prefixedKey = prefix ? prefix + "~::~" + key : key;
+                if (!keys.includes(prefixedKey)) {
+                    keys.push(prefixedKey);
+                }
+                if (typeof jsonObj[key] === "object" && !Array.isArray(jsonObj[key])) {
+                    keys = keys.concat(traverse(jsonObj[key], prefixedKey));
+                }
             }
-        })
-        .catch(function() {
-            showErrorMessage("加载错误", true);
-        });
-        state(getContent().time);
+        }
+        return keys;
+    }
+
+    var keys = traverse(data[0], "");
+    output = keys.join(",") + "\n";
+
+    data.forEach(function (item) {
+        var row = keys.map(function (key) {
+            var value = key.split("~::~").reduce(function (o, k) {
+                return o && o[k];
+            }, item);
+            value = value !== undefined ? value.toString().replace(/"/g, '""').replace(/\n/g, '\\n') : "";
+            return isNaN(value) || value.indexOf(",") !== -1 ? '"' + value + '"' : value;
+        }).join(",");
+        output += row + "\n";
+    });
+
+    editor1.session.setMode("ace/mode/json");
+    editor2.setValue(output || '没有返回值');
+    state(getContent().time);
 }
 
 function jsonToXML() {
     var content = getContent().content;
     if (!content) return;
-    loadScripts(["/luci-static/tinynote/vkbeautify.js", '/luci-static/tinynote/ObjTree.min.js', 'https://cdn.bootcdn.net/ajax/libs/jsonlint/1.6.0/jsonlint.min.js'])
+    loadScripts(["/luci-static/tinynote/vkbeautify.js", '/luci-static/tinynote/ObjTree.min.js'])
         .then(function() {
             try {
                 var x = content.replace(/([ :$&]+)(?=[(\w* *]*":)/g, "_"),
-                    json = jsonlint.parse(x),
-                    xotree = new XML.ObjTree(),
-                    xml = xotree.writeXML(json);
+                    xml = (new XML.ObjTree()).writeXML(JSON.parse(x)),
+                    xml = xml.substr(0, 39) + "<root>" + xml.substr(39) + "</root>";
+                output = vkbeautify.xml(xml);
                 editor1.session.setMode("ace/mode/json");
                 editor2.session.setMode("ace/mode/xml");
-                editor2.setValue(vkbeautify.xml(xml) || '没有返回值');
+                editor2.setValue(output || '没有返回值');
             } catch (e) {
                 showErrorMessage(e.message);
             }
