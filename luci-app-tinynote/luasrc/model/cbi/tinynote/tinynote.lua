@@ -280,23 +280,23 @@ end
 
 f:tab("note", translate("Note Settings"))
 
+f:tab("ace", translate("Ace Support"),
+    translate("Ace supports syntax highlighting, line number display, automatic syntax checking, etc.<br><b>") ..
+    [[<a href='https://www.bootcdn.cn/ace/' target='_blank'>]] ..
+    translate("BootCDN Resources") ..
+    [[</a>&nbsp;&nbsp;&nbsp;<a href='https://ace.c9.io/build/kitchen-sink.html' target='_blank'>]] ..
+    translate("Ace demo, theme preview.") ..
+    [[</a>&nbsp;&nbsp;&nbsp;<a href='https://github.com/ajaxorg/ace-builds/' target='_blank'>]] ..
+    translate("github") .. [[</a></b>]]
+)
+
 f:tab("codemirror", translate("CodeMirror Support"),
     translate("CodeMirror supports syntax highlighting, line number display, automatic indentation, etc.<br><b>") ..
     [[<a href='https://www.bootcdn.cn/codemirror/' target='_blank'>]] ..
     translate("BootCDN Resources") ..
-    [[</a><span style="white-space: pre;">     </span><a href='https://discuss.codemirror.net/t/user-manual-in-chinese/1436/' target='_blank'>]] ..
+    [[</a>&nbsp;&nbsp;&nbsp;<a href='https://discuss.codemirror.net/t/user-manual-in-chinese/1436/' target='_blank'>]] ..
     translate("User manual in Chinese") ..
-    [[</a><span style="white-space: pre;">     </span><a href='https://codemirror.net/5/demo/theme.html' target='_blank'>]] ..
-    translate("Theme Demo") .. [[</a></b>]]
-)
-
-f:tab("ace", translate("act Support"),
-    translate("CodeMirror supports syntax highlighting, line number display, automatic indentation, etc.<br><b>") ..
-    [[<a href='https://www.bootcdn.cn/ace/' target='_blank'>]] ..
-    translate("BootCDN Resources") ..
-    [[</a><span style="white-space: pre;">     </span><a href='https://discuss.codemirror.net/t/user-manual-in-chinese/1436/' target='_blank'>]] ..
-    translate("User manual in Chinese") ..
-    [[</a><span style="white-space: pre;">     </span><a href='https://codemirror.net/5/demo/theme.html' target='_blank'>]] ..
+    [[</a>&nbsp;&nbsp;&nbsp;<a href='https://codemirror.net/5/demo/theme.html' target='_blank'>]] ..
     translate("Theme Demo") .. [[</a></b>]]
 )
 
@@ -355,7 +355,7 @@ local enable = f:taboption("note", Flag, "enable",
 enable:depends("aceenable", 0)
 
 local aceenable = f:taboption("note", Flag, "aceenable",
-    translate("ace 支持"))
+    translate("Enable Ace Support"))
 aceenable:depends("enable", 0)
 
 local theme = f:taboption("codemirror", ListValue, "theme",

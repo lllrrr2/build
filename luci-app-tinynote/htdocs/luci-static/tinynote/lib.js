@@ -44,8 +44,6 @@
 var editor1 = ace.edit("editor1"),
     editor2 = ace.edit("editor2");
 editor1.setOptions({
-    theme: "ace/theme/monokai",
-    fontSize: "14px",
     fontFamily: "Consolas, monospace",
     printMarginColumn: -1,
     wrap: true,
@@ -53,19 +51,102 @@ editor1.setOptions({
 });
 
 editor2.setOptions({
-    theme: "ace/theme/monokai",
-    fontSize: "14px",
     fontFamily: "Consolas, monospace",
     printMarginColumn: -1,
     wrap: true,
     showPrintMargin: true
 });
-
 var output = '',
     indent_char = ' ',
     indent_size = calculateTabSize();
-$('#tabsize').on('change', function() {
-    indent_size = calculateTabSize();
+
+$(document).ready(function () {
+    var themes = [
+        { value: "ambiance",                 name: "Ambiance"                },
+        { value: "chaos",                    name: "Chaos"                   },
+        { value: "chrome",                   name: "Chrome"                  },
+        { value: "cloud9_day",               name: "Cloud9 Day"              },
+        { value: "cloud9_night",             name: "Cloud9 Night"            },
+        { value: "cloud9_night_low_color",   name: "Cloud9 Night Low Color"  },
+        { value: "clouds",                   name: "Clouds"                  },
+        { value: "clouds_midnight",          name: "Clouds Midnight"         },
+        { value: "cobalt",                   name: "Cobalt"                  },
+        { value: "crimson_editor",           name: "Crimson Editor"          },
+        { value: "dawn",                     name: "Dawn"                    },
+        { value: "dracula",                  name: "Dracula"                 },
+        { value: "dreamweaver",              name: "Dreamweaver"             },
+        { value: "eclipse",                  name: "Eclipse"                 },
+        { value: "github",                   name: "GitHub"                  },
+        { value: "github_dark",              name: "GitHub Dark"             },
+        { value: "gob",                      name: "Gob"                     },
+        { value: "gruvbox",                  name: "Gruvbox"                 },
+        { value: "gruvbox_dark_hard",        name: "Gruvbox Dark Hard"       },
+        { value: "gruvbox_light_hard",       name: "Gruvbox Light Hard"      },
+        { value: "idle_fingers",             name: "Idle Fingers"            },
+        { value: "iplastic",                 name: "IPlastic"                },
+        { value: "katzenmilch",              name: "Katzenmilch"             },
+        { value: "kr_theme",                 name: "KR Theme"                },
+        { value: "kuroir",                   name: "Kuroir"                  },
+        { value: "merbivore",                name: "Merbivore"               },
+        { value: "merbivore_soft",           name: "Merbivore Soft"          },
+        { value: "mono_industrial",          name: "Mono Industrial"         },
+        { value: "monokai",                  name: "Monokai"                 },
+        { value: "nord_dark",                name: "Nord Dark"               },
+        { value: "one_dark",                 name: "One Dark"                },
+        { value: "pastel_on_dark",           name: "Pastel on Dark"          },
+        { value: "solarized_dark",           name: "Solarized Dark"          },
+        { value: "solarized_light",          name: "Solarized Light"         },
+        { value: "sqlserver",                name: "SQL Server"              },
+        { value: "terminal",                 name: "Terminal"                },
+        { value: "textmate",                 name: "TextMate"                },
+        { value: "tomorrow",                 name: "Tomorrow"                },
+        { value: "tomorrow_night",           name: "Tomorrow Night"          },
+        { value: "tomorrow_night_blue",      name: "Tomorrow Night Blue"     },
+        { value: "tomorrow_night_bright",    name: "Tomorrow Night Bright"   },
+        { value: "tomorrow_night_eighties",  name: "Tomorrow Night Eighties" },
+        { value: "twilight",                 name: "Twilight"                },
+        { value: "vibrant_ink",              name: "Vibrant Ink"             },
+        { value: "xcode",                    name: "Xcode"                   }
+    ],
+        fontSizes = ['12px', '14px', '16px', '18px'],
+        selectTheme = $('#aceTheme'),
+        selectFontSize = $('#fontSize');
+
+    function updateTheme(theme, fontSize) {
+        if (theme) {
+            var themePath = 'ace/theme/' + theme;
+            editor1.setTheme(themePath);
+            editor2.setTheme(themePath);
+        }
+        if (fontSize) {
+            editor1.setFontSize(fontSize);
+            editor2.setFontSize(fontSize);
+        }
+    }
+
+    themes.forEach(function (theme) {
+        selectTheme.append($('<option>', { value: theme.value, text: theme.name }));
+    });
+
+    fontSizes.forEach(function (size) {
+        selectFontSize.append($('<option>', { value: size, text: size }));
+    });
+    selectTheme.val('monokai');
+    selectFontSize.val('14px');
+
+    updateTheme(selectTheme.val(), selectFontSize.val());
+
+    selectTheme.on('change', function () {
+        updateTheme(selectTheme.val(), null);
+    });
+
+    selectFontSize.on('change', function () {
+        updateTheme(null, selectFontSize.val());
+    });
+
+    $('#indent_size').on('change', function () {
+        indent_size = calculateTabSize();
+    });
 });
 
 if (indent_size === '\t') {
@@ -433,40 +514,15 @@ function jsonTocsv() {
     var content = getContent().content;
     if (!content) return;
 
-    var data = JSON.parse(content);
-
-    function traverse(jsonObj, prefix) {
-        var keys = [];
-        for (var key in jsonObj) {
-            if (jsonObj.hasOwnProperty(key)) {
-                var prefixedKey = prefix ? prefix + "~::~" + key : key;
-                if (!keys.includes(prefixedKey)) {
-                    keys.push(prefixedKey);
-                }
-                if (typeof jsonObj[key] === "object" && !Array.isArray(jsonObj[key])) {
-                    keys = keys.concat(traverse(jsonObj[key], prefixedKey));
-                }
-            }
-        }
-        return keys;
-    }
-
-    var keys = traverse(data[0], "");
-    output = keys.join(",") + "\n";
-
-    data.forEach(function (item) {
-        var row = keys.map(function (key) {
-            var value = key.split("~::~").reduce(function (o, k) {
-                return o && o[k];
-            }, item);
-            value = value !== undefined ? value.toString().replace(/"/g, '""').replace(/\n/g, '\\n') : "";
-            return isNaN(value) || value.indexOf(",") !== -1 ? '"' + value + '"' : value;
-        }).join(",");
-        output += row + "\n";
-    });
-
-    editor1.session.setMode("ace/mode/json");
-    editor2.setValue(output || '没有返回值');
+    loadScripts("/luci-static/tinynote/tocsv.js")
+        .then(function () {
+            output = jsonToCsv(content, ",", !0, !1, !1);
+            editor1.session.setMode("ace/mode/json");
+            editor2.setValue(output || '没有返回值');
+        })
+        .catch(function () {
+            showErrorMessage("加载错误", true)
+        });
     state(getContent().time);
 }
 
@@ -639,7 +695,7 @@ function clearAll(event, a) {
 }
 
 function calculateTabSize() {
-    var parsedValue = parseInt($('#tabsize').val(), 10);
+    var parsedValue = parseInt($('#indent_size').val(), 10);
     if (parsedValue === 1) parsedValue = '\t';
     return parsedValue;
 }

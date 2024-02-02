@@ -22,6 +22,12 @@ msgstr "中文用户手册"
 msgid "Theme Demo"
 msgstr "主题预览"
 
+msgid "Ace supports syntax highlighting, line number display, automatic syntax checking, etc."
+msgstr "Ace支持语法高亮、行号显示、自动语法检查等。"
+
+msgid "Ace demo, theme preview."
+msgstr "Ace 演示，主题预览"
+
 msgid "Save Path"
 msgstr "保存路径"
 
@@ -37,8 +43,14 @@ msgstr "文本类形"
 msgid "Enable CodeMirror Support"
 msgstr "启用 CodeMirror 支持"
 
+msgid "Enable Ace Support"
+msgstr "启用 Ace 支持"
+
 msgid "CodeMirror Support"
 msgstr "CodeMirror 支持"
+
+msgid "Ace Support"
+msgstr "Ace 支持"
 
 msgid "Design"
 msgstr "主题"
