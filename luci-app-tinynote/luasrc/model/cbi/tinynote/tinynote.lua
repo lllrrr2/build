@@ -281,8 +281,8 @@ end
 f:tab("note", translate("Note Settings"))
 
 f:tab("ace", translate("Ace Support"),
-    translate("Ace supports syntax highlighting, line number display, automatic syntax checking, etc.<br><b>") ..
-    [[<a href='https://www.bootcdn.cn/ace/' target='_blank'>]] ..
+    translate("Ace supports syntax highlighting, line number display, automatic syntax checking, etc.") ..
+    [[<br><b><a href='https://www.bootcdn.cn/ace/' target='_blank'>]] ..
     translate("BootCDN Resources") ..
     [[</a>&nbsp;&nbsp;&nbsp;<a href='https://ace.c9.io/build/kitchen-sink.html' target='_blank'>]] ..
     translate("Ace demo, theme preview.") ..
