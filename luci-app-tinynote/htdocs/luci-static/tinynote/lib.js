@@ -258,14 +258,14 @@ function formatShCode(content, indentSize) {
         isInCat, isInFunction,
         caseregex = /^case\s+(.+)\s+in$/,
         catregex = /^cat.*<<-?\\?\s*(\w+)>?/,
-        functionRegex = /^(\w+)\s*\([^)]*\)\s*{/,
+        functionRegex = /(function\s+)?(\w+)\s*\(\)\s*{/,
         endBlockRegex = /^(esac|fi|done|elif|else|\})/,
         keywordRegex = /^(case|while|until|for|if|elif|else)|[({]$/;
 
     content.replace(/(.*\))\s+(case\s+.*\s+in)/g, '$1\n$2')
            .split('\n').forEach(function (line) {
 
-        if (!isInCat) line = line.replace(/(?!#!.*)#.*/g, '');
+        if (!isInCat) line = line.replace(/^(?!#!)#.*$|\s+#.*$/gm, '');
         line = line.trim();
 
         if (!line) return;
@@ -273,7 +273,10 @@ function formatShCode(content, indentSize) {
         var spaces = createIndentation(indentSize, indentLevel);
 
         if (line.match(functionRegex)) isInFunction = true;
-        else if (isInFunction && line === '}') isInFunction = false;
+        else if (isInFunction && line === '}') {
+            indentLevel = (indentLevel > 0) ? indentLevel - 1 : 0;
+            isInFunction = false;
+        }
 
         if (caseregex.test(line)) casestack.push('case');
         else if (line.startsWith('esac')) casestack.pop();
