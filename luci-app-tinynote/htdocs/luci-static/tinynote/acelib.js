@@ -1,50 +1,51 @@
 
 function renderAceEditor(id, model, only, theme = 'monokai', font_size, height) {
-    var htmlCode = 
-        '<div class="aceEditorMenu">' +
-            '<a style="float:left;">' +
-                '<i class="is-size-6 is-family-primary">输入</i>' +
-            '</a>' +
-            '<div class="editortoolbar btn-group-sm">' +
-                '<a id="fileInput' + id + '"  class="icon is-hidden-mobile" title="上传文件">' +
-                    '<i class="material-icons">publish</i>' +
-                '</a>' +
-                '<a  class="icon" title="保存" onclick="cbi_submit(this, \'cbi.save\')">' +
-                    '<i class="material-icons">save</i>' +
-                '</a>' +
-                '<a id="down' + id + '" class="icon" title="下载">' +
-                    '<i class="material-icons">cloud_download</i>' +
-                '</a>' +
-                '<a id="clear' + id + '" class="icon" title="清除">' +
-                    '<i class="material-icons">delete_outline</i>' +
-                '</a>' +
-                '<a id="copy' + id + '" class="icon" title="复制输入代码">' +
-                    '<i class="material-icons">content_copy</i>' +
-                '</a>' +
-                '<a id="' + id + 'FullScreen" class="icon" onclick="addFullScreen(\'' + id + '\');" title="全屏">' +
-                    '<i class="material-icons">open_in_full</i>' +
-                '</a>' +
-                '<a id="' + id + 'CloseScreen" style="display:none" class="icon" onclick="removeFullScreen(\'' + id + '\');" title="关闭全屏">' +
-                    '<i class="material-icons">close_fullscreen</i>' +
-                '</a>' +
-            '</div>' +
-        '</div>';
+    var htmlCode = `
+        <div class="aceEditorMenu">
+            <a style="float:left;">
+                <i class="is-size-6 is-family-primary">输入</i>
+            </a>
+            <div class="editortoolbar btn-group-sm">
+                <a id="fileInput${id}" class="icon is-hidden-mobile" title="上传文件">
+                    <i class="material-icons">publish</i>
+                </a>
+                <a class="icon" title="保存" onclick="cbi_submit(this, 'cbi.save')">
+                    <i class="material-icons">save</i>
+                </a>
+                <a id="down${id}" class="icon" title="下载">
+                    <i class="material-icons">cloud_download</i>
+                </a>
+                <a id="clear${id}" class="icon" title="清除">
+                    <i class="material-icons">delete_outline</i>
+                </a>
+                <a id="copy${id}" class="icon" title="复制输入代码">
+                    <i class="material-icons">content_copy</i>
+                </a>
+                <a id="${id}FullScreen" class="icon" onclick="addFullScreen('${id}');" title="全屏">
+                    <i class="material-icons">open_in_full</i>
+                </a>
+                <a id="${id}CloseScreen" style="display:none" class="icon" onclick="removeFullScreen('${id}');" title="关闭全屏">
+                    <i class="material-icons">close_fullscreen</i>
+                </a>
+            </div>
+        </div>`;
 
-    var statusBarHtml = '<div class="columns is-mobile m-0 aceStatusBar" id="StatusBar">' +
-        '<div class="column is-two-thirds p-0 pl-0 status-left" id="' + id + 'AceLineColumn">Ln: 1 Col: 0; Max Col: 0</div>' +
-        '<div class="column is-one-thirds p-0 has-text-centered status-right" id="' + id + 'TextSize">Size: 0 Byte</div>' +
-        '</div>';
+    var statusBarHtml = `
+        <div class="columns is-mobile m-0 aceStatusBar" id="StatusBar">
+            <div class="column is-two-thirds p-0 pl-0 status-left" id="${id}AceLineColumn">Ln: 1 Col: 0; Max Col: 0</div>
+            <div class="column is-one-thirds p-0 has-text-centered status-right" id="${id}TextSize">Size: 0 Byte</div>
+        </div>`;
 
-    var wrapperContent = '\
-        <div class="columns is-centered" style="display: none;"></div>' +
-        '<div class="field state" style="display: none;"></div>' +
-        '<div class="field success" style="display: none;"></div>';
+    var wrapperContent = `
+        <div class="columns is-centered" style="display: none;"></div>
+        <div class="field state" style="display: none;"></div>
+        <div class="field success" style="display: none;"></div>`;
 
-    $(".cbi-value#cbi-luci-tinynote-" + id)
+    $(`.cbi-value#cbi-luci-tinynote-${id}`)
         .prepend(htmlCode)
         .append(statusBarHtml)
         .addClass('column')
-        .wrapInner($('<div class=\'aceEditorBorder\' id=\'ace' + id + '\'></div>'))
+        .wrapInner($(`<div class='aceEditorBorder' id='ace${id}'></div>`))
         .before(wrapperContent);
 
     var $textarea = $('#' + id);
@@ -69,22 +70,22 @@ function renderAceEditor(id, model, only, theme = 'monokai', font_size, height) 
     
     id.on("input", function () {
         $textarea.val(id.getValue());
-        updateDisplay(id, $("#" + xid + "TextSize"), $("#" + xid + "AceLineColumn"));
+        updateDisplay(id, $(`#${xid}TextSize`), $(`#${xid}AceLineColumn`));
     });
 
-    $('#copy' + xid).click(function () {
-        setupClipboard(id, 'copy' + xid);
+    $(`#copy${xid}`).click(function () {
+        setupClipboard(id, `copy${xid}`);
     });
 
-    $('#clear' + xid).click(function () {
+    $(`#clear${xid}`).click(function () {
         clearValue(id);
     });
 
-    $('#down' + xid).click(function () {
+    $(`#down${xid}`).click(function () {
         downloadFile(id);
     });
 
-    $('#fileInput' + xid).click(function () {
+    $(`#fileInput${xid}`).click(function () {
         var fileInput = $('<input type="file" class="file-input">').on('change', function (event) {
             changeToFileContent(event.target, id);
         });
@@ -145,13 +146,13 @@ function updateDisplay(editor, sizeOutput, lineColumnOutput) {
     for (var i = 0; i < lineNumber; i++) {
         maxColumnCount = Math.max(maxColumnCount, editor.session.getLine(i).length);
     }
-    lineColumnOutput.html("Ln: " + lineNumber + "; Col: " + columnNumber + "; Max Col: " + maxColumnCount);
+    lineColumnOutput.html(`Ln: ${lineNumber}; Col: ${columnNumber}; Max Col: ${maxColumnCount}`);
 }
 
 function addFullScreen(id) {
-    $("#ace" + id + ".aceEditorBorder").addClass('fullScreen');
-    $("#" + id + "FullScreen").hide();
-    $("#" + id + "CloseScreen").show();
+    $(`#ace${id}.aceEditorBorder`).addClass('fullScreen');
+    $(`#${id}FullScreen`).hide();
+    $(`#${id}CloseScreen`).show();
     $('.ace_editor').css('height', 'calc(100% - 65px)');
     $('body').css({
         overflow: 'hidden',
@@ -160,9 +161,9 @@ function addFullScreen(id) {
 }
 
 function removeFullScreen(id) {
-    $("#ace" + id + ".aceEditorBorder").removeClass('fullScreen');
-    $("#" + id + "FullScreen").show();
-    $("#" + id + "CloseScreen").hide();
+    $(`#ace${id}.aceEditorBorder`).removeClass('fullScreen');
+    $(`#${id}FullScreen`).show();
+    $(`#${id}CloseScreen`).hide();
     $('.ace_editor').css('height', '60vh');
     $('body').css({
         overflow: '',
@@ -178,13 +179,19 @@ function setupClipboard(id, buttonId) {
         }
     }).on('success', function (e) {
         if (id) id.execCommand('selectAll');
-        showSuccessMessage("已复制");
+        var alertCopyMessage = $('<div>').addClass('copy-message').text('内容已复制');
+        $('body').append(alertCopyMessage);
+        setTimeout(() => alertCopyMessage.remove(), 1000);
         e.clearSelection();
     }).on('error', function (e) {
         e.clearSelection();
+        var errorMessage = '复制出错';
         if (id.getValue().trim() === '') {
-            showErrorMessage('内容为空', true)
-        } else showErrorMessage('复制出错' + e.action);
+            errorMessage = '内容为空';
+        }
+        var alertCopyMessage = $('<div>').addClass('copy-message').text(errorMessage);
+        $('body').append(alertCopyMessage);
+        setTimeout(() => alertCopyMessage.remove(), 3000); // 显示错误消息3秒后移除
     });
 }
 

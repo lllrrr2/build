@@ -1,3 +1,20 @@
+<style>
+    .copy-message {
+        display: flex;                             /* 使用弹性布局 */
+        position: fixed;                           /* 固定定位 */
+        align-items: center;                       /* 垂直居中对齐 */
+        justify-content: center;                   /* 水平居中对齐 */
+        top: 50%;                                  /* 距离顶部的偏移量为50% */
+        left: 50%;                                 /* 距离左侧的偏移量为50% */
+        color: white;                              /* 文字颜色为白色 */
+        z-index: 9999;                             /* z轴顺序为9999，使弹窗处于最上层 */
+        padding: 10px;                             /* 内边距为10像素 */
+        font-size: 16px;                           /* 字体大小为16像素 */
+        border-radius: 5px;                        /* 边框圆角半径为5像素 */
+        transform: translate(-50%, -50%);          /* 使用transform平移来实现居中 */
+        background-color: rgba(0, 0, 0, 0.8);      /* 背景颜色为黑色，透明度为0.8 */
+    }
+</style>
 <script src="/luci-static/tinynote/jquery.min.js"></script>
 <link rel="stylesheet" href="/luci-static/tinynote/bulma.css"/>
 <script src="/luci-static/tinynote/clipboard.min.js"></script>
