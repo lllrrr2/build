@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008-2016 OpenWrt.org
+# Copyright (C) 2008-2023 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,17 +8,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netdata
-PKG_VERSION:=1.30.1
-PKG_RELEASE:=1
+PKG_VERSION:=1.37.1
+PKG_RELEASE:=local
 
-PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>, Daniel Engberg <daniel.engberg.lists@pyret.net>
+PKG_MAINTAINER:=M. Raymond Vaughn <nethershaw@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:my-netdata:netdata
 
-PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/netdata/netdata/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=e05f8b59d283fb2844280455b9481a2f9104730fd77f535312ff2fec40a6bc11
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/netdata/netdata.git
+PKG_SOURCE_VERSION:=v${PKG_VERSION}
+PKG_SOURCE_DATE=2022-12-05
+PKG_MIRROR_HASH:=c57ae7f5334b740a2c505c9a06705c40b92dec6e5f8b98977ed748e749dabd01
+
+HOST_FIXUP:=autoreconf
+
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
@@ -26,45 +31,37 @@ PKG_USE_MIPS16:=0
 
 include $(INCLUDE_DIR)/package.mk
 
+define Package/netdata/Default
+	SECTION:=admin
+	CATEGORY:=Administration
+	DEPENDS:=+zlib +libuuid +libuv +libmnl +libjson-c +bash +coreutils-timeout +curl +uuidgen +liblz4 +libcap +openssl-util +libatomic +libstdcpp +libc +libcups
+	TITLE:=Real-time performance monitoring tool
+	URL:=https://www.netdata.cloud/
+endef
+
 define Package/netdata
-  SECTION:=admin
-  CATEGORY:=Administration
-  DEPENDS:=+zlib +libuuid +libuv +libmnl +libjson-c
-  TITLE:=Real-time performance monitoring tool
-  URL:=https://www.netdata.cloud/
+	$(call Package/netdata/Default)
 endef
 
 define Package/netdata/description
   netdata is a highly optimized Linux daemon providing real-time performance
   monitoring for Linux systems, applications and SNMP devices over the web.
-
-  If you want to use Python plugins install python3, python3-yaml and
-  python3-urllib3
 endef
 
 TARGET_CFLAGS := $(filter-out -O%,$(TARGET_CFLAGS))
-TARGET_CFLAGS += -ffunction-sections -fdata-sections -O3
+ifeq ($(CONFIG_DEBUG),y)
+	TARGET_CFLAGS := -O1 -ggdb3 -DNETDATA_INTERNAL_CHECKS=1 -DNETDATA_DEV_MODE=1 -fstack-protector-all -fno-omit-frame-pointer
+else
+	TARGET_CFLAGS += -O2
+endif
 TARGET_LDFLAGS += -Wl,--gc-sections
 
 CONFIGURE_ARGS += \
-	--with-zlib \
-	--with-math \
-	--disable-x86-sse \
-	--enable-lto \
-	--disable-ebpf \
-	--without-libcap \
-	--disable-https \
-	--disable-dbengine \
-	--disable-plugin-nfacct \
-	--disable-plugin-freeipmi \
-	--disable-plugin-cups \
-	--disable-plugin-xenstat \
-	--disable-backend-prometheus-remote-write \
-	--disable-unit-tests \
-	--disable-cloud
+	--disable-cloud \
+	--disable-ebpf
 
 define Package/netdata/conffiles
-/etc/netdata/
+	/etc/netdata/
 endef
 
 define Package/netdata/install
@@ -74,11 +71,10 @@ define Package/netdata/install
 	touch $(1)/etc/netdata/.opt-out-from-anonymous-statistics
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/netdata $(1)/usr/lib
-	$(CP) $(1)/usr/lib/netdata/conf.d/fping.conf $(1)/etc
-	$(CP) $(1)/usr/lib/netdata/conf.d/health_alarm_notify.conf $(1)/etc
-	$(CP) $(1)/usr/lib/netdata/plugins.d/tc-qos-helper.sh $(1)/etc
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/netdata $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/netdatacli $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/netdata-claim.sh $(1)/usr/sbin
 	$(INSTALL_DIR) $(1)/usr/share/netdata
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/netdata $(1)/usr/share
 	rm $(1)/usr/share/netdata/web/demo*html

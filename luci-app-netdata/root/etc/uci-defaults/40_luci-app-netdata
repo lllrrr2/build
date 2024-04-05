@@ -1,0 +1,166 @@
+#!/bin/sh
+# [ -f /usr/share/netdata/webcn/netdata.conf ] && mv -f /usr/share/netdata/webcn/netdata.conf /etc/netdata/netdata.conf
+# [ -f /usr/share/netdata/webcn/netdata ] && mv -f /usr/share/netdata/webcn/netdata /etc/config/netdata
+# [ -f /usr/share/netdata/webcn/netdata.init ] && mv -f /usr/share/netdata/webcn/netdata.init /etc/init.d/netdata
+files="dashboard.js dashboard_info.js main.js index.html"
+for file in $files; do
+    [ ! -f "/usr/share/netdata/web/bf_$file" ] && mv -f "/usr/share/netdata/web/$file" "/usr/share/netdata/web/bf_$file"
+    [ -f "/usr/share/netdata/webcn/$file" ] && mv -f "/usr/share/netdata/webcn/$file" "/usr/share/netdata/web/$file"
+done
+
+sed -i '{
+        s|Chart Resize|调整图表大小|
+        s|Drag this point with your mouse or your finger (on touch devices), to resize the chart vertically. You can also <b>double click it</b> or <b>double tap it</b> to reset between 2 states: the default and the one that fits all the values.<br/><small>Help can be disabled from the settings.</small>|用鼠标或手指拖动此点（在触摸设备上），垂直调整图表大小。您也可以<b>双击它</b>或<b>双点它</b]在两种状态之间重置：默认状态和适合所有值的状态<br/><small>可以从设置中禁用帮助。</small>|
+        s|Pan Left|向左平移|
+        s|Pan the chart to the left. You can also <b>drag it</b> with your mouse or your finger (on touch devices).<br/><small>Help can be disabled from the settings.</small>|将图表向左平移。您也可以用鼠标或手指（在触摸设备上）<b>拖动它</b><br/><small>可以从设置中禁用帮助。</small>|
+        s|Pan Right|向右平移|
+        s|Pan the chart to the right. You can also <b>drag it</b> with your mouse or your finger (on touch devices).<br/><small>Help can be disabled from the settings.</small>|将图表平移到右侧。您还可以使用鼠标或手指（在触摸设备上）<b>拖动它</b>。<br/><small>可以从设置中禁用帮助。</small>|
+        s|Chart Zoom In|图表放大|
+        s|Zoom in the chart. You can also press SHIFT and select an area of the chart, or press SHIFT or ALT and use the mouse wheel or 2-finger touchpad scroll to zoom in or out. <br/><small>Help can be disabled from the settings.|放大图表。也可以按SHIFT键并选择图表的某个区域，或者按SHIFT或ALT键并使用鼠标滚轮或双指触摸板滚动来放大或缩小<br/><small>可以从设置中禁用帮助。|
+        s|Chart Zoom Out|图表缩小|
+        s|Zoom out the chart. You can also press SHIFT or ALT and use the mouse wheel, or 2-finger touchpad scroll to zoom in or out.<br/><small>Help can be disabled from the settings.</small>|缩小图表。您还可以按 SHIFT 或 ALT 并使用鼠标滚轮或两指触摸板滚动来放大或缩小。<br/><small>可以从设置中禁用帮助。</small>|
+        s|Preparing dashboard for printing...|正在准备仪表板以进行打印...|
+        s|Please wait while we initialize and render all the charts on the dashboard.|正在初始化并呈现仪表板上的所有图表，请稍候。|
+        s|The print dialog will appear as soon as we finish rendering the page.|渲染完页面后，将立即显示打印对话框。|
+        s|Import a Netdata snapshot|导入 Netdata 快照|
+        s|Export a Netdata snapshot|导出 Netdata 快照|
+        s|Print the dashboard|打印仪表板|
+        s|Need help?" : "Check Version|需要帮忙？" : "检查新的版本|
+        s|Last 5 minutes|最后 5 分钟|
+        s|Last 15 minutes|最后 15 分钟|
+        s|Last 30 minutes|最后 30 分钟|
+        s|Last 2 hours|最后 2 小时|
+        s|Last 6 hours|最后 6 小时|
+        s|Last 12 hours|过去 12 小时|
+        s|Last Day|最后一天|
+        s|Last 2 Days|过去 2 天|
+        s|Last 7 Days|过去 7 天|
+        s|Select a start date|选择开始日期|
+        s|Select an end date|选择结束日期|
+        s|Select a predefined or a custom timeframe|选择预定义的或自定义的时间框架|
+        s|Clear|取消|
+        s|Apply|使用|
+        s|Click to pause":"Click to play|点击暂停":"点击实时显示|
+        s|Playing":"Paused|已实时显示":"已暂停|
+        s|Need help?":"Check Version|需要帮忙？":"检查版本|
+        s|Play to refresh and have live content, pause to see historical, or force play to keep refreshing even when the tab loses focus at the expense of some system performance.|播放以刷新并显示实时内容，暂停以查看历史记录，或强制播放以保持刷新，即使选项卡失去焦点，也会以牺牲某些系统性能为代价。|
+        s|"Play"|"播放"|
+        s|"Pause"|"暂停"|
+        s|"Force Play"|"强制播放"|
+        s|"News"|"主题"|
+        s|"Search"|"搜索"|
+        s|"Space Bar"|"空格键"|
+        s|"Settings"|"设置"|
+        s|"Need help?"|"需要帮忙？"|
+        s|"Disk Read"|"磁盘读取"|g
+        s|"Disk Write"|"磁盘写入"|g
+        s|"Net Inbound"|"净入站"|
+        s|"Net Outbound"|"净出站"|
+        s|"Used RAM"|"已用内存"|
+        s|"Used Swap"|"已用 Swap"|
+        s|"IP Inbound"|"IP 入站"|
+        s|"IP Outbound"|"IP 出站"|
+        s|"IPv4 Inbound"|"IPv4 入站"|
+        s|"IPv4 Outbound"|"IPv4 出站"|
+        s|data-width="9%"|data-width="12%"|g
+        s|data-width="11%"|data-width="15%"|g
+        s|Downloading latest version id from GCS...|正在从 GCS 下载最新版本 ID...|
+        s|Downloading latest version id from github...|正在从 github 下载最新版本 ID...|
+        s|Failed to download the latest stable version id from github!|从github下载最新稳定版本id失败！|
+        s|Failed to download the latest nightly version from GCS!|无法从 GCS 下载最新的夜间版本！|
+        s|checking for updates...|查询更新...|
+        s|Failed to get your netdata version!|无法获取您的 netdata 版本！|
+        s|You already have the latest netdata!|您已经拥有最新的 netdata 版本数据！|
+        s|No update yet?|还没有更新吗？|
+        s|We probably need some motivation to keep going on!|我们可能需要一些动力才能继续前进！|
+        s|Want to extend your history of real-time metrics?|想要延长您的实时指标历史记录吗？|
+        s|DB engine|数据库引擎|
+        s|"history"|"历史记录"|
+        s|or use the|或使用|
+        s|A moderate snapshot.|一个适度的快照。|
+        s|A nice small snapshot!|一个很小的快照！|
+        s|Will stress your browser...|会给您的浏览器带来压力...|
+        s|Hm... good luck...|嗯……祝你好运……|
+        s|The snapshot will have|快照每个维度将有|
+        s|points per dimension. Expected size on disk|个数据点。预期在硬盘上的大小为|
+        s|MB, at browser memory|MB，在浏览器内存中为|
+        s|unknown compression method:|未知的压缩方法：|
+        s|To troubleshoot Netdata Cloud connection issues, please follow|要解决 Netdata Cloud 连接问题，请按照|
+        s|Take me to Netdata Cloud|带我去 Netdata Cloud|
+        s|Cannot center around empty selection|无法用空的选项|
+        s|uncompressed snapshot data for key|密钥的未压缩快照数据|
+        s|is undefined|未定义|
+        s|is null|空白|
+        s|is not string|不是字符串|
+        s|decompression of snapshot data for key|解压缩密钥的快照数据|
+        s|parsing snapshot data for key|解析快照数据的关键|
+        s|failed to parse URL hash parameter|解析 URL 哈希参数失败|
+        s|localStorage is not available|本地存储不可用|
+        s|Sorry! I cannot find any operational URL for this server|对不起！我找不到该服务器的任何可操作 URL|
+        }' /usr/share/netdata/web/static/js/main.7d1bdca1.chunk.js
+
+sed -i "s|If you haven\\\'t already, <a href=\"https://github.com/netdata/netdata\" target=\"_blank\">give netdata a <b><i class=\"fas fa-star\"></i></b> at its github page</a>.|如果您还没有，给<a href=\"https://github.com/netdata/netdata\" target=\"_blank\"> netdata <b><i class=\"fas fa-star\"></i></b>在其 github 页面上加注星标</a>。|; s|Configure Netdata's|配置 Netdata 的|" /usr/share/netdata/web/static/js/main.7d1bdca1.chunk.js
+
+sed -i '{
+        s|"Need help?"|"需要帮忙？"|g
+        s|"Dashboard"|"仪表板"|
+        s|Learn how to interact with graphs using your mouse or touch interface.|了解如何使用鼠标或触摸界面与图形交互。|
+        s|Learn to use the Dashboard|学习使用仪表板|
+        s|"Documentation"|"文档"|g
+        s|View how-tos, reference docs, and tutorials to help you get the most out of Netdata Cloud.|查看如何操作、参考文档和教程，帮助您充分利用Netdata Cloud。|
+        s|Search Netdata\\\u2019s docs & community|搜索 Netdata 文档和社区|
+        s|"Visit the docs"|"访问文档"|
+        s|Report a Bug|提交错误|
+        s|Let us know about any bugs you\\\u2019ve encountered in Netdata Agent.|请告诉我们您在Netdata Agent中遇到的任何错误。|
+        s|Open a new Issue in GitHub|在 GitHub 中打开一个新问题|
+        s|Found a bug with the Netdata|发现 Netdata Cloud 的错误|
+        s|Open an issue| GitHub |
+        s|on GitHub|上打开问题|
+        s|If you need help or would like to contribute to Netdata, join our Community and ask questions, discuss topics, or propose feature requests.|如果您需要帮助或想为Netdata做出贡献，请加入我们的社区，提出问题、讨论主题或提出功能请求。|
+        s|Join the Community|加入社区|
+        s|"Community"|"社区"|g
+        s|"Netdata News"|"Netdata 主题"|
+        s|Using a Mouse|使用鼠标|
+        s|Using Touch|使用触摸|
+        s|Mouse Over / Hover|鼠标悬停/悬停|
+        s|Drag Chart Contents|拖动图表内容|g
+        s|"Double Click"|"双击"|
+        s|SHIFT + Drag|SHIFT + 拖动|
+        s|Highlight Timeframe|突出显示时间范围|
+        s|SHIFT + Mouse Wheel|SHIFT + 鼠标滚轮|
+        s|Legend Operations|图例操作|
+        s|Mouse over on a chart to show, at its legend, the values for the timestamp under the mouse (the chart will also highlight the point at the chart).|将鼠标悬停在图表上可在其图例处显示鼠标下方的时间戳值（图表还将突出显示图表上的点）。|
+        s|All the other visible charts will also show and highlight their values for the same timestamp.|所有其他可见图表也将显示并突出显示相同时间戳的值。|
+        s|Drag the contents of a chart, by pressing the left mouse button and moving the mouse,|通过按住鼠标左键并移动鼠标来拖动图表的内容，|
+        s|All the charts will follow soon after you let the chart alone (this little delay is by design: it speeds up your browser and lets you focus on what you are exploring).|在您放开图表后，所有图表很快就会出现（这种小小的延迟是设计使然：它可以加快您的浏览器速度，让您专注于正在探索的内容）。|
+        s|Once a chart is panned, auto refreshing stops for all charts. To enable it again, double click a panned chart.|平移图表后，所有图表的自动刷新都会停止。要再次启用它，请双击平移图表。|
+        s|Double Click a chart to reset all the charts to their default auto-refreshing state.|双击图表可将所有图表重置为默认自动刷新状态。|
+        s|While pressing the|按住|g
+        s|" key|" 键|g
+        s|, press the left mouse button on the contents of a chart and move the mouse to select an area, to zoom in. The other charts will follow too. Zooming is performed in two phases:|的同时，在图表内容上按鼠标左键，然后移动鼠标选择区域并进行放大。其他图表也会随之放大。缩放分两个阶段执行：|
+        s|- The already loaded chart contents are zoomed (low resolution)|- 已加载的图表内容被缩放（低分辨率）|
+        s|- New data are transferred from the netdata server, to refresh the chart with possibly more detail.|- 新数据从网络数据服务器传输，以刷新图表以提供更多详细信息。|
+        s|With two fingers, zoom in or out.|用两个手指放大或缩小。|
+        s|Once a chart is zoomed, auto refreshing stops for all charts. To enable it again, double click a zoomed chart.|图表缩放后，所有图表的自动刷新都会停止。要再次启用它，请双击缩放图表。|g
+        s|, press the left mouse button on the contents of a chart and move the mouse to select an area. The selected are will be highlighted on all charts.|的同时，在图表内容上按鼠标左键，然后移动鼠标选择区域。所选区域将在所有图表上突出显示。|
+        s| and the mouse pointer is over the contents of a chart, scroll the mouse wheel to zoom in or out. This kind of zooming is aligned to center below the mouse pointer. The other charts will follow too.|且鼠标指针位于图表内容上方时，滚动鼠标滚轮可放大或缩小。这种缩放与鼠标指针下方的中心对齐。其他图表也将随之而来。|
+        s|Click on the label or value of a dimension, will select / un-select this dimension.|单击尺寸的标签或值，将选择/取消选择该尺寸。|
+        s|You can press any of the|您可以按任意|
+        s|" or "|" 或 "|
+        s|s and then click on legend labels or values, to select / un-select multiple dimensions.|，然后单击图例标签或值，以选择/取消选择多个标注。|
+        s|Single tap|单击|
+        s|"Zoom"|"缩放"|
+        s|(does not work on firefox and IE/Edge)|（不适用于 Firefox 和 IE/Edge）|
+        s|Double Tap|双击|
+        s|Single Tap on the contents of a chart to show, at its legend, the values for the timestamp tapped (the chart will also highlight the point at the chart).|单击图表的内容可在其图例中显示所点击的时间戳的值（图表还将突出显示图表中的点）。|
+        s|All the other visible charts will also show and highlight their values for the same timestamp.|所有其他可见图表也将显示并突出显示同一时间戳的它们的值。|
+        s|Touch and Drag the contents of a chart to pan it horizontally.|触摸并拖动图表的内容以水平平移它。|
+        s|All the charts will follow soon after you let the chart alone (this little delay is by design: it speeds up your browser and lets you focus on what you are exploring).|在你放开图表后，所有的图表都会很快跟上（这一点延迟是故意的：它加快了你的浏览器速度，让你专注于你正在探索的内容）。|
+        s|Once a chart is panned, auto refreshing stops for all charts. To enable it again, double tap a panned chart.|一旦图表被平移，所有图表的自动刷新将停止。要再次启用它，请双击平移的图表。|
+        s|Tap on the label or value of a dimension, will select / un-select this dimension.|点击标注的标签或值，将选择/取消选择此标注。|
+        }' /usr/share/netdata/web/static/js/2.92ca8446.chunk.js
+
+rm -rf /tmp/luci-modulecache /tmp/luci-indexcache*
+chmod +x /etc/init.d/netdata
+
+exit 0

@@ -14,7 +14,7 @@ get_config() {
 }
 
 set_config() {
-    [ -e "$1" ] || return 1 && file="$1"; shift
+    file="$1"; shift
     while [ -n "$1" ]; do
         node="$1"
         [ "$node" = "pwd_sha1" ] || get_config "$node"
