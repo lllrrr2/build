@@ -40,6 +40,15 @@ sed -i '{
         s|Select a predefined or a custom timeframe|选择预定义的或自定义的时间框架|
         s|Clear|取消|
         s|Apply|使用|
+        s|"From")|"从")|
+        s|"To")|"到")|
+        s|"Last")|"最后")|
+        s|unit: "d"|unit: "天"|g
+        s|unit: "h"|unit: "小时"|g
+        s|unit: "min"|unit: "分钟"|g
+        s|unit: "s"|unit: "秒"|g
+        s|"MMMM d yyyy, H:mm"|"yyyy年M月d日 HH:mm"|g
+        s|"MMMM d yyyy, H:mm:ss"|"yyyy年MM月dd日 HH:mm:ss"|g
         s|Click to pause":"Click to play|点击暂停":"点击实时显示|
         s|Playing":"Paused|已实时显示":"已暂停|
         s|Need help?":"Check Version|需要帮忙？":"检查版本|
@@ -102,6 +111,24 @@ sed -i '{
 sed -i "s|If you haven\\\'t already, <a href=\"https://github.com/netdata/netdata\" target=\"_blank\">give netdata a <b><i class=\"fas fa-star\"></i></b> at its github page</a>.|如果您还没有，给<a href=\"https://github.com/netdata/netdata\" target=\"_blank\"> netdata <b><i class=\"fas fa-star\"></i></b>在其 github 页面上加注星标</a>。|; s|Configure Netdata's|配置 Netdata 的|" /usr/share/netdata/web/static/js/main.7d1bdca1.chunk.js
 
 sed -i '{
+        s|"less than {{count}}|"少于 {{count}}|g
+        s|"about {{count}}|"大约 {{count}}|g
+        s|"over {{count}}|"超过 {{count}}|g
+        s|"almost {{count}}"|"将近 {{count}}|g
+        s|"almost {{count}}|"快 {{count}}|g
+        s|{{count}} seconds"|{{count}} 秒"|g
+        s|{{count}} minutes"|{{count}} 分钟"|g
+        s|{{count}} hours"|{{count}} 小时"|g
+        s|{{count}} days"|{{count}} 天"|g
+        s|{{count}} weeks"|{{count}} 周"|g
+        s|{{count}} months"|{{count}} 月"|g
+        s|{{count}} years"|{{count}} 年"|g
+        s|firstWeekContainsDate must be between 1 and 7 inclusively|firstWeekContainsDate 必须介于 1 和 7 之间（含 1 和 7）|g
+        s|weekStartsOn must be between 0 and 6 inclusively|weekStartsOn 必须介于 0 和 6 之间（包含 0 和 6）|g
+        s|locale must contain localize property|locale 必须包含 localize 属性|g
+        s|locale must contain formatLong property|locale 必须包含 formatLong 属性|g
+        s|Invalid time value|时间值无效|g
+        s|Format string contains an unescaped latin alphabet character|格式字符串包含未转义的拉丁字母字符|g
         s|"Need help?"|"需要帮忙？"|g
         s|"Dashboard"|"仪表板"|
         s|Learn how to interact with graphs using your mouse or touch interface.|了解如何使用鼠标或触摸界面与图形交互。|
@@ -158,6 +185,19 @@ sed -i '{
         s|All the charts will follow soon after you let the chart alone (this little delay is by design: it speeds up your browser and lets you focus on what you are exploring).|在你放开图表后，所有的图表都会很快跟上（这一点延迟是故意的：它加快了你的浏览器速度，让你专注于你正在探索的内容）。|
         s|Once a chart is panned, auto refreshing stops for all charts. To enable it again, double tap a panned chart.|一旦图表被平移，所有图表的自动刷新将停止。要再次启用它，请双击平移的图表。|
         s|Tap on the label or value of a dimension, will select / un-select this dimension.|点击标注的标签或值，将选择/取消选择此标注。|
+        s|"J","F","M","A","M","J","J","A","S","O","N","D"|"一","二","三","四","五","六","七","八","九","十","十一","十二"|g
+        s|"J","F","M","A","M","J","J","A","S","O","N","D"|"一","二","三","四","五","六","七","八","九","十","十一","十二"|g
+        s|"January","February","March","April","May","June","July","August","September","October","November","December"|"一月","二月","三月","四月","五月","六月","七月","八月","九月","十月","十一月","十二月"|g
+        s|"S","M","T","W","T","F","S"|"日","一","二","三","四","五","六"|g
+        s|"Su","Mo","Tu","We","Th","Fr","Sa"|"日","一","二","三","四","五","六"|g
+        s|"Sun","Mon","Tue","Wed","Thu","Fri","Sat"|"周日","周一","周二","周三","周四","周五","周六"|g
+        s|"Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"|"星期日","星期一","星期二","星期三","星期四","星期五","星期六"|g
+        s|"1","2","3","4"|"第一季度","第二季度","第三季度","第四季度"|g
+        s|"Q1","Q2","Q3","Q4"|"第一季度", "第二季度", "第三季度", "第四季度"|g
+        s|"1st quarter","2nd quarter","3rd quarter","4th quarter"|"第一季度","第二季度","第三季度","第四季度"|g
+        s|"B","A"|"公元前","公元"|g
+        s|"BC","AD"|"公元前","公元"|g
+        s|"Before Christ","Anno Domini"|"公元前","公元"|g
         }' /usr/share/netdata/web/static/js/2.92ca8446.chunk.js
 
 rm -rf /tmp/luci-modulecache /tmp/luci-indexcache*

@@ -707,11 +707,17 @@ function changeToFileContent(input) {
     var file = input.files[0];
     if (file) {
         var reader = new FileReader();
-        reader.readAsText(file, "UTF-8");
-        reader.onload = function(event) {
-            if (editor1) editor1.setValue(event.target.result);
+        var content = '';
+        reader.onload = function (event) {
+            content += event.target.result;
+            if (reader.readyState === FileReader.DONE) {
+                if (editor1) editor1.setValue(content);
+                input.value = "";
+            } else {
+                reader.readAsText(file.slice(content.length), "UTF-8");
+            }
         };
-        input.value = "";
+        reader.readAsText(file.slice(0, Math.min(1024 * 1024, file.size)), "UTF-8");
     }
 }
 
