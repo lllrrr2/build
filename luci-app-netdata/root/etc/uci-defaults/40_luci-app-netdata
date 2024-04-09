@@ -1,25 +1,27 @@
 #!/bin/sh
-# [ -f /usr/share/netdata/webcn/netdata.conf ] && mv -f /usr/share/netdata/webcn/netdata.conf /etc/netdata/netdata.conf
-# [ -f /usr/share/netdata/webcn/netdata ] && mv -f /usr/share/netdata/webcn/netdata /etc/config/netdata
-# [ -f /usr/share/netdata/webcn/netdata.init ] && mv -f /usr/share/netdata/webcn/netdata.init /etc/init.d/netdata
+
 files="dashboard.js dashboard_info.js main.js index.html"
 for file in $files; do
-    [ ! -f "/usr/share/netdata/web/bf_$file" ] && mv -f "/usr/share/netdata/web/$file" "/usr/share/netdata/web/bf_$file"
+    mv -n "/usr/share/netdata/web/$file" "/usr/share/netdata/web/bf_$file"
     [ -f "/usr/share/netdata/webcn/$file" ] && mv -f "/usr/share/netdata/webcn/$file" "/usr/share/netdata/web/$file"
 done
 
+cp -np "/usr/share/netdata/web/static/js/2.92ca8446.chunk.js" "/usr/share/netdata/web/static/js/2.92ca8446.bf_chunk.js"
+cp -np "/usr/share/netdata/web/static/js/main.7d1bdca1.chunk.js" "/usr/share/netdata/web/static/js/main.7d1bdca1.bf_chunk.js"
 sed -i '{
         s|Chart Resize|调整图表大小|
-        s|Drag this point with your mouse or your finger (on touch devices), to resize the chart vertically. You can also <b>double click it</b> or <b>double tap it</b> to reset between 2 states: the default and the one that fits all the values.<br/><small>Help can be disabled from the settings.</small>|用鼠标或手指拖动此点（在触摸设备上），垂直调整图表大小。您也可以<b>双击它</b>或<b>双点它</b]在两种状态之间重置：默认状态和适合所有值的状态<br/><small>可以从设置中禁用帮助。</small>|
+        s|Help can be disabled from the settings.|可以从设置中禁用帮助。|g
+        s|Drag this point with your mouse or your finger (on touch.*one that fits all the values.|用鼠标或手指拖动此点（在触摸设备上），垂直调整图表大小。您也可以<b>双击它</b>或<b>双点它</b]在两种状态之间重置：默认状态和适合所有值的状态|
+        s|You can also <b>drag it</b> with your mouse or your finger (on touch devices).|您还可以用鼠标或手指（在触摸设备上）<b>拖动它</b>。|
         s|Pan Left|向左平移|
-        s|Pan the chart to the left. You can also <b>drag it</b> with your mouse or your finger (on touch devices).<br/><small>Help can be disabled from the settings.</small>|将图表向左平移。您也可以用鼠标或手指（在触摸设备上）<b>拖动它</b><br/><small>可以从设置中禁用帮助。</small>|
+        s|Pan the chart to the left.|将图表向左平移。|
         s|Pan Right|向右平移|
-        s|Pan the chart to the right. You can also <b>drag it</b> with your mouse or your finger (on touch devices).<br/><small>Help can be disabled from the settings.</small>|将图表平移到右侧。您还可以使用鼠标或手指（在触摸设备上）<b>拖动它</b>。<br/><small>可以从设置中禁用帮助。</small>|
+        s|Pan the chart to the right.|将图表平移到右侧。|
         s|Chart Zoom In|图表放大|
-        s|Zoom in the chart. You can also press SHIFT and select an area of the chart, or press SHIFT or ALT and use the mouse wheel or 2-finger touchpad scroll to zoom in or out. <br/><small>Help can be disabled from the settings.|放大图表。也可以按SHIFT键并选择图表的某个区域，或者按SHIFT或ALT键并使用鼠标滚轮或双指触摸板滚动来放大或缩小<br/><small>可以从设置中禁用帮助。|
+        s|Zoom in the chart. You can also press SHIFT and select an area of the chart, or press SHIFT or ALT and use the mouse wheel or 2-finger touchpad scroll to zoom in or out. |放大图表。也可以按SHIFT键并选择图表的某个区域，或者按SHIFT或ALT键并使用鼠标滚轮或双指触摸板滚动来放大或缩小|
         s|Chart Zoom Out|图表缩小|
-        s|Zoom out the chart. You can also press SHIFT or ALT and use the mouse wheel, or 2-finger touchpad scroll to zoom in or out.<br/><small>Help can be disabled from the settings.</small>|缩小图表。您还可以按 SHIFT 或 ALT 并使用鼠标滚轮或两指触摸板滚动来放大或缩小。<br/><small>可以从设置中禁用帮助。</small>|
-        s|Preparing dashboard for printing...|正在准备仪表板以进行打印...|
+        s|Zoom out the chart. You can also press SHIFT or ALT and use the mouse wheel, or 2-finger touchpad scroll to zoom in or out.|缩小图表。您还可以按 SHIFT 或 ALT 并使用鼠标滚轮或两指触摸板滚动来放大或缩小。|
+        s|Preparing dashboard for printing...|准备打印仪表板...|
         s|Please wait while we initialize and render all the charts on the dashboard.|正在初始化并呈现仪表板上的所有图表，请稍候。|
         s|The print dialog will appear as soon as we finish rendering the page.|渲染完页面后，将立即显示打印对话框。|
         s|Import a Netdata snapshot|导入 Netdata 快照|
@@ -52,7 +54,7 @@ sed -i '{
         s|Click to pause":"Click to play|点击暂停":"点击实时显示|
         s|Playing":"Paused|已实时显示":"已暂停|
         s|Need help?":"Check Version|需要帮忙？":"检查版本|
-        s|Play to refresh and have live content, pause to see historical, or force play to keep refreshing even when the tab loses focus at the expense of some system performance.|播放以刷新并显示实时内容，暂停以查看历史记录，或强制播放以保持刷新，即使选项卡失去焦点，也会以牺牲某些系统性能为代价。|
+        s|Play to refresh.*system performance.|播放以刷新并显示实时内容，暂停以查看历史记录，或强制播放以保持刷新，即使选项卡失去焦点，也会以牺牲某些系统性能为代价。|
         s|"Play"|"播放"|
         s|"Pause"|"暂停"|
         s|"Force Play"|"强制播放"|
@@ -106,9 +108,115 @@ sed -i '{
         s|failed to parse URL hash parameter|解析 URL 哈希参数失败|
         s|localStorage is not available|本地存储不可用|
         s|Sorry! I cannot find any operational URL for this server|对不起！我找不到该服务器的任何可操作 URL|
+        s|e+t+"per point.*server default"|"每个数据点 "+e+t.toString().replace("seconds"," 秒")+(e === options.data.update_every ?"，服务器默认。"|
+        s|"International Date Line West"|"国际日期变更线西部"|
+        s|"Coordinated Universal Time-11"|"协调世界时-11"|
+        s|"International Date Line West"|"国际日期变更线西部"|
+        s|"Coordinated Universal Time-11"|"协调世界时-11"|
+        s|"Hawaii"|"夏威夷"|
+        s|"Alaska"|"阿拉斯加"|
+        s|"Baja California"|"巴哈加利福尼亚"|
+        s|"Pacific Time (US & Canada)"|"太平洋时间（美国与加拿大）"|
+        s|"Arizona"|"亚利桑那"|
+        s|"Chihuahua, La Paz, Mazatlan"|"奇瓦瓦，拉巴斯，马萨特兰"|
+        s|"Mountain Time (US & Canada)"|"山地时间（美国与加拿大）"|
+        s|"Central America"|"中美洲"|
+        s|"Central Time (US & Canada)"|"中部时间（美国与加拿大）"|
+        s|"Guadalajara, Mexico City, Monterrey"|"瓜达拉哈拉，墨西哥城，蒙特雷"|
+        s|"Saskatchewan"|"萨斯喀彻温"|
+        s|"Bogota, Lima, Quito"|"波哥大，利马，基多"|
+        s|"Eastern Time (US & Canada)"|"东部时间（美国与加拿大）"|
+        s|"Indiana (East)"|"印第安纳（东部）"|
+        s|"Caracas"|"加拉加斯"|
+        s|"Asuncion"|"亚松森"|
+        s|"Atlantic Time (Canada)"|"大西洋时间（加拿大）"|
+        s|"Cuiaba"|"库亚巴"|
+        s|"Georgetown, La Paz, Manaus, San Juan"|"乔治敦，拉巴斯，马瑙斯，圣胡安"|
+        s|"Santiago"|"圣地亚哥"|
+        s|"Newfoundland"|"纽芬兰"|
+        s|"Brasilia"|"巴西利亚"|
+        s|"Buenos Aires"|"布宜诺斯艾利斯"|
+        s|"Cayenne, Fortaleza"|"卡宴，福塔雷萨"|
+        s|"Greenland"|"格陵兰"|
+        s|"Montevideo"|"蒙得维的亚"|
+        s|"Salvador"|"萨尔瓦多"|
+        s|"Coordinated Universal Time-02"|"协调世界时-02"|
+        s|"Mid-Atlantic - Old"|"中大西洋 - 旧"|
+        s|"Azores"|"亚速尔群岛"|
+        s|"Cape Verde Is."|"佛得角群岛"|
+        s|"Casablanca"|"卡萨布兰卡"|
+        s|"Coordinated Universal Time"|"协调世界时"|
+        s|"Edinburgh, London"|"爱丁堡，伦敦"|
+        s|"Dublin, Lisbon"|"都柏林，里斯本"|
+        s|"Monrovia, Reykjavik"|"蒙罗维亚，雷克雅未克"|
+        s|"Amsterdam, Berlin, Bern, Rome, Stockholm, Vienna"|"阿姆斯特丹，柏林，伯尔尼，罗马，斯德哥尔摩，维也纳"|
+        s|"Belgrade, Bratislava, Budapest, Ljubljana, Prague"|"贝尔格莱德，布拉迪斯拉发，布达佩斯，卢布尔雅那，布拉格"|
+        s|"Brussels, Copenhagen, Madrid, Paris"|"布鲁塞尔，哥本哈根，马德里，巴黎"|
+        s|"Sarajevo, Skopje, Warsaw, Zagreb"|"萨拉热窝，斯科普里，华沙，萨格勒布"|
+        s|"West Central Africa"|"西非中部"|
+        s|"Windhoek"|"温得和克"|
+        s|"Athens, Bucharest"|"雅典，布加勒斯特"|
+        s|"Beirut"|"贝鲁特"|
+        s|"Cairo"|"开罗"|
+        s|"Damascus"|"大马士革"|
+        s|"E. Europe"|"东欧"|
+        s|"Harare, Pretoria"|"哈拉雷，比勒陀利亚"|
+        s|"Helsinki, Kyiv, Riga, Sofia, Tallinn, Vilnius"|"赫尔辛基，基辅，里加，索菲亚，塔林，维尔纽斯"|
+        s|"Istanbul"|"伊斯坦布尔"|
+        s|"Jerusalem"|"耶路撒冷"|
+        s|"Tripoli"|"的黎波里"|
+        s|"Amman"|"安曼"|
+        s|"Baghdad"|"巴格达"|
+        s|"Kaliningrad"|"加里宁格勒"|
+        s|"Kuwait, Riyadh"|"科威特，利雅得"|
+        s|"Nairobi"|"内罗毕"|
+        s|"Moscow, St. Petersburg, Volgograd, Minsk"|"莫斯科，圣彼得堡，伏尔加格勒，明斯克"|
+        s|"Samara, Ulyanovsk, Saratov"|"萨马拉，乌里扬诺夫斯克，萨拉托夫"|
+        s|"Tehran"|"德黑兰"|
+        s|"Abu Dhabi, Muscat"|"阿布扎比，马斯喀特"|
+        s|"Baku"|"巴库"|
+        s|"Port Louis"|"路易港"|
+        s|"Tbilisi"|"第比利斯"|
+        s|"Yerevan"|"埃里温"|
+        s|"Kabul"|"喀布尔"|
+        s|"Ashgabat, Tashkent"|"阿什哈巴德，塔什干"|
+        s|"Yekaterinburg"|"叶卡捷琳堡"|
+        s|"Islamabad, Karachi"|"伊斯兰堡，卡拉奇"|
+        s|"Chennai, Kolkata, Mumbai, New Delhi"|"金奈，加尔各答，孟买，新德里"|
+        s|"Sri Jayawardenepura"|"斯里查亚瓦德纳普勒"|
+        s|"Kathmandu"|"加德满都"|
+        s|"Nur-Sultan (Astana)"|"努尔苏丹（阿斯塔纳）"|
+        s|"Dhaka"|"达卡"|
+        s|"Yangon (Rangoon)"|"仰光"|
+        s|"Bangkok, Hanoi, Jakarta"|"曼谷，河内，雅加达"|
+        s|"Novosibirsk"|"新西伯利亚"|
+        s|"Beijing, Chongqing, Hong Kong, Urumqi"|"北京，重庆，香港，乌鲁木齐"|
+        s|"Krasnoyarsk"|"克拉斯诺亚尔斯克"|
+        s|"Kuala Lumpur, Singapore"|"吉隆坡，新加坡"|
+        s|"Perth"|"珀斯"|
+        s|"Taipei"|"台北"|
+        s|"Ulaanbaatar"|"乌兰巴托"|
+        s|"Irkutsk"|"伊尔库茨克"|
+        s|"Osaka, Sapporo, Tokyo"|"大阪，札幌，东京"|
+        s|"Seoul"|"首尔"|
+        s|"Adelaide"|"阿德莱德"|
+        s|"Darwin"|"达尔文"|
+        s|"Brisbane"|"布里斯班"|
+        s|"Canberra, Melbourne, Sydney"|"堪培拉，墨尔本，悉尼"|
+        s|"Guam, Port Moresby"|"关岛，莫尔兹比港"|
+        s|"Hobart"|"霍巴特"|
+        s|"Yakutsk"|"雅库茨克"|
+        s|"Solomon Is., New Caledonia"|"所罗门群岛，新喀里多尼亚"|
+        s|"Vladivostok"|"海参崴"|
+        s|"Auckland, Wellington"|"奥克兰，惠灵顿"|
+        s|"Coordinated Universal Time+12"|"协调世界时+12"|
+        s|"Fiji"|"斐济"|
+        s|"Magadan"|"马加丹"|
+        s|"Petropavlovsk-Kamchatsky - Old"|"彼得罗巴甫洛夫斯克 - 旧"|
+        s|"Samoa"|"萨摩亚"|
         }' /usr/share/netdata/web/static/js/main.7d1bdca1.chunk.js
 
-sed -i "s|If you haven\\\'t already, <a href=\"https://github.com/netdata/netdata\" target=\"_blank\">give netdata a <b><i class=\"fas fa-star\"></i></b> at its github page</a>.|如果您还没有，给<a href=\"https://github.com/netdata/netdata\" target=\"_blank\"> netdata <b><i class=\"fas fa-star\"></i></b>在其 github 页面上加注星标</a>。|; s|Configure Netdata's|配置 Netdata 的|" /usr/share/netdata/web/static/js/main.7d1bdca1.chunk.js
+sed -i "s|Nuku'alofa|努库阿洛法|; s|If you haven.*</b> at its github page</a>.|如果您还没有，给<a href=\"https://github.com/netdata/netdata\" target=\"_blank\"> netdata <b><i class=\"fas fa-star\"></i></b>在其 github 页面上加注星标</a>。|; s|Configure Netdata's|配置 Netdata 的|" /usr/share/netdata/web/static/js/main.7d1bdca1.chunk.js
 
 sed -i '{
         s|"less than {{count}}|"少于 {{count}}|g
