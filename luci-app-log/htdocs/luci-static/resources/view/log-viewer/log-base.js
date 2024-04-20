@@ -229,7 +229,7 @@ return baseclass.extend({
 
 		msgFilterReValue     : false,
 
-		logSortingValue      : 'asc',
+		logSortingValue      : 'desc',
 
 		autoRefreshValue     : true,
 
@@ -716,6 +716,9 @@ return baseclass.extend({
 									}, '&#9003;'),
 								]),
 							]),
+							this.logHostsDropdownElem,
+							this.logFacilitiesDropdownElem,
+							this.logLevelsDropdownElem,
 							E('div', { 'class': 'cbi-value' }, [
 								E('label', {
 									'class': 'cbi-value-title',
@@ -750,9 +753,6 @@ return baseclass.extend({
 									),
 								]),
 							]),
-							this.logHostsDropdownElem,
-							this.logFacilitiesDropdownElem,
-							this.logLevelsDropdownElem,
 							E('div', { 'class': 'cbi-value' }, [
 								E('label', {
 									'class': 'cbi-value-title',
