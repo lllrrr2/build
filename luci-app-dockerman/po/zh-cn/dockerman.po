@@ -1158,3 +1158,21 @@ msgstr "临时文件系统（--tmpfs）"
 
 msgid "The logging driver for the container"
 msgstr "容器的日志记录驱动程序"
+
+msgid "Go to the parent directory"
+msgstr "进入父目录"
+
+msgid "File operations"
+msgstr "文件操作"
+
+msgid "Change the time"
+msgstr "修改时间"
+
+msgid "Rights"
+msgstr "权限"
+
+msgid "owner"
+msgstr "所有者"
+
+msgid "Back to previous"
+msgstr "返回上一页"

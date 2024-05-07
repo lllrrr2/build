@@ -198,3 +198,12 @@ msgstr "所有者"
 
 msgid "size"
 msgstr "大小"
+
+msgid "Download folder"
+msgstr "下载目录"
+
+msgid "View Files"
+msgstr "查看文件"
+
+msgid ""
+msgstr ""

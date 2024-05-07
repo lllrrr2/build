@@ -1,10 +1,11 @@
 <link rel="stylesheet" href="/luci-static/resources/dockerman/file-manager.css?v=@ver">
 <fieldset class="cbi-section fb-container">
-	<input id="current-path" type="text" class="current-path cbi-input-text" value="/" />
-	<div class="panel-container">
-		<input type="file" name="upload_archive" accept="*/*"
-			style="visibility:hidden; position: absolute;top: 0px; left: 0px;" multiple="multiple" id="upload_archive" />
-		<button id="upload-file" class="upload-toggle cbi-button cbi-button-edit"><%:Upload%></button>
+	<div style="display: flex; align-items: center; justify-content: center;">
+		<input id="current-path" type="text" class="current-path cbi-input-text" value="/" />
+		<div class="panel-container" style="margin-left: 7px;">
+			<input type="file" name="upload_archive" accept="*/*" style="visibility:hidden; position: absolute;top: 0px; left: 0px;" multiple="multiple" id="upload_archive" />
+			<button id="upload-file" class="upload-toggle cbi-button cbi-button-edit"><%:Upload%></button>
+		</div>
 	</div>
 	<div id="list-content"></div>
 </fieldset>
@@ -66,11 +67,13 @@
 			}
 		}
 
-		function openpath(filename, dirname) {
+		function openpath(filename, dirname, isdir) {
+			isdir = isdir || '';
 			dirname = dirname || currentPath;
 			window.open('<%=luci.dispatcher.build_url("admin/services/docker/container_get_archive")%>?id=<%=self.container%>&path='
 				+ encodeURIComponent(dirname + '/' + filename) + '&filename='
-				+ encodeURIComponent(filename))
+				+ encodeURIComponent(filename) + '&isdir='
+				+ encodeURIComponent(isdir))
 		}
 
 		function getFileElem(elem) {
@@ -106,6 +109,11 @@
 				openpath(targetElem.parentNode.parentNode.dataset['filename']);
 				evt.preventDefault();
 			}
+			else if (targetElem.className.indexOf('cbi-button-positive') > -1) {
+				infoElem = targetElem.parentNode.parentNode;
+				openpath(targetElem.parentNode.parentNode.dataset['filename'], currentPath, infoElem.dataset['isdir']);
+				evt.preventDefault();
+			}
 			else if (targetElem.className.indexOf('cbi-button-rename') > -1) {
 				renamePath(targetElem.parentNode.parentNode.dataset['filename']);
 				evt.preventDefault();
@@ -136,49 +144,51 @@
 				}
 			}
 		}
-		function refresh_list(filenames, path) {
-			var listHtml = '<table class="cbi-section-table"><tbody>';
+		function refresh_list(filePath, path) {
+			var html = '<table class="table">';
 			if (path !== '/') {
-				listHtml += '<tr class="cbi-section-table-row cbi-rowstyle-2"><td class="parent-icon" colspan="6"><strong>..</strong></td></tr>';
+				html += '<tr class="cbi-section-table-row cbi-rowstyle-2" style="cursor: pointer;"><td class="parent-icon center" colspan="6" title="<%:Back to previous%>" style="color: red;"><strong>&#8617;</strong></td></tr>';
 			}
-			if (filenames) {
-				for (var i = 0; i < filenames.length; i++) {
-					var line = filenames[i]
-					if (line) {
-						var f = line.match(/(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+([\S\s]+)/);
-						var isLink = f[1][0] === 'z' || f[1][0] === 'l' || f[1][0] === 'x';
-						var o = {
-							displayname: f[9],
-							filename: isLink ? f[9].split(' -> ')[0] : f[9],
-							perms: f[1],
-							date: f[7] + ' ' + f[6] + ' ' + f[8],
-							size: f[5],
-							owner: f[3],
-							icon: (f[1][0] === 'd') ? "folder-icon" : (isLink ? "link-icon" : "file-icon")
-						};
-						listHtml += '<tr class="cbi-section-table-row cbi-rowstyle-' + (1 + i % 2)
-							+ '" data-filename="' + o.filename + '" data-isdir="' + Number(f[1][0] === 'd' || f[1][0] === 'z') + '"'
-							+ ((f[1][0] === 'z' || f[1][0] === 'l') ? (' data-linktarget="' + f[9].split(' -> ')[1]) : '')
-							+ '">'
-							+ '<td class="cbi-value-field ' + o.icon + '">'
-							+ '<strong>' + o.displayname + '</strong>'
-							+ '</td>'
-							+ '<td class="cbi-value-field cbi-value-owner">' + o.owner + '</td>'
-							+ '<td class="cbi-value-field cbi-value-date">' + o.date + '</td>'
-							+ '<td class="cbi-value-field cbi-value-size">' + o.size + '</td>'
-							+ '<td class="cbi-value-field cbi-value-perm">' + o.perms + '</td>'
-							+ '<td class="cbi-section-table-cell">\
-								<button class="btn cbi-button cbi-button-rename cbi-button-edit">'+ "<%:Rename%>" + '</button>\
-								<button class="btn cbi-button cbi-button-download cbi-button-add">'+ "<%:Download%>" + '</button>\
-								<button class="btn cbi-button cbi-button-remove">'+ "<%:Remove%>" + '</button>\
-							</td>'
-							+ '</tr>';
-					}
+			html += '<tr class="tr">';
+			html += '<th class="th"><%:name%></th>';
+			html += '<th class="th"><%:size%></th>';
+			html += '<th class="th"><%:owner%></th>';
+			html += '<th class="th"><%:Change the time%></th>';
+			html += '<th class="th"><%:Rights%></th>';
+			html += '<th class="th center" style="position: relative;"><%:File operations%></th>';
+			html += '</tr>';
+			for (var i = 0; i < filePath.length; i++) {
+				var line = filePath[i].trim().split(/\s+/);
+				var type = line[0];
+				var owner = line[2];
+				var size = line[4];
+				var day = line[5];
+				var datetime = line[6];
+				var time = datetime.split('.')[0];
+				var fullNameParts = line.slice(8);
+				var fullName = fullNameParts.join(' ');
+				var isLink = ['z', 'l', 'x'].includes(type);
+				var icon = type[0] === 'd' ? "folder-icon" : (isLink ? "link-icon" : "file-icon");
+				var truncatedName = fullName.length > 20 ? `${fullName.slice(0, 13)}...${fullName.slice(-7)}` : fullName;
+				html += '<tr class="tr cbi-rowstyle-' + ((i % 2) + 1) + '" data-filename="' + fullName + '" data-isdir="' + Number(type[0] === 'd' || type[0] === 'z') + '" data-linktarget="' + ((/->.*/.test(fullName)) && fullName) + '">';
+				html += '<td class="td ' + icon + '"><b title="' + fullName + '">' + truncatedName + '</b></td>';
+				html += '<td class="td">' + (type[0] === 'd' ? '' : size) + '</td>';
+				html += '<td class="td">' + owner + '</td>';
+				html += '<td class="td">' + day + ' ' + time + '</td>';
+				html += '<td class="td">' + type + '</td>';
+				html += '<td class="td right">';
+				if (type[0] !== 'd') {
+					html += `<input type="button" class="btn cbi-button cbi-button-positive important" value="<%:View Files%>"> `;
 				}
+				html += '<button class="btn cbi-button cbi-button-rename cbi-button-edit"><%:Rename%></button> ';
+				html += '<button class="btn cbi-button cbi-button-download cbi-button-add"><%:Download%></button> ';
+				html += '<button class="btn cbi-button cbi-button-remove"><%:Remove%></button>';
+				html += '</td></tr>';
 			}
-			listHtml += "</table>";
-			listElem.innerHTML = listHtml;
+			html += '</table>';
+			listElem.innerHTML = html;
 		}
+
 		function update_list(path, opt) {
 			opt = opt || {};
 			path = concatPath(path, '');

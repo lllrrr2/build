@@ -29,41 +29,30 @@
         })
         // handle partitons info
         if (disk_info.partitions && disk_info.partitions.length > 0) {
-          let partitons_div
-          if (item.nodeName == "TR") {
-            partitons_div = '<tr width="100%" style="white-space:nowrap;"><td style="margin:0px; padding:0px; border:0px; white-space:nowrap;" colspan="15">'
-          } else if (item.nodeName == "DIV") {
-            partitons_div = '<div class="tr cbi-section-table-row cbi-rowstyle-1"><div style="white-space:nowrap; position:absolute; width:100%">'
-          }
-          let expand = 0
-          let need_expand = 0
-          disk_info.partitions.forEach((part) => {
-            let p = part.size / disk_info.size * 100
+          var isTr = item.nodeName === "TR";
+          let partitions_div = '', expand = 0, need_expand = 0, n = 0;
+          var openingTag = isTr ? '<tr width="100%" style="white-space:nowrap;"><td style="margin:0px; padding:0px; border:0px; white-space:nowrap;" colspan="15">' : '<div class="tr cbi-section-table-row cbi-rowstyle-1"><div style="white-space:nowrap; position:absolute; width:100%">';
+          var closingTag = isTr ? '</td></tr>' : '</div><div>&nbsp</div></div>';
+
+          disk_info.partitions.forEach((part, index) => {
+            // if (index % 2 === 0) return;
+            let p = part.size / disk_info.size * 100;
             if (p <= 8) {
-              expand += 8
-              need_expand += p
-              part.part_percent = 8
+              expand += 8;
+              need_expand += p;
+              part.part_percent = 8;
+            } else {
+              part.part_percent = p * (100 - expand) / (100 - need_expand);
             }
-          })
-          let n = 0
-          disk_info.partitions.forEach((part) => {
-            let p = part.size / disk_info.size * 100
-            if (p > 8) {
-              part.part_percent = p * (100 - expand) / (100 - need_expand)
-            }
-            let part_percent = part.part_percent + '%'
-            let p_color = p_colors[n++]
-            if (n > 4) { n = 0 }
-            let inline_txt = (part.name != '-' && part.name || '') + ' ' + (part.fs != 'Free Space' && part.fs || '') + ' ' + part.size_formated + ' ' + (part.useage != '-' && part.useage || '')
-            let partiton_div = '<div title="' + inline_txt + '" style="color: #525F7F; display:inline-block; text-align:center;background-color:' + p_color + '; width:' + part_percent + '">' + inline_txt + '</div>'
-            partitons_div += partiton_div
-          })
-          if (item.nodeName == "TR") {
-            partitons_div += '</td></tr>'
-          } else if (item.nodeName == "DIV") {
-            partitons_div += '</div><div>&nbsp</div></div>'
-          }
-          item.insertAdjacentHTML('afterend', partitons_div);
+            let p_color = p_colors[n++];
+            let part_percent = part.part_percent + '%';
+            if (n > 4) { n = 0; }
+            let inline_txt = (part.name !== '-' && part.name || '') + ' ' + (part.fs !== 'Free Space' && part.fs || '') + ' ' + part.size_formated + ' ' + (part.useage !== '-' && part.useage || '');
+            let partition_div = `<div title="${inline_txt}" style="color: #525F7F; display:inline-block; text-align:center;background-color:${p_color}; width:${part_percent}">${inline_txt}</div>`;
+            partitions_div += partition_div;
+          });
+
+          item.insertAdjacentHTML('afterend', openingTag + partitions_div + closingTag);
         }
       })
     })

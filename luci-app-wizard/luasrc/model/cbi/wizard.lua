@@ -3,6 +3,15 @@ local sys = require "luci.sys"
 local uci = require "luci.model.uci".cursor()
 local wizard = uci:get_all("wizard", "default")
 
+local hosts         = '/etc/hosts'
+local rc_local      = '/etc/rc.local'
+local file_dhcp     = '/etc/config/dhcp'
+local dnsmasq_conf  = '/etc/dnsmasq.conf'
+local file_uhttpd   = '/etc/config/uhttpd'
+local file_network  = '/etc/config/network'
+local file_firewall = '/etc/config/firewall'
+local file_wireless = '/etc/config/wireless'
+
 local ip_mac = {}
 sys.net.ipv4_hints(
     function(ip, name)
@@ -14,22 +23,25 @@ sys.net.ipv4_hints(
     return a.ip < b.ip
 end)
 
-local function isFileNotEmpty(file)
-    local content = fs.readfile(file) or ""
-    return content ~= ""
+local function isFileEmpty(file)
+    return (fs.readfile(file) or "") ~= ""
 end
 
-local function txt(x)
-    return translatef([[本页是%s的配置文件内容，编辑后点击<code>保存&应用</code>按钮后重启生效<br><font color="Red">配置文件是直接编辑的！除非你知道自己在干什么，否则请不要轻易修改这些配置文件。配置不正确可能会导致不能联网等错误。</font>]], x)
+local function _writefile(value, path)
+    value = value:gsub("\r\n?", "\n")
+    local old_value = fs.readfile(path) or ""
+    if value ~= old_value then
+        return fs.writefile(path, value)
+    else
+        return false
+    end
 end
 
-local file_dhcp     = '/etc/config/dhcp'
-local file_network  = '/etc/config/network'
-local file_firewall = '/etc/config/firewall'
-local file_wireless = '/etc/config/wireless'
+local function description(x)
+    return translatef([[<font color='red'><strong>配置文件是直接编辑保存的！除非你知道在干什么，否则请不要修改这些配置文件。配置不正确可能会导致不能开机，联网等错误。</strong></font><br/><b><font color='green'>修改行前建议先备份行再修改，注释行在行首添加 ＃。</font></b><br>本页是<code>%s</code>的配置文件内容，编辑后点击<code>保存&应用</code>按钮后重启生效<br>]], x)
+end
 
-m = Map('wizard', translate('Inital Router Setup'),
-    translate('If you are using this router for the first time, please configure it here.'))
+m = Map('wizard', translate('快捷设置'))
 
 s = m:section(TypedSection, 'wizard')
 s.addremove = false
@@ -215,7 +227,7 @@ ip_tables.default = "iptables -t nat -I POSTROUTING -o eth0 -j MASQUERADE"
 ip_tables.anonymous = false
 ip_tables:depends("omasq", true)
 
-if isFileNotEmpty(file_wireless) then
+if isFileEmpty(file_wireless) then
     s:tab('wifisetup', translate('Wireless Settings'),
         translate('Set the router\'s wireless name and password. For more advanced settings, please go to the Network-Wireless page.'))
     o = s:taboption('wifisetup', Value, 'wifi_ssid', translate('<abbr title=\"Extended Service Set Identifier\">ESSID</abbr>'))
@@ -225,13 +237,13 @@ if isFileNotEmpty(file_wireless) then
     o.password = true
 end
 
-if isFileNotEmpty(file_network) then
-    s:tab("netwrokconf", translate("修改network"), txt(file_network))
+if isFileEmpty(file_network) then
+    s:tab("netwrokconf", translate("修改network"), description(file_network))
     local o = s:taboption("netwrokconf", Button, "_network")
     o.inputtitle = translate("重启network")
     o.inputstyle = "reset"
     function o.write(self, section)
-        sys.call("/etc/init.d/network restart >/dev/null &")
+        sys.init.restart("network")
     end
 
     local conf = s:taboption("netwrokconf", Value, "netwrokconf", nil)
@@ -243,24 +255,20 @@ if isFileNotEmpty(file_network) then
     end
 
     function conf.write(self, section, value)
-        if value then
-            value = value:gsub("\r\n?", "\n")
-            local old_value = fs.readfile(file_network) or ""
-            if value ~= old_value then
-                fs.writefile(file_network, value)
-                sys.call("/etc/init.d/network restart >/dev/null &")
-            end
+        if not value then return end
+        if _writefile(value, file_network) then
+            sys.init.restart("network")
         end
     end
 end
 
-if isFileNotEmpty(file_dhcp) then
-    s:tab("dhcpconf", translate("修改DHCP"), txt(file_dhcp))
+if isFileEmpty(file_dhcp) then
+    s:tab("dhcpconf", translate("修改DHCP"), description(file_dhcp))
     local o = s:taboption("dhcpconf", Button, "_dhcp")
     o.inputtitle = translate("重启dnsmasq")
     o.inputstyle = "reset"
     function o.write(self, section)
-        sys.call("/etc/init.d/dnsmasq reload >/dev/null &")
+        sys.init.restart("dnsmasq")
     end
 
     local conf = s:taboption("dhcpconf", Value, "dhcpconf", nil)
@@ -272,24 +280,20 @@ if isFileNotEmpty(file_dhcp) then
     end
 
     function conf.write(self, section, value)
-        if value then
-            value = value:gsub("\r\n?", "\n")
-            local old_value = fs.readfile(file_dhcp) or ""
-            if value ~= old_value then
-                fs.writefile(file_dhcp, value)
-                sys.call("/etc/init.d/dnsmasq reload >/dev/null &")
-            end
+        if not value then return end
+        if _writefile(value, file_dhcp) then
+            sys.init.restart("dnsmasq")
         end
     end
 end
 
-if isFileNotEmpty(file_firewall) then
-    s:tab("firewallconf", translate("修改firewall"), txt(file_firewall))
+if isFileEmpty(file_firewall) then
+    s:tab("firewallconf", translate("修改firewall"), description(file_firewall))
     local o = s:taboption("firewallconf", Button, "_firewall")
     o.inputtitle = translate("重启firewall")
     o.inputstyle = "reset"
     function o.write(self, section)
-        sys.call("/etc/init.d/firewall reload >/dev/null &")
+        sys.init.restart("firewall")
     end
 
     local conf = s:taboption("firewallconf", Value, "firewallconf", nil)
@@ -301,14 +305,106 @@ if isFileNotEmpty(file_firewall) then
     end
 
     function conf.write(self, section, value)
-        if value then
-            value = value:gsub("\r\n?", "\n")
-            local old_value = fs.readfile(file_firewall) or ""
-            if value ~= old_value then
-                fs.writefile(file_firewall, value)
-                sys.call("/etc/init.d/firewall reload >/dev/null &")
-            end
+        if not value then return end
+        if _writefile(value, file_firewall) then
+            sys.init.restart("firewall")
         end
+    end
+end
+
+if isFileEmpty(hosts) then
+    s:tab("hostsconf", translate("hosts"), description(hosts))
+    o = s:taboption("hostsconf", Button, "_hosts")
+    o.inputtitle = translate("重启dnsmasq")
+    o.inputstyle = "reset"
+    function o.write(self, section)
+        sys.init.restart("dnsmasq")
+    end
+
+    conf = s:taboption("hostsconf", Value, "hostsconf", nil)
+    conf.template = "cbi/tvalue"
+    conf.rows = 20
+    conf.wrap = "off"
+
+    function conf.cfgvalue(self, section)
+        return fs.readfile(hosts) or ""
+    end
+
+    function conf.write(self, section, value)
+        if not value then return end
+        if _writefile(value, hosts) then
+            sys.init.restart("dnsmasq")
+        end
+    end
+end
+
+if isFileEmpty(file_uhttpd) then
+    s:tab("uhttpdconf", translate("uhttpd服务器"), description(file_uhttpd))
+    o = s:taboption("uhttpdconf", Button, "_uhttpd")
+    o.inputtitle = translate("重启uhttpd")
+    o.inputstyle = "reset"
+    function o.write(self, section)
+        sys.init.restart("uhttpd")
+    end
+
+    conf = s:taboption("uhttpdconf", Value, "uhttpdconf", nil)
+    conf.template = "cbi/tvalue"
+    conf.rows = 20
+    conf.wrap = "off"
+
+    function conf.cfgvalue(self, section)
+        return fs.readfile(file_uhttpd) or ""
+    end
+
+    function conf.write(self, section, value)
+        if not value then return end
+        if _writefile(value, file_uhttpd) then
+            sys.init.restart("uhttpd")
+        end
+    end
+end
+
+if isFileEmpty(dnsmasq_conf) then
+    s:tab("dnsmasqconf", translate("dnsmasq"), description(dnsmasq_conf))
+    o = s:taboption("dnsmasqconf", Button, "_dnsmasq")
+    o.inputtitle = translate("重启dnsmasq")
+    o.inputstyle = "reset"
+    function o.write(self, section)
+        sys.init.restart("dnsmasq")
+    end
+
+    conf = s:taboption("dnsmasqconf", Value, "dnsmasqconf", nil)
+    conf.template = "cbi/tvalue"
+    conf.rows = 20
+    conf.wrap = "off"
+
+    function conf.cfgvalue(self, section)
+        return fs.readfile(dnsmasq_conf) or ""
+    end
+
+    function conf.write(self, section, value)
+        if not value then return end
+        if _writefile(value, dnsmasq_conf) then
+            sys.init.restart("dnsmasq")
+        end
+    end
+end
+
+if isFileEmpty(rc_local) then
+    s:tab("rc_localconf", translate("本地启动脚本"),
+        translatef("本页是<code>%s</code>的配置文件内容，编辑后点击<code>保存&应用</code>按钮后生效。<br>启动脚本插入到 'exit 0' 之前即可随系统启动运行。<br>", rc_local))
+    conf = s:taboption("rc_localconf", Value, "rc_localconf", nil)
+    conf.template = "cbi/tvalue"
+    conf.rows = 20
+    conf.wrap = "off"
+
+    function conf.cfgvalue(self, section)
+        return fs.readfile(rc_local) or ""
+    end
+
+    function conf.write(self, section, value)
+        if not value then return end
+        _writefile(value, rc_local)
     end
 end
 

@@ -152,6 +152,9 @@ log-emerg td {
 	top: 1px;
 	margin: 0 !important;
 	min-width: 3.2em;
+	width: 55px;
+	text-align: center;
+	height: 28px !important;
 }
 `));
 
@@ -178,6 +181,7 @@ return baseclass.extend({
 			'user'    : E('span', { 'class': 'zonebadge log-facility-dropdown-item' }, E('strong', 'user')),
 			'mail'    : E('span', { 'class': 'zonebadge log-facility-dropdown-item' }, E('strong', 'mail')),
 			'daemon'  : E('span', { 'class': 'zonebadge log-facility-dropdown-item' }, E('strong', 'daemon')),
+			'cron'    : E('span', { 'class': 'zonebadge log-facility-dropdown-item' }, E('strong', 'cron')),
 			'auth'    : E('span', { 'class': 'zonebadge log-facility-dropdown-item' }, E('strong', 'auth')),
 			'syslog'  : E('span', { 'class': 'zonebadge log-facility-dropdown-item' }, E('strong', 'syslog')),
 			'lpr'     : E('span', { 'class': 'zonebadge log-facility-dropdown-item' }, E('strong', 'lpr')),
@@ -209,7 +213,7 @@ return baseclass.extend({
 			'debug' : E('span', { 'class': 'zonebadge log-debug' }, E('strong', _('Debug'))),
 		},
 
-		tailValue            : 25,
+		tailValue            : 30,
 
 		fastTailIncrement    : 50,
 
@@ -826,13 +830,13 @@ return baseclass.extend({
 					E('button', {
 						'type' : 'submit',
 						'form' : 'logFilterForm',
-						'class': 'cbi-button btn cbi-button-save',
+						'class': 'cbi-button btn cbi-button-positive important',
 						'click': ui.createHandlerFn(this, function(ev) {
 							ev.target.blur();
 							ev.preventDefault();
 							return this.onSubmitFilter();
 						}),
-					}, _('Save')),
+					}, _('Apply')),
 				]),
 			], 'cbi-modal');
 		},
@@ -1020,7 +1024,7 @@ return baseclass.extend({
 			this.moreEntriesBtn = E('button', {
 				'title': _('Get more entries'),
 				'class': 'cbi-button btn log-side-btn cbi-button-edit',
-				'style': 'margin-top:1px !important',
+				'style': 'margin-top:2px !important',
 				'click': ui.createHandlerFn(this, function(ev) {
 					ev.target.blur();
 					if(this.fastTailValue === null) {
@@ -1042,7 +1046,7 @@ return baseclass.extend({
 			this.allEntriesBtn = E('button', {
 				'title': _('Get all entries'),
 				'class': 'cbi-button btn log-side-btn cbi-button-edit',
-				'style': 'margin-top:1px !important',
+				'style': 'margin-top:2px !important',
 				'click': ui.createHandlerFn(this, function(ev) {
 					ev.target.blur();
 					this.fastTailValue = 0;
@@ -1053,7 +1057,7 @@ return baseclass.extend({
 			this.filterModalBtn = E('button', {
 				'title': _('Filter settings'),
 				'class': 'cbi-button btn log-side-btn cbi-button-edit',
-				'style': 'margin-top:10px !important',
+				'style': 'margin-top:2px !important',
 				'click': ev => {
 					ev.target.blur();
 					this.filterSettingsModal();
@@ -1076,7 +1080,7 @@ return baseclass.extend({
 					E('button', {
 						'title': _('back to the top'),
 						'class': 'cbi-button btn log-side-btn cbi-button-edit',
-						'style': 'margin-top:10px !important',
+						'style': 'margin-top:2px !important',
 						'click': ev => {
 							this.scrollToTop();
 							ev.target.blur();
@@ -1085,7 +1089,7 @@ return baseclass.extend({
 					E('button', {
 						'title': _('back to bottom'),
 						'class': 'cbi-button btn log-side-btn cbi-button-edit',
-						'style': 'margin-top:1px !important',
+						'style': 'margin-top:2px !important',
 						'click': ev => {
 							this.scrollToBottom();
 							ev.target.blur();

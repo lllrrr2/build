@@ -17,49 +17,49 @@ function index()
 end
 
 local MIME_TYPES = {
-    bmp   = "image/bmp",
-    gif   = "image/gif",
-    jpg   = "image/jpeg",
-    jpeg  = "image/jpeg",
-    png   = "image/png",
-    svg   = "image/svg+xml",
-    pdf   = "application/pdf",
-    xml   = "application/xml",
-    xsl   = "application/xml",
-    doc   = "application/msword",
-    ppt   = "application/vnd.ms-powerpoint",
-    xls   = "application/vnd.ms-excel",
-    odt   = "application/vnd.oasis.opendocument.text",
-    odp   = "application/vnd.oasis.opendocument.presentation",
-    zip   = "application/zip",
-    tgz   = "application/x-compressed-tar",
-    deb   = "application/x-deb",
-    iso   = "application/x-cd-image",
-    txt   = "text/plain;charset=UTF-8",
-    yaml  = "text/plain;charset=UTF-8",
-    conf  = "text/plain;charset=UTF-8",
-    ovpn  = "text/plain;charset=UTF-8",
-    log   = "text/plain;charset=UTF-8",
-    js    = "text/javascript;charset=UTF-8",
-    json  = "application/json;charset=UTF-8",
-    lua   = "text/plain;charset=UTF-8",
-    css   = "text/css;charset=UTF-8",
-    htm   = "text/html;charset=UTF-8",
-    html  = "text/html;charset=UTF-8",
-    patch = "text/x-patch;charset=UTF-8",
-    c     = "text/x-csrc;charset=UTF-8",
-    h     = "text/x-chdr;charset=UTF-8",
-    o     = "text/x-object;charset=UTF-8",
-    ko    = "text/x-object;charset=UTF-8",
-    pl    = "application/x-perl",
-    sh    = "text/plain;charset=UTF-8",
-    php   = "application/x-php;charset=UTF-8",
-    mp3   = "audio/mpeg",
-    ogg   = "audio/x-vorbis+ogg",
-    wav   = "audio/x-wav",
-    mpg   = "video/mpeg",
-    mpeg  = "video/mpeg",
-    avi   = "video/x-msvideo"
+    avi    = "video/x-msvideo",
+    bmp    = "image/bmp",
+    c      = "text/plain; charset=UTF-8",
+    conf   = "text/plain; charset=UTF-8",
+    css    = "text/plain; charset=UTF-8",
+    deb    = "application/x-debian-package",
+    doc    = "application/msword",
+    gif    = "image/gif",
+    h      = "text/plain; charset=UTF-8",
+    htm    = "text/plain; charset=UTF-8",
+    html   = "text/plain; charset=UTF-8",
+    iso    = "application/x-iso9660-image",
+    js     = "text/plain; charset=UTF-8",
+    json   = "text/plain; charset=UTF-8",
+    jpg    = "image/jpeg",
+    jpeg   = "image/jpeg",
+    ko     = "text/plain; charset=UTF-8",
+    lua    = "text/plain; charset=UTF-8",
+    log    = "text/plain; charset=UTF-8",
+    mpg    = "video/mpeg",
+    mpeg   = "video/mpeg",
+    mp3    = "audio/mpeg",
+    o      = "text/plain; charset=UTF-8",
+    odp    = "application/vnd.oasis.opendocument.presentation",
+    odt    = "application/vnd.oasis.opendocument.text",
+    ogg    = "application/ogg",
+    ovpn   = "application/x-openvpn-profile",
+    pdf    = "application/pdf",
+    patch  = "text/plain; charset=UTF-8",
+    php    = "text/plain; charset=UTF-8",
+    pl     = "text/plain; charset=UTF-8",
+    png    = "image/png",
+    ppt    = "application/vnd.ms-powerpoint",
+    sh     = "text/plain; charset=UTF-8",
+    svg    = "text/plain; charset=UTF-8",
+    tar    = "application/x-tar",
+    txt    = "text/plain; charset=UTF-8",
+    wav    = "audio/x-wav",
+    xsl    = "text/plain; charset=UTF-8",
+    xls    = "application/vnd.ms-excel",
+    xml    = "text/plain; charset=UTF-8",
+    yaml   = "text/plain; charset=UTF-8",
+    zip    = "application/zip",
 }
 
 local stat = false
@@ -74,8 +74,15 @@ end
 function arrangefiles(dir)
     local linkFiles, regularFiles = {}, {}
     for fileinfo in util.execi('ls -Ah --full-time --group-directories-first "%s"' %{dir}) do
+        local dir_name = fileinfo:match("%s([^%s]+)$")
         if fileinfo:sub(1, 2) == 'lr' then
             util.append(linkFiles, fileinfo)
+        elseif fileinfo:sub(1, 2) == 'dr' and dir_name ~= "proc" then
+            local dir_path = '/%s/%s' %{dir, dir_name}
+            for sizeinfo in util.execi('du -sh "%s"' %{dir_path:gsub("/+", "/")}) do
+                fileinfo = fileinfo:gsub("(%s+%S+%s+%S+%s+%S+%s+)(%S+)(%s+.+)$", "%1" .. sizeinfo:match("(%S+)") .. "%3")
+                util.append(regularFiles, fileinfo)
+            end
         else
             util.append(regularFiles, fileinfo)
         end
@@ -156,7 +163,7 @@ end
 
 function downloadfile(filepath)
     local fd, block, filename, isDir = fd, block, filename, lfs.isdirectory(filepath)
-    fd = (isDir and io.popen('tar -C "%s" -cz .' %{filepath}, "r")) or nixio.open(filepath, "r")
+    fd = (isDir and io.popen('tar -C "%s" -cz .' %{filepath}, "r")) or io.open(filepath, "r")
     if not fd then return end
     filename = (isDir and lfs.basename(filepath) .. ".tar.gz") or lfs.basename(filepath)
     http.header('Content-Disposition', 'inline; filename="%s"' %{filename})
@@ -172,13 +179,11 @@ end
 
 function to_mime(filename, download)
     if download == 'open' then
-        return "text/plain;charset=UTF-8"
+        local ext = filename:match("%.(%w+)$")
+        return MIME_TYPES[ext and ext:lower()] or "text/plain; charset=UTF-8"
     elseif download == 'true' or type(filename) ~= "string" then
         return "application/octet-stream"
     end
-
-    local ext = filename:match("%.(%w+)$")
-    return MIME_TYPES[ext and ext:lower()] or "application/octet-stream"
 end
 
 function checkdirectory()
@@ -192,16 +197,27 @@ end
 
 function dpfile()
     local path = http.formvalue("path")
+    local linkfile = http.formvalue("linkfile")
     local filename = http.formvalue("filename")
     local download = http.formvalue("download")
-    local filepath = path .. filename
+    local filepath = ((linkfile == "1") and "" or path) .. filename
     local mime = to_mime(filename, download)
     http.prepare_content(mime)
     if mime == "application/octet-stream" then
         downloadfile(filepath)
     else
         http.header('Content-Disposition', 'inline; filename="%s"' %{filename})
-        luci.ltn12.pump.all(luci.ltn12.source.file(io.open(filepath, "r")), http.write)
+        local fd, code, msg = io.open(filepath, "r")
+        if fd then
+            repeat
+                local chunk = fd:read(4096)
+                if chunk then
+                    http.write(chunk)
+                end
+            until not chunk
+            fd:close()
+        else
+            http.write("无法打开文件：%s,\n错误信息: %s,\n错误代码: %s" %{filepath, code, msg})
+        end
     end
-    http.close()
 end

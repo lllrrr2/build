@@ -75,7 +75,6 @@ function scandir(id, directory)
 	if not cmd_docker or cmd_docker:match("^%s+$") then
 		return
 	end
-	local i, t, popen = 0, {}, io.popen
 	local uci = (require "luci.model.uci").cursor()
 	local remote = uci:get_bool("dockerd", "dockerman", "remote_endpoint")
 	local socket_path = not remote and uci:get("dockerd", "dockerman", "socket_path") or nil
@@ -88,12 +87,25 @@ function scandir(id, directory)
 	else
 		return
 	end
-	local pfile = popen(cmd_docker .. ' -H "'.. hosts ..'" exec ' ..id .." ls -lh \""..directory.."\" | egrep -v '^total'")
-	for fileinfo in pfile:lines() do
-			i = i + 1
+	local i, t = 0, {}
+	local lfs  = require "luci.fs"
+	local pfile = luci.util.execi('%s -H "%s" exec "%s" ls -Ah --full-time --group-directories-first "%s" | egrep -v "^total"' %{cmd_docker, hosts, id, directory})
+	for fileinfo in pfile do
+		i = i + 1
+		-- local dirname = fileinfo:match("%s([^%s]+)$")
+		-- if fileinfo:sub(1, 2) == 'dr' and dirname ~= 'proc' then
+		-- 		local dirname = fileinfo:match("%s([^%s]+)$")
+		-- 		local filepath = ('/%s/%s' %{directory, dirname}):gsub("/+", "/")
+		-- 		local du_dir = luci.util.execi('%s -H "%s" exec "%s" du -sh %s' %{cmd_docker, hosts, id, filepath})
+		-- 		for sizeinfo in du_dir do
+		-- 				sizeinfo = sizeinfo:match("(%S+)")
+		-- 				fileinfo = fileinfo:gsub("(%s+%S+%s+%S+%s+%S+%s+)(%S+)(%s+.+)$", "%1" .. sizeinfo .. "%3")
+		-- 				t[i] = fileinfo
+		-- 		end
+		-- else
 			t[i] = fileinfo
+		-- end
 	end
-	pfile:close()
 	return t
 end
 
@@ -138,9 +150,55 @@ function rename_file(id)
 	else
 		return
 	end
-	local success = os.execute(cmd_docker .. ' -H "'.. hosts ..'" exec '.. id ..' mv "'..filepath..'" "'..newpath..'"')
+	local success = luci.util.exec('%s -H "%s" exec "%s" mv "%s" "%s"' %{cmd_docker, hosts, id, filepath, newpath})
 	list_response(nixio.fs.dirname(filepath), success)
 end
+
+local MIME_TYPES = {
+	avi    = "video/x-msvideo",
+	bmp    = "image/bmp",
+	c      = "text/x-csrc; charset=UTF-8",
+	conf   = "text/plain; charset=UTF-8",
+	css    = "text/css; charset=UTF-8",
+	deb    = "application/x-deb",
+	doc    = "application/msword",
+	gif    = "image/gif",
+	h      = "text/x-chdr; charset=UTF-8",
+	htm    = "text/html; charset=UTF-8",
+	html   = "text/html; charset=UTF-8",
+	iso    = "application/x-cd-image",
+	js     = "text/javascript; charset=UTF-8",
+	json   = "application/json; charset=UTF-8",
+	jpg    = "image/jpeg",
+	jpeg   = "image/jpeg",
+	ko     = "text/x-object; charset=UTF-8",
+	lua    = "text/plain; charset=UTF-8",
+	log    = "text/plain; charset=UTF-8",
+	mpg    = "video/mpeg",
+	mpeg   = "video/mpeg",
+	mp3    = "audio/mpeg",
+	o      = "text/x-object; charset=UTF-8",
+	odp    = "application/vnd.oasis.opendocument.presentation",
+	odt    = "application/vnd.oasis.opendocument.text",
+	ogg    = "audio/x-vorbis+ogg",
+	ovpn   = "text/plain; charset=UTF-8",
+	pdf    = "application/pdf",
+	patch  = "text/x-patch; charset=UTF-8",
+	php    = "application/x-php; charset=UTF-8",
+	pl     = "application/x-perl",
+	png    = "image/png",
+	ppt    = "application/vnd.ms-powerpoint",
+	sh     = "text/plain; charset=UTF-8",
+	svg    = "image/svg+xml",
+	tar    = "application/x-compressed-tar",
+	txt    = "text/plain; charset=UTF-8",
+	wav    = "audio/x-wav",
+	xsl    = "application/xml",
+	xls    = "application/vnd.ms-excel",
+	xml    = "application/xml",
+	yaml   = "text/plain; charset=UTF-8",
+	zip    = "application/zip",
+}
 
 function remove_file(id)
 	local path = luci.http.formvalue("path")
@@ -161,11 +219,10 @@ function remove_file(id)
 	else
 		return
 	end
-	path = path:gsub("<>", "/")
-	path = path:gsub(" ", "\ ")
+	path = path:gsub("<>", "/"):gsub(" ", "\ ")
 	local success
 	if isdir then
-			success = os.execute(cmd_docker .. ' -H "'.. hosts ..'" exec '.. id ..' rm -r "'..path..'"')
+			success = luci.util.exec('%s -H "%s" exec %s rm -r "%s"' %{cmd_docker, hosts, id, path})
 	else
 			success = os.remove(path)
 	end
@@ -356,27 +413,44 @@ function download_archive()
 	local id = luci.http.formvalue("id")
 	local path = luci.http.formvalue("path")
 	local filename = luci.http.formvalue("filename") or "archive"
-	local dk = docker.new()
-	local first
+	local isdir = luci.http.formvalue("isdir") or ""
+
+	if isdir == '0' then
+		local cmd_docker = luci.util.exec("command -v docker"):match("^.+docker") or nil
+		if not cmd_docker or cmd_docker:match("^%s+$") then
+			return
+		end
+		path = path:find("->") and path:match("->%s(.*)$") or path
+		path = path:gsub("<>", "/"):gsub(" ", "\ "):gsub("/+", "/")
+		local dir_path = luci.util.exec('%s inspect -f "{{.GraphDriver.Data.MergedDir}}" %s' %{cmd_docker, id})
+		local file_path = dir_path:gsub("\n", "") .. path
+		local ext = filename:match("%.(%w+)$")
+		local TYPES = MIME_TYPES[ext and ext:lower()] or "text/plain; charset=UTF-8"
+		luci.http.prepare_content(TYPES)
+		luci.http.header('Content-Disposition', 'inline; filename="%s"' %{filename})
+		return luci.ltn12.pump.all(luci.ltn12.source.file(io.open(file_path, "r")), luci.http.write)
+	end
 
 	local cb = function(res, chunk)
 		if res and res.code and res.code == 200 then
-			if not first then
-				first = true
-				luci.http.header('Content-Disposition', 'inline; filename="'.. filename .. '.tar"')
-				luci.http.header('Content-Type', 'application\/x-tar')
-			end
-			luci.ltn12.pump.all(chunk, luci.http.write)
+				if not first then
+					first = true
+					luci.http.header('Content-Disposition', 'inline; filename="'.. filename .. '.tar"')
+					luci.http.header('Content-Type', 'application\/x-tar')
+				end
+				luci.ltn12.pump.all(chunk, luci.http.write)
 		else
 			if not first then
 				first = true
 				luci.http.status(res and res.code or 500, msg or "unknow")
-				luci.http.prepare_content("text/plain")
+				luci.http.prepare_content("text/plain; charset=UTF-8")
 			end
 			luci.ltn12.pump.all(chunk, luci.http.write)
 		end
 	end
 
+	local first
+	local dk = docker.new()
 	local res = dk.containers:get_archive({
 		id = id,
 		query = {
@@ -388,12 +462,11 @@ end
 function upload_archive(container_id)
 	local path = luci.http.formvalue("upload-path")
 	local dk = docker.new()
-	local ltn12 = require "luci.ltn12"
 
 	local rec_send = function(sinkout)
 		luci.http.setfilehandler(function (meta, chunk, eof)
 			if chunk then
-				ltn12.pump.step(ltn12.source.string(chunk), sinkout)
+				luci.ltn12.pump.step(luci.ltn12.source.string(chunk), sinkout)
 			end
 		end)
 	end
@@ -452,12 +525,11 @@ end
 function load_images()
 	local archive = luci.http.formvalue("upload-archive")
 	local dk = docker.new()
-	local ltn12 = require "luci.ltn12"
 
 	local rec_send = function(sinkout)
 		luci.http.setfilehandler(function (meta, chunk, eof)
 			if chunk then
-				ltn12.pump.step(ltn12.source.string(chunk), sinkout)
+				luci.ltn12.pump.step(luci.ltn12.source.string(chunk), sinkout)
 			end
 		end)
 	end
@@ -480,12 +552,11 @@ function import_images()
 	local src = luci.http.formvalue("src")
 	local itag = luci.http.formvalue("tag")
 	local dk = docker.new()
-	local ltn12 = require "luci.ltn12"
 
 	local rec_send = function(sinkout)
 		luci.http.setfilehandler(function (meta, chunk, eof)
 			if chunk then
-				ltn12.pump.step(ltn12.source.string(chunk), sinkout)
+				luci.ltn12.pump.step(luci.ltn12.source.string(chunk), sinkout)
 			end
 		end)
 	end

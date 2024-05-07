@@ -2,30 +2,18 @@
 <style>
     .fb-container {
         margin: 1rem auto; /* 水平居中显示，顶部边距为 1rem */
-        max-width: 800px; /* 容器最大宽度 */
+        max-width: auto; /* 容器最大宽度 */
         margin-top: 1rem; /* 顶部边距 */
     }
 
     .fb-container table {
-        width: 100%; /* 宽度自适应 */
+        width: 100%;
     }
 
-    .fb-container td {
+    .fb-container td,
+    .fb-container th {
         padding: 6px; /* 行高 */
-        text-align: center; /* 文字居中 */
-        border-bottom: 1px solid #ddd;
-    }
-
-    .cbi-section-table-row:nth-child(odd) {
-        background-color: #f1f1f1;
-    }
-
-    .cbi-section-table-row:nth-child(even) {
-        background-color: #ffffff; /* 偶数行背景色 */
-    }
-
-    .fb-container .cbi-value-field {
-        text-align: left; /* 文字左对齐 */
+        border-bottom: 1px solid #e6e6e6;
     }
 
     .input-container {
@@ -35,11 +23,11 @@
     }
 
     .input-container.float {
-        padding: 4px;
-        z-index: 666;
+        padding: 3px;
         position: sticky;
         border-radius: 8px;
-        background-color: #6efbff;
+        z-index: 1 !important;
+        background-color: #7df9fd;
     }
 
     .fb-container #current-path {
@@ -77,11 +65,11 @@
 
     .custom-menu {
         margin: 0;
-        z-index: 999;
         padding: 5px 0;
         position: fixed;
         font-size: 15px;
         border-radius: 5px;
+        z-index: 1 !important;
         border: 1px solid #dadada;
         background-color: #f5f5f5;
         font-family: Arial, sans-serif;
@@ -177,9 +165,9 @@
         width: 100%;
         height: 100%;
         display: flex;
-        z-index: 9999;
         position: fixed;
         align-items: center;
+        z-index: 1 !important;
         justify-content: center;
         background-color: rgba(0, 0, 0, 0.5);
     }
@@ -210,10 +198,9 @@
         background-color: #212121;
     }
 
-/*    在480px以下的屏幕*/
     @media screen and (max-width: 480px) {
         .cbi-titles {
-            width: 30px; /* 设置一个固定宽度，根据需求调整 */
+            width: 20px; /* 设置一个固定宽度，根据需求调整 */
             overflow: hidden; /* 控制溢出隐藏 */
             white-space: nowrap; /* 防止换行 */
             text-overflow: ellipsis; /* 显示省略号 */
@@ -229,21 +216,21 @@
         }
 
         .display-none {
-            display: none;
+            display: none !important;
         }
     }
 </style>
 <script src="/luci-static/resources/fb/sweetalert2.all.js"></script>
 <h2 name="content"><%:File management%></h2>
-<fieldset class="fb-container">
+<div class="fb-container">
     <div class="input-container">
-        <input id="createnewfile" type="button" class="cbi-button cbi-button-apply" value="<%:Create%>" style="margin-right: 6px;">
+        <input id="createnewfile" type="button" class="btn cbi-button cbi-button-add" value="<%:Create%>" style="margin-right: 6px;">
         <input id="current-path" type="text" title="<%:If the path is the root directory, add '&' at the first character%>" value="/" />
         <input id="godirectory" type="button" class="btn cbi-button cbi-button-apply" value="<%:Go to directory%>">
-        <input id="uploadfile" type="button" class="btn cbi-button cbi-button-apply" style="margin-left: 6px;" value="<%:Upload%>">
-        <input id="selectedremove" type="button" class="cbi-button cbi-button-remove" style="margin-left: 6px;" value="<%:Delete%>">
+        <input id="uploadfile" type="button" class="btn cbi-button cbi-button-action important" style="margin-left: 6px;" value="<%:Upload%>">
+        <input id="selectedremove" type="button" class="btn cbi-button cbi-button-remove" style="margin-left: 6px;" value="<%:Delete%>">
     </div>
-</fieldset>
+</div>
 <script type="text/javascript">
 // console.log(Object.keys(Swal));
 (function () {
@@ -271,7 +258,7 @@
         function floatInputContainer() {
             var shouldFloat = window.pageYOffset > originalPosition;
             isFloating = shouldFloat !== isFloating ? shouldFloat : isFloating;
-            inputContainer.style = `top: ${isFloating ? navHeight : 0}px; width: ${originalWidth}px`;
+            inputContainer.style = `top: ${isFloating ? navHeight : 0}px; width: ${originalWidth}px; z-index: 1 !important;`;
             inputContainer.classList.toggle('float', isFloating);
         };
         window.addEventListener('scroll', floatInputContainer);
@@ -290,10 +277,8 @@
     }
 
     function removeCustomMenu() {
-        if (customMenu) {
-            customMenu.remove();
-            customMenu = null;
-        }
+        customMenu && customMenu.remove();
+        customMenu = null;
     }
 
     function convertPermissions(permissions) {
@@ -365,14 +350,8 @@
     };
 
     function sendRequest(url, params, method = 'GET') {
-        var isGetParams = !(params instanceof FormData);
-        var urlWithParams = isGetParams ? url += `?${params.toString()}` : url;
-        if (typeof fetch === 'function') {
-            var requestOptions = {
-                method: method, body: isGetParams ? null : params
-            };
-            return fetch(urlWithParams, requestOptions).then(function (res) { return res.json() });
-        } else {
+        var isGetParams = !(params && params.constructor && params.constructor.name === 'FormData');
+        var urlWithParams = isGetParams ? url + '?' + params.toString() : url;
             return new Promise(function (resolve, reject) {
                 var xhr = new XMLHttpRequest();
                 xhr.open(method, urlWithParams, true);
@@ -383,7 +362,6 @@
                 };
                 xhr.send(isGetParams ? null : params);
             });
-        }
     }
 
     function godirectory(filePath = '') {
@@ -543,10 +521,12 @@
             },
             didRender: function () { //在弹出框渲染完成后执行的操作。
                 var directorytip = document.getElementById('directorytip'),
-                    createdirectoryCheckbox = document.getElementById('createdirectory');
-                createdirectoryCheckbox?.addEventListener('change', function () {
-                    directorytip?.classList.toggle('hidden', !createdirectoryCheckbox.checked)
-                });
+                    createdirectory = document.getElementById('createdirectory');
+                if (createdirectory && directorytip) {
+                    createdirectory.addEventListener('change', function () {
+                        directorytip.classList.toggle('hidden', !createdirectory.checked);
+                    });
+                }
             }
         }).then(function (result) {
             if (!result.isConfirmed) return;
@@ -624,8 +604,14 @@
     }
 
     function dpfile(filename, path = currentPath, download = '') {
-        if (filename.includes("->")) [, path, filename] = filename.match(/(.*) -> (.*)/) ?? [];
-        var params = new URLSearchParams({ path, filename, download });
+        var linkfile;
+        var match = filename.match(/(.*) -> (.*)/);
+        if (match !== null) {
+            linkfile = 1;
+            path = match[1];
+            filename = match[2];
+        }
+        var params = new URLSearchParams({ path, filename, download, linkfile });
         var url = `<%=url("admin/system/dpfile")%>?${params.toString()}`;
         if (!download) return window.open(url);
         Swal.fire({
@@ -647,7 +633,7 @@
 
     function handleClick(event) {
         function getFileElem(elem) {
-            while (elem && !elem.className?.includes('-icon')) {
+            while (elem && !(elem.className && elem.className.includes('-icon'))) {
                 elem = elem.parentNode;
             }
             return elem || '';
@@ -657,24 +643,26 @@
         var infoElem = targetElem.parentNode.parentNode.dataset;
         function hasClass(element, className) { return element.classList.contains(className) }
 
-        if (hasClass(targetElem, 'button-rename')) renamefile(infoElem.filename);
-        else if (hasClass(targetElem, 'button-install')) installipk(infoElem.filename);
-        else if (hasClass(targetElem, 'button-remove')) deletefiles(infoElem.filename, infoElem.isdir);
+        if (hasClass(targetElem, 'cbi-button-rename')) renamefile(infoElem.filename);
+        else if (hasClass(targetElem, 'cbi-button-install')) installipk(infoElem.filename);
+        else if (hasClass(targetElem, 'cbi-button-remove')) deletefiles(infoElem.filename, infoElem.isdir);
+        else if (hasClass(targetElem, 'cbi-button-download')) dpfile(infoElem.filename, currentPath, infoElem.isdir === '1' ? true : 'open');
         if (fileElem) {
             if (hasClass(fileElem, 'back-root-icon')) update_list('/');
             else if (hasClass(fileElem, 'file-icon')) dpfile(infoElem.filename);
             else if (hasClass(fileElem, 'back-icon')) update_list(currentPath.replace(/\/[^/]*\/?$/, '/'));
             else if (hasClass(fileElem, 'folder-icon')) update_list(concatPath(currentPath, fileElem.parentNode.dataset.filename));
             else if (hasClass(fileElem, 'link-icon')) {
-                var [, sourcefile, destinationfile] = infoElem.linktarget.match(/(.*) -> (.*)/) ?? [];
-                if (sourcefile && destinationfile) {
-                    var filePath = destinationfile.replace(/^\/*/, '/');
+                var match = infoElem.filename.match(/(.*) -> (.*)/);
+                if (match !== null) {
+                    var [path, filename] = match.slice(1);
+                    var filePath = filename.replace(/^\/*/, '/');
                     checkdirectory(filePath).then(function (exists) {
                         exists
                             ? update_list(filePath)
-                            : (destinationfile.match(/\//g) || []).length > 1
+                            : (filename.match(/\//g) || []).length > 1
                                 ? update_list(filePath.match(/(.+\/)(.+)/)[1])
-                                : swalNotification(`${colorMessage(sourcefile, 'red')} <%:It’s the current directory%> ${colorMessage(destinationfile, 'blue')}`, 'info');
+                                : swalNotification(`${colorMessage(sourcefile, 'red')} <%:It’s the current directory%> ${colorMessage(filename, 'blue')}`, 'info');
                     });
                 }
             }
@@ -684,51 +672,52 @@
     function refresh_list(filePath) {
         let numFolders = filePath.filter(function (line) {return line.startsWith('d');}).length;
         let regularFiles = filePath.filter(function (line) { return /^[^dl]/.test(line) }).length;
-        listElem.innerHTML = `
-            <table class="cbi-section-table">
-                <tr>
-                    <td colspan="7">
-                        ${getInitPath() !== '/' ? '<input type="button" class="btn cbi-button cbi-button-apply back-root-icon display-none" style="margin-right: 10px;" value="<%:Go to root directory%>">' : ''}
-                        <b><%:There are currently ${regularFiles} files,%> ${numFolders} <%:directory.%> <%:total file size%>：${calculateTotalSize(filePath)}</b>
-                        ${getInitPath() !== '/' ? '<input type="button" class="btn cbi-button cbi-button-apply back-icon" style="margin-left: 10px;" value="<%:Back to previous%>">' : ''}
+        var html = `<table>
+            <tr>
+                <td colspan="7" class="center">
+                    ${getInitPath() !== '/' ? '<input type="button" class="btn cbi-button cbi-button-apply back-root-icon display-none" style="margin-right: 10px;" value="<%:Go to root directory%>">' : ''}
+                    <b class="display-none"><%:There are currently ${regularFiles} files,%> ${numFolders} <%:directory.%> <%:total file size%>：${calculateTotalSize(filePath)}</b>
+                    ${getInitPath() !== '/' ? '<input type="button" class="btn cbi-button cbi-button-apply back-icon" style="margin-left: 10px;" value="<%:Back to previous%>">' : ''}
+                </td>
+            </tr>
+            <tr>
+                <th class="display-none"></th>
+                <th class="th left"><%:name%></th>
+                <th class="th left display-none"><%:owner%></th>
+                <th class="th left"><%:size%></th>
+                <th class="th left display-none"><%:Change the time%></th>
+                <th class="th left display-none"><%:Rights%></th>
+                <th class="th"><%:File operations%></th>
+            </tr>`;
+            for (var i = 0; i < filePath.length; i++) {
+                var [type, , owner, , size, month, day, , ...fullNameParts] = filePath[i].trim().split(/\s+/);
+                var fullName = fullNameParts.join(' ');
+                var isLink = ['z', 'l', 'x'].includes(type[0]);
+                var icon = type[0] === 'd' ? "folder-icon" : (isLink ? "link-icon" : "file-icon");
+                var truncatedName = fullName.length > 20 ? `${fullName.slice(0, 13)}...${fullName.slice(-7)}` : fullName;
+                var installButtonHtml = fullName.endsWith(".ipk") ? `<input type="button" class="btn cbi-button cbi-button-apply cbi-button-install" value="<%:Install%>">` : "";
+                html += `
+                <tr class="cbi-rowstyle-${(i % 2) + 1} cbi-titles" data-filename="${fullName}" data-isdir="${Number(type[0] === 'd' || type[0] === 'z')}" data-authority="${type}" data-linktarget="${(/->.*/.test(fullName)) && fullName}">
+                    <td class="td display-none">
+                        <input type="checkbox" class="file-checkbox" name="${fullName}"/>
                     </td>
-                </tr>
-                <tr class="tr table-titles">
-                    <th class="display-none"></th>
-                    <th class="th cbi-titles"><%:name%></th>
-                    <th class="th cbi-titles"><%:size%></th>
-                    <th class="th cbi-titles display-none"><%:Change the time%></th>
-                    <th class="th cbi-titles display-none"><%:Rights%></th>
-                    <th class="th cbi-titles display-none"><%:owner%></th>
-                    <th class="th cbi-titles" style="position: relative; text-align: center;"><%:File operations%></th>
-                </tr>
-                ${filePath.map(function (line) {
-                    var [type, , owner, , size, month, day, , ...fullNameParts] = line.trim().split(/\s+/);
-                    var fullName = fullNameParts.join(' ');
-                    var isLink = ['z', 'l', 'x'].includes(type[0]);
-                    var icon = type[0] === 'd' ? "folder-icon" : (isLink ? "link-icon" : "file-icon");
-                    var truncatedName = fullName.length > 20 ? `${fullName.slice(0, 13)}...${fullName.slice(-7)}` : fullName;
-                    var installButtonHtml = fullName.endsWith(".ipk") ? `<input type="button" class="btn cbi-button cbi-button-apply button-install" value="<%:Install%>">` : "";
-                    return `
-                        <tr class="cbi-section-table-row" data-filename="${fullName}" data-isdir="${Number(type[0] === 'd' || type[0] === 'z')}" data-type="${type}" data-linktarget="${(/->.*/.test(fullName)) && fullName}">
-                            <td class="display-none">
-                                <input type="checkbox" class="file-checkbox" name="${fullName}"/>
-                            </td>
-                            <td class="cbi-value-field cbi-titles ${icon}"><b title="${fullName}">${truncatedName}</b></td>
-                            <td class="cbi-value-field">${size}</td>
-                            <td class="display-none">${month} ${day}</td>
-                            <td class="display-none"> [ ${convertPermissions(type)} ] ${type}</td>
-                            <td class="display-none">${owner}</td>
-                            <td class="cbi-section-table-cell">
-                                <input type="button" class="btn cbi-button cbi-button-apply button-rename" value="<%:Rename%>">
-                                <input type="button" class="btn cbi-button cbi-button-remove button-remove" value="<%:Delete%>">
-                                ${installButtonHtml}
-                            </td>
-                        </tr>
-                    `;
-                }).join('')}
-            </table>
-        `;
+                    <td class="td ${icon}">
+                        <b title="${fullName}">${truncatedName}</b>
+                    </td>
+                    <td class="td left display-none" data-title="<%:owner%>">${owner}</td>
+                    <td class="td left" data-title="<%:size%>">${size}</td>
+                    <td class="td left display-none" data-title="<%:Change the time%>">${month} ${day}</td>
+                    <td class="td left display-none" data-title="<%:Rights%>">[ ${convertPermissions(type)} ] ${type}</td>
+                    <td class="td right" data-title="<%:File operations%>">
+                        <input type="button" class="btn cbi-button cbi-button-edit cbi-button-rename" value="<%:Rename%>">
+                        <input type="button" class="btn cbi-button cbi-button-remove" value="<%:Delete%>">
+                        <input type="button" class="btn cbi-button cbi-button-add cbi-button-download display-none" value="${type[0] !== 'd' ? '<%:View Files%>' : '<%:Download folder%>'}">
+                        ${installButtonHtml}
+                    </td>
+                </tr>`;
+            }
+        html += '</table>';
+        listElem.innerHTML = html;
         var deleteButton = document.getElementById('selectedremove');
         document.querySelectorAll('.file-checkbox').forEach(function (checkbox) {
             checkbox.addEventListener('change', function () {
@@ -740,31 +729,23 @@
 
     function createCustomMenu(filename, targetElem) {
         removeCustomMenu();
+
+        var isFile = targetElem.isdir === '0';
         var menuItems = [
-            { label: "<%:Refresh Page%>", action: function () { location.reload() }},
-            { label: "<%:Rename%>", action: function () { renamefile(filename) }},
-            { label: "<%:Modify permissions%>", action: function () { modifypermissions(filename, targetElem.type) }},
-            { label: "<%:upload file%>", action: function () { uploadfile() }},
-            ...((targetElem.isdir === '0')
-                ? [{ label: "<%:download file%>", action: function () { dpfile(filename, currentPath, true) }},
-                { label: "<%:open file%>", action: function () { dpfile(filename, currentPath, 'open') }}]
-                : [{ label: "<%:Download catalog%>", action: function () { dpfile(filename, currentPath, true) }},
-                { label: "<%:open Directory%>", action: function () { update_list(concatPath(currentPath, filename)) }}]
-            ),
-            { label: "<%:Create file (directory)%>", action: function () { createnewfile() }},
-            { label: "<%:Delete file (directory)%>", action: function () { deletefiles(filename, targetElem.isdir) }},
-            ...(currentPath.split('/').length > 2
-                ? [{ label: "<%:Back to previous%>", action: function () { update_list(currentPath.replace(/\/[^/]*\/?$/, '/')) }}]
-                : []
-            )
+            { label: "<%:Refresh Page%>", action: function() { location.reload(); } },
+            { label: "<%:Rename%>", action: function() { renamefile(filename); } },
+            { label: "<%:Modify permissions%>", action: function() { modifypermissions(filename, targetElem.authority); } },
+            { label: isFile ? "<%:download file%>" : "<%:Download catalog%>", action: function() { dpfile(filename, currentPath, true); } },
+            { label: isFile ? "<%:open file%>" : "<%:open Directory%>", action: function() { dpfile(filename, currentPath, isFile ? 'open' : ''); } },
+            { label: "<%:Create file (directory)%>", action: function() { createnewfile(); } },
+            { label: "<%:Delete file (directory)%>", action: function() { deletefiles(filename, targetElem.isdir); } },
+            ...(currentPath.split('/').length > 2 ? [{ label: "<%:Back to previous%>", action: function() { update_list(currentPath.replace(/\/[^/]*\/?$/, '/')); } }] : [])
         ];
         customMenu = document.createElement('ul');
         customMenu.className = 'custom-menu';
         menuItems.forEach(function (item) {
-            var label = item.label;
-            var action = item.action;
-            var menuItemElem = Object.assign(document.createElement('div'), { className: 'menu-item', innerText: label });
-            menuItemElem.addEventListener('click', action);
+            var menuItemElem = Object.assign(document.createElement('div'), { className: 'menu-item', innerText: item.label });
+            menuItemElem.addEventListener('click', item.action);
             customMenu.appendChild(menuItemElem);
         });
 
@@ -790,7 +771,7 @@
     });
 
     window.addEventListener('popstate', function (evt) {
-        update_list(evt.state?.path || '/', true);
+        update_list(evt.state ? evt.state.path : '/', true);
     });
 })();
 </script>
