@@ -1,5 +1,5 @@
+local fs   = require "luci.fs"
 local nfs  = require "nixio.fs"
-local lfs  = require "luci.fs"
 local util = require "luci.util"
 local http = require "luci.http"
 module("luci.controller.filebrowser", package.seeall)
@@ -96,52 +96,52 @@ function file_list()
 end
 
 function deletefiles()
-    local path, isdir = http.formvalue("path"), http.formvalue("isdir")
-    stat = isdir == '1' and util.exec('rm -rf "%s"' %{path}) or nfs.remover(path)
-    list_response(nfs.dirname(path), stat)
+    local path = http.formvalue("path")
+    stat = fs.isdirectory(path) and util.exec('rm -rf "%s"' %{path}) or nfs.remover(path)
+    list_response(fs.dirname(path), stat)
 end
 
 function renamefile()
     local newname, oldname = http.formvalue("newname"), http.formvalue("oldname")
     stat = nfs.move(oldname, newname)
-    list_response(nfs.dirname(oldname), stat)
+    list_response(fs.dirname(oldname), stat)
 end
 
 function createnewfile()
     local permissions = http.formvalue("permissions")
     local data, newfile = http.formvalue("data"), http.formvalue("newfile")
     if http.formvalue("createdirectory") == "true" then
-        stat = nfs.mkdirr(newfile)
+        stat = fs.mkdir(newfile)
     else
         local file_handle = io.open(newfile, "w")
         file_handle:setvbuf("full", 1024 * 1024)
         stat = file_handle:write(data)
         file_handle:close()
     end
-    nfs.chmod(newfile, permissions)
-    list_response(nfs.dirname(newfile), stat)
+    fs.chmod(newfile, permissions)
+    list_response(fs.dirname(newfile), stat)
 end
 
 function createLink()
-    local linkPath   = http.formvalue("linkPath")
-    local isHardLink = http.formvalue("isHardLink")
-    local targetPath = http.formvalue("targetPath")
-    local sym = (isHardLink == 'false') and true or false
-    stat = lfs.link(targetPath, linkPath, sym)
-    list_response(nfs.dirname(targetPath), stat)
+    local linkPath       = http.formvalue("linkPath")
+    local targetPath     = http.formvalue("targetPath")
+    local isSymbolicLink = http.formvalue("isHardLink") ~= 'true'
+
+    stat = fs.link(targetPath, linkPath, isSymbolicLink)
+    list_response(fs.dirname(targetPath), stat)
 end
 
 function modifypermissions()
     local path, modify = http.formvalue("path"), http.formvalue("permissions")
-    stat = nfs.chmod(path, modify)
-    list_response(nfs.dirname(path), stat)
+    stat = fs.chmod(path, modify)
+    list_response(fs.dirname(path), stat)
 end
 
 function uploadfile()
     local filedir, filename = http.formvalue("filedir"), http.formvalue("filename")
     if filename:match(".*%.(.*)$") == "ipk" then
         filedir = '/tmp/ipkdir/'
-        if not nfs.access(filedir) then nfs.mkdir(filedir) end
+        if not fs.access(filedir) then fs.mkdir(filedir) end
     end
     local fd
     http.setfilehandler(function(meta, chunk, eof)
@@ -174,14 +174,14 @@ function installipk()
 end
 
 function downloadfile(filepath)
-    local fd, filename, isDir = nil, nil, lfs.isdirectory(filepath)
+    local fd, filename, isDir = nil, nil, fs.isdirectory(filepath)
     if isDir then
         fd = io.popen('tar -C "%s" -cz .' %{filepath}, "r")
-        filename = lfs.basename(filepath) .. ".tar.gz"
+        filename = fs.basename(filepath) .. ".tar.gz"
         http.header('Content-Type', 'application/x-tar')
     else
         fd = io.open(filepath, "r")
-        filename = lfs.basename(filepath)
+        filename = fs.basename(filepath)
     end
     if not fd then return end
     http.header('Content-Disposition', 'inline; filename="%s"' %{filename})
@@ -199,7 +199,7 @@ end
 
 function checkdirectory()
     local state, filepath = 1, http.formvalue("path")
-    if lfs.isdirectory(filepath) then
+    if fs.isdirectory(filepath) then
         state = 0
     end
     http.prepare_content("application/json")

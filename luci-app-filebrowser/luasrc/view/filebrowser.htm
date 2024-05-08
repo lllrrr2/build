@@ -220,7 +220,7 @@
         }
     }
 </style>
-<script src="/luci-static/resources/fb/sweetalert2.all.js"></script>
+<script src="/luci-static/resources/fb/sweetalert2.all.min.js"></script>
 <h2 name="content"><%:File management%></h2>
 <div class="fb-container">
     <div class="input-container">
@@ -390,10 +390,11 @@
         if (!opt) history.pushState({ path }, null, `?path=${path}`);
     }
 
-    function deletefiles(filename = '', isdir = '') {
-        function deleteSingleFile(name, isdir) {
+    function deletefiles(filename) {
+        function deleteSingleFile(name) {
             var path = concatPath(currentPath, name);
-            var params = new URLSearchParams({ isdir, path });
+            path = path.replace(/(.*) ->.*/, '$1');
+            var params = new URLSearchParams({ path });
             sendRequest('<%=url("admin/system/deletefiles")%>', params).then(function (res) {
                 var isSuccess = res.stat === 0;
                 var message = isSuccess
@@ -404,15 +405,19 @@
             });
         };
 
-        [filename, isdir] = [ensureString(filename), ensureString(isdir)];
-        if (filename || isdir) {
+        filename = ensureString(filename);
+        if (filename) {
             return Swal.fire({
                 ...swalConfig, icon: 'warning', iconColor: 'red',
                 html: `<%:confirm deletion%> ${colorMessage(filename, 'red')} ?`
-            }).then(function (result) { result.isConfirmed && deleteSingleFile(filename, isdir) });
+            }).then(function (result) {
+                result.isConfirmed && deleteSingleFile(filename)
+            });
         }
         var selectedFiles = Array.from(document.querySelectorAll('.file-checkbox:checked'))
-            .map(function (checkbox) { return checkbox.closest('tr').dataset });
+            .map(function (checkbox) {
+                return checkbox.closest('tr').dataset
+            });
         var selectedFileNames = selectedFiles.map(function (file) {
             return file.filename.length > 28 ? `${file.filename.slice(0, 20)}...${file.filename.slice(-8)}` : file.filename;
         });
@@ -420,31 +425,35 @@
             ...swalConfig, icon: 'warning', iconColor: 'red',
             html: `<%:confirm deletion%> ?<br>${colorMessage(selectedFileNames.join('<br>'), 'red')}`
         }).then(function (result) {
-            result.isConfirmed && selectedFiles.forEach(function (file) { deleteSingleFile(file.filename, file.isdir) });
+            result.isConfirmed && selectedFiles.forEach(function (file) {
+                deleteSingleFile(file.filename)
+            });
         });
     }
 
     function createLink(targetPath, isDirectory) {
-        var targetPathcolor = colorMessage(targetPath, 'blue')
+        var targetPathcolor = colorMessage(targetPath, 'blue');
         Swal.fire({
-            ...swalConfig, input: 'text', icon: 'info',
+            ...swalConfig, input: 'text', icon: 'info', inputValue: '/',
             title: `<%:Enter ${targetPathcolor} target link path%>`,
-            inputAttributes: { style: 'margin: 10px 100px; width: auto; height: 36px;' },
-            html: isDirectory === '0' ? `
-                <input class="swal2-checkbox" type="checkbox"> <%:Create hard link%><br>
-            ` : ''
+            inputAttributes: { style: 'margin: 8px 100px; width: auto; height: 36px;' },
+            html: isDirectory !== '0' ? '' :
+            '<div><input id="checkbox" class="swal2-checkbox" type="checkbox"/>' +
+            '<label for="checkbox"> <%:Create hard link%></label></div>'
         }).then(function (result) {
             if (!result.isConfirmed) return;
             var linkPath = document.getElementById('swal2-input').value,
-                isHardLinkElement = document.querySelector('.swal2-checkbox'),
-                isHardLink = isHardLinkElement ? isHardLinkElement.checked : 'false';
-            var params = new URLSearchParams({ targetPath, linkPath, isHardLink });
+                isHardLinkElement = document.getElementById('checkbox'),
+                isHardLink = isHardLinkElement ? isHardLinkElement.checked : false;
+            var params = new URLSearchParams({
+                targetPath: targetPath, linkPath: linkPath, isHardLink: isHardLink
+            });
             sendRequest('<%=url("admin/system/createLink")%>', params).then(function (res) {
                 if (res.stat === 0) {
                     refresh_list(res.data);
-                    swalNotification(`${colorMessage(targetPath, 'blue')} <%:Link created successfully%>`, 'success');
+                    swalNotification(`${colorMessage(linkPath, 'blue')} <%:Link created successfully%>`, 'success');
                 } else {
-                    swalNotification(`${colorMessage(targetPath, 'red')} <%:Link creation failed%>`, 'error');
+                    swalNotification(`${colorMessage(linkPath, 'red')} <%:Link creation failed%>`, 'error');
                 }
             });
         });
@@ -685,7 +694,7 @@
 
         if (hasClass(targetElem, 'cbi-button-rename')) renamefile(infoElem.filename);
         else if (hasClass(targetElem, 'cbi-button-install')) installipk(infoElem.filename);
-        else if (hasClass(targetElem, 'cbi-button-remove')) deletefiles(infoElem.filename, infoElem.isdir);
+        else if (hasClass(targetElem, 'cbi-button-remove')) deletefiles(infoElem.filename);
         else if (hasClass(targetElem, 'cbi-button-download')) dpfile(infoElem.filename, currentPath, infoElem.isdir === '1' ? true : 'open');
         if (fileElem) {
             if (hasClass(fileElem, 'back-root-icon')) update_list('/');
@@ -769,15 +778,16 @@
 
     function createCustomMenu(filename, targetElem) {
         removeCustomMenu();
-
         var isFile = targetElem.isdir === '0';
         var menuItems = [
             { label: "<%:Refresh Page%>", action: function() { location.reload(); } },
             { label: "<%:Rename%>", action: function() { renamefile(filename); } },
             { label: isFile ? "<%:download file%>" : "<%:Download catalog%>", action: function() { dpfile(filename, currentPath, true); } },
-            { label: isFile ? "<%:open file%>" : "<%:open Directory%>", action: function() { dpfile(filename, currentPath, isFile ? 'open' : ''); } },
+            { label: isFile ? "<%:open file%>" : "<%:open Directory%>", action: function() {
+                isFile ? dpfile(filename, currentPath, 'open') : update_list(concatPath(currentPath, filename))
+            } },
             { label: "<%:Create file (directory)%>", action: function() { createnewfile(); } },
-            { label: "<%:Delete file (directory)%>", action: function() { deletefiles(filename, targetElem.isdir); } },
+            { label: "<%:Delete file (directory)%>", action: function() { deletefiles(filename); } },
             { label: "<%:Modify permissions%>", action: function() { modifypermissions(filename, targetElem.authority); } },
             { label: "<%:Create link%>", action: function() { createLink(currentPath + filename, targetElem.isdir); } },
             ...(currentPath.split('/').length > 2 ? [{ label: "<%:Back to previous%>", action: function() { update_list(currentPath.replace(/\/[^/]*\/?$/, '/')); } }] : [])
