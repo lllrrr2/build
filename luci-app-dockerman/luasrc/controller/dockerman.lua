@@ -88,7 +88,7 @@ function scandir(id, directory)
 		return
 	end
 	local i, t = 0, {}
-	local lfs  = require "luci.fs"
+	local lfs = require "luci.fs"
 	local pfile = luci.util.execi('%s -H "%s" exec "%s" ls -Ah --full-time --group-directories-first "%s" | egrep -v "^total"' %{cmd_docker, hosts, id, directory})
 	for fileinfo in pfile do
 		i = i + 1
@@ -140,7 +140,7 @@ function rename_file(id)
 	end
 	local uci = (require "luci.model.uci").cursor()
 	local remote = uci:get_bool("dockerd", "dockerman", "remote_endpoint")
-	local socket_path = not remote and  uci:get("dockerd", "dockerman", "socket_path") or nil
+	local socket_path = not remote and uci:get("dockerd", "dockerman", "socket_path") or nil
 	local host = remote and uci:get("dockerd", "dockerman", "remote_host") or nil
 	local port = remote and uci:get("dockerd", "dockerman", "remote_port") or nil
 	if remote and host and port then
@@ -209,7 +209,7 @@ function remove_file(id)
 	end 
 	local uci = (require "luci.model.uci").cursor()
 	local remote = uci:get_bool("dockerd", "dockerman", "remote_endpoint")
-	local socket_path = not remote and  uci:get("dockerd", "dockerman", "socket_path") or nil
+	local socket_path = not remote and uci:get("dockerd", "dockerman", "socket_path") or nil
 	local host = remote and uci:get("dockerd", "dockerman", "remote_host") or nil
 	local port = remote and uci:get("dockerd", "dockerman", "remote_port") or nil
 	if remote and host and port then
@@ -319,7 +319,7 @@ local function get_stat(container_id)
 		local dk = docker.new()
 		local response = dk.containers:inspect({id = container_id})
 		if response.code == 200 and response.body.State.Running then
-			response = dk.containers:stats({id = container_id, query = {stream = false,  ["one-shot"] = true}})
+			response = dk.containers:stats({id = container_id, query = {stream = false, ["one-shot"] = true}})
 			if response.code == 200 then
 				local container_stats = response.body
 				local cpu_percent = calculate_cpu_percent(container_stats)
@@ -386,49 +386,55 @@ function action_confirm()
 end
 
 function export_container(id)
-  local dk = docker.new()
-  local first
+	local dk = docker.new()
+	local first
 
-  local cb = function(res, chunk)
-    if res.code == 200 then
-      if not first then
-        first = true
-        luci.http.header('Content-Disposition', 'inline; filename="'.. id ..'.tar"')
-        luci.http.header('Content-Type', 'application\/x-tar')
-      end
-      luci.ltn12.pump.all(chunk, luci.http.write)
-    else
-      if not first then
-        first = true
-        luci.http.prepare_content("text/plain")
-      end
-      luci.ltn12.pump.all(chunk, luci.http.write)
-    end
-  end
+	local cb = function(res, chunk)
+		if res.code == 200 then
+			if not first then
+				first = true
+				luci.http.header('Content-Disposition', 'inline; filename="'.. id ..'.tar"')
+				luci.http.header('Content-Type', 'application\/x-tar')
+			end
+			luci.ltn12.pump.all(chunk, luci.http.write)
+		else
+			if not first then
+				first = true
+				luci.http.prepare_content("text/plain")
+			end
+			luci.ltn12.pump.all(chunk, luci.http.write)
+		end
+	end
 
-  local res = dk.containers:export({id = id}, cb)
+	local res = dk.containers:export({id = id}, cb)
+end
+
+function open_file(id, path, filename)
+	local cmd_docker = luci.util.exec("command -v docker"):match("^.+docker") or nil
+	if not cmd_docker or cmd_docker:match("^%s+$") then
+		return
+	end
+	path = path:find("->") and path:match("->%s(.*)$") or path
+	path = path:gsub("<>", "/"):gsub(" ", "\ "):gsub("/+", "/")
+	local dir_path = (luci.util.exec('%s inspect -f "{{.GraphDriver.Data.MergedDir}}" %s' %{cmd_docker, id})):gsub("\n", "")
+	local ext = filename:match("%.(%w+)$")
+	local TYPES = MIME_TYPES[ext and ext:lower()] or "text/plain; charset=UTF-8"
+	luci.http.prepare_content(TYPES)
+	luci.http.header('Content-Disposition', 'inline; filename="%s"' %{filename})
+	local stat = luci.ltn12.pump.all(luci.ltn12.source.file(io.open(dir_path .. path, "r")), luci.http.write)
+	if not stat then
+		luci.http.write("无法打开文件：%s" %{dir_path .. path})
+	end
 end
 
 function download_archive()
 	local id = luci.http.formvalue("id")
 	local path = luci.http.formvalue("path")
+	local isdir = luci.http.formvalue("isdir")
 	local filename = luci.http.formvalue("filename") or "archive"
-	local isdir = luci.http.formvalue("isdir") or ""
 
-	if isdir == '0' then
-		local cmd_docker = luci.util.exec("command -v docker"):match("^.+docker") or nil
-		if not cmd_docker or cmd_docker:match("^%s+$") then
-			return
-		end
-		path = path:find("->") and path:match("->%s(.*)$") or path
-		path = path:gsub("<>", "/"):gsub(" ", "\ "):gsub("/+", "/")
-		local dir_path = luci.util.exec('%s inspect -f "{{.GraphDriver.Data.MergedDir}}" %s' %{cmd_docker, id})
-		local file_path = dir_path:gsub("\n", "") .. path
-		local ext = filename:match("%.(%w+)$")
-		local TYPES = MIME_TYPES[ext and ext:lower()] or "text/plain; charset=UTF-8"
-		luci.http.prepare_content(TYPES)
-		luci.http.header('Content-Disposition', 'inline; filename="%s"' %{filename})
-		return luci.ltn12.pump.all(luci.ltn12.source.file(io.open(file_path, "r")), luci.http.write)
+	if isdir ~= '' then
+		return open_file(id, path, filename)
 	end
 
 	local cb = function(res, chunk)

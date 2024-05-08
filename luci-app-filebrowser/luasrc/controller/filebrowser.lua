@@ -7,6 +7,7 @@ function index()
     entry({"admin", "system", "filebrowser"}, template("filebrowser"), _("File management"), 60).dependent = true
     entry({"admin", "system", "dpfile"}, call("dpfile"), nil).leaf = true
     entry({"admin", "system", "file_list"}, call("file_list"), nil).leaf = true
+    entry({"admin", "system", "createLink"}, call("createLink"), nil).leaf = true
     entry({"admin", "system", "renamefile"}, call("renamefile"), nil).leaf = true
     entry({"admin", "system", "uploadfile"}, call("uploadfile"), nil).leaf = true
     entry({"admin", "system", "installipk"}, call("installipk"), nil).leaf = true
@@ -107,16 +108,27 @@ function renamefile()
 end
 
 function createnewfile()
+    local permissions = http.formvalue("permissions")
     local data, newfile = http.formvalue("data"), http.formvalue("newfile")
     if http.formvalue("createdirectory") == "true" then
-        stat = util.exec('mkdir -p "%s"' %{newfile})
+        stat = nfs.mkdirr(newfile)
     else
         local file_handle = io.open(newfile, "w")
         file_handle:setvbuf("full", 1024 * 1024)
         stat = file_handle:write(data)
         file_handle:close()
     end
+    nfs.chmod(newfile, permissions)
     list_response(nfs.dirname(newfile), stat)
+end
+
+function createLink()
+    local linkPath   = http.formvalue("linkPath")
+    local isHardLink = http.formvalue("isHardLink")
+    local targetPath = http.formvalue("targetPath")
+    local sym = (isHardLink == 'false') and true or false
+    stat = lfs.link(targetPath, linkPath, sym)
+    list_response(nfs.dirname(targetPath), stat)
 end
 
 function modifypermissions()
@@ -162,19 +174,18 @@ function installipk()
 end
 
 function downloadfile(filepath)
-    local fd, block, filename, isDir = fd, block, filename, lfs.isdirectory(filepath)
-    fd = (isDir and io.popen('tar -C "%s" -cz .' %{filepath}, "r")) or io.open(filepath, "r")
+    local fd, filename, isDir = nil, nil, lfs.isdirectory(filepath)
+    if isDir then
+        fd = io.popen('tar -C "%s" -cz .' %{filepath}, "r")
+        filename = lfs.basename(filepath) .. ".tar.gz"
+        http.header('Content-Type', 'application/x-tar')
+    else
+        fd = io.open(filepath, "r")
+        filename = lfs.basename(filepath)
+    end
     if not fd then return end
-    filename = (isDir and lfs.basename(filepath) .. ".tar.gz") or lfs.basename(filepath)
     http.header('Content-Disposition', 'inline; filename="%s"' %{filename})
-
-    repeat
-        block = fd:read(nixio.const.buffersize)
-        if not block or #block == 0 then break end
-        http.write(block)
-    until not block
-
-    fd:close()
+    luci.ltn12.pump.all(luci.ltn12.source.file(fd), luci.http.write)
 end
 
 function to_mime(filename, download)
@@ -207,17 +218,9 @@ function dpfile()
         downloadfile(filepath)
     else
         http.header('Content-Disposition', 'inline; filename="%s"' %{filename})
-        local fd, code, msg = io.open(filepath, "r")
-        if fd then
-            repeat
-                local chunk = fd:read(4096)
-                if chunk then
-                    http.write(chunk)
-                end
-            until not chunk
-            fd:close()
-        else
-            http.write("无法打开文件：%s,\n错误信息: %s,\n错误代码: %s" %{filepath, code, msg})
+        local stat = luci.ltn12.pump.all(luci.ltn12.source.file(io.open(filepath, "r")), http.write)
+        if not stat then
+            http.write("无法打开文件：%s" %{filepath})
         end
     end
 end

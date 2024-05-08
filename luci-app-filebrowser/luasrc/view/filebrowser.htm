@@ -366,13 +366,14 @@
 
     function godirectory(filePath = '') {
         var path = ensureString(filePath) ? filePath : resolveFilePath(pathElem.value.trim());
+        var pathcolor = colorMessage(path, 'red')
         checkdirectory(path).then(function (exists) {
             exists
                 ? update_list(path)
                 : Swal.fire({
                     ...swalConfig, confirmButtonText: '<%:Create%>',
                     text: '<%:Do you want to create this directory?%>',
-                    title: `${colorMessage(path, 'red')} <%:The directory does not exist%>`
+                    title: `<%:${pathcolor} directory does not exist%>`
                 }).then(function (result) { result.isConfirmed && createnewfile(path) });
         });
     }
@@ -423,13 +424,40 @@
         });
     }
 
+    function createLink(targetPath, isDirectory) {
+        var targetPathcolor = colorMessage(targetPath, 'blue')
+        Swal.fire({
+            ...swalConfig, input: 'text', icon: 'info',
+            title: `<%:Enter ${targetPathcolor} target link path%>`,
+            inputAttributes: { style: 'margin: 10px 100px; width: auto; height: 36px;' },
+            html: isDirectory === '0' ? `
+                <input class="swal2-checkbox" type="checkbox"> <%:Create hard link%><br>
+            ` : ''
+        }).then(function (result) {
+            if (!result.isConfirmed) return;
+            var linkPath = document.getElementById('swal2-input').value,
+                isHardLinkElement = document.querySelector('.swal2-checkbox'),
+                isHardLink = isHardLinkElement ? isHardLinkElement.checked : 'false';
+            var params = new URLSearchParams({ targetPath, linkPath, isHardLink });
+            sendRequest('<%=url("admin/system/createLink")%>', params).then(function (res) {
+                if (res.stat === 0) {
+                    refresh_list(res.data);
+                    swalNotification(`${colorMessage(targetPath, 'blue')} <%:Link created successfully%>`, 'success');
+                } else {
+                    swalNotification(`${colorMessage(targetPath, 'red')} <%:Link creation failed%>`, 'error');
+                }
+            });
+        });
+    }
+
     function renamefile(oldname) {
         if (oldname.includes("->")) return swalNotification(`${colorMessage(oldname, 'red')} <%:Linked files are not allowed to be modified%>`, 'error');
+        var oldnamecolor = colorMessage(oldname, 'blue')
         checkdirectory(concatPath(currentPath, oldname)).then(function (exists) {
             Swal.fire({
                 ...swalConfig, inputValue: oldname, iconColor: 'red', input: 'text',
                 inputAttributes: { style: 'margin: 10px 100px; width: auto; height: 38px;' },
-                title: `${colorMessage(oldname, 'blue')} <%:Enter new name%>`, icon: 'warning',
+                title: `<%:Enter ${oldnamecolor} new name%>`, icon: 'warning',
                 didRender: function () {
                     setTimeout(function () {
                         var input = Swal.getInput();
@@ -463,11 +491,11 @@
 
     function modifypermissions(filepath, type) {
         var oldPermissions = convertPermissions(type);
-        var filename = `${colorMessage(filepath, 'blue')}`;
+        var filenamecolor = `${colorMessage(filepath, 'blue')}`;
         Swal.fire({
             ...swalConfig, icon: 'warning', iconColor: 'red', inputValue: oldPermissions,
-            title: `<%:Please select new permissions for ${filename}%>`, input: 'select',
-            inputAttributes: { style: 'height: auto; margin: 10px 28px; width: auto; height: 38px;' },
+            title: `<%:Please select new permissions for ${filenamecolor}%>`, input: 'select',
+            inputAttributes: { style: 'height: auto; margin: 10px 25px; width: auto; height: 34px; font-size: 14px;' },
             inputOptions: {
                 777: '<%:777 - All users have read, write and execute permissions%>',
                 755: '<%:755 - All users have read and execute permissions, but only the file owner has write permissions%>',
@@ -479,20 +507,19 @@
                 444: '<%:444 - All users have read permissions but no write and execute permissions%>',
             }
         }).then(function (result) {
-            var permissions = (result.value || '').trim();
-            if (permissions && permissions !== oldPermissions) {
-                var params = new URLSearchParams({
-                    permissions, path: concatPath(currentPath, filepath)
-                });
-                sendRequest('<%=url("admin/system/modifypermissions")%>', params).then(function (res) {
-                    var isSuccess = res.stat === 0;
-                    var message = isSuccess
-                        ? `${colorMessage(filepath, 'blue')} <%:Permissions modified successfully%>`
-                        : `${colorMessage(filepath, 'red')} <%:Permission modification failed%>`;
-                    swalNotification(message, isSuccess ? 'success' : 'error');
-                    isSuccess && refresh_list(res.data);
-                });
-            }
+            var permissions = document.getElementById('swal2-select').value;
+            if (!result.isConfirmed || permissions === oldPermissions) return;
+            var params = new URLSearchParams({
+                permissions, path: concatPath(currentPath, filepath)
+            });
+            sendRequest('<%=url("admin/system/modifypermissions")%>', params).then(function (res) {
+                var isSuccess = res.stat === 0;
+                var message = isSuccess
+                    ? `${colorMessage(filepath, 'blue')} <%:Permissions modified successfully%>`
+                    : `${colorMessage(filepath, 'red')} <%:Permission modification failed%>`;
+                swalNotification(message, isSuccess ? 'success' : 'error');
+                isSuccess && refresh_list(res.data);
+            });
         });
     }
 
@@ -501,11 +528,22 @@
         Swal.fire({
             ...swalConfig, title: '<%:Enter name%>：',
             html: `
-                <input id="newname" class="swal2-input" style="margin: 10px 28px; width: auto; height: 38px;" placeholder="<%:For example: example.txt%>" type="text" title="<%:You can enter a file name or directory name%>"><br><br>
+                <input id="newname" class="swal2-input" style="margin: 10px 25px; width: auto; height: 35px;" placeholder="<%:For example: example.txt%>" type="text" title="<%:You can enter a file name or directory name%>"><br><br>
                 <input id="createdirectory" class="swal2-checkbox" type="checkbox">
                 <label for="createdirectory"><b><%:Create as directory%></b></label><br>
                 <span id="directorytip" class="hidden" style="font-size: smaller;"><%:If the path is the root directory, add '&' at the first character%></span>
-            `,
+            `, input: 'select', inputValue: '644',
+            inputAttributes: { style: 'height: auto; margin: 10px 25px; width: auto; height: 34px; font-size: 14px;' },
+            inputOptions: {
+                777: '<%:777 - All users have read, write and execute permissions%>',
+                755: '<%:755 - All users have read and execute permissions, but only the file owner has write permissions%>',
+                700: '<%:700 - Only the file owner has read, write, and execute permissions%>',
+                666: '<%:666 - All users have read and write permissions but no execute permissions%>',
+                644: '<%:644 - All users have read permissions, but only the file owner has write permissions%>',
+                600: '<%:600 - Only the file owner has read and write permissions%>',
+                555: '<%:555 - All users have execute permissions, but only the file owner has read and write permissions%>',
+                444: '<%:444 - All users have read permissions but no write and execute permissions%>',
+            },
             didOpen: function () { //在弹出框打开后执行的操作。
                 if (filePath) {
                     document.getElementById('newname').value = filePath;
@@ -516,8 +554,9 @@
             },
             preConfirm: function () { //在用户点击确认按钮之前执行的操作。
                 var newname = document.getElementById('newname').value,
+                    permissions = document.getElementById('swal2-select').value,
                     createdirectory = document.getElementById('createdirectory').checked;
-                return { newname, createdirectory };
+                return { newname, createdirectory, permissions };
             },
             didRender: function () { //在弹出框渲染完成后执行的操作。
                 var directorytip = document.getElementById('directorytip'),
@@ -531,7 +570,7 @@
         }).then(function (result) {
             if (!result.isConfirmed) return;
             var data;
-            var { newname, createdirectory } = result.value;
+            var { newname, createdirectory, permissions } = result.value;
             var newfile = (filePath && !createdirectory)
                 ? newname
                 : (filePath && createdirectory)
@@ -542,7 +581,7 @@
                 Swal.fire({
                     ...swalConfig, title: '<%:Enter file content%>',
                     inputPlaceholder: '<%:Enter text here%>', input: 'textarea',
-                    inputAttributes: { style: "margin: 10px 28px; width: auto;" },
+                    inputAttributes: { style: "margin: 10px 25px; width: auto;" },
                 }).then(function (result) {
                     if (result.isConfirmed) { data = result.value; executeOrder() }
                 });
@@ -552,6 +591,7 @@
                 var formData = new FormData();
                 formData.append('data', data);
                 formData.append('newfile', newfile);
+                formData.append('permissions', permissions);
                 formData.append('createdirectory', createdirectory);
                 sendRequest('<%=url("admin/system/createnewfile")%>', formData, 'POST').then(function (res) {
                     if (res.stat === 0) {
@@ -586,7 +626,7 @@
     function uploadfile() {
         Swal.fire({
             ...swalConfig, title: '<%:upload file%>', input: 'file',
-            inputAttributes: { style: "margin: 10px 28px;", accept: '/*' }
+            inputAttributes: { style: "margin: 10px 25px;", accept: '/*' }
         }).then(function (response) {
             var file = response.value;
             if (!file) return;
@@ -704,11 +744,11 @@
                     <td class="td ${icon}">
                         <b title="${fullName}">${truncatedName}</b>
                     </td>
-                    <td class="td left display-none" data-title="<%:owner%>">${owner}</td>
-                    <td class="td left" data-title="<%:size%>">${size}</td>
-                    <td class="td left display-none" data-title="<%:Change the time%>">${month} ${day}</td>
-                    <td class="td left display-none" data-title="<%:Rights%>">[ ${convertPermissions(type)} ] ${type}</td>
-                    <td class="td right" data-title="<%:File operations%>">
+                    <td class="td left display-none">${owner}</td>
+                    <td class="td left">${size}</td>
+                    <td class="td left display-none">${month} ${day}</td>
+                    <td class="td left display-none">[ ${convertPermissions(type)} ] ${type}</td>
+                    <td class="td right">
                         <input type="button" class="btn cbi-button cbi-button-edit cbi-button-rename" value="<%:Rename%>">
                         <input type="button" class="btn cbi-button cbi-button-remove" value="<%:Delete%>">
                         <input type="button" class="btn cbi-button cbi-button-add cbi-button-download display-none" value="${type[0] !== 'd' ? '<%:View Files%>' : '<%:Download folder%>'}">
@@ -734,11 +774,12 @@
         var menuItems = [
             { label: "<%:Refresh Page%>", action: function() { location.reload(); } },
             { label: "<%:Rename%>", action: function() { renamefile(filename); } },
-            { label: "<%:Modify permissions%>", action: function() { modifypermissions(filename, targetElem.authority); } },
             { label: isFile ? "<%:download file%>" : "<%:Download catalog%>", action: function() { dpfile(filename, currentPath, true); } },
             { label: isFile ? "<%:open file%>" : "<%:open Directory%>", action: function() { dpfile(filename, currentPath, isFile ? 'open' : ''); } },
             { label: "<%:Create file (directory)%>", action: function() { createnewfile(); } },
             { label: "<%:Delete file (directory)%>", action: function() { deletefiles(filename, targetElem.isdir); } },
+            { label: "<%:Modify permissions%>", action: function() { modifypermissions(filename, targetElem.authority); } },
+            { label: "<%:Create link%>", action: function() { createLink(currentPath + filename, targetElem.isdir); } },
             ...(currentPath.split('/').length > 2 ? [{ label: "<%:Back to previous%>", action: function() { update_list(currentPath.replace(/\/[^/]*\/?$/, '/')); } }] : [])
         ];
         customMenu = document.createElement('ul');

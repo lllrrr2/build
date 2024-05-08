@@ -13,8 +13,8 @@ msgstr "确定删除"
 msgid "create new file"
 msgstr "创建新文件"
 
-msgid "Enter new name"
-msgstr "输入新的文件名"
+msgid "Enter ${oldnamecolor} new name"
+msgstr "输入 ${oldnamecolor} 新的文件名"
 
 msgid "Back to previous"
 msgstr "返回上一级"
@@ -73,8 +73,8 @@ msgstr "权限修改成功"
 msgid "Permission modification failed"
 msgstr "权限修改失败"
 
-msgid "Please select new permissions for ${filename}"
-msgstr "请选择 ${filename} 新的权限"
+msgid "Please select new permissions for ${filenamecolor}"
+msgstr "请为 ${filenamecolor} 选择新权限"
 
 msgid "Modify permissions"
 msgstr "修改权限"
@@ -163,8 +163,8 @@ msgstr "确定下载"
 msgid "Do you want to create this directory?"
 msgstr "是否要创建该目录？"
 
-msgid "The directory does not exist"
-msgstr "的目录不存在"
+msgid "${pathcolor} directory does not exist"
+msgstr "${pathcolor} 目录不存在"
 
 msgid "If the path is the root directory, add '&' at the first character"
 msgstr "如路径是根目录在首字符添加'&'"
@@ -204,6 +204,21 @@ msgstr "下载目录"
 
 msgid "View Files"
 msgstr "查看文件"
+
+msgid "Create link"
+msgstr "创建链接"
+
+msgid "Enter ${targetPathcolor} target link path"
+msgstr "输入 ${targetPathcolor} 的链接目标路径"
+
+msgid "Create hard link"
+msgstr "创建硬链接"
+
+msgid "Link created successfully"
+msgstr "链接创建成功"
+
+msgid "Link creation failed"
+msgstr "链接创建失败"
 
 msgid ""
 msgstr ""
