@@ -73,7 +73,7 @@ function arrangefiles(dir)
     local cmd = util.execi('ls -Ah --full-time --group-directories-first "%s"' %{dir})
     for fileinfo in cmd do
         local dir_name = fileinfo:match("%s([^%s]+)$")
-        local dir_path = dir .. dir_name
+        local dir_path = ('/%s/%s' %{dir, dir_name}):gsub("/+", "/")
         if fileinfo:sub(1, 2) == 'lr' then
             util.append(linkFiles, fileinfo)
         elseif fileinfo:sub(1, 2) == 'dr' and dir_name ~= "proc" then
@@ -101,9 +101,8 @@ function handleDocument()
         return http.write_json({ success = false, error = luci.i18n.translatef("%s file does not exist", path)})
     end
 
-    if content and #content ~= 0 then
-        content = content:gsub("\r\n?", "\n")
-        local success, code, msg = fs.writefile(path, content)
+    if not not content then
+        local success, code, msg = fs.writefile(path, content:gsub("\r\n?", "\n"))
         return http.write_json({ success = success, error = not success and msg or nil })
     end
 
@@ -116,10 +115,10 @@ end
 
 function file_tools()
     local path       = http.formvalue("path") or nil
-    local filepath   = http.formvalue("filepath") or nil
-    local dir_path   = http.formvalue("dir_path") or nil
     local newname    = http.formvalue("newname") or nil
     local oldname    = http.formvalue("oldname") or nil
+    local filepath   = http.formvalue("filepath") or nil
+    local dir_path   = http.formvalue("dir_path") or nil
     local linkPath   = http.formvalue("linkPath") or nil
     local targetPath = http.formvalue("targetPath") or nil
     local modify     = http.formvalue("permissions") or nil
