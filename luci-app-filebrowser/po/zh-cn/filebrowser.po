@@ -258,3 +258,6 @@ msgstr "您可以修改文件和目录的名称和下载、权限、添加目录
 
 msgid "Right click"
 msgstr "右键点击"
+
+msgid "open"
+msgstr "打开"

@@ -226,7 +226,6 @@
 </style>
 <script src="/luci-static/resources/fb/sweetalert2.all.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.33.1/ace.min.js"></script>
-<!-- <script src="/luci-static/tinynote/jquery.min.js?v=unknown"></script> -->
 <h2 name="content"><%:File management%></h2>
 <div class="cbi-map-descr"><font color="red"><%:Right click%></font><%:You can modify the names and downloads of files and directories, permissions, add directories and files, and edit scripts.%></div>
 <div class="fb-container">
@@ -613,7 +612,7 @@
             var path = concatPath(currentPath, name);
             path = path.replace(/(.*) ->.*/, '$1');
             var params = new URLSearchParams({ path });
-            sendRequest('<%=url("admin/system/deletefiles")%>', params).then(function (res) {
+            sendRequest('<%=url("admin/system/file_tools")%>', params).then(function (res) {
                 var isSuccess = res.stat;
                 var message = isSuccess
                     ? `${colorMessage(name, 'blue')} <%:successfully deleted!%>`
@@ -671,7 +670,7 @@
             var params = new URLSearchParams({
                 targetPath: targetPath, linkPath: linkPath, isHardLink: isHardLink
             });
-            sendRequest('<%=url("admin/system/createLink")%>', params).then(function (res) {
+            sendRequest('<%=url("admin/system/file_tools")%>', params).then(function (res) {
                 if (res.stat) {
                     refresh_list(res.data);
                     swalNotification(`${colorMessage(linkPath, 'blue')} <%:Link created successfully%>`, 'success');
@@ -708,7 +707,7 @@
                     var params = new URLSearchParams({
                         newname: concatPath(currentPath, newname), oldname: concatPath(currentPath, oldname)
                     });
-                    sendRequest('<%=url("admin/system/renamefile")%>', params).then(function (res) {
+                    sendRequest('<%=url("admin/system/file_tools")%>', params).then(function (res) {
                         if (res.stat) {
                             refresh_list(res.data);
                             swalNotification(`${colorMessage(oldname, 'blue')} <%:Renaming successful!%>`, 'success');
@@ -747,7 +746,7 @@
             var params = new URLSearchParams({
                 permissions, path: concatPath(currentPath, filepath)
             });
-            sendRequest('<%=url("admin/system/modifypermissions")%>', params).then(function (res) {
+            sendRequest('<%=url("admin/system/file_tools")%>', params).then(function (res) {
                 var isSuccess = res.stat;
                 var message = isSuccess
                     ? `${colorMessage(filepath, 'blue')} <%:Permissions modified successfully%>`
@@ -851,7 +850,7 @@
             html: `<%:Confirm installation%> ${colorMessage(filename, 'red')} ?`,
             preConfirm: function () {
                 var params = new URLSearchParams({ filepath });
-                sendRequest('<%=url("admin/system/installipk")%>', params).then(function (res) {
+                sendRequest('<%=url("admin/system/file_tools")%>', params).then(function (res) {
                     res.stat
                         ? alert(res.data)
                         : swalNotification(`${colorMessage(filename, 'red')} <%:installation failed%>`, 'error');
@@ -867,9 +866,9 @@
             ...swalConfig, title: '<%:upload file%>', input: 'file',
             inputAttributes: { style: "margin: 10px 25px;", accept: '/*' },
             didOpen: function() { Draggable(); }
-        }).then(function (response) {
+        }).then(function (result) {
             if (!result.isConfirmed) return;
-            var file = response.value;
+            var file = result.value;
             var data = new FormData();
             data.append('file', file);
             data.append('filename', file.name);
@@ -903,9 +902,9 @@
         });
     }
 
-    function checkdirectory(path) {
-        var params = new URLSearchParams({ path });
-        return sendRequest('<%=url("admin/system/checkdirectory")%>', params)
+    function checkdirectory(dir_path) {
+        var params = new URLSearchParams({ dir_path });
+        return sendRequest('<%=url("admin/system/file_tools")%>', params)
         .then(function (res) {
             return Promise.resolve(res.stat);
         })

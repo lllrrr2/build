@@ -7,15 +7,10 @@ function index()
     entry({"admin", "system", "filebrowser"}, template("filebrowser"), _("File management"), 60).dependent = true
     entry({"admin", "system", "dpfile"}, call("dpfile"), nil).leaf = true
     entry({"admin", "system", "file_list"}, call("file_list"), nil).leaf = true
-    entry({"admin", "system", "createLink"}, call("createLink"), nil).leaf = true
-    entry({"admin", "system", "renamefile"}, call("renamefile"), nil).leaf = true
     entry({"admin", "system", "uploadfile"}, call("uploadfile"), nil).leaf = true
-    entry({"admin", "system", "installipk"}, call("installipk"), nil).leaf = true
-    entry({"admin", "system", "deletefiles"}, call("deletefiles"), nil).leaf = true
+    entry({"admin", "system", "file_tools"}, call("file_tools"), nil).leaf = true
     entry({"admin", "system", "createnewfile"}, call("createnewfile"), nil).leaf = true
-    entry({"admin", "system", "checkdirectory"}, call("checkdirectory"), nil).leaf = true
     entry({"admin", "system", "handleDocument"}, call("handleDocument"), nil).leaf = true
-    entry({"admin", "system", "modifypermissions"}, call("modifypermissions"), nil).leaf = true
 end
 
 local MIME_TYPES = {
@@ -69,7 +64,7 @@ function list_response(path, stat)
     http.prepare_content("application/json")
     http.write_json({
         stat = stat and true or false,
-        data = stat and (fs.isdirectory(path) and arrangefiles(path) or nil) or nil
+        data = stat and fs.isdirectory(path) and arrangefiles(path) or nil
     })
 end
 
@@ -84,8 +79,8 @@ function arrangefiles(dir)
         elseif fileinfo:sub(1, 2) == 'dr' and dir_name ~= "proc" then
             for sizeinfo in util.execi('du -sh %s | cut -f1' %{dir_path}) do
                 fileinfo = fileinfo:gsub("(%s+%S+%s+%S+%s+%S+%s+)(%S+)(%s+.+)$", "%1" .. sizeinfo .. "%3")
-                util.append(regularFiles, fileinfo)
             end
+            util.append(regularFiles, fileinfo)
         else
             util.append(regularFiles, fileinfo)
         end
@@ -119,16 +114,38 @@ function handleDocument()
     return http.write_json({ data = data, success = true })
 end
 
-function deletefiles()
-    local path = http.formvalue("path")
-    stat = fs.isdirectory(path) and util.exec('rm -rf "%s"' %{path}) or nfs.remover(path)
-    list_response(fs.dirname(path), stat)
-end
+function file_tools()
+    local path       = http.formvalue("path") or nil
+    local filepath   = http.formvalue("filepath") or nil
+    local dir_path   = http.formvalue("dir_path") or nil
+    local newname    = http.formvalue("newname") or nil
+    local oldname    = http.formvalue("oldname") or nil
+    local linkPath   = http.formvalue("linkPath") or nil
+    local targetPath = http.formvalue("targetPath") or nil
+    local modify     = http.formvalue("permissions") or nil
+    local isHardLink = http.formvalue("isHardLink") ~= 'true'
 
-function renamefile()
-    local newname, oldname = http.formvalue("newname"), http.formvalue("oldname")
-    stat = nfs.move(oldname, newname)
-    list_response(fs.dirname(oldname), stat)
+    if dir_path then
+        stat = fs.isdirectory(dir_path)
+        http.prepare_content("application/json")
+        http.write_json({ stat = stat })
+    elseif modify then
+        stat = fs.chmod(path, modify)
+        list_response(fs.dirname(path), stat)
+    elseif oldname and newname then
+        stat = fs.move(oldname, newname)
+        list_response(fs.dirname(oldname), stat)
+    elseif linkPath and targetPath then
+        stat = fs.link(targetPath, linkPath, isHardLink)
+        list_response(fs.dirname(targetPath), stat)
+    elseif filepath then
+        stat = filepath:match(".*%.(.*)$") == "ipk" and util.exec('opkg --force-depends install "%s"' %{filepath})
+        http.prepare_content("application/json")
+        http.write_json({ data = stat, stat = stat and true or false })
+    else
+        stat = fs.isdirectory(path) and util.exec('rm -rf "%s"' %{path}) or nfs.remover(path)
+        list_response(fs.dirname(path), stat)
+    end
 end
 
 function createnewfile()
@@ -144,21 +161,6 @@ function createnewfile()
     end
     fs.chmod(newfile, permissions)
     list_response(fs.dirname(newfile), stat)
-end
-
-function createLink()
-    local linkPath       = http.formvalue("linkPath")
-    local targetPath     = http.formvalue("targetPath")
-    local isSymbolicLink = http.formvalue("isHardLink") ~= 'true'
-
-    stat = fs.link(targetPath, linkPath, isSymbolicLink)
-    list_response(fs.dirname(targetPath), stat)
-end
-
-function modifypermissions()
-    local path, modify = http.formvalue("path"), http.formvalue("permissions")
-    stat = fs.chmod(path, modify)
-    list_response(fs.dirname(path), stat)
 end
 
 function uploadfile()
@@ -188,15 +190,6 @@ function uploadfile()
     })
 end
 
-function installipk()
-    local filepath = http.formvalue("filepath")
-    if filepath:match(".*%.(.*)$") == "ipk" then
-        stat = util.exec('opkg --force-depends install "%s"' %{filepath})
-    end
-    http.prepare_content("application/json")
-    http.write_json({ data = stat, stat = stat and 0 or 1 })
-end
-
 function downloadfile(filepath)
     local fd, filename, isDir = nil, nil, fs.isdirectory(filepath)
     if isDir then
@@ -219,13 +212,6 @@ function to_mime(filename, download)
     elseif download == 'true' or type(filename) ~= "string" then
         return "application/octet-stream"
     end
-end
-
-function checkdirectory()
-    local filepath = http.formvalue("path")
-    local stat = fs.isdirectory(filepath) and true or false
-    http.prepare_content("application/json")
-    http.write_json({ stat = stat })
 end
 
 function dpfile()
