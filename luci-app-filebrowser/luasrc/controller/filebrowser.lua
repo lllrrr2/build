@@ -14,6 +14,7 @@ function index()
     entry({"admin", "system", "deletefiles"}, call("deletefiles"), nil).leaf = true
     entry({"admin", "system", "createnewfile"}, call("createnewfile"), nil).leaf = true
     entry({"admin", "system", "checkdirectory"}, call("checkdirectory"), nil).leaf = true
+    entry({"admin", "system", "handleDocument"}, call("handleDocument"), nil).leaf = true
     entry({"admin", "system", "modifypermissions"}, call("modifypermissions"), nil).leaf = true
 end
 
@@ -67,21 +68,22 @@ local stat = false
 function list_response(path, stat)
     http.prepare_content("application/json")
     http.write_json({
-        stat = stat and 0 or 1,
-        data = stat and arrangefiles(path) or nil
+        stat = stat and true or false,
+        data = stat and (fs.isdirectory(path) and arrangefiles(path) or nil) or nil
     })
 end
 
 function arrangefiles(dir)
     local linkFiles, regularFiles = {}, {}
-    for fileinfo in util.execi('ls -Ah --full-time --group-directories-first "%s"' %{dir}) do
+    local cmd = util.execi('ls -Ah --full-time --group-directories-first "%s"' %{dir})
+    for fileinfo in cmd do
         local dir_name = fileinfo:match("%s([^%s]+)$")
+        local dir_path = dir .. dir_name
         if fileinfo:sub(1, 2) == 'lr' then
             util.append(linkFiles, fileinfo)
         elseif fileinfo:sub(1, 2) == 'dr' and dir_name ~= "proc" then
-            local dir_path = '/%s/%s' %{dir, dir_name}
-            for sizeinfo in util.execi('du -sh "%s"' %{dir_path:gsub("/+", "/")}) do
-                fileinfo = fileinfo:gsub("(%s+%S+%s+%S+%s+%S+%s+)(%S+)(%s+.+)$", "%1" .. sizeinfo:match("(%S+)") .. "%3")
+            for sizeinfo in util.execi('du -sh %s | cut -f1' %{dir_path}) do
+                fileinfo = fileinfo:gsub("(%s+%S+%s+%S+%s+%S+%s+)(%S+)(%s+.+)$", "%1" .. sizeinfo .. "%3")
                 util.append(regularFiles, fileinfo)
             end
         else
@@ -93,6 +95,28 @@ end
 
 function file_list()
     list_response(http.formvalue("path"), true)
+end
+
+function handleDocument()
+    local path = http.formvalue("path")
+    local content = http.formvalue("content")
+    http.prepare_content("application/json")
+
+    if not fs.isfile(path) then
+        return http.write_json({ success = false, error = luci.i18n.translatef("%s file does not exist", path)})
+    end
+
+    if content and #content ~= 0 then
+        content = content:gsub("\r\n?", "\n")
+        local success, code, msg = fs.writefile(path, content)
+        return http.write_json({ success = success, error = not success and msg or nil })
+    end
+
+    local data, code, msg = fs.readfile(path)
+    if type(data) ~= "string" and #data == 0 and not data then
+        return http.write_json({ success = false, error = luci.i18n.translatef("Unable to read file: %s", msg)})
+    end
+    return http.write_json({ data = data, success = true })
 end
 
 function deletefiles()
@@ -111,7 +135,7 @@ function createnewfile()
     local permissions = http.formvalue("permissions")
     local data, newfile = http.formvalue("data"), http.formvalue("newfile")
     if http.formvalue("createdirectory") == "true" then
-        stat = fs.mkdir(newfile)
+        stat = fs.mkdir(newfile, newfile:match("/"))
     else
         local file_handle = io.open(newfile, "w")
         file_handle:setvbuf("full", 1024 * 1024)
@@ -198,12 +222,10 @@ function to_mime(filename, download)
 end
 
 function checkdirectory()
-    local state, filepath = 1, http.formvalue("path")
-    if fs.isdirectory(filepath) then
-        state = 0
-    end
+    local filepath = http.formvalue("path")
+    local stat = fs.isdirectory(filepath) and true or false
     http.prepare_content("application/json")
-    http.write_json({ stat = state })
+    http.write_json({ stat = stat })
 end
 
 function dpfile()
@@ -220,7 +242,7 @@ function dpfile()
         http.header('Content-Disposition', 'inline; filename="%s"' %{filename})
         local stat = luci.ltn12.pump.all(luci.ltn12.source.file(io.open(filepath, "r")), http.write)
         if not stat then
-            http.write("无法打开文件：%s" %{filepath})
+            http.write(luci.i18n.translatef("Unable to open file: %s", filepath))
         end
     end
 end
