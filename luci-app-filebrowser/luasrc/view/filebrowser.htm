@@ -145,25 +145,22 @@
         padding-left: 6px !important;
     }
 
-    div:where(.swal2-container) .swal2-select:focus,
-    div:where(.swal2-container) input:where(.swal2-file):focus,
-    div:where(.swal2-container) input:where(.swal2-input):focus,
-    div:where(.swal2-container) textarea:where(.swal2-textarea):focus {
+    .swal2-input:focus, .swal2-select:focus,
+    .swal2-textarea:focus, .swal2-file:focus {
         outline: 0;
         text-decoration: none;
         border-color: rgba(235, 120, 67, 0.8) !important;
-        box-shadow: inset 0 1px 3.5px hsla(206, 100%, 50%, 0.01), 0 0 10px rgba(249, 128, 72, 0.8) !important;
+        box-shadow: inset 0 1px 3px hsla(206, 100%, 50%, 0.01), 0 0 10px rgba(249, 128, 72, 0.8) !important;
 /*        border-color: rgba(82, 168, 236, 0.8) !important;
         box-shadow: inset 0 1px 3px hsla(0, 0%, 99%, 0.01), 0 0 8px rgba(82, 168, 236, 0.6) !important;*/
-
     }
 
-    div:where(.swal2-container) div:where(.swal2-timer-progress-bar) {
+    .swal2-timer-progress-bar {
         height: 3px !important;
         background: #ff0000 !important;
     }
 
-    .alert-mask {
+    #alertMask {
         top: 0;
         left: 0;
         width: 100%;
@@ -176,7 +173,7 @@
         background-color: rgba(0, 0, 0, 0.5);
     }
 
-    .alert-container {
+    #alertContainer {
         width: 70%;
         overflow: auto;
         max-width: 900px;
@@ -187,12 +184,12 @@
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     }
 
-    .alert-content {
+    #alertContent {
         overflow: auto;
         max-height: calc(70vh - 100px);
     }
 
-    .alert-content pre {
+    #alertContent pre {
         margin: 0;
         color: #3699ff;
         font-size: 14px;
@@ -224,7 +221,7 @@
         }
     }
 </style>
-<script src="/luci-static/resources/fb/sweetalert2.all.min.js"></script>
+<script src="<%=resource%>/fb/sweetalert2.all.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.33.1/ace.min.js"></script>
 <h2 name="content"><%:File management%></h2>
 <div class="cbi-map-descr"><font color="red"><%:Right click%></font><%:You can modify the names and downloads of files and directories, permissions, add directories and files, and edit scripts.%></div>
@@ -363,13 +360,13 @@
     function alert(msg) {
         var body = document.body;
         var alertMask = document.createElement('div');
-        alertMask.className = 'alert-mask';
+        alertMask.setAttribute('id', 'alertMask');
 
         var alertContainer = document.createElement('div');
-        alertContainer.className = 'alert-container';
+        alertContainer.setAttribute('id', 'alertContainer');
 
         var alertContent = document.createElement('div');
-        alertContent.className = 'alert-content';
+        alertContent.setAttribute('id', 'alertContent');
         alertContent.innerHTML = `<pre>\n${msg}\n\n</pre>`;
 
         alertMask.onclick = function (event) {
@@ -469,107 +466,121 @@
     }
 
     function renderDocumentEditor(path, content) {
+        var isace = typeof ace === 'object';
         Swal.fire({
-            ...swalConfig, title: path, padding: '2px', width: '900px',
-            input: 'checkbox', inputPlaceholder: '<%:Read-only%>', inputValue: true,
-            confirmButtonText: '<%:Save%>', allowOutsideClick: false, html: `
-                <div id="editorContent" style="height: 450px; width: auto;"></div>
-                <textarea id="editor" style="display: none;"></textarea>
-            `, showConfirmButton: false,
+            ...swalConfig, inputPlaceholder: '<%:Read-only%>', showConfirmButton: false,
+            confirmButtonText: '<%:Save%>', allowOutsideClick: false, inputValue: true,
+            title: path, input: 'checkbox', padding: '2px', width: '900px', html: isace
+                ? `<div id="editorContent" style="height: 450px; width: auto;"></div>
+                    <textarea style="display: none;"></textarea>`
+                : `<textarea id="Swaleditor" style="height: 450px; width: 100%; background-color: black; color: white; font-size: 14px"></textarea>`,
             didOpen: function() {
-                var Theme, mode = getMode(path),
-                    editor = ace.edit('editorContent');
-
-                if (mode === 'text' && content.trim() !== '') {
-                    if (content.trim().match(/^#!\/.*\/lua/)) mode = 'lua';
-                    else if (content.trim().match(/^#!\/.*(ba)?sh/)) mode = 'sh';
-                }
-
-                editor.setOptions({
-                    fontSize: "14px", fontFamily: "Consolas, monospace", wrap: true,
-                    printMarginColumn: -1, showPrintMargin: true, readOnly: true,
-                    mode: 'ace/mode/' + mode, theme: "ace/theme/" + (Theme || 'monokai')
-                });
-
-                editor.setValue(content, 1);
-                editor.focus();
+                var chk = document.querySelector('.swal2-checkbox');
                 setStyle('.swal2-title', { padding: '5px 0 1px' });
                 setStyle('.swal2-checkbox', { margin: '0px 15px 0px' });
                 setStyle('.swal2-html-container', { margin: '2px 2px 2px' });
                 setStyle('.swal2-container .swal2-actions', { margin: '.2em auto 0' });
+                if (isace) {
+                    var Theme, mode = getMode(path),
+                        editor = ace.edit('editorContent');
 
-                var ace_td=[["ambiance","Ambiance"],["chaos","Chaos"],["chrome","Chrome"],["cloud9_day","Cloud9 Day"],["cloud9_night","Cloud9 Night"],["cloud9_night_low_color","Cloud9 Night Low Color"],["clouds","Clouds"],["clouds_midnight","Clouds Midnight"],["cobalt","Cobalt"],["crimson_editor","Crimson Editor"],["dawn","Dawn"],["dracula","Dracula"],["dreamweaver","Dreamweaver"],["eclipse","Eclipse"],["github","GitHub"],["github_dark","GitHub Dark"],["gob","Gob"],["gruvbox","Gruvbox"],["gruvbox_dark_hard","Gruvbox Dark Hard"],["gruvbox_light_hard","Gruvbox Light Hard"],["idle_fingers","Idle Fingers"],["iplastic","IPlastic"],["katzenmilch","Katzenmilch"],["kr_theme","KR Theme"],["kuroir","Kuroir"],["merbivore","Merbivore"],["merbivore_soft","Merbivore Soft"],["mono_industrial","Mono Industrial"],["monokai","Monokai"],["nord_dark","Nord Dark"],["one_dark","One Dark"],["pastel_on_dark","Pastel on Dark"],["solarized_dark","Solarized Dark"],["solarized_light","Solarized Light"],["sqlserver","SQL Server"],["terminal","Terminal"],["textmate","TextMate"],["tomorrow","Tomorrow"],["tomorrow_night","Tomorrow Night"],["tomorrow_night_blue","Tomorrow Night Blue"],["tomorrow_night_bright","Tomorrow Night Bright"],["tomorrow_night_eighties","Tomorrow Night Eighties"],["twilight","Twilight"],["vibrant_ink","Vibrant Ink"],["xcode","Xcode"]];
+                    if (mode === 'text' && content.trim() !== '') {
+                        if (content.trim().match(/^#!\/.*\/lua/)) mode = 'lua';
+                        else if (content.trim().match(/^#!\/.*(ba)?sh/)) mode = 'sh';
+                    }
 
-                var ace_md=[["sh","Shell"],["lua","Lua"],["html","HTML"],["javascript","JavaScript"],["css","CSS"],["python","Python"],["php","PHP"],["json","JSON"],["xml","XML"],["yaml","YAML"],["sql","SQL"],["makefile","Makefile"],["markdown","markdown"],["ini","ini"]];
-
-                var createDropdown = function(opts, id, defVal, txt) {
-                    var cnt = document.createElement('div'),
-                        lbl = document.createElement('label'),
-                        sel = document.createElement('select');
-
-                    lbl.textContent = isMobileDevice ? '' : txt;;
-                    lbl.setAttribute('for', id);
-                    lbl.className = 'cbi-value-title';
-                    sel.setAttribute('id', id);
-                    sel.setAttribute('style', 'width: 70px; margin-left: 10px;');
-                    opts.forEach(function(o) { sel.appendChild(new Option(o[1], o[0])) });
-                    sel.value = defVal;
-                    sel.addEventListener('change', function() {
-                        id === 'td'
-                        ? editor.setTheme("ace/theme/" + sel.value)
-                        : editor.getSession().setMode("ace/mode/" + sel.value);
+                    editor.setOptions({
+                        fontSize: "14px", fontFamily: "Consolas, monospace", wrap: true,
+                        printMarginColumn: -1, showPrintMargin: true, readOnly: true,
+                        mode: 'ace/mode/' + mode, theme: "ace/theme/" + (Theme || 'monokai')
                     });
 
-                    cnt.append(lbl, sel);
-                    return cnt;
-                };
+                    editor.setValue(content, 1);
+                    editor.focus();
+                    setStyle('.swal2-title', { padding: '5px 0 1px' });
+                    setStyle('.swal2-checkbox', { margin: '0px 15px 0px' });
+                    setStyle('.swal2-html-container', { margin: '2px 2px 2px' });
+                    setStyle('.swal2-container .swal2-actions', { margin: '.2em auto 0' });
 
-                var con = document.createElement('div'),
-                    h2e = document.querySelector('.swal2-title'),
-                    em = editor.getOptions().mode.split('/').pop(),
-                    et = editor.getOptions().theme.split('/').pop(),
-                    chk = document.querySelector('.swal2-checkbox'),
-                    md = createDropdown(ace_md, 'md', em, "<%:Type%>"),
-                    td = createDropdown(ace_td, 'td', et, "<%:Theme%>"),
-                    tn = document.querySelector('[aria-labelledby="swal2-title"]');
+                    var ace_td=[["ambiance","Ambiance"],["chaos","Chaos"],["chrome","Chrome"],["cloud9_day","Cloud9 Day"],["cloud9_night","Cloud9 Night"],["cloud9_night_low_color","Cloud9 Night Low Color"],["clouds","Clouds"],["clouds_midnight","Clouds Midnight"],["cobalt","Cobalt"],["crimson_editor","Crimson Editor"],["dawn","Dawn"],["dracula","Dracula"],["dreamweaver","Dreamweaver"],["eclipse","Eclipse"],["github","GitHub"],["github_dark","GitHub Dark"],["gob","Gob"],["gruvbox","Gruvbox"],["gruvbox_dark_hard","Gruvbox Dark Hard"],["gruvbox_light_hard","Gruvbox Light Hard"],["idle_fingers","Idle Fingers"],["iplastic","IPlastic"],["katzenmilch","Katzenmilch"],["kr_theme","KR Theme"],["kuroir","Kuroir"],["merbivore","Merbivore"],["merbivore_soft","Merbivore Soft"],["mono_industrial","Mono Industrial"],["monokai","Monokai"],["nord_dark","Nord Dark"],["one_dark","One Dark"],["pastel_on_dark","Pastel on Dark"],["solarized_dark","Solarized Dark"],["solarized_light","Solarized Light"],["sqlserver","SQL Server"],["terminal","Terminal"],["textmate","TextMate"],["tomorrow","Tomorrow"],["tomorrow_night","Tomorrow Night"],["tomorrow_night_blue","Tomorrow Night Blue"],["tomorrow_night_bright","Tomorrow Night Bright"],["tomorrow_night_eighties","Tomorrow Night Eighties"],["twilight","Twilight"],["vibrant_ink","Vibrant Ink"],["xcode","Xcode"]];
 
-                con.append(td, md, chk);
-                con.id = 'con';
-                md.style.cssText = 'margin-left: 15px;';
-                con.style.cssText = 'display: none; justify-content: center; align-items: center; height: 36px;';
-                tn.insertAdjacentElement('afterbegin', con);
-                var sca = document.getElementById('con'),
-                    endEvent = isMobileDevice ? 'touchend' : 'mouseleave',
-                    startEvent = isMobileDevice ? 'touchstart' : 'mouseenter';
+                    var ace_md=[["sh","Shell"],["lua","Lua"],["html","HTML"],["javascript","JavaScript"],["css","CSS"],["python","Python"],["php","PHP"],["json","JSON"],["xml","XML"],["yaml","YAML"],["sql","SQL"],["makefile","Makefile"],["markdown","markdown"],["ini","ini"]];
 
-                chk.addEventListener('change', function(e) {
-                    editor.setReadOnly(e.target.checked);
-                    var Confirm = document.querySelector('.swal2-confirm');
-                    Confirm.style.display = e.target.checked ? 'none' : 'block';
-                });
+                    var createDropdown = function(opts, id, defVal, txt) {
+                        var cnt = document.createElement('div'),
+                            lbl = document.createElement('label'),
+                            sel = document.createElement('select');
 
-                h2e.addEventListener(startEvent, function() {
-                    sca.style.display = 'flex';
-                    h2e.style.display = 'none';
-                });
+                        lbl.textContent = isMobileDevice ? '' : txt;;
+                        lbl.setAttribute('for', id);
+                        lbl.className = 'cbi-value-title';
+                        sel.setAttribute('id', id);
+                        sel.setAttribute('style', 'width: 70px; margin-left: 10px;');
+                        opts.forEach(function(o) { sel.appendChild(new Option(o[1], o[0])) });
+                        sel.value = defVal;
+                        sel.addEventListener('change', function() {
+                            id === 'td'
+                            ? editor.setTheme("ace/theme/" + sel.value)
+                            : editor.getSession().setMode("ace/mode/" + sel.value);
+                        });
 
-                sca.addEventListener(endEvent, function(e) {
-                    if (!isMobileDevice || !['md', 'td', 'swal2-checkbox'].includes(e.target.id)) {
-                        sca.style.display = 'none';
-                        h2e.style.display = 'block';
-                    }
-                });
+                        cnt.append(lbl, sel);
+                        return cnt;
+                    };
+
+                    var con = document.createElement('div'),
+                        h2e = document.querySelector('.swal2-title'),
+                        em = editor.getOptions().mode.split('/').pop(),
+                        et = editor.getOptions().theme.split('/').pop(),
+                        md = createDropdown(ace_md, 'md', em, "<%:Type%>"),
+                        td = createDropdown(ace_td, 'td', et, "<%:Theme%>"),
+                        tn = document.querySelector('[aria-labelledby="swal2-title"]');
+
+                    con.append(td, md, chk);
+                    con.id = 'con';
+                    md.style.cssText = 'margin-left: 15px;';
+                    con.style.cssText = 'display: none; justify-content: center; align-items: center; height: 36px;';
+                    tn.insertAdjacentElement('afterbegin', con);
+                    var sca = document.getElementById('con'),
+                        endEvent = isMobileDevice ? 'touchend' : 'mouseleave',
+                        startEvent = isMobileDevice ? 'touchstart' : 'mouseenter';
+
+                    chk.addEventListener('change', function(e) {
+                        editor.setReadOnly(e.target.checked);
+                        var Confirm = document.querySelector('.swal2-confirm');
+                        Confirm.style.display = e.target.checked ? 'none' : 'block';
+                    });
+
+                    h2e.addEventListener(startEvent, function() {
+                        sca.style.display = 'flex';
+                        h2e.style.display = 'none';
+                    });
+
+                    sca.addEventListener(endEvent, function(e) {
+                        if (!isMobileDevice || !['md', 'td', 'swal2-checkbox'].includes(e.target.id)) {
+                            sca.style.display = 'none';
+                            h2e.style.display = 'block';
+                        }
+                    });
+                } else {
+                    var textarea = document.getElementById("Swaleditor");
+                    textarea.innerHTML = content;
+                    chk.addEventListener('change', function(e) {
+                        var Confirm = document.querySelector('.swal2-confirm');
+                        Confirm.style.display = e.target.checked ? 'none' : 'block';
+                    });
+                }
 
                 Draggable();
             },
             preConfirm: function() {
-                return ace.edit('editorContent').getValue();
+                return isace ? ace.edit('editorContent').getValue() : document.getElementById('Swaleditor').value;
             }
         }).then(function(result) {
             if (!result.isConfirmed || result.value === content) return;
             Swal.fire({
                 ...swalConfig, title: '<%:Confirm Save%>', icon: 'question',
-                allowOutsideClick: false, text: path + ' <%:Are you sure you want to save the changes?%>',
+                allowOutsideClick: false, html: `${path} ${colorMessage('<%:Are you sure you want to save the changes?%>', 'orange')}`,
                 didOpen: function() { Draggable(); }
             }).then(function(confirmResult) {
                 if (!confirmResult.isConfirmed) return;
@@ -673,6 +684,7 @@
             sendRequest('<%=url("admin/system/file_tools")%>', params).then(function (res) {
                 if (res.stat) {
                     refresh_list(res.data);
+                    update_list(linkPath.replace(/\/[^/]*\/?$/, '/'), undefined, true);
                     swalNotification(`${colorMessage(linkPath, 'blue')} <%:Link created successfully%>`, 'success');
                 } else {
                     swalNotification(`${colorMessage(linkPath, 'red')} <%:Link creation failed%>`, 'error');
@@ -874,10 +886,13 @@
             data.append('filename', file.name);
             data.append('filedir', concatPath(currentPath));
             sendRequest('<%=url("admin/system/uploadfile")%>', data, 'POST').then(function (res) {
-                update_list(res.filedir, undefined, true);
-                swalNotification(`${colorMessage(res.filename, 'blue')} <%:File has been uploaded to%> ${res.filedir}`, 'success');
-            }).catch(function (error) {
-                swalNotification(`${colorMessage(file.name, 'red')} <%:upload failed%>`, 'error');
+                if (res.stat) {
+                   update_list(res.filedir, undefined, true);
+                   swalNotification(`${colorMessage(res.filename, 'blue')} <%:File has been uploaded to%> ${colorMessage(res.filedir, 'blue')}`, 'success');
+                } else {
+                    swalNotification(`${colorMessage(res.filename, 'red')} <%:upload failed%>`, 'error');
+                }
+                
             });
         });
     }

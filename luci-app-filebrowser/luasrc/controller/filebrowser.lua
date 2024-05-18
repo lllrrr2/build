@@ -132,11 +132,11 @@ function file_tools()
         stat = fs.chmod(path, modify)
         list_response(fs.dirname(path), stat)
     elseif oldname and newname then
-        stat = fs.move(oldname, newname)
+        stat = nfs.move(oldname, newname)
         list_response(fs.dirname(oldname), stat)
     elseif linkPath and targetPath then
         stat = fs.link(targetPath, linkPath, isHardLink)
-        list_response(fs.dirname(targetPath), stat)
+        list_response(fs.dirname(linkPath), stat)
     elseif filepath then
         stat = filepath:match(".*%.(.*)$") == "ipk" and util.exec('opkg --force-depends install "%s"' %{filepath})
         http.prepare_content("application/json")
@@ -163,12 +163,13 @@ function createnewfile()
 end
 
 function uploadfile()
-    local filedir, filename = http.formvalue("filedir"), http.formvalue("filename")
+    local fd
+    local filedir = http.formvalue("filedir")
+    local filename = http.formvalue("filename")
     if filename:match(".*%.(.*)$") == "ipk" then
         filedir = '/tmp/ipkdir/'
         if not fs.access(filedir) then fs.mkdir(filedir) end
     end
-    local fd
     http.setfilehandler(function(meta, chunk, eof)
         if not fd then
             if meta and chunk then
@@ -181,11 +182,12 @@ function uploadfile()
         if eof and fd then
             fd:close()
             fd = nil
+            stat = true
         end
     end)
     http.prepare_content("application/json")
     http.write_json({
-        stat = eof and 0 or 1, filename = filename, filedir = filedir
+        stat = stat, filename = filename, filedir = filedir
     })
 end
 
