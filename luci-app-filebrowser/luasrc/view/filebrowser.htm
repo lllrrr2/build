@@ -38,9 +38,7 @@
         cursor: pointer; /* 鼠标样式 */
     }
 
-    .file-icon:before,
-    .link-icon:before,
-    .folder-icon:before {
+    .file-icon:before, .link-icon:before, .folder-icon:before {
         content: ''; /* 伪元素的内容为空 */
         width: 1.5rem; /* 宽度 */
         height: 1.5rem; /* 高度 */
@@ -160,45 +158,6 @@
         background: #ff0000 !important;
     }
 
-    #alertMask {
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        position: fixed;
-        align-items: center;
-        z-index: 1 !important;
-        justify-content: center;
-        background-color: rgba(0, 0, 0, 0.5);
-    }
-
-    #alertContainer {
-        width: 70%;
-        overflow: auto;
-        max-width: 900px;
-        max-height: 70vh;
-        position: relative;
-        border-radius: 7px;
-        background-color: #fff;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-    }
-
-    #alertContent {
-        overflow: auto;
-        max-height: calc(70vh - 100px);
-    }
-
-    #alertContent pre {
-        margin: 0;
-        color: #3699ff;
-        font-size: 14px;
-        line-height: 1.5;
-        text-align: left;
-        font-family: Consolas;
-        background-color: #212121;
-    }
-
     @media screen and (max-width: 480px) {
         .cbi-titles {
             width: 20px; /* 设置一个固定宽度，根据需求调整 */
@@ -233,24 +192,28 @@
         <input id="uploadfile" type="button" class="btn cbi-button cbi-button-action important" style="margin-left: 6px;" value="<%:Upload%>">
         <input id="selectedremove" type="button" class="btn cbi-button cbi-button-remove" style="margin-left: 6px;" value="<%:Delete%>">
     </div>
+    <div id="file-list"></div>
 </div>
 <script type="text/javascript">
 // console.log(Object.keys(Swal));
 (function () {
     let currentPath, customMenu = null;
-    var pathElem = document.getElementById("current-path");
+    var listElem = document.getElementById("file-list"),
+        pathElem = document.getElementById("current-path"),
+        isAndroid = /Android/.test(navigator.userAgent),
+        isMobileWebkit = /AppleWebKit/.test(navigator.userAgent) && /Mobile\/\w+/.test(navigator.userAgent),
+        isMobileDevice = isAndroid || isMobileWebkit || /webOS|BlackBerry|Opera Mini|Opera Mobi|IEMobile/i.test(navigator.userAgent),
+        swalConfig = {
+            showCancelButton: true, cancelButtonText: '<%:Cancel%>', confirmButtonText: '<%:Confirm%>'
+        };
+
+    listElem.onclick = handleClick;
     document.getElementById('uploadfile').addEventListener('click', uploadfile);
     document.getElementById('godirectory').addEventListener('click', godirectory);
     document.getElementById('selectedremove').addEventListener('click', deletefiles);
     document.getElementById('createnewfile').addEventListener('click', createnewfile);
-    var listElem = document.querySelector(".fb-container").appendChild(document.createElement("div"));
-    listElem.id = "file-list";
-    listElem.onclick = handleClick;
     pathElem.addEventListener("keyup", function (event) { event.key === "Enter" && godirectory() });
 
-    var isAndroid = /Android/.test(navigator.userAgent),
-        isMobileWebkit = /AppleWebKit/.test(navigator.userAgent) && /Mobile\/\w+/.test(navigator.userAgent),
-        isMobileDevice = isAndroid || isMobileWebkit || /webOS|BlackBerry|Opera Mini|Opera Mobi|IEMobile/i.test(navigator.userAgent);
     document.addEventListener('DOMContentLoaded', function () {
         let isFloating = false, navHeight = document.querySelector('header').offsetHeight;
         var inputContainer = document.querySelector('.input-container');
@@ -266,11 +229,17 @@
         window.addEventListener('scroll', floatInputContainer);
     });
 
-    function ensureString(v) { return typeof v === 'string' ? v.trim() : '' }
     function FileExt(v) { return v.split('.').pop().toLowerCase(); }
-    function getInitPath() { return new URLSearchParams(location.search).get('path') || '/' }
+    function ensureString(v) { return typeof v === 'string' ? v.trim() : '' }
     function concatPath(p, f = '') { return `${p.replace(/\/*$/, '/')}${f}` }
     function colorMessage(n, c) { return `<span style="color: ${c};">${n}</span>` }
+    function getInitPath() { return new URLSearchParams(location.search).get('path') || '/' }
+
+    function removeCustomMenu() {
+        customMenu && customMenu.remove();
+        customMenu = null;
+    }
+
     function resolveFilePath(n) {
         return /^&\//.test(n)
             ? n.replace(/^&/, '')
@@ -279,9 +248,13 @@
                 : concatPath(currentPath, n.replace(/^\//, ''));
     }
 
-    function removeCustomMenu() {
-        customMenu && customMenu.remove();
-        customMenu = null;
+    function setStyle(r, s) {
+        var k = document.querySelector(r);
+        if (k) {
+            Object.entries(s).forEach(function([t, v]) {
+                k.style.setProperty(t, v, 'important');
+            });
+        }
     }
 
     function convertPermissions(p) {
@@ -303,27 +276,69 @@
         return o;
     }
 
-    function setStyle(r, s) {
-        var k = document.querySelector(r);
-        if (k) {
-            Object.entries(s).forEach(function([t, v]) {
-                k.style.setProperty(t, v, 'important');
-            });
-        }
+    function getMode(path) {
+        var fileExt = FileExt(path),
+            modes = {'js':'javascript','html':'html','css':'css','php':'php',
+            'py':'python','rb':'ruby','sh':'sh','sql':'sql','json':'json','xml':'xml',
+            'yaml':'yaml','lua':'lua','htm':'html'};
+        return modes[fileExt] || 'text';
+    }
+
+    function swalNotification(html = '', icon = 'success') {
+        Swal.fire({
+            html, toast: true, timerProgressBar: true,
+            icon, timer: 2000, showConfirmButton: false,
+            didOpen: function (toast) {
+                toast.addEventListener('mouseenter', Swal.stopTimer);
+                toast.addEventListener('mouseleave', Swal.resumeTimer);
+            }
+        });
+    }
+
+    function alert(msg) {
+        var body = document.body,
+            alertMask = document.createElement('div'),
+            alertContent = document.createElement('div'),
+            alertContainer = document.createElement('div');
+
+        alertMask.id = 'alertMask';
+        alertContent.id = 'alertContent';
+        alertContainer.id = 'alertContainer';
+        alertContent.innerHTML = `<pre>\n${msg}\n\n</pre>`;
+        alertMask.style.cssText = `
+            top: 0; left: 0; width: 100%; height: 100%; display: flex; position: fixed; align-items: center;
+            z-index: 1 !important; justify-content: center; background-color: rgba(0, 0, 0, 0.5);
+        `;
+        alertContent.style.cssText = "overflow: auto; max-height: calc(70vh - 100px);";
+        alertContainer.style.cssText = `
+            width: 70%; overflow: auto; max-width: 900px; max-height: 70vh; position: relative;
+            border-radius: 7px; background-color: #fff; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        `;
+
+        body.appendChild(alertMask).appendChild(alertContainer).appendChild(alertContent);
+        document.querySelector('#alertContent pre').style.cssText = `
+            margin: 0; color: #3699ff; font-size: 14px; line-height: 1.5;
+            text-align: left; font-family: Consolas; background-color: #212121;
+        `;
+
+        alertMask.onclick = function (event) {
+            event.target === alertMask && body.removeChild(alertMask);
+        };
     }
 
     function Draggable() {
         var x, y,
             m = document.getElementById('md'),
             t = document.getElementById('td'),
+            S = document.getElementById('Swaleditor'),
             p = document.querySelector('.swal2-popup'),
             f = document.querySelector('.swal2-file'),
             r = document.querySelector('.swal2-range'),
             i = document.querySelector('.swal2-input'),
             s = document.querySelector('.swal2-select'),
-            c = document.querySelector('.swal2-checkbox'),
             e = document.getElementById('editorContent'),
-            q = [m, t, f, r, i, s, c, e].filter(function(f) {
+            c = document.querySelector('.swal2-checkbox'),
+            q = [m, t, f, r, i, s, c, e, S].filter(function(f) {
                 return f !== null && f !== undefined;
             });
 
@@ -357,26 +372,6 @@
         }
     }
 
-    function alert(msg) {
-        var body = document.body;
-        var alertMask = document.createElement('div');
-        alertMask.setAttribute('id', 'alertMask');
-
-        var alertContainer = document.createElement('div');
-        alertContainer.setAttribute('id', 'alertContainer');
-
-        var alertContent = document.createElement('div');
-        alertContent.setAttribute('id', 'alertContent');
-        alertContent.innerHTML = `<pre>\n${msg}\n\n</pre>`;
-
-        alertMask.onclick = function (event) {
-            event.target === alertMask && body.removeChild(alertMask);
-        };
-        alertContainer.appendChild(alertContent);
-        alertMask.appendChild(alertContainer);
-        body.appendChild(alertMask);
-    };
-
     function calculateTotalSize(path) {
         let unitIndex = 0;
         var units = ['B', 'KB', 'MB', 'GB'];
@@ -395,23 +390,6 @@
         return `${totalSize.toFixed(2)} ${units[unitIndex]}`;
     }
 
-    function swalNotification(html = '', icon = 'success') {
-        Swal.fire({
-            html, toast: true, timerProgressBar: true,
-            icon, timer: 2000, showConfirmButton: false,
-            didOpen: function (toast) {
-                toast.addEventListener('mouseenter', Swal.stopTimer);
-                toast.addEventListener('mouseleave', Swal.resumeTimer);
-            }
-        });
-    }
-
-    var swalConfig = {
-        showCancelButton: true,
-        cancelButtonText: '<%:Cancel%>',
-        confirmButtonText: '<%:Confirm%>'
-    };
-
     function sendRequest(url, params, method = 'GET') {
         var isGetParams = !(params && params.constructor && params.constructor.name === 'FormData');
         var urlWithParams = isGetParams ? url + '?' + params.toString() : url;
@@ -425,14 +403,6 @@
                 };
                 xhr.send(isGetParams ? null : params);
             });
-    }
-
-    function getMode(path) {
-        var modes = {'js':'javascript','html':'html','css':'css','php':'php',
-            'py':'python','rb':'ruby','sh':'sh','sql':'sql','json':'json','xml':'xml',
-            'yaml':'yaml','lua':'lua','htm':'html'};
-        var fileExt = FileExt(path);
-        return modes[fileExt] || 'text';
     }
 
     function godirectory(filePath = '') {
@@ -473,16 +443,44 @@
             title: path, input: 'checkbox', padding: '2px', width: '900px', html: isace
                 ? `<div id="editorContent" style="height: 450px; width: auto;"></div>
                     <textarea style="display: none;"></textarea>`
-                : `<textarea id="Swaleditor" style="height: 450px; width: 100%; background-color: black; color: white; font-size: 14px"></textarea>`,
+                : `<textarea id="Swaleditor" style="height: 450px; width: 100%; background-color: black; color: white; font-size: 14px"></textarea>`, cancelButtonText: '<%:Dismiss%>',
             didOpen: function() {
-                var chk = document.querySelector('.swal2-checkbox');
+                var acs = document.querySelector('.swal2-actions'),
+                    chk = document.querySelector('.swal2-checkbox');
+
+                acs.appendChild(chk);
                 setStyle('.swal2-title', { padding: '5px 0 1px' });
-                setStyle('.swal2-checkbox', { margin: '0px 15px 0px' });
+                setStyle('.swal2-checkbox', { margin: '0px 25px' });
                 setStyle('.swal2-html-container', { margin: '2px 2px 2px' });
                 setStyle('.swal2-container .swal2-actions', { margin: '.2em auto 0' });
                 if (isace) {
                     var Theme, mode = getMode(path),
-                        editor = ace.edit('editorContent');
+                        editor = ace.edit('editorContent'),
+                        ace_md = [["sh","Shell"],["lua","Lua"],["html","HTML"],["javascript","JavaScript"],["css","CSS"],["python","Python"],["php","PHP"],["json","JSON"],["xml","XML"],["yaml","YAML"],["sql","SQL"],["makefile","Makefile"],["markdown","markdown"],["ini","ini"]],
+
+                        ace_td = [["ambiance","Ambiance"],["chaos","Chaos"],["chrome","Chrome"],["cloud9_day","Cloud9 Day"],["cloud9_night","Cloud9 Night"],["cloud9_night_low_color","Cloud9 Night Low Color"],["clouds","Clouds"],["clouds_midnight","Clouds Midnight"],["cobalt","Cobalt"],["crimson_editor","Crimson Editor"],["dawn","Dawn"],["dracula","Dracula"],["dreamweaver","Dreamweaver"],["eclipse","Eclipse"],["github","GitHub"],["github_dark","GitHub Dark"],["gob","Gob"],["gruvbox","Gruvbox"],["gruvbox_dark_hard","Gruvbox Dark Hard"],["gruvbox_light_hard","Gruvbox Light Hard"],["idle_fingers","Idle Fingers"],["iplastic","IPlastic"],["katzenmilch","Katzenmilch"],["kr_theme","KR Theme"],["kuroir","Kuroir"],["merbivore","Merbivore"],["merbivore_soft","Merbivore Soft"],["mono_industrial","Mono Industrial"],["monokai","Monokai"],["nord_dark","Nord Dark"],["one_dark","One Dark"],["pastel_on_dark","Pastel on Dark"],["solarized_dark","Solarized Dark"],["solarized_light","Solarized Light"],["sqlserver","SQL Server"],["terminal","Terminal"],["textmate","TextMate"],["tomorrow","Tomorrow"],["tomorrow_night","Tomorrow Night"],["tomorrow_night_blue","Tomorrow Night Blue"],["tomorrow_night_bright","Tomorrow Night Bright"],["tomorrow_night_eighties","Tomorrow Night Eighties"],["twilight","Twilight"],["vibrant_ink","Vibrant Ink"],["xcode","Xcode"]],
+
+                        createDropdown = function(opts, id, defVal, txt) {
+                            var cnt = document.createElement('div'),
+                                lbl = document.createElement('label'),
+                                sel = document.createElement('select');
+
+                            lbl.textContent = isMobileDevice ? '' : txt;
+                            lbl.setAttribute('for', id);
+                            lbl.className = 'cbi-value-title';
+                            sel.setAttribute('id', id);
+                            sel.setAttribute('style', 'width: 70px; margin-left: 10px;');
+                            opts.forEach(function(o) { sel.appendChild(new Option(o[1], o[0])) });
+                            sel.value = defVal;
+                            sel.addEventListener('change', function() {
+                                id === 'td'
+                                    ? editor.setTheme("ace/theme/" + sel.value)
+                                    : editor.getSession().setMode("ace/mode/" + sel.value);
+                            });
+
+                            cnt.append(lbl, sel);
+                            return cnt;
+                        };
 
                     if (mode === 'text' && content.trim() !== '') {
                         if (content.trim().match(/^#!\/.*\/lua/)) mode = 'lua';
@@ -490,43 +488,13 @@
                     }
 
                     editor.setOptions({
-                        fontSize: "14px", fontFamily: "Consolas, monospace", wrap: true,
                         printMarginColumn: -1, showPrintMargin: true, readOnly: true,
+                        fontSize: "15px", fontFamily: "Consolas, monospace", wrap: true,
                         mode: 'ace/mode/' + mode, theme: "ace/theme/" + (Theme || 'monokai')
                     });
 
                     editor.setValue(content, 1);
                     editor.focus();
-                    setStyle('.swal2-title', { padding: '5px 0 1px' });
-                    setStyle('.swal2-checkbox', { margin: '0px 15px 0px' });
-                    setStyle('.swal2-html-container', { margin: '2px 2px 2px' });
-                    setStyle('.swal2-container .swal2-actions', { margin: '.2em auto 0' });
-
-                    var ace_td=[["ambiance","Ambiance"],["chaos","Chaos"],["chrome","Chrome"],["cloud9_day","Cloud9 Day"],["cloud9_night","Cloud9 Night"],["cloud9_night_low_color","Cloud9 Night Low Color"],["clouds","Clouds"],["clouds_midnight","Clouds Midnight"],["cobalt","Cobalt"],["crimson_editor","Crimson Editor"],["dawn","Dawn"],["dracula","Dracula"],["dreamweaver","Dreamweaver"],["eclipse","Eclipse"],["github","GitHub"],["github_dark","GitHub Dark"],["gob","Gob"],["gruvbox","Gruvbox"],["gruvbox_dark_hard","Gruvbox Dark Hard"],["gruvbox_light_hard","Gruvbox Light Hard"],["idle_fingers","Idle Fingers"],["iplastic","IPlastic"],["katzenmilch","Katzenmilch"],["kr_theme","KR Theme"],["kuroir","Kuroir"],["merbivore","Merbivore"],["merbivore_soft","Merbivore Soft"],["mono_industrial","Mono Industrial"],["monokai","Monokai"],["nord_dark","Nord Dark"],["one_dark","One Dark"],["pastel_on_dark","Pastel on Dark"],["solarized_dark","Solarized Dark"],["solarized_light","Solarized Light"],["sqlserver","SQL Server"],["terminal","Terminal"],["textmate","TextMate"],["tomorrow","Tomorrow"],["tomorrow_night","Tomorrow Night"],["tomorrow_night_blue","Tomorrow Night Blue"],["tomorrow_night_bright","Tomorrow Night Bright"],["tomorrow_night_eighties","Tomorrow Night Eighties"],["twilight","Twilight"],["vibrant_ink","Vibrant Ink"],["xcode","Xcode"]];
-
-                    var ace_md=[["sh","Shell"],["lua","Lua"],["html","HTML"],["javascript","JavaScript"],["css","CSS"],["python","Python"],["php","PHP"],["json","JSON"],["xml","XML"],["yaml","YAML"],["sql","SQL"],["makefile","Makefile"],["markdown","markdown"],["ini","ini"]];
-
-                    var createDropdown = function(opts, id, defVal, txt) {
-                        var cnt = document.createElement('div'),
-                            lbl = document.createElement('label'),
-                            sel = document.createElement('select');
-
-                        lbl.textContent = isMobileDevice ? '' : txt;;
-                        lbl.setAttribute('for', id);
-                        lbl.className = 'cbi-value-title';
-                        sel.setAttribute('id', id);
-                        sel.setAttribute('style', 'width: 70px; margin-left: 10px;');
-                        opts.forEach(function(o) { sel.appendChild(new Option(o[1], o[0])) });
-                        sel.value = defVal;
-                        sel.addEventListener('change', function() {
-                            id === 'td'
-                            ? editor.setTheme("ace/theme/" + sel.value)
-                            : editor.getSession().setMode("ace/mode/" + sel.value);
-                        });
-
-                        cnt.append(lbl, sel);
-                        return cnt;
-                    };
 
                     var con = document.createElement('div'),
                         h2e = document.querySelector('.swal2-title'),
@@ -536,7 +504,7 @@
                         td = createDropdown(ace_td, 'td', et, "<%:Theme%>"),
                         tn = document.querySelector('[aria-labelledby="swal2-title"]');
 
-                    con.append(td, md, chk);
+                    con.append(td, md);
                     con.id = 'con';
                     md.style.cssText = 'margin-left: 15px;';
                     con.style.cssText = 'display: none; justify-content: center; align-items: center; height: 36px;';
@@ -563,14 +531,14 @@
                         }
                     });
                 } else {
-                    var textarea = document.getElementById("Swaleditor");
-                    textarea.innerHTML = content;
+                    document.getElementById('Swaleditor').innerHTML = content;
+                    document.getElementById('swal2-checkbox').checked = false;
+                    document.querySelector('.swal2-label').innerHTML = '<%:Save%>'
                     chk.addEventListener('change', function(e) {
                         var Confirm = document.querySelector('.swal2-confirm');
-                        Confirm.style.display = e.target.checked ? 'none' : 'block';
+                        Confirm.style.display = e.target.checked ? 'block' : 'none';
                     });
                 }
-
                 Draggable();
             },
             preConfirm: function() {
@@ -579,8 +547,8 @@
         }).then(function(result) {
             if (!result.isConfirmed || result.value === content) return;
             Swal.fire({
-                ...swalConfig, title: '<%:Confirm Save%>', icon: 'question',
-                allowOutsideClick: false, html: `${path} ${colorMessage('<%:Are you sure you want to save the changes?%>', 'orange')}`,
+                ...swalConfig, title: '<%:Confirm Save%>', icon: 'question', allowOutsideClick: false,
+                html: `${path} ${colorMessage('<%:Are you sure you want to save the changes?%>', 'orange')}`,
                 didOpen: function() { Draggable(); }
             }).then(function(confirmResult) {
                 if (!confirmResult.isConfirmed) return;
@@ -607,11 +575,9 @@
         var params = new URLSearchParams({ path });
         sendRequest('<%=url("admin/system/handleDocument")%>', params)
             .then(function (res) {
-                if (res.success) {
-                    renderDocumentEditor(path, res.data);
-                } else {
-                    swalNotification(`${colorMessage(path, 'red')} <%:Failed to load document%> <br> ${colorMessage(res.error, 'red')}`, 'error');
-                }
+                res.success
+                   ? renderDocumentEditor(path, res.data)
+                   : swalNotification(`${colorMessage(path, 'red')} <%:Failed to load document%> <br> ${colorMessage(res.error, 'red')}`, 'error');
             })
             .catch(function (error) {
                 swalNotification(`${colorMessage(path, 'red')} <%:An error occurred while loading the document%>`, 'error');
@@ -624,10 +590,10 @@
             path = path.replace(/(.*) ->.*/, '$1');
             var params = new URLSearchParams({ path });
             sendRequest('<%=url("admin/system/file_tools")%>', params).then(function (res) {
-                var isSuccess = res.stat;
-                var message = isSuccess
-                    ? `${colorMessage(name, 'blue')} <%:successfully deleted!%>`
-                    : `${colorMessage(name, 'red')} <%:deleted failed%>`;
+                var isSuccess = res.stat,
+                    message = isSuccess
+                        ? `${colorMessage(name, 'blue')} <%:successfully deleted!%>`
+                        : `${colorMessage(name, 'red')} <%:deleted failed%>`;
                 swalNotification(message, isSuccess ? 'success' : 'error');
                 isSuccess && refresh_list(res.data);
             });
@@ -677,10 +643,10 @@
             if (!result.isConfirmed) return;
             var linkPath = result.value,
                 isHardLinkElement = document.getElementById('checkbox'),
-                isHardLink = isHardLinkElement ? isHardLinkElement.checked : false;
-            var params = new URLSearchParams({
-                targetPath: targetPath, linkPath: linkPath, isHardLink: isHardLink
-            });
+                isHardLink = isHardLinkElement ? isHardLinkElement.checked : false,
+                params = new URLSearchParams({
+                    targetPath: targetPath, linkPath: linkPath, isHardLink: isHardLink
+                });
             sendRequest('<%=url("admin/system/file_tools")%>', params).then(function (res) {
                 if (res.stat) {
                     refresh_list(res.data);
@@ -694,7 +660,7 @@
     }
 
     function renamefile(oldname) {
-        var oldnamecolor = colorMessage(oldname, 'blue')
+        var oldnamecolor = colorMessage(oldname, 'blue');
         oldname = oldname.includes(' -> ') ? oldname.replace(/\s*->.*/, '') : oldname;
         checkdirectory(concatPath(currentPath, oldname)).then(function (exists) {
             Swal.fire({
@@ -735,8 +701,8 @@
     }
 
     function modifypermissions(filepath, type) {
-        var oldPermissions = convertPermissions(type);
-        var filenamecolor = `${colorMessage(filepath, 'blue')}`;
+        var oldPermissions = convertPermissions(type),
+            filenamecolor = `${colorMessage(filepath, 'blue')}`;
         Swal.fire({
             ...swalConfig, icon: 'warning', iconColor: 'red', inputValue: oldPermissions,
             title: `<%:Please select new permissions for ${filenamecolor}%>`, input: 'select',
@@ -754,15 +720,15 @@
             didOpen: function() { Draggable(); }
         }).then(function (result) {
             if (!result.isConfirmed) return;
-            var permissions = result.value;
-            var params = new URLSearchParams({
-                permissions, path: concatPath(currentPath, filepath)
-            });
+            var permissions = result.value,
+                params = new URLSearchParams({
+                    permissions, path: concatPath(currentPath, filepath)
+                });
             sendRequest('<%=url("admin/system/file_tools")%>', params).then(function (res) {
-                var isSuccess = res.stat;
-                var message = isSuccess
-                    ? `${colorMessage(filepath, 'blue')} <%:Permissions modified successfully%>`
-                    : `${colorMessage(filepath, 'red')} <%:Permission modification failed%>`;
+                var isSuccess = res.stat,
+                    message = isSuccess
+                        ? `${colorMessage(filepath, 'blue')} <%:Permissions modified successfully%>`
+                        : `${colorMessage(filepath, 'red')} <%:Permission modification failed%>`;
                 swalNotification(message, isSuccess ? 'success' : 'error');
                 isSuccess && refresh_list(res.data);
             });
@@ -816,13 +782,13 @@
             }
         }).then(function (result) {
             if (!result.isConfirmed) return;
-            var data;
-            var { newname, createdirectory, permissions } = result.value;
-            var newfile = (filePath && !createdirectory)
-                ? newname
-                : (filePath && createdirectory)
-                    ? filePath
-                    : resolveFilePath(newname);
+            var data,
+                { newname, createdirectory, permissions } = result.value,
+                newfile = (filePath && !createdirectory)
+                    ? newname
+                    : (filePath && createdirectory)
+                        ? filePath
+                        : resolveFilePath(newname);
 
             if (!createdirectory) {
                 Swal.fire({
@@ -880,8 +846,8 @@
             didOpen: function() { Draggable(); }
         }).then(function (result) {
             if (!result.isConfirmed) return;
-            var file = result.value;
-            var data = new FormData();
+            var file = result.value,
+                data = new FormData();
             data.append('file', file);
             data.append('filename', file.name);
             data.append('filedir', concatPath(currentPath));
@@ -892,21 +858,20 @@
                 } else {
                     swalNotification(`${colorMessage(res.filename, 'red')} <%:upload failed%>`, 'error');
                 }
-                
             });
         });
     }
 
     function dpfile(filename, path = currentPath, download = '') {
-        var linkfile;
-        var match = filename.match(/(.*) -> (.*)/);
+        var linkfile,
+            match = filename.match(/(.*) -> (.*)/);
         if (match !== null) {
             linkfile = 1;
             path = match[1];
             filename = match[2];
         }
-        var params = new URLSearchParams({ path, filename, download, linkfile });
-        var url = `<%=url("admin/system/dpfile")%>?${params.toString()}`;
+        var params = new URLSearchParams({ path, filename, download, linkfile }),
+            url = `<%=url("admin/system/dpfile")%>?${params.toString()}`;
         if (!download) return window.open(url);
         Swal.fire({
             ...swalConfig, icon: 'info',
@@ -929,16 +894,16 @@
     }
 
     function handleClick(event) {
+        function hasClass(element, className) { return element.classList.contains(className) }
         function getFileElem(elem) {
             while (elem && !(elem.className && elem.className.includes('-icon'))) {
                 elem = elem.parentNode;
             }
             return elem || '';
         }
-        var targetElem = event.target;
-        var fileElem = getFileElem(targetElem);
-        var infoElem = targetElem.parentNode.parentNode.dataset;
-        function hasClass(element, className) { return element.classList.contains(className) }
+        var targetElem = event.target,
+            fileElem = getFileElem(targetElem),
+            infoElem = targetElem.parentNode.parentNode.dataset;
 
         if (hasClass(targetElem, 'rename')) renamefile(infoElem.filename);
         else if (hasClass(targetElem, 'install')) installipk(infoElem.filename);
@@ -953,8 +918,8 @@
             else if (hasClass(fileElem, 'link-icon')) {
                 var match = infoElem.filename.match(/(.*) -> (.*)/);
                 if (match !== null) {
-                    var [path, filename] = match.slice(1);
-                    var filePath = filename.replace(/^\/*/, '/');
+                    var [path, filename] = match.slice(1),
+                        filePath = filename.replace(/^\/*/, '/');
                     checkdirectory(filePath).then(function (exists) {
                         exists
                             ? update_list(filePath)
@@ -968,8 +933,8 @@
     }
 
     function refresh_list(filePath) {
-        let numFolders = filePath.filter(function (line) {return line.startsWith('d');}).length;
-        let regularFiles = filePath.filter(function (line) { return /^[^dl]/.test(line) }).length;
+        let numFolders = filePath.filter(function (line) {return line.startsWith('d');}).length,
+            regularFiles = filePath.filter(function (line) { return /^[^dl]/.test(line) }).length;
         var html = `<table>
             <tr>
                 <td colspan="7" class="center">
@@ -988,13 +953,13 @@
                 <th class="th"><%:File operations%></th>
             </tr>`;
             for (var i = 0; i < filePath.length; i++) {
-                var [type, _, owner, _, size, month, day, _, ...fullNameParts] = filePath[i].trim().split(/\s+/);
-                var fullName = fullNameParts.join(' ');
-                var isLink = ['z', 'l', 'x'].includes(type[0]);
-                var icon = type[0] === 'd' ? "folder-icon" : (isLink ? "link-icon" : "file-icon");
-                var truncatedName = fullName.length > 20 ? `${fullName.slice(0, 13)}...${fullName.slice(-7)}` : fullName;
-                var installButtonHtml = fullName.endsWith(".ipk") ? `<input type="button" class="btn cbi-button cbi-button-apply install" value="<%:Install%>">` : "";
-                var editButtonHtml = (type[0] !== 'd' && !isLink) ? `<input type="button" class="btn cbi-button cbi-button-edit" value="<%:open%>">` : "";
+                var [type, _, owner, _, size, month, day, _, ...fullNameParts] = filePath[i].trim().split(/\s+/),
+                    fullName = fullNameParts.join(' '),
+                    isLink = ['z', 'l', 'x'].includes(type[0]),
+                    icon = type[0] === 'd' ? "folder-icon" : (isLink ? "link-icon" : "file-icon"),
+                    truncatedName = fullName.length > 20 ? `${fullName.slice(0, 13)}...${fullName.slice(-7)}` : fullName,
+                    installButtonHtml = fullName.endsWith(".ipk") ? `<input type="button" class="btn cbi-button cbi-button-apply install" value="<%:Install%>">` : "",
+                    editButtonHtml = (type[0] !== 'd' && !isLink) ? `<input type="button" class="btn cbi-button cbi-button-edit" value="<%:open%>">` : "";
                 html += `
                 <tr class="cbi-rowstyle-${(i % 2) + 1} cbi-titles" data-filename="${fullName}" data-isdir="${Number(type[0] === 'd' || type[0] === 'z')}" data-authority="${type}" data-linktarget="${(/->.*/.test(fullName)) && fullName}">
                     <td class="td display-none">
@@ -1028,21 +993,21 @@
 
     function createCustomMenu(filename, targetElem) {
         removeCustomMenu();
-        var isFile = targetElem.isdir === '0';
-        var menuItems = [
-            { label: "<%:Refresh Page%>", action: function() { location.reload(); } },
-            { label: "<%:Rename%>", action: function() { renamefile(filename); } },
-            ...(isFile ? [{label: "<%:Edit Document%>", action: function() { editDocument(currentPath + filename); } }] : []),
-            { label: isFile ? "<%:download file%>" : "<%:Download catalog%>", action: function() { dpfile(filename, currentPath, true); } },
-            { label: isFile ? "<%:open file%>" : "<%:open Directory%>", action: function() {
-                isFile ? dpfile(filename, currentPath, 'open') : update_list(concatPath(currentPath, filename))
-            } },
-            { label: "<%:Create file (directory)%>", action: function() { createnewfile(); } },
-            { label: "<%:Delete file (directory)%>", action: function() { deletefiles(filename); } },
-            { label: "<%:Modify permissions%>", action: function() { modifypermissions(filename, targetElem.authority); } },
-            { label: "<%:Create link%>", action: function() { createLink(currentPath + filename, targetElem.isdir); } },
-            ...(currentPath.split('/').length > 2 ? [{ label: "<%:Back to previous%>", action: function() { update_list(currentPath.replace(/\/[^/]*\/?$/, '/')); } }] : [])
-        ];
+        var isFile = targetElem.isdir === '0',
+            menuItems = [
+                { label: "<%:Refresh Page%>", action: function() { location.reload(); } },
+                { label: "<%:Rename%>", action: function() { renamefile(filename); } },
+                ...(isFile ? [{label: "<%:Edit Document%>", action: function() { editDocument(currentPath + filename); } }] : []),
+                { label: isFile ? "<%:download file%>" : "<%:Download catalog%>", action: function() { dpfile(filename, currentPath, true); } },
+                { label: isFile ? "<%:open file%>" : "<%:open Directory%>", action: function() {
+                    isFile ? dpfile(filename, currentPath, 'open') : update_list(concatPath(currentPath, filename))
+                } },
+                { label: "<%:Create file (directory)%>", action: function() { createnewfile(); } },
+                { label: "<%:Delete file (directory)%>", action: function() { deletefiles(filename); } },
+                { label: "<%:Modify permissions%>", action: function() { modifypermissions(filename, targetElem.authority); } },
+                { label: "<%:Create link%>", action: function() { createLink(currentPath + filename, targetElem.isdir); } },
+                ...(currentPath.split('/').length > 2 ? [{ label: "<%:Back to previous%>", action: function() { update_list(currentPath.replace(/\/[^/]*\/?$/, '/')); } }] : [])
+            ];
         customMenu = document.createElement('ul');
         customMenu.className = 'custom-menu';
         menuItems.forEach(function (item) {
@@ -1051,11 +1016,11 @@
             customMenu.appendChild(menuItemElem);
         });
 
-        var { clientX, clientY } = event;
-        var bottomEdge = clientY + menuItems.length * 30 > window.innerHeight;
-        var position = bottomEdge
-            ? { bottom: `${window.innerHeight - clientY - 30}px`, left: `${clientX}px` }
-            : { top: `${clientY}px`, left: `${clientX}px` };
+        var { clientX, clientY } = event,
+            bottomEdge = clientY + menuItems.length * 30 > window.innerHeight,
+            position = bottomEdge
+                ? { bottom: `${window.innerHeight - clientY - 30}px`, left: `${clientX}px` }
+                : { top: `${clientY}px`, left: `${clientX}px` };
         Object.assign(customMenu.style, position);
         document.body.appendChild(customMenu);
     }
