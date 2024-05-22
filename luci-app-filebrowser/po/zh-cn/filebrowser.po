@@ -261,3 +261,6 @@ msgstr "右键点击"
 
 msgid "open"
 msgstr "打开"
+
+msgid "wrap"
+msgstr "换行"

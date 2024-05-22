@@ -180,8 +180,8 @@
         }
     }
 </style>
-<script src="<%=resource%>/fb/sweetalert2.all.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.33.1/ace.min.js"></script>
+<script src="<%=resource%>/fb/sweetalert2.all.min.js?v=11.10.8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.33.1/ace.min.js?v=1.33.1"></script>
 <h2 name="content"><%:File management%></h2>
 <div class="cbi-map-descr"><font color="red"><%:Right click%></font><%:You can modify the names and downloads of files and directories, permissions, add directories and files, and edit scripts.%></div>
 <div class="fb-container">
@@ -216,10 +216,10 @@
 
     document.addEventListener('DOMContentLoaded', function () {
         let isFloating = false, navHeight = document.querySelector('header').offsetHeight;
-        var inputContainer = document.querySelector('.input-container');
-        var originalPosition = document.querySelector('header').getBoundingClientRect().bottom + document.querySelector('h2').offsetHeight + window.scrollY;
+        var inputContainer = document.querySelector('.input-container'),
+            originalWidth = inputContainer.offsetWidth,
+            originalPosition = document.querySelector('header').getBoundingClientRect().bottom + document.querySelector('h2').offsetHeight + window.scrollY;
         isMobileDevice && (navHeight = navHeight === 0 ? 40 : navHeight < 40 ? navHeight * 10 : navHeight);
-        var originalWidth = inputContainer.offsetWidth;
         function floatInputContainer() {
             var shouldFloat = window.pageYOffset > originalPosition;
             isFloating = shouldFloat !== isFloating ? shouldFloat : isFloating;
@@ -258,21 +258,14 @@
     }
 
     function convertPermissions(p) {
-        let o = '';
-        var m = { 'r': 4, 'w': 2, 'x': 1 };
-        o = p.slice(1).match(/.{3}/g).reduce(function(x, k) {
-            var v = k.split('').reduce(function(a, c) {
-                return a + (m[c] || 0);
+        var v, o = '',
+            m = { 'r': 4, 'w': 2, 'x': 1, '-': 0 };
+        for (let i = 1; i < p.length; i += 3) {
+            v = p.slice(i, i + 3).split('').reduce(function (a, c) {
+                return a + m[c];
             }, 0);
-            return x + v.toString(8);
-        }, '');
-        // for (let i = 1; i < p.length; i += 3) {
-        //     var s = p.slice(i, i + 3);
-        //     var v = s.split('').reduce(function (a, c) {
-        //         return a + (m[c] || 0);
-        //     }, 0);
-        //     o += v.toString(8);
-        // }
+            o += v.toString(8);
+        }
         return o;
     }
 
@@ -438,28 +431,26 @@
     function renderDocumentEditor(path, content) {
         var isace = typeof ace === 'object';
         Swal.fire({
-            ...swalConfig, inputPlaceholder: '<%:Read-only%>', showConfirmButton: false,
-            confirmButtonText: '<%:Save%>', allowOutsideClick: false, inputValue: true,
-            title: path, input: 'checkbox', padding: '2px', width: '900px', html: isace
-                ? `<div id="editorContent" style="height: 450px; width: auto;"></div>
-                    <textarea style="display: none;"></textarea>`
+            ...swalConfig, showConfirmButton: false, padding: '2px',
+            confirmButtonText: '<%:Save%>', allowOutsideClick: false,
+            title: path, width: '900px', inputValue: true, html: isace
+                ? `<label id="readonly" class="swal2-checkbox" style="margin: 0 12px 0 30px;"><input type="checkbox" value="1" checked><span class="swal2-label"><%:Read-only%></span></label><label id="wrap" class="swal2-checkbox" style="margin: 0;"><input type="checkbox" value="1" checked><span class="swal2-label"><%:wrap%></span></label>
+                    <div id="editorContent" style="height: 450px; width: auto;"></div>`
                 : `<textarea id="Swaleditor" style="height: 450px; width: 100%; background-color: black; color: white; font-size: 14px"></textarea>`, cancelButtonText: '<%:Dismiss%>',
             didOpen: function() {
-                var acs = document.querySelector('.swal2-actions'),
-                    chk = document.querySelector('.swal2-checkbox');
+                var ch2 = document.getElementById('wrap'),
+                    ch1 = document.getElementById('readonly'),
+                    acs = document.querySelector('.swal2-actions');
 
-                acs.appendChild(chk);
+                acs.append(ch1, ch2);
                 setStyle('.swal2-title', { padding: '5px 0 1px' });
-                setStyle('.swal2-checkbox', { margin: '0px 25px' });
                 setStyle('.swal2-html-container', { margin: '2px 2px 2px' });
                 setStyle('.swal2-container .swal2-actions', { margin: '.2em auto 0' });
                 if (isace) {
                     var Theme, mode = getMode(path),
                         editor = ace.edit('editorContent'),
-                        ace_md = [["sh","Shell"],["lua","Lua"],["html","HTML"],["javascript","JavaScript"],["css","CSS"],["python","Python"],["php","PHP"],["json","JSON"],["xml","XML"],["yaml","YAML"],["sql","SQL"],["makefile","Makefile"],["markdown","markdown"],["ini","ini"]],
-
+                        ace_md = [["textile","text"],["sh","Shell"],["lua","Lua"],["html","HTML"],["javascript","JavaScript"],["css","CSS"],["python","Python"],["php","PHP"],["json","JSON"],["xml","XML"],["yaml","YAML"],["sql","SQL"],["makefile","Makefile"],["markdown","markdown"],["ini","ini"],["diff","patch(diff)"]],
                         ace_td = [["ambiance","Ambiance"],["chaos","Chaos"],["chrome","Chrome"],["cloud9_day","Cloud9 Day"],["cloud9_night","Cloud9 Night"],["cloud9_night_low_color","Cloud9 Night Low Color"],["clouds","Clouds"],["clouds_midnight","Clouds Midnight"],["cobalt","Cobalt"],["crimson_editor","Crimson Editor"],["dawn","Dawn"],["dracula","Dracula"],["dreamweaver","Dreamweaver"],["eclipse","Eclipse"],["github","GitHub"],["github_dark","GitHub Dark"],["gob","Gob"],["gruvbox","Gruvbox"],["gruvbox_dark_hard","Gruvbox Dark Hard"],["gruvbox_light_hard","Gruvbox Light Hard"],["idle_fingers","Idle Fingers"],["iplastic","IPlastic"],["katzenmilch","Katzenmilch"],["kr_theme","KR Theme"],["kuroir","Kuroir"],["merbivore","Merbivore"],["merbivore_soft","Merbivore Soft"],["mono_industrial","Mono Industrial"],["monokai","Monokai"],["nord_dark","Nord Dark"],["one_dark","One Dark"],["pastel_on_dark","Pastel on Dark"],["solarized_dark","Solarized Dark"],["solarized_light","Solarized Light"],["sqlserver","SQL Server"],["terminal","Terminal"],["textmate","TextMate"],["tomorrow","Tomorrow"],["tomorrow_night","Tomorrow Night"],["tomorrow_night_blue","Tomorrow Night Blue"],["tomorrow_night_bright","Tomorrow Night Bright"],["tomorrow_night_eighties","Tomorrow Night Eighties"],["twilight","Twilight"],["vibrant_ink","Vibrant Ink"],["xcode","Xcode"]],
-
                         createDropdown = function(opts, id, defVal, txt) {
                             var cnt = document.createElement('div'),
                                 lbl = document.createElement('label'),
@@ -513,10 +504,14 @@
                         endEvent = isMobileDevice ? 'touchend' : 'mouseleave',
                         startEvent = isMobileDevice ? 'touchstart' : 'mouseenter';
 
-                    chk.addEventListener('change', function(e) {
+                    ch1.addEventListener('change', function(e) {
                         editor.setReadOnly(e.target.checked);
                         var Confirm = document.querySelector('.swal2-confirm');
                         Confirm.style.display = e.target.checked ? 'none' : 'block';
+                    });
+
+                    ch2.addEventListener('change', function(e) {
+                        editor.setOption("wrap", e.target.checked);
                     });
 
                     h2e.addEventListener(startEvent, function() {
@@ -525,16 +520,16 @@
                     });
 
                     sca.addEventListener(endEvent, function(e) {
-                        if (!isMobileDevice || !['md', 'td', 'swal2-checkbox'].includes(e.target.id)) {
+                        if (!isMobileDevice || !['md', 'td', 'readonly'].includes(e.target.id)) {
                             sca.style.display = 'none';
                             h2e.style.display = 'block';
                         }
                     });
                 } else {
                     document.getElementById('Swaleditor').innerHTML = content;
-                    document.getElementById('swal2-checkbox').checked = false;
+                    document.getElementById('readonly').checked = false;
                     document.querySelector('.swal2-label').innerHTML = '<%:Save%>'
-                    chk.addEventListener('change', function(e) {
+                    ch1.addEventListener('change', function(e) {
                         var Confirm = document.querySelector('.swal2-confirm');
                         Confirm.style.display = e.target.checked ? 'block' : 'none';
                     });
