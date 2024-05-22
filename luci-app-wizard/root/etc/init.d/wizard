@@ -1,6 +1,7 @@
 #!/bin/sh /etc/rc.common
 
 START=19
+
 extra_command "reconfig" ""
 
 uci_set_network() {
@@ -173,14 +174,12 @@ add_wizard() {
     #     uci -q delete network.wan6
     #     test uci_get network lan gateway || uci_set_network lan ifname "$eth"
     # fi
-    uci_commit wizard
-    [ "$(uci -q changes network | wc -l)" -ge 1 ] && {
-        uci_commit network
-        service network restart &
-        ifup wan
-        /etc/init.d/dnsmasq restart &
-        # /etc/init.d/network restart &
-    }
+    uci commit wizard
+    uci commit dhcp
+    uci commit firewall
+    uci commit network
+    (/etc/init.d/network restart
+     /etc/init.d/dnsmasq reload)&
 }
 
 reconfig() {
