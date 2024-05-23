@@ -220,13 +220,12 @@
             originalWidth = inputContainer.offsetWidth,
             originalPosition = document.querySelector('header').getBoundingClientRect().bottom + document.querySelector('h2').offsetHeight + window.scrollY;
         isMobileDevice && (navHeight = navHeight === 0 ? 40 : navHeight < 40 ? navHeight * 10 : navHeight);
-        function floatInputContainer() {
+        window.addEventListener('scroll', function() {
             var shouldFloat = window.pageYOffset > originalPosition;
             isFloating = shouldFloat !== isFloating ? shouldFloat : isFloating;
             inputContainer.style = `top: ${isFloating ? navHeight : 0}px; width: ${originalWidth}px; z-index: 1 !important;`;
             inputContainer.classList.toggle('float', isFloating);
-        };
-        window.addEventListener('scroll', floatInputContainer);
+        });
     });
 
     function FileExt(v) { return v.split('.').pop().toLowerCase(); }
@@ -259,7 +258,7 @@
 
     function convertPermissions(p) {
         var v, o = '',
-            m = { 'r': 4, 'w': 2, 'x': 1, '-': 0 };
+            m = { 'r': 4, 'w': 2, 'x': 1, 't': 1, '-': 0 };
         for (let i = 1; i < p.length; i += 3) {
             v = p.slice(i, i + 3).split('').reduce(function (a, c) {
                 return a + m[c];
@@ -274,7 +273,7 @@
             modes = {'js':'javascript','html':'html','css':'css','php':'php',
             'py':'python','rb':'ruby','sh':'sh','sql':'sql','json':'json','xml':'xml',
             'yaml':'yaml','lua':'lua','htm':'html'};
-        return modes[fileExt] || 'text';
+        return modes[fileExt] || 'textile';
     }
 
     function swalNotification(html = '', icon = 'success') {
@@ -324,45 +323,42 @@
             m = document.getElementById('md'),
             t = document.getElementById('td'),
             S = document.getElementById('Swaleditor'),
-            p = document.querySelector('.swal2-popup'),
             f = document.querySelector('.swal2-file'),
+            p = document.querySelector('.swal2-popup'),
             r = document.querySelector('.swal2-range'),
             i = document.querySelector('.swal2-input'),
             s = document.querySelector('.swal2-select'),
             e = document.getElementById('editorContent'),
             c = document.querySelector('.swal2-checkbox'),
+            a = document.querySelector('[aria-live="assertive"]'),
             q = [m, t, f, r, i, s, c, e, S].filter(function(f) {
                 return f !== null && f !== undefined;
-            });
+            }),
+            g = function(a, t) {
+                return a.some(function(el) { return el.contains(t)});
+            },
+            z = function(k) {
+                var b = k.clientX, c = k.clientY;
+                p.style.position = 'fixed';
+                p.style.top = `${c - y}px`;
+                p.style.left = `${b - x}px`;
+            },
+            u = function() {
+                document.removeEventListener('mouseup', u);
+                document.removeEventListener('mousemove', z);
+            };
+
+        a.addEventListener('mouseover', function(k) {
+            a.style.cursor = g(q, k.target) ? 'auto' : 'move';
+        });
 
         p.addEventListener('mousedown', function(k) {
-            if (g(k.target, q)) return;
+            if (g(q, k.target)) return;
             x = k.offsetX; y = k.offsetY;
-            p.style.cursor = 'move';
             document.addEventListener('mouseup', u);
             document.addEventListener('mousemove', z);
             k.preventDefault();
         });
-
-        function z(k) {
-            var b = k.clientX, c = k.clientY;
-            p.style.position = 'fixed';
-            p.style.top = `${c - y}px`;
-            p.style.left = `${b - x}px`;
-        }
-
-        function u() {
-            document.removeEventListener('mouseup', u);
-            document.removeEventListener('mousemove', z);
-            p.style.cursor = 'auto';
-        }
-
-        function g(t, a) {
-            for (var i = 0; i < a.length; i++) {
-                if (a[i].contains(t)) return true;
-            }
-            return false;
-        }
     }
 
     function calculateTotalSize(path) {
@@ -436,13 +432,14 @@
             title: path, width: '900px', inputValue: true, html: isace
                 ? `<label id="readonly" class="swal2-checkbox" style="margin: 0 12px 0 30px;"><input type="checkbox" value="1" checked><span class="swal2-label"><%:Read-only%></span></label><label id="wrap" class="swal2-checkbox" style="margin: 0;"><input type="checkbox" value="1" checked><span class="swal2-label"><%:wrap%></span></label>
                     <div id="editorContent" style="height: 450px; width: auto;"></div>`
-                : `<textarea id="Swaleditor" style="height: 450px; width: 100%; background-color: black; color: white; font-size: 14px"></textarea>`, cancelButtonText: '<%:Dismiss%>',
+                : `<label id="readonly" class="swal2-checkbox" style="margin: 0 12px 0 30px;"><input type="checkbox" value="1" checked><span class="swal2-label"><%:Read-only%></span></label><textarea id="Swaleditor" style="height: 450px; width: 100%; background-color: black; color: white; font-size: 14px"></textarea>`, cancelButtonText: '<%:Dismiss%>',
             didOpen: function() {
                 var ch2 = document.getElementById('wrap'),
                     ch1 = document.getElementById('readonly'),
+                    cfm = document.querySelector('.swal2-confirm'),
                     acs = document.querySelector('.swal2-actions');
 
-                acs.append(ch1, ch2);
+                acs.append(ch1, ch2 || '');
                 setStyle('.swal2-title', { padding: '5px 0 1px' });
                 setStyle('.swal2-html-container', { margin: '2px 2px 2px' });
                 setStyle('.swal2-container .swal2-actions', { margin: '.2em auto 0' });
@@ -473,7 +470,7 @@
                             return cnt;
                         };
 
-                    if (mode === 'text' && content.trim() !== '') {
+                    if (mode === 'textile' && content.trim() !== '') {
                         if (content.trim().match(/^#!\/.*\/lua/)) mode = 'lua';
                         else if (content.trim().match(/^#!\/.*(ba)?sh/)) mode = 'sh';
                     }
@@ -506,8 +503,7 @@
 
                     ch1.addEventListener('change', function(e) {
                         editor.setReadOnly(e.target.checked);
-                        var Confirm = document.querySelector('.swal2-confirm');
-                        Confirm.style.display = e.target.checked ? 'none' : 'block';
+                        cfm.style.display = e.target.checked ? 'none' : 'block';
                     });
 
                     ch2.addEventListener('change', function(e) {
@@ -527,11 +523,9 @@
                     });
                 } else {
                     document.getElementById('Swaleditor').innerHTML = content;
-                    document.getElementById('readonly').checked = false;
                     document.querySelector('.swal2-label').innerHTML = '<%:Save%>'
                     ch1.addEventListener('change', function(e) {
-                        var Confirm = document.querySelector('.swal2-confirm');
-                        Confirm.style.display = e.target.checked ? 'block' : 'none';
+                        cfm.style.display = e.target.checked ? 'none' : 'block';
                     });
                 }
                 Draggable();
