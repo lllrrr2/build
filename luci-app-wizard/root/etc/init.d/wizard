@@ -174,10 +174,10 @@ add_wizard() {
     #     uci -q delete network.wan6
     #     test uci_get network lan gateway || uci_set_network lan ifname "$eth"
     # fi
-    uci commit wizard
-    uci commit dhcp
-    uci commit firewall
-    uci commit network
+    uci_commit wizard
+    uci_commit dhcp
+    uci_commit firewall
+    uci_commit network
     (/etc/init.d/network restart
      /etc/init.d/dnsmasq reload)&
 }
