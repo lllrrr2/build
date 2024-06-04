@@ -1,4 +1,4 @@
-local fs  = require "nixio.fs"
+local fs  = require "luci.fs"
 local sys = require "luci.sys"
 local uci = require "luci.model.uci".cursor()
 local wizard = uci:get_all("wizard", "default")
@@ -22,10 +22,6 @@ sys.net.ipv4_hints(
     end
     return a.ip < b.ip
 end)
-
-local function isFileEmpty(file)
-    return (fs.readfile(file) or "") ~= ""
-end
 
 local function _writefile(value, path)
     value = value:gsub("\r\n?", "\n")
@@ -227,7 +223,7 @@ ip_tables.default = "iptables -t nat -I POSTROUTING -o eth0 -j MASQUERADE"
 ip_tables.anonymous = false
 ip_tables:depends("omasq", true)
 
-if isFileEmpty(file_wireless) then
+if fs.isfile(file_wireless) then
     s:tab('wifisetup', translate('Wireless Settings'),
         translate('Set the router\'s wireless name and password. For more advanced settings, please go to the Network-Wireless page.'))
     o = s:taboption('wifisetup', Value, 'wifi_ssid', translate('<abbr title=\"Extended Service Set Identifier\">ESSID</abbr>'))
@@ -237,7 +233,7 @@ if isFileEmpty(file_wireless) then
     o.password = true
 end
 
-if isFileEmpty(file_network) then
+if fs.isfile(file_network) then
     s:tab("netwrokconf", translate("修改network"), description(file_network))
     local o = s:taboption("netwrokconf", Button, "_network")
     o.inputtitle = translate("重启network")
@@ -262,7 +258,7 @@ if isFileEmpty(file_network) then
     end
 end
 
-if isFileEmpty(file_dhcp) then
+if fs.isfile(file_dhcp) then
     s:tab("dhcpconf", translate("修改DHCP"), description(file_dhcp))
     local o = s:taboption("dhcpconf", Button, "_dhcp")
     o.inputtitle = translate("重启dnsmasq")
@@ -287,7 +283,7 @@ if isFileEmpty(file_dhcp) then
     end
 end
 
-if isFileEmpty(file_firewall) then
+if fs.isfile(file_firewall) then
     s:tab("firewallconf", translate("修改firewall"), description(file_firewall))
     local o = s:taboption("firewallconf", Button, "_firewall")
     o.inputtitle = translate("重启firewall")
@@ -312,7 +308,7 @@ if isFileEmpty(file_firewall) then
     end
 end
 
-if isFileEmpty(hosts) then
+if fs.isfile(hosts) then
     s:tab("hostsconf", translate("hosts"), description(hosts))
     o = s:taboption("hostsconf", Button, "_hosts")
     o.inputtitle = translate("重启dnsmasq")
@@ -338,7 +334,7 @@ if isFileEmpty(hosts) then
     end
 end
 
-if isFileEmpty(file_uhttpd) then
+if fs.isfile(file_uhttpd) then
     s:tab("uhttpdconf", translate("uhttpd服务器"), description(file_uhttpd))
     o = s:taboption("uhttpdconf", Button, "_uhttpd")
     o.inputtitle = translate("重启uhttpd")
@@ -364,7 +360,7 @@ if isFileEmpty(file_uhttpd) then
     end
 end
 
-if isFileEmpty(dnsmasq_conf) then
+if fs.isfile(dnsmasq_conf) then
     s:tab("dnsmasqconf", translate("dnsmasq"), description(dnsmasq_conf))
     o = s:taboption("dnsmasqconf", Button, "_dnsmasq")
     o.inputtitle = translate("重启dnsmasq")
@@ -390,7 +386,7 @@ if isFileEmpty(dnsmasq_conf) then
     end
 end
 
-if isFileEmpty(rc_local) then
+if fs.isfile(rc_local) then
     s:tab("rc_localconf", translate("本地启动脚本"),
         translatef("本页是<code>%s</code>的配置文件内容，编辑后点击<code>保存&应用</code>按钮后生效。<br>启动脚本插入到 'exit 0' 之前即可随系统启动运行。<br>", rc_local))
     conf = s:taboption("rc_localconf", Value, "rc_localconf", nil)
