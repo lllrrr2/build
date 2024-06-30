@@ -319,46 +319,93 @@
     }
 
     function Draggable() {
-        var x, y,
-            m = document.getElementById('md'),
-            t = document.getElementById('td'),
-            S = document.getElementById('Swaleditor'),
-            f = document.querySelector('.swal2-file'),
-            p = document.querySelector('.swal2-popup'),
-            r = document.querySelector('.swal2-range'),
-            i = document.querySelector('.swal2-input'),
-            s = document.querySelector('.swal2-select'),
-            e = document.getElementById('editorContent'),
-            c = document.querySelector('.swal2-checkbox'),
-            a = document.querySelector('[aria-live="assertive"]'),
-            q = [m, t, f, r, i, s, c, e, S].filter(function(f) {
-                return f !== null && f !== undefined;
-            }),
-            g = function(a, t) {
-                return a.some(function(el) { return el.contains(t)});
-            },
-            z = function(k) {
-                var b = k.clientX, c = k.clientY;
-                p.style.position = 'fixed';
-                p.style.top = `${c - y}px`;
-                p.style.left = `${b - x}px`;
-            },
-            u = function() {
-                document.removeEventListener('mouseup', u);
-                document.removeEventListener('mousemove', z);
-            };
+        // 初始化鼠标按下时的坐标
+        var x, y;
 
-        a.addEventListener('mouseover', function(k) {
-            a.style.cursor = g(q, k.target) ? 'auto' : 'move';
-        });
+        // 获取页面上不可直接拖动的元素集合
+        var draggableElements = getDraggableElements();
 
-        p.addEventListener('mousedown', function(k) {
-            if (g(q, k.target)) return;
-            x = k.offsetX; y = k.offsetY;
-            document.addEventListener('mouseup', u);
-            document.addEventListener('mousemove', z);
-            k.preventDefault();
-        });
+        /**
+         * 获取页面上作为边界判定的不可拖动元素集合。
+         * @returns {Array} 包含不可拖动元素的数组。
+         */
+        function getDraggableElements() {
+            // 使用querySelectorAll选取多个可能的元素，然后转换为数组并过滤掉null或undefined的项
+            return Array.from(document.querySelectorAll('#md, #td, .swal2-file, .swal2-range, .swal2-input, .swal2-select, .swal2-checkbox, #editorContent, #Swaleditor'))
+                .filter(function(el) { return el !== null && el !== undefined; });
+        }
+
+        /**
+         * 判断目标元素是否包含在给定的父母元素集合中。
+         * @param {Array} parents 父元素集合。
+         * @param {Element} target 需要检查的目标元素。
+         * @returns {boolean} 如果目标元素被包含则返回true，否则返回false。
+         */
+        function containsAny(parents, target) {
+            return parents.some(function(el) { return el.contains(target); });
+        }
+
+        /**
+         * 处理鼠标移动事件，实时更新弹出框位置。
+         * @param {MouseEvent} event 鼠标事件对象。
+         */
+        function handleMouseMove(event) {
+            // 获取当前鼠标的客户端坐标
+            var clientX = event.clientX, 
+                clientY = event.clientY,
+                popup = document.querySelector('.swal2-popup'); // 获取弹出框元素，并设置其固定定位及实时位置
+            popup.style.position = 'fixed';
+            popup.style.top = `${clientY - y}px`;
+            popup.style.left = `${clientX - x}px`;
+        }
+
+        /**
+         * 鼠标抬起时的处理函数，移除移动和抬起的事件监听。
+         */
+        function handleMouseUp() {
+            // 清理事件，避免内存泄漏
+            document.removeEventListener('mouseup', handleMouseUp);
+            document.removeEventListener('mousemove', handleMouseMove);
+        }
+
+        /**
+         * 鼠标按下的处理函数，初始化拖动过程。
+         * @param {MouseEvent} event 鼠标事件对象。
+         */
+        function handleMouseDown(event) {
+            var target = event.target; // 当前点击的目标元素
+            var popup = document.querySelector('.swal2-popup'); // 弹出框元素
+
+            // 如果点击的是不可拖动的元素，则直接返回不执行拖动逻辑
+            if (containsAny(draggableElements, target)) return;
+
+            // 记录鼠标按下时相对于弹出框的位置
+            x = event.offsetX;
+            y = event.offsetY;
+
+            // 添加鼠标抬起和移动的事件监听器
+            document.addEventListener('mouseup', handleMouseUp);
+            document.addEventListener('mousemove', handleMouseMove);
+
+            // 阻止默认行为，比如文本选中等
+            event.preventDefault();
+        }
+
+        // 修改具有aria-live属性的元素（通常用于辅助阅读）的鼠标样式
+        var assertiveElement = document.querySelector('[aria-live="assertive"]');
+        if (assertiveElement) {
+            assertiveElement.addEventListener('mouseover', function(event) {
+                // 根据鼠标是否位于不可拖动元素上动态改变光标样式
+                var cursorStyle = containsAny(draggableElements, event.target) ? 'auto' : 'move';
+                assertiveElement.style.cursor = cursorStyle;
+            });
+        }
+
+        // 为弹出框元素添加鼠标按下的监听事件
+        var popupElement = document.querySelector('.swal2-popup');
+        if (popupElement) {
+            popupElement.addEventListener('mousedown', handleMouseDown);
+        }
     }
 
     function calculateTotalSize(path) {
@@ -431,9 +478,35 @@
             confirmButtonText: '<%:Save%>', allowOutsideClick: false,
             title: path, width: '900px', inputValue: true, html: isace
                 ? `<label id="readonly" class="swal2-checkbox" style="margin: 0 12px 0 30px;"><input type="checkbox" value="1" checked><span class="swal2-label"><%:Read-only%></span></label><label id="wrap" class="swal2-checkbox" style="margin: 0;"><input type="checkbox" value="1" checked><span class="swal2-label"><%:wrap%></span></label>
-                    <div id="editorContent" style="height: 450px; width: auto;"></div>`
+                <div id="editorContainer" style="position: relative; height: 450px;">
+                    <div id="editorContent" style="height: 100%;"></div>
+                    <button id="FullScreen" class="btn cbi-button cbi-button-apply" style="position: absolute; cursor: pointer; top: 0px; right: 18px; z-index: 1;">全屏</button>
+                    <button id="CloseScreen" class="btn cbi-button cbi-button-apply" style="position: absolute; cursor: pointer; top: 0px; right: 18px; z-index: 1; display: none;">恢复</button>
+                </div>`
                 : `<label id="readonly" class="swal2-checkbox" style="margin: 0 12px 0 30px;"><input type="checkbox" value="1" checked><span class="swal2-label"><%:Read-only%></span></label><textarea id="Swaleditor" style="height: 450px; width: 100%; background-color: black; color: white; font-size: 14px"></textarea>`, cancelButtonText: '<%:Dismiss%>',
             didOpen: function() {
+                function toggleFullscreen() {
+                    var editorContainer = document.getElementById('editorContainer'),
+                        FullScreen = document.getElementById('FullScreen'),
+                        CloseScreen = document.getElementById('CloseScreen'),
+                        ace_content = document.querySelector('.ace_content'),
+                        swalActions = document.querySelector('.swal2-actions'),
+                        isFullscreen = editorContainer.classList.toggle('fullScreen');
+
+                        if (isFullscreen) {
+                            editorContainer.style.cssText = 'height: 100%; position: fixed; left: 0; right: 0; bottom: 0; z-index: 1; overflow: hidden;';
+                            CloseScreen.style.display = 'block';
+                            FullScreen.style.display = 'none';
+                            swalActions.style.display = 'none';
+                        } else {
+                            ace_content.style.cssText = 'width: 855px;'
+                            editorContainer.style.cssText = 'position: relative; height: 450px;';
+                            CloseScreen.style.display = 'none';
+                            FullScreen.style.display = 'block';
+                            swalActions.style.display = 'flex';
+                        }
+                }
+
                 var ch2 = document.getElementById('wrap'),
                     ch1 = document.getElementById('readonly'),
                     cfm = document.querySelector('.swal2-confirm'),
@@ -475,13 +548,12 @@
                         else if (content.trim().match(/^#!\/.*(ba)?sh/)) mode = 'sh';
                     }
 
+                    editor.getSession().setValue(content);
                     editor.setOptions({
                         printMarginColumn: -1, showPrintMargin: true, readOnly: true,
                         fontSize: "15px", fontFamily: "Consolas, monospace", wrap: true,
                         mode: 'ace/mode/' + mode, theme: "ace/theme/" + (Theme || 'monokai')
                     });
-
-                    editor.setValue(content, 1);
                     editor.focus();
 
                     var con = document.createElement('div'),
@@ -521,6 +593,9 @@
                             h2e.style.display = 'block';
                         }
                     });
+
+                    document.getElementById('FullScreen').addEventListener('click', toggleFullscreen);
+                    document.getElementById('CloseScreen').addEventListener('click', toggleFullscreen);
                 } else {
                     document.getElementById('Swaleditor').innerHTML = content;
                     document.querySelector('.swal2-label').innerHTML = '<%:Save%>'
