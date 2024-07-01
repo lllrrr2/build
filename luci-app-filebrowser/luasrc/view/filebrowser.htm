@@ -49,6 +49,19 @@
         background-size: contain; /* 背景图自适应 */
     }
 
+    .screen_button {
+        top: 0; /* 位于父元素顶部 */
+        right: 0; /* 右侧距离0 */
+        line-height: 22px; /* 设置行高为22像素 */
+        z-index: 99; /* 层级99，处于最顶层 */
+        position: absolute; /* 绝对定位 */
+        cursor: pointer; /* 设置鼠标光标为文本光标 */
+        color: #666; /* 文字颜色为深灰色 */
+        background-color: #ddd; /* 背景颜色为浅灰色 */
+        border-radius: 0px 0px 0px 5px; /* 边框圆角设置，左下角为5像素 */
+        padding: 4px 6px 0 4px; /* 上内边距4px，右内边距6px，下内边距0，左内边距4px */
+    }
+
     .file-icon:before {
         background-image: url(/luci-static/resources/fb/file-icon.png);
     }
@@ -475,15 +488,26 @@
         var isace = typeof ace === 'object';
         Swal.fire({
             ...swalConfig, showConfirmButton: false, padding: '2px',
-            confirmButtonText: '<%:Save%>', allowOutsideClick: false,
-            title: path, width: '900px', inputValue: true, html: isace
-                ? `<label id="readonly" class="swal2-checkbox" style="margin: 0 12px 0 30px;"><input type="checkbox" value="1" checked><span class="swal2-label"><%:Read-only%></span></label><label id="wrap" class="swal2-checkbox" style="margin: 0;"><input type="checkbox" value="1" checked><span class="swal2-label"><%:wrap%></span></label>
-                <div id="editorContainer" style="position: relative; height: 450px;">
-                    <div id="editorContent" style="height: 100%;"></div>
-                    <button id="FullScreen" class="btn cbi-button cbi-button-apply" style="position: absolute; cursor: pointer; top: 0px; right: 18px; z-index: 1;">全屏</button>
-                    <button id="CloseScreen" class="btn cbi-button cbi-button-apply" style="position: absolute; cursor: pointer; top: 0px; right: 18px; z-index: 1; display: none;">恢复</button>
-                </div>`
-                : `<label id="readonly" class="swal2-checkbox" style="margin: 0 12px 0 30px;"><input type="checkbox" value="1" checked><span class="swal2-label"><%:Read-only%></span></label><textarea id="Swaleditor" style="height: 450px; width: 100%; background-color: black; color: white; font-size: 14px"></textarea>`, cancelButtonText: '<%:Dismiss%>',
+            confirmButtonText: '<%:Save%>', allowOutsideClick: false, width: '900px',
+            title: path, inputValue: true, cancelButtonText: '<%:Dismiss%>', html: isace
+                ?  `<label id="readonly" class="swal2-checkbox" style="margin: 0 12px 0 30px;">
+                        <input type="checkbox" value="1" checked>
+                        <span class="swal2-label"><%:Read-only%></span>
+                    </label>
+                    <label id="wrap" class="swal2-checkbox" style="margin: 0;">
+                        <input type="checkbox" value="1" checked>
+                        <span class="swal2-label"><%:wrap%></span>
+                    </label>
+                    <div id="editorContainer" style="position: relative; height: 450px;">
+                        <div id="editorContent" style="height: 100%;"></div>
+                        <button id="FullScreen" class="screen_button">拉伸</button>
+                        <button id="CloseScreen" class="screen_button" style="display: none;">恢复</button>
+                    </div>`
+                :  `<label id="readonly" class="swal2-checkbox" style="margin: 0 12px 0 30px;">
+                        <input type="checkbox" value="1" checked>
+                        <span class="swal2-label"><%:Read-only%></span>
+                    </label>
+                    <textarea id="Swaleditor" style="height: 450px; width: 100%; background-color: black; color: white; font-size: 16px"></textarea>`,
             didOpen: function() {
                 function toggleFullscreen() {
                     var editorContainer = document.getElementById('editorContainer'),
@@ -499,7 +523,6 @@
                             FullScreen.style.display = 'none';
                             swalActions.style.display = 'none';
                         } else {
-                            ace_content.style.cssText = 'width: 855px;'
                             editorContainer.style.cssText = 'position: relative; height: 450px;';
                             CloseScreen.style.display = 'none';
                             FullScreen.style.display = 'block';
@@ -551,7 +574,7 @@
                     editor.getSession().setValue(content);
                     editor.setOptions({
                         printMarginColumn: -1, showPrintMargin: true, readOnly: true,
-                        fontSize: "15px", fontFamily: "Consolas, monospace", wrap: true,
+                        fontSize: "16px", fontFamily: "Consolas, monospace", wrap: true,
                         mode: 'ace/mode/' + mode, theme: "ace/theme/" + (Theme || 'monokai')
                     });
                     editor.focus();
