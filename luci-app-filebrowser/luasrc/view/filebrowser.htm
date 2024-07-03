@@ -52,14 +52,18 @@
     .screen_button {
         top: 0; /* 位于父元素顶部 */
         right: 0; /* 右侧距离0 */
-        line-height: 22px; /* 设置行高为22像素 */
         z-index: 99; /* 层级99，处于最顶层 */
+        line-height: 22px; /* 设置行高为22像素 */
         position: absolute; /* 绝对定位 */
         cursor: pointer; /* 设置鼠标光标为文本光标 */
         color: #666; /* 文字颜色为深灰色 */
         background-color: #ddd; /* 背景颜色为浅灰色 */
         border-radius: 0px 0px 0px 5px; /* 边框圆角设置，左下角为5像素 */
         padding: 4px 6px 0 4px; /* 上内边距4px，右内边距6px，下内边距0，左内边距4px */
+    }
+
+    .screen_button:hover {
+        background-color: #faf8f8;
     }
 
     .file-icon:before {
@@ -72,19 +76,6 @@
 
     .link-icon:before {
         background-image: url(/luci-static/resources/fb/link-icon.png);
-    }
-
-    .custom-menu {
-        margin: 0;
-        padding: 5px 0;
-        position: fixed;
-        font-size: 15px;
-        border-radius: 5px;
-        z-index: 1 !important;
-        border: 1px solid #dadada;
-        background-color: #f5f5f5;
-        font-family: Arial, sans-serif;
-        box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.1);
     }
 
     .menu-item {
@@ -326,99 +317,41 @@
             text-align: left; font-family: Consolas; background-color: #212121;
         `;
 
-        alertMask.onclick = function (event) {
-            event.target === alertMask && body.removeChild(alertMask);
+        alertMask.onclick = function (e) {
+            e.target === alertMask && body.removeChild(alertMask);
         };
     }
 
     function Draggable() {
-        // 初始化鼠标按下时的坐标
-        var x, y;
+        var x, y,
+            p = document.querySelector('[aria-live="assertive"]');
 
-        // 获取页面上不可直接拖动的元素集合
-        var draggableElements = getDraggableElements();
-
-        /**
-         * 获取页面上作为边界判定的不可拖动元素集合。
-         * @returns {Array} 包含不可拖动元素的数组。
-         */
-        function getDraggableElements() {
-            // 使用querySelectorAll选取多个可能的元素，然后转换为数组并过滤掉null或undefined的项
-            return Array.from(document.querySelectorAll('#md, #td, .swal2-file, .swal2-range, .swal2-input, .swal2-select, .swal2-checkbox, #editorContent, #Swaleditor'))
-                .filter(function(el) { return el !== null && el !== undefined; });
+        function handleMouseMove(e) {
+            var b = e.clientX,
+                c = e.clientY;
+            p.style.position = 'fixed';
+            p.style.top = `${c - y}px`;
+            p.style.left = `${b - x}px`;
         }
 
-        /**
-         * 判断目标元素是否包含在给定的父母元素集合中。
-         * @param {Array} parents 父元素集合。
-         * @param {Element} target 需要检查的目标元素。
-         * @returns {boolean} 如果目标元素被包含则返回true，否则返回false。
-         */
-        function containsAny(parents, target) {
-            return parents.some(function(el) { return el.contains(target); });
-        }
-
-        /**
-         * 处理鼠标移动事件，实时更新弹出框位置。
-         * @param {MouseEvent} event 鼠标事件对象。
-         */
-        function handleMouseMove(event) {
-            // 获取当前鼠标的客户端坐标
-            var clientX = event.clientX, 
-                clientY = event.clientY,
-                popup = document.querySelector('.swal2-popup'); // 获取弹出框元素，并设置其固定定位及实时位置
-            popup.style.position = 'fixed';
-            popup.style.top = `${clientY - y}px`;
-            popup.style.left = `${clientX - x}px`;
-        }
-
-        /**
-         * 鼠标抬起时的处理函数，移除移动和抬起的事件监听。
-         */
         function handleMouseUp() {
-            // 清理事件，避免内存泄漏
             document.removeEventListener('mouseup', handleMouseUp);
             document.removeEventListener('mousemove', handleMouseMove);
         }
 
-        /**
-         * 鼠标按下的处理函数，初始化拖动过程。
-         * @param {MouseEvent} event 鼠标事件对象。
-         */
-        function handleMouseDown(event) {
-            var target = event.target; // 当前点击的目标元素
-            var popup = document.querySelector('.swal2-popup'); // 弹出框元素
+        document.addEventListener('mouseover', function(e) {
+            p.style.cursor = (e.target === p) ? 'move' : 'auto';
+            p.title = (e.target === p) ? '<%:Window can be dragged%>' : '';
+        });
 
-            // 如果点击的是不可拖动的元素，则直接返回不执行拖动逻辑
-            if (containsAny(draggableElements, target)) return;
-
-            // 记录鼠标按下时相对于弹出框的位置
-            x = event.offsetX;
-            y = event.offsetY;
-
-            // 添加鼠标抬起和移动的事件监听器
+        p.addEventListener('mousedown', function(e) {
+            if (e.target !== p) return;
+            x = e.offsetX;
+            y = e.offsetY;
             document.addEventListener('mouseup', handleMouseUp);
             document.addEventListener('mousemove', handleMouseMove);
-
-            // 阻止默认行为，比如文本选中等
-            event.preventDefault();
-        }
-
-        // 修改具有aria-live属性的元素（通常用于辅助阅读）的鼠标样式
-        var assertiveElement = document.querySelector('[aria-live="assertive"]');
-        if (assertiveElement) {
-            assertiveElement.addEventListener('mouseover', function(event) {
-                // 根据鼠标是否位于不可拖动元素上动态改变光标样式
-                var cursorStyle = containsAny(draggableElements, event.target) ? 'auto' : 'move';
-                assertiveElement.style.cursor = cursorStyle;
-            });
-        }
-
-        // 为弹出框元素添加鼠标按下的监听事件
-        var popupElement = document.querySelector('.swal2-popup');
-        if (popupElement) {
-            popupElement.addEventListener('mousedown', handleMouseDown);
-        }
+            e.preventDefault();
+        });
     }
 
     function calculateTotalSize(path) {
@@ -440,18 +373,18 @@
     }
 
     function sendRequest(url, params, method = 'GET') {
-        var isGetParams = !(params && params.constructor && params.constructor.name === 'FormData');
-        var urlWithParams = isGetParams ? url + '?' + params.toString() : url;
-            return new Promise(function (resolve, reject) {
-                var xhr = new XMLHttpRequest();
-                xhr.open(method, urlWithParams, true);
-                xhr.onload = function () {
-                    (xhr.readyState === 4 && xhr.status === 200)
-                        ? resolve(JSON.parse(xhr.responseText))
-                        : reject(new Error(xhr.statusText));
-                };
-                xhr.send(isGetParams ? null : params);
-            });
+        return new Promise(function(resolve, reject) {
+            var xhr = new XMLHttpRequest(),
+                urlWithParams = url + (method === 'GET' && params ? '?' + params.toString() : '');
+            xhr.open(method, urlWithParams);
+            xhr.onload = function() {
+                return xhr.status === 200 ? resolve(JSON.parse(xhr.responseText)) : reject(new Error(xhr.statusText));
+            };
+            xhr.onerror = function() {
+                reject(new Error('Network error'));
+            };
+            xhr.send(method === 'GET' ? null : params);
+        });
     }
 
     function godirectory(filePath = '') {
@@ -500,8 +433,8 @@
                     </label>
                     <div id="editorContainer" style="position: relative; height: 450px;">
                         <div id="editorContent" style="height: 100%;"></div>
-                        <button id="FullScreen" class="screen_button">拉伸</button>
-                        <button id="CloseScreen" class="screen_button" style="display: none;">恢复</button>
+                        <button id="fullscreen" class="screen_button">拉伸</button>
+                        <button id="closescreen" class="screen_button" style="display: none;">恢复</button>
                     </div>`
                 :  `<label id="readonly" class="swal2-checkbox" style="margin: 0 12px 0 30px;">
                         <input type="checkbox" value="1" checked>
@@ -510,22 +443,22 @@
                     <textarea id="Swaleditor" style="height: 450px; width: 100%; background-color: black; color: white; font-size: 16px"></textarea>`,
             didOpen: function() {
                 function toggleFullscreen() {
-                    var editorContainer = document.getElementById('editorContainer'),
-                        FullScreen = document.getElementById('FullScreen'),
-                        CloseScreen = document.getElementById('CloseScreen'),
+                    var fullscreen = document.getElementById('fullscreen'),
+                        closescreen = document.getElementById('closescreen'),
                         ace_content = document.querySelector('.ace_content'),
                         swalActions = document.querySelector('.swal2-actions'),
+                        editorContainer = document.getElementById('editorContainer'),
                         isFullscreen = editorContainer.classList.toggle('fullScreen');
 
                         if (isFullscreen) {
                             editorContainer.style.cssText = 'height: 100%; position: fixed; left: 0; right: 0; bottom: 0; z-index: 1; overflow: hidden;';
-                            CloseScreen.style.display = 'block';
-                            FullScreen.style.display = 'none';
+                            closescreen.style.display = 'block';
+                            fullscreen.style.display = 'none';
                             swalActions.style.display = 'none';
                         } else {
                             editorContainer.style.cssText = 'position: relative; height: 450px;';
-                            CloseScreen.style.display = 'none';
-                            FullScreen.style.display = 'block';
+                            closescreen.style.display = 'none';
+                            fullscreen.style.display = 'block';
                             swalActions.style.display = 'flex';
                         }
                 }
@@ -549,11 +482,10 @@
                                 lbl = document.createElement('label'),
                                 sel = document.createElement('select');
 
-                            lbl.textContent = isMobileDevice ? '' : txt;
-                            lbl.setAttribute('for', id);
+                            lbl.textContent = txt;
                             lbl.className = 'cbi-value-title';
-                            sel.setAttribute('id', id);
-                            sel.setAttribute('style', 'width: 70px; margin-left: 10px;');
+                            sel.id = id;
+                            sel.style.cssText = 'width: 70px; margin-left: 10px;';
                             opts.forEach(function(o) { sel.appendChild(new Option(o[1], o[0])) });
                             sel.value = defVal;
                             sel.addEventListener('change', function() {
@@ -611,14 +543,14 @@
                     });
 
                     sca.addEventListener(endEvent, function(e) {
-                        if (!isMobileDevice || !['md', 'td', 'readonly'].includes(e.target.id)) {
+                        if (!isMobileDevice || !['md', 'td'].includes(e.target.id)) {
                             sca.style.display = 'none';
                             h2e.style.display = 'block';
                         }
                     });
 
-                    document.getElementById('FullScreen').addEventListener('click', toggleFullscreen);
-                    document.getElementById('CloseScreen').addEventListener('click', toggleFullscreen);
+                    document.getElementById('fullscreen').addEventListener('click', toggleFullscreen);
+                    document.getElementById('closescreen').addEventListener('click', toggleFullscreen);
                 } else {
                     document.getElementById('Swaleditor').innerHTML = content;
                     document.querySelector('.swal2-label').innerHTML = '<%:Save%>'
@@ -1096,7 +1028,7 @@
                 ...(currentPath.split('/').length > 2 ? [{ label: "<%:Back to previous%>", action: function() { update_list(currentPath.replace(/\/[^/]*\/?$/, '/')); } }] : [])
             ];
         customMenu = document.createElement('ul');
-        customMenu.className = 'custom-menu';
+        customMenu.style.cssText = 'margin: 0; padding: 5px 0; position: fixed; font-size: 15px; border-radius: 5px; z-index: 1 !important; border: 1px solid #dadada; background-color: #f5f5f5; font-family: Arial, sans-serif; box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.1);';
         menuItems.forEach(function (item) {
             var menuItemElem = Object.assign(document.createElement('div'), { className: 'menu-item', innerText: item.label });
             menuItemElem.addEventListener('click', item.action);
