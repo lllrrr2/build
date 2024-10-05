@@ -162,7 +162,7 @@
         background: #ff0000 !important;
     }
 
-    @media screen and (max-width: 480px) {
+    @media screen and (max-device-width: 600px) {
         .cbi-titles {
             width: 20px; /* 设置一个固定宽度，根据需求调整 */
             overflow: hidden; /* 控制溢出隐藏 */
@@ -202,11 +202,10 @@
 // console.log(Object.keys(Swal));
 (function () {
     let currentPath, customMenu = null;
-    var listElem = document.getElementById("file-list"),
+    var formData = new FormData(),
+        listElem = document.getElementById("file-list"),
         pathElem = document.getElementById("current-path"),
-        isAndroid = /Android/.test(navigator.userAgent),
-        isMobileWebkit = /AppleWebKit/.test(navigator.userAgent) && /Mobile\/\w+/.test(navigator.userAgent),
-        isMobileDevice = isAndroid || isMobileWebkit || /webOS|BlackBerry|Opera Mini|Opera Mobi|IEMobile/i.test(navigator.userAgent),
+        isMobileDevice = /Android|iPhone|iPod|iPad|BlackBerry|Mobile|MQQBrowser|JUC|Fennec|wOSBrowser|WebOS|Symbian|Windows Phone|HarmonyOS|HyperOS/i.test(navigator.userAgent),
         swalConfig = {
             showCancelButton: true, cancelButtonText: '<%:Cancel%>', confirmButtonText: '<%:Confirm%>'
         };
@@ -477,17 +476,16 @@
                         editor = ace.edit('editorContent'),
                         ace_md = [["textile","text"],["sh","Shell"],["lua","Lua"],["html","HTML"],["javascript","JavaScript"],["css","CSS"],["python","Python"],["php","PHP"],["json","JSON"],["xml","XML"],["yaml","YAML"],["sql","SQL"],["makefile","Makefile"],["markdown","markdown"],["ini","ini"],["diff","patch(diff)"]],
                         ace_td = [["ambiance","Ambiance"],["chaos","Chaos"],["chrome","Chrome"],["cloud9_day","Cloud9 Day"],["cloud9_night","Cloud9 Night"],["cloud9_night_low_color","Cloud9 Night Low Color"],["clouds","Clouds"],["clouds_midnight","Clouds Midnight"],["cobalt","Cobalt"],["crimson_editor","Crimson Editor"],["dawn","Dawn"],["dracula","Dracula"],["dreamweaver","Dreamweaver"],["eclipse","Eclipse"],["github","GitHub"],["github_dark","GitHub Dark"],["gob","Gob"],["gruvbox","Gruvbox"],["gruvbox_dark_hard","Gruvbox Dark Hard"],["gruvbox_light_hard","Gruvbox Light Hard"],["idle_fingers","Idle Fingers"],["iplastic","IPlastic"],["katzenmilch","Katzenmilch"],["kr_theme","KR Theme"],["kuroir","Kuroir"],["merbivore","Merbivore"],["merbivore_soft","Merbivore Soft"],["mono_industrial","Mono Industrial"],["monokai","Monokai"],["nord_dark","Nord Dark"],["one_dark","One Dark"],["pastel_on_dark","Pastel on Dark"],["solarized_dark","Solarized Dark"],["solarized_light","Solarized Light"],["sqlserver","SQL Server"],["terminal","Terminal"],["textmate","TextMate"],["tomorrow","Tomorrow"],["tomorrow_night","Tomorrow Night"],["tomorrow_night_blue","Tomorrow Night Blue"],["tomorrow_night_bright","Tomorrow Night Bright"],["tomorrow_night_eighties","Tomorrow Night Eighties"],["twilight","Twilight"],["vibrant_ink","Vibrant Ink"],["xcode","Xcode"]],
-                        createDropdown = function(opts, id, defVal, txt) {
+                        createDropdown = function(id, opts, value, txt) {
                             var cnt = document.createElement('div'),
                                 lbl = document.createElement('label'),
                                 sel = document.createElement('select');
 
-                            lbl.textContent = txt;
-                            lbl.className = 'cbi-value-title';
                             sel.id = id;
-                            sel.style.cssText = 'width: 70px; margin-left: 10px;';
-                            opts.forEach(function(o) { sel.appendChild(new Option(o[1], o[0])) });
-                            sel.value = defVal;
+                            sel.style.cssText = 'width: 70px; margin-left: 6px;';
+                            opts.forEach(function([v, t]) { sel.appendChild(new Option(t, v)) });
+                            sel.value = value;
+                            lbl.textContent = txt;
                             sel.addEventListener('change', function() {
                                 id === 'td'
                                     ? editor.setTheme("ace/theme/" + sel.value)
@@ -515,8 +513,8 @@
                         h2e = document.querySelector('.swal2-title'),
                         em = editor.getOptions().mode.split('/').pop(),
                         et = editor.getOptions().theme.split('/').pop(),
-                        md = createDropdown(ace_md, 'md', em, "<%:Type%>"),
-                        td = createDropdown(ace_td, 'td', et, "<%:Theme%>"),
+                        md = createDropdown('md', ace_md, em, "<%:Type%>"),
+                        td = createDropdown('td', ace_td, et, "<%:Theme%>"),
                         tn = document.querySelector('[aria-labelledby="swal2-title"]');
 
                     con.append(td, md);
@@ -524,8 +522,7 @@
                     md.style.cssText = 'margin-left: 15px;';
                     con.style.cssText = 'display: none; justify-content: center; align-items: center; height: 36px;';
                     tn.insertAdjacentElement('afterbegin', con);
-                    var sca = document.getElementById('con'),
-                        endEvent = isMobileDevice ? 'touchend' : 'mouseleave',
+                    var endEvent = isMobileDevice ? 'touchend' : 'mouseleave',
                         startEvent = isMobileDevice ? 'touchstart' : 'mouseenter';
 
                     ch1.addEventListener('change', function(e) {
@@ -538,13 +535,13 @@
                     });
 
                     h2e.addEventListener(startEvent, function() {
-                        sca.style.display = 'flex';
+                        con.style.display = 'flex';
                         h2e.style.display = 'none';
                     });
 
-                    sca.addEventListener(endEvent, function(e) {
+                    con.addEventListener(endEvent, function(e) {
                         if (!isMobileDevice || !['md', 'td'].includes(e.target.id)) {
-                            sca.style.display = 'none';
+                            con.style.display = 'none';
                             h2e.style.display = 'block';
                         }
                     });
@@ -571,7 +568,6 @@
                 didOpen: function() { Draggable(); }
             }).then(function(confirmResult) {
                 if (!confirmResult.isConfirmed) return;
-                var formData = new FormData();
                 formData.append('path', path);
                 formData.append('content', result.value);
                 sendRequest('<%=url("admin/system/handleDocument")%>', formData, 'POST')
@@ -822,7 +818,6 @@
             } else executeOrder();
 
             function executeOrder() {
-                var formData = new FormData();
                 formData.append('data', data);
                 formData.append('newfile', newfile);
                 formData.append('permissions', permissions);
@@ -865,12 +860,11 @@
             didOpen: function() { Draggable(); }
         }).then(function (result) {
             if (!result.isConfirmed) return;
-            var file = result.value,
-                data = new FormData();
-            data.append('file', file);
-            data.append('filename', file.name);
-            data.append('filedir', concatPath(currentPath));
-            sendRequest('<%=url("admin/system/uploadfile")%>', data, 'POST').then(function (res) {
+            var file = result.value;
+            formData.append('file', file);
+            formData.append('filename', file.name);
+            formData.append('filedir', concatPath(currentPath));
+            sendRequest('<%=url("admin/system/uploadfile")%>', formData, 'POST').then(function (res) {
                 if (res.stat) {
                    update_list(res.filedir, undefined, true);
                    swalNotification(`${colorMessage(res.filename, 'blue')} <%:File has been uploaded to%> ${colorMessage(res.filedir, 'blue')}`, 'success');
