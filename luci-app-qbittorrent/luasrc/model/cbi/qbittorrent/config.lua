@@ -54,13 +54,15 @@ e:value("en", translate("English"))
 e.default = "zh_CN"
 
 local e = t:taboption("basic", Value, "Username", translate("Username"),
-    translate("The login name for WebUI."))
+    translate("The login name for WebUI,Default admin."))
+e.default = "admin"
 e.placeholder = "admin"
 
 local p = t:taboption("basic", Value, "password", translate("Password"),
-    translate("The login password for WebUI."))
+    translate("The login password for WebUI,Default adminadmin."))
 p.password = true
 p.rmempty = false
+p.default = "adminadmin"
 p.placeholder = "adminadmin"
 p.template = "qbittorrent/qb_password"
 local oldpassword = con.password

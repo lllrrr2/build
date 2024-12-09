@@ -14,6 +14,9 @@ msgstr "运行中"
 msgid "NOT RUNNING"
 msgstr "未运行"
 
+msgid "Global settings"
+msgstr "全局设置"
+
 msgid "Downloads Settings"
 msgstr "下载设置"
 
@@ -74,14 +77,14 @@ msgstr "WebUI的连接端口。"
 msgid "Username"
 msgstr "用户名"
 
-msgid "The login name for WebUI."
-msgstr "WebUI的登录名"
+msgid "The login name for WebUI,Default admin."
+msgstr "WebUI的登录名，默认admin。"
 
 msgid "Password"
 msgstr "密码"
 
-msgid "The login password for WebUI."
-msgstr "WebUI的登陆密码"
+msgid "The login password for WebUI,Default adminadmin."
+msgstr "WebUI的登录密码，默认adminadmin。"
 
 msgid "The Suffix of the Profile Root Path"
 msgstr "配置文件根路径的后缀"
