@@ -330,7 +330,7 @@ function examineJavaScript() {
     var content = getContent().content;
     if (!content) return;
     editor1.session.setMode("ace/mode/javascript");
-    loadScripts("https://cdn.bootcdn.net/ajax/libs/jshint/2.13.6/jshint.js")
+    loadScripts("https://cdnjs.cloudflare.com/ajax/libs/jshint/2.13.6/jshint.js")
         .then(function() {
             var output = JSHINT(content, { asi: true, esversion: 8 });
             if (output) showSuccessMessage("语法通过");
@@ -402,7 +402,7 @@ function formatLua(a) {
 function jsonFormat(a) {
     var content = getContent().content;
     if (!content) return;
-    loadScripts(["/luci-static/tinynote/vkbeautify.js", "https://cdn.bootcdn.net/ajax/libs/jsonlint/1.6.0/jsonlint.min.js"])
+    loadScripts(["/luci-static/tinynote/vkbeautify.js", "https://cdnjs.cloudflare.com/ajax/libs/jsonlint/1.6.0/jsonlint.min.js"])
         .then(function() {
             editor1.session.setMode("ace/mode/json");
             try {
@@ -469,7 +469,7 @@ function FormatHTML(a) {
 function FormatYAML(a) {
     var content = getContent().content;
     if (!content) return;
-    loadScripts(["/luci-static/tinynote/vkbeautify.js", "https://cdn.bootcdn.net/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"])
+    loadScripts(["/luci-static/tinynote/vkbeautify.js", "https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"])
         .then(function() {
             try {
                 editor1.session.setMode("ace/mode/yaml");
@@ -499,7 +499,7 @@ function FormatYAML(a) {
 function yamlToxml() {
     var content = getContent().content;
     if (!content) return;
-    loadScripts(["/luci-static/tinynote/ObjTree.min.js", "/luci-static/tinynote/vkbeautify.js", "https://cdn.bootcdn.net/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"])
+    loadScripts(["/luci-static/tinynote/ObjTree.min.js", "/luci-static/tinynote/vkbeautify.js", "https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"])
         .then(function () {
             var xmlData = (new XML.ObjTree).writeXML(jsyaml.load(content));
             xmlData = xmlData.substr(0, 39) + "<root>" + xmlData.substr(39) + "</root>";
