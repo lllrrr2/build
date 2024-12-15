@@ -36,7 +36,7 @@ s.addremove = true -- 添加
 -- s.extedit  =  true -- 修改
 -- s.sortable  =  true -- 移动
 
-enable = s:option(Flag, "enable", translate("enable"))
+enable = s:option(Flag, "enable", translate("Enable"))
 enable.rmempty = false
 enable.default = 0
 enable.width = '10%'
