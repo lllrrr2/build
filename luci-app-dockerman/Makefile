@@ -8,7 +8,7 @@ LUCI_DEPENDS:=@(aarch64||arm||x86_64) \
 	+docker \
 	+dockerd \
 	+ttyd
-PKG_NAME:=luci-app-dockerman
+LUCI_PKGARCH:=all
 
 PKG_LICENSE:=AGPL-3.0
 PKG_MAINTAINER:=lisaac <lisaac.cn@gmail.com> \
