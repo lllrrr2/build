@@ -1,4 +1,3 @@
-local fs  = require "luci.fs"
 local sys = require "luci.sys"
 local uci = require "luci.model.uci".cursor()
 local wizard = uci:get_all("wizard", "default")

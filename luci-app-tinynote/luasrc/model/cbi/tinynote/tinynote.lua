@@ -1,6 +1,7 @@
-local fs   = require 'luci.fs'
+local fs   = require "nixio.fs"
 local util = require 'luci.util'
 local uci  = require 'luci.model.uci'.cursor()
+local nixio = require "nixio"
 
 if not uci:get('luci', 'tinynote') then
     uci:set('luci', 'tinynote', 'tinynote')
@@ -410,7 +411,7 @@ local code_aceenable = con.aceenable or nil
 local note_suffix = con.note_suffix or "txt"
 local note_path   = con.note_path   or "/etc/tinynote"
 
-if not fs.isfile(note_path) then
+if nixio.fs.lstat(note_path, "type") ~= 'dir' then
     fs.mkdir(note_path)
 end
 
@@ -420,7 +421,7 @@ for sum_str = 1, note_sum do
     local file = "%s/note%s.%s" % {note_path, sum, note_suffix}
     note_arg[#note_arg + 1] = file
 
-    if not fs.isfile(file) then
+    if nixio.fs.lstat(file, "type") ~= "reg" then
         new_write_file(file, note_suffix)
     end
 
@@ -500,10 +501,10 @@ for sum_str = 1, note_sum do
     end
 end
 
-for file_name in nixio.fs.dir(note_path) do
+for file_name in fs.dir(note_path) do
     local file_path = "%s/%s" % {note_path, file_name}
     if not util.contains(note_arg, file_path) then
-        nixio.fs.remover(file_path)
+        fs.remover(file_path)
     end
 end
 
