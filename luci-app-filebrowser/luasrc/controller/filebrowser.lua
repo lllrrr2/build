@@ -154,27 +154,23 @@ function file_tools()
         http.prepare_content("application/json")
         http.write_json({ data = stat, stat = stat and true or false })
     else
-        stat = isdirectory(path) and util.exec('rm -rf "%s"' %{path}) or fs.remover(path)
+        stat = util.exec('rm -rf "%s"' %{path})
         list_response(fs.dirname(path), stat)
     end
 end
 
-function mkdir(path, recursive)
-    return recursive and fs.mkdirr(path) or fs.mkdir(path)
-end
-
 function createnewfile()
-    local perms = http.formvalue("perms")
-    local data, path = http.formvalue("data"), http.formvalue("newfile")
+    local path = http.formvalue("newfile")
+    local perms, data = http.formvalue("perms"), http.formvalue("data")
     if http.formvalue("is_dir") == 'true' then
-        stat = mkdir(path, path:match("/") == nil)
+        stat = util.exec('mkdir -m "%s" -p "%s"' %{perms, path})
     else
-        local file_handle, err = io.open(path, "w")
+        local file_handle = io.open(path, "w")
         file_handle:setvbuf("full", 1024 * 1024)
         stat = file_handle:write(data)
         file_handle:close()
+        fs.chmod(path, perms)
     end
-    fs.chmod(path, perms)
     list_response(fs.dirname(path), stat)
 end
 
@@ -184,7 +180,9 @@ function uploadfile()
     local filename = http.formvalue("filename")
     if filename:match(".*%.(.*)$") == "ipk" then
         filedir = '/tmp/ipkdir/'
-        if not fs.access(filedir) then mkdir(filedir) end
+        if not isdirectory(filedir) then
+            util.exec('mkdir -p "%s"' %{filedir})
+        end
     end
     http.setfilehandler(function(meta, chunk, eof)
         if not fd then
