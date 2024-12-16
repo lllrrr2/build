@@ -109,8 +109,8 @@ msgstr "555 - 所有用户都具有执行权限，但只有文件所有者具有
 msgid "444 - All users have read permissions but no write and execute permissions"
 msgstr "444 - 所有用户都具有读取权限，但没有写入权限和执行权限"
 
-msgid "There are currently ${regularFiles} files,"
-msgstr "当前有 ${regularFiles} 文件，"
+msgid "There are currently ${fileCount} files,"
+msgstr "当前有 ${fileCount} 文件，"
 
 msgid "directory."
 msgstr "个目录。"

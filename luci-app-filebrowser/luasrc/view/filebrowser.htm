@@ -202,8 +202,7 @@
 // console.log(Object.keys(Swal));
 (function () {
     let currentPath, customMenu = null;
-    var formData = new FormData(),
-        listElem = document.getElementById("file-list"),
+    var listElem = document.getElementById("file-list"),
         pathElem = document.getElementById("current-path"),
         isMobileDevice = /Android|iPhone|iPod|iPad|BlackBerry|Mobile|MQQBrowser|JUC|Fennec|wOSBrowser|WebOS|Symbian|Windows Phone|HarmonyOS|HyperOS/i.test(navigator.userAgent),
         swalConfig = {
@@ -568,6 +567,7 @@
                 didOpen: function() { Draggable(); }
             }).then(function(confirmResult) {
                 if (!confirmResult.isConfirmed) return;
+                var formData = new FormData();
                 formData.append('path', path);
                 formData.append('content', result.value);
                 sendRequest('<%=url("admin/system/handleDocument")%>', formData, 'POST')
@@ -756,8 +756,8 @@
             ...swalConfig, title: '<%:Enter name%>：',
             html: `
                 <input id="newname" class="swal2-input" style="margin: 10px 25px; width: auto; height: 35px;" placeholder="<%:For example: example.txt%>" type="text" title="<%:You can enter a file name or directory name%>"><br><br>
-                <input id="createdirectory" class="swal2-checkbox" type="checkbox">
-                <label for="createdirectory"><b><%:Create as directory%></b></label><br>
+                <input id="is_dir" class="swal2-checkbox" type="checkbox">
+                <label for="is_dir"><b><%:Create as directory%></b></label><br>
                 <span id="directorytip" class="hidden" style="font-size: smaller;"><%:If the path is the root directory, add '&' at the first character%></span>
             `, input: 'select', inputValue: '644',
             inputAttributes: { style: 'height: auto; margin: 10px 25px; width: auto; height: 34px; font-size: 14px;' },
@@ -774,38 +774,38 @@
             didOpen: function () { //在弹出框打开后执行的操作。
                 if (filePath) {
                     document.getElementById('newname').value = filePath;
-                    document.getElementById('createdirectory').checked = true;
-                    document.getElementById('createdirectory').dispatchEvent(new Event('change'));
+                    document.getElementById('is_dir').checked = true;
+                    document.getElementById('is_dir').dispatchEvent(new Event('change'));
                 }
                 document.getElementById("newname").focus();
                 Draggable();
             },
             preConfirm: function () { //在用户点击确认按钮之前执行的操作。
                 var newname = document.getElementById('newname').value,
-                    permissions = document.getElementById('swal2-select').value,
-                    createdirectory = document.getElementById('createdirectory').checked;
-                return { newname, createdirectory, permissions };
+                    perms = document.getElementById('swal2-select').value,
+                    is_dir = document.getElementById('is_dir').checked;
+                return { newname, is_dir, perms };
             },
             didRender: function () { //在弹出框渲染完成后执行的操作。
                 var directorytip = document.getElementById('directorytip'),
-                    createdirectory = document.getElementById('createdirectory');
-                if (createdirectory && directorytip) {
-                    createdirectory.addEventListener('change', function () {
-                        directorytip.classList.toggle('hidden', !createdirectory.checked);
+                    is_dir = document.getElementById('is_dir');
+                if (is_dir && directorytip) {
+                    is_dir.addEventListener('change', function () {
+                        directorytip.classList.toggle('hidden', !is_dir.checked);
                     });
                 }
             }
         }).then(function (result) {
             if (!result.isConfirmed) return;
             var data,
-                { newname, createdirectory, permissions } = result.value,
-                newfile = (filePath && !createdirectory)
+                { newname, is_dir, perms } = result.value,
+                newfile = (filePath && !is_dir)
                     ? newname
-                    : (filePath && createdirectory)
+                    : (filePath && is_dir)
                         ? filePath
                         : resolveFilePath(newname);
 
-            if (!createdirectory) {
+            if (!is_dir) {
                 Swal.fire({
                     ...swalConfig, title: '<%:Enter file content%>',
                     inputPlaceholder: '<%:Enter text here%>', input: 'textarea',
@@ -818,13 +818,14 @@
             } else executeOrder();
 
             function executeOrder() {
-                formData.append('data', data);
+                var formData = new FormData();
                 formData.append('newfile', newfile);
-                formData.append('permissions', permissions);
-                formData.append('createdirectory', createdirectory);
+                if (data) formData.append('data', data);
+                formData.append('perms', perms);
+                formData.append('is_dir', is_dir);
                 sendRequest('<%=url("admin/system/createnewfile")%>', formData, 'POST').then(function (res) {
                     if (res.stat) {
-                        createdirectory && update_list(newfile || '');
+                        is_dir && update_list(newfile || '');
                         refresh_list(res.data);
                         swalNotification(`${colorMessage(newfile, 'blue')} <%:File created successfully!%>`, 'success');
                     } else {
@@ -860,7 +861,8 @@
             didOpen: function() { Draggable(); }
         }).then(function (result) {
             if (!result.isConfirmed) return;
-            var file = result.value;
+            var file = result.value,
+                formData = new FormData();
             formData.append('file', file);
             formData.append('filename', file.name);
             formData.append('filedir', concatPath(currentPath));
@@ -946,13 +948,17 @@
     }
 
     function refresh_list(filePath) {
-        let numFolders = filePath.filter(function (line) {return line.startsWith('d');}).length,
-            regularFiles = filePath.filter(function (line) { return /^[^dl]/.test(line) }).length;
+        let folderCount = 0, fileCount = 0, totalSize = 0;
+        if (filePath && filePath.length > 0) {
+            totalSize = calculateTotalSize(filePath),
+            folderCount = filePath.filter(function (line) {return line.startsWith('d');}).length,
+            fileCount = filePath.filter(function (line) { return /^[^dl]/.test(line) }).length;
+        }
         var html = `<table>
             <tr>
                 <td colspan="7" class="center">
                     ${getInitPath() !== '/' ? '<input type="button" class="btn cbi-button cbi-button-apply back-root-icon display-none" style="margin-right: 10px;" value="<%:Go to root directory%>">' : ''}
-                    <b class="display-none"><%:There are currently ${regularFiles} files,%> ${numFolders} <%:directory.%> <%:total file size%>：${calculateTotalSize(filePath)}</b>
+                    <b class="display-none"><%:There are currently ${fileCount} files,%> ${folderCount} <%:directory.%> <%:total file size%>：${totalSize}</b>
                     ${getInitPath() !== '/' ? '<input type="button" class="btn cbi-button cbi-button-apply back-icon" style="margin-left: 10px;" value="<%:Back to previous%>">' : ''}
                 </td>
             </tr>

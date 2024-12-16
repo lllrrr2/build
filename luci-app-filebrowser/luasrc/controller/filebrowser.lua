@@ -1,5 +1,4 @@
-local fs   = require "luci.fs"
-local nfs  = require "nixio.fs"
+local fs   = require "nixio.fs"
 local util = require "luci.util"
 local http = require "luci.http"
 module("luci.controller.filebrowser", package.seeall)
@@ -60,11 +59,24 @@ local MIME_TYPES = {
 }
 
 local stat = false
+
+function isfile(filename)
+    return fs.stat(filename, "type") == "reg"
+end
+
+function isdirectory(dirname)
+    return fs.stat(dirname, "type") == "dir"
+end
+
+function link(src, dest, sym)
+    return sym and fs.symlink(src, dest) or fs.link(src, dest)
+end
+
 function list_response(path, stat)
     http.prepare_content("application/json")
     http.write_json({
         stat = stat and true or false,
-        data = stat and fs.isdirectory(path) and arrangefiles(path) or nil
+        data = stat and isdirectory(path) and arrangefiles(path) or nil
     })
 end
 
@@ -97,7 +109,7 @@ function handleDocument()
     local content = http.formvalue("content")
     http.prepare_content("application/json")
 
-    if not fs.isfile(path) then
+    if not isfile(path) then
         return http.write_json({ success = false, error = luci.i18n.translatef("%s file does not exist", path)})
     end
 
@@ -125,41 +137,45 @@ function file_tools()
     local isHardLink = http.formvalue("isHardLink") ~= 'true'
 
     if dir_path then
-        stat = fs.isdirectory(dir_path)
+        stat = isdirectory(dir_path)
         http.prepare_content("application/json")
         http.write_json({ stat = stat })
     elseif modify then
         stat = fs.chmod(path, modify)
         list_response(fs.dirname(path), stat)
     elseif oldname and newname then
-        stat = nfs.move(oldname, newname)
+        stat = fs.move(oldname, newname)
         list_response(fs.dirname(oldname), stat)
     elseif linkPath and targetPath then
-        stat = fs.link(targetPath, linkPath, isHardLink)
+        stat = link(targetPath, linkPath, isHardLink)
         list_response(fs.dirname(linkPath), stat)
     elseif filepath then
         stat = filepath:match(".*%.(.*)$") == "ipk" and util.exec('opkg --force-depends install "%s"' %{filepath})
         http.prepare_content("application/json")
         http.write_json({ data = stat, stat = stat and true or false })
     else
-        stat = fs.isdirectory(path) and util.exec('rm -rf "%s"' %{path}) or nfs.remover(path)
+        stat = isdirectory(path) and util.exec('rm -rf "%s"' %{path}) or fs.remover(path)
         list_response(fs.dirname(path), stat)
     end
 end
 
+function mkdir(path, recursive)
+    return recursive and fs.mkdirr(path) or fs.mkdir(path)
+end
+
 function createnewfile()
-    local permissions = http.formvalue("permissions")
-    local data, newfile = http.formvalue("data"), http.formvalue("newfile")
-    if http.formvalue("createdirectory") == "true" then
-        stat = fs.mkdir(newfile, newfile:match("/"))
+    local perms = http.formvalue("perms")
+    local data, path = http.formvalue("data"), http.formvalue("newfile")
+    if http.formvalue("is_dir") == 'true' then
+        stat = mkdir(path, path:match("/") == nil)
     else
-        local file_handle = io.open(newfile, "w")
+        local file_handle, err = io.open(path, "w")
         file_handle:setvbuf("full", 1024 * 1024)
         stat = file_handle:write(data)
         file_handle:close()
     end
-    fs.chmod(newfile, permissions)
-    list_response(fs.dirname(newfile), stat)
+    fs.chmod(path, perms)
+    list_response(fs.dirname(path), stat)
 end
 
 function uploadfile()
@@ -168,7 +184,7 @@ function uploadfile()
     local filename = http.formvalue("filename")
     if filename:match(".*%.(.*)$") == "ipk" then
         filedir = '/tmp/ipkdir/'
-        if not fs.access(filedir) then fs.mkdir(filedir) end
+        if not fs.access(filedir) then mkdir(filedir) end
     end
     http.setfilehandler(function(meta, chunk, eof)
         if not fd then
@@ -192,7 +208,7 @@ function uploadfile()
 end
 
 function downloadfile(filepath)
-    local fd, filename, isDir = nil, nil, fs.isdirectory(filepath)
+    local fd, filename, isDir = nil, nil, isdirectory(filepath)
     if isDir then
         fd = io.popen('tar -C "%s" -cz .' %{filepath}, "r")
         filename = fs.basename(filepath) .. ".tar.gz"
