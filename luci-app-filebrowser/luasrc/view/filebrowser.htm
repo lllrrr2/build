@@ -572,15 +572,8 @@
                 formData.append('content', result.value);
                 sendRequest('<%=url("admin/system/handleDocument")%>', formData, 'POST')
                 .then(function(res) {
-                    if (res.success) {
-                        update_list(path.replace(/\/[^/]*\/?$/, '/'), undefined, true)
-                        swalNotification(`${colorMessage(path, 'blue')} <%:Document saved successfully%>`, 'success');
-                    } else {
-                        swalNotification(`${colorMessage(path, 'red')} <%:Failed to save document%> <br> ${colorMessage(res.error, 'red')}`, 'error');
-                    }
-                })
-                .catch(function(error) {
-                    swalNotification(`${colorMessage(path, 'red')} <%:An error occurred while saving the document%>`, 'error');
+                    if (res.success) update_list(path.replace(/\/[^/]*\/?$/, '/'), undefined, true)
+                    swalNotification(`${path} <br> ${colorMessage(res.msg, res.success ? 'blue' : 'red')}`);
                 });
             });
         });
@@ -592,10 +585,7 @@
             .then(function (res) {
                 res.success
                    ? renderDocumentEditor(path, res.data)
-                   : swalNotification(`${colorMessage(path, 'red')} <%:Failed to load document%> <br> ${colorMessage(res.error, 'red')}`, 'error');
-            })
-            .catch(function (error) {
-                swalNotification(`${colorMessage(path, 'red')} <%:An error occurred while loading the document%>`, 'error');
+                   : swalNotification(`${path} <br> ${colorMessage(res.msg, 'red')}`);
             });
     }
 

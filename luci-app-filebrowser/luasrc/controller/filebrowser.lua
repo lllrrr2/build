@@ -59,24 +59,15 @@ local MIME_TYPES = {
 }
 
 local stat = false
-
-function isfile(filename)
-    return fs.stat(filename, "type") == "reg"
+function hvalue(value)
+    return http.formvalue(value) or nil
 end
 
-function isdirectory(dirname)
-    return fs.stat(dirname, "type") == "dir"
-end
-
-function link(src, dest, sym)
-    return sym and fs.symlink(src, dest) or fs.link(src, dest)
-end
-
-function list_response(path, stat)
+function list_response(path, lstat)
     http.prepare_content("application/json")
     http.write_json({
-        stat = stat and true or false,
-        data = stat and isdirectory(path) and arrangefiles(path) or nil
+        stat = lstat,
+        data = lstat and fs.stat(path, 'type') == "dir" and arrangefiles(path) or nil
     })
 end
 
@@ -101,73 +92,70 @@ function arrangefiles(dir)
 end
 
 function file_list()
-    list_response(http.formvalue("path"), true)
+    list_response(hvalue("path"), true)
 end
 
 function handleDocument()
-    local path = http.formvalue("path")
-    local content = http.formvalue("content")
+    local path, content = hvalue("path"), hvalue("content")
     http.prepare_content("application/json")
 
-    if not isfile(path) then
-        return http.write_json({ success = false, error = luci.i18n.translatef("%s file does not exist", path)})
+    if fs.stat(path, "type") ~= "reg" then
+        return http.write_json({ success = false, msg = luci.i18n.translatef("file does not exist")})
     end
 
-    if not not content then
-        local success, code, msg = fs.writefile(path, content:gsub("\r\n?", "\n"))
-        return http.write_json({ success = success, error = not success and msg or nil })
+    if content and path then
+        local stat = fs.writefile(path, content:gsub("\r\n?", "\n")) ~= nil
+        return http.write_json({
+            success = stat,
+            msg = stat and luci.i18n.translatef("Document saved successfully")
+                       or luci.i18n.translatef("Failed to save document")
+        })
     end
 
-    local data, code, msg = fs.readfile(path)
-    if type(data) ~= "string" and #data == 0 and not data then
-        return http.write_json({ success = false, error = luci.i18n.translatef("Unable to read file: %s", msg)})
+    local data = fs.readfile(path)
+    if not data or #data == 0 then
+        return http.write_json({ success = false, msg = luci.i18n.translatef("Failed to load document")})
     end
-    return http.write_json({ data = data, success = true })
+    return http.write_json({ success = true, data = data })
 end
 
 function file_tools()
-    local path       = http.formvalue("path") or nil
-    local newname    = http.formvalue("newname") or nil
-    local oldname    = http.formvalue("oldname") or nil
-    local filepath   = http.formvalue("filepath") or nil
-    local dir_path   = http.formvalue("dir_path") or nil
-    local linkPath   = http.formvalue("linkPath") or nil
-    local targetPath = http.formvalue("targetPath") or nil
-    local modify     = http.formvalue("permissions") or nil
-    local isHardLink = http.formvalue("isHardLink") ~= 'true'
+    local path,     dir_path   = hvalue("path"),     hvalue("dir_path")
+    local newname,  linkPath   = hvalue("newname"),  hvalue("linkPath")
+    local oldname,  targetPath = hvalue("oldname"),  hvalue("targetPath")
+    local filepath, modify     = hvalue("filepath"), hvalue("permissions")
 
     if dir_path then
-        stat = isdirectory(dir_path)
+        stat = fs.stat(dir_path, "type") == "dir"
         http.prepare_content("application/json")
         http.write_json({ stat = stat })
     elseif modify then
         stat = fs.chmod(path, modify)
         list_response(fs.dirname(path), stat)
-    elseif oldname and newname then
+    elseif newname and oldname then
         stat = fs.move(oldname, newname)
         list_response(fs.dirname(oldname), stat)
-    elseif linkPath and targetPath then
-        stat = link(targetPath, linkPath, isHardLink)
+    elseif linkPath then
+        stat = hvalue("isHardLink") == 'true' and fs.link(targetPath, linkPath) or fs.symlink(targetPath, linkPath)
         list_response(fs.dirname(linkPath), stat)
     elseif filepath then
         stat = filepath:match(".*%.(.*)$") == "ipk" and util.exec('opkg --force-depends install "%s"' %{filepath})
         http.prepare_content("application/json")
-        http.write_json({ data = stat, stat = stat and true or false })
+        http.write_json({ data = stat, stat = stat ~= nil })
     else
-        stat = util.exec('rm -rf "%s"' %{path})
+        stat = util.exec('rm -rf "%s"' %{path}) ~= nil
         list_response(fs.dirname(path), stat)
     end
 end
 
 function createnewfile()
-    local path = http.formvalue("newfile")
-    local perms, data = http.formvalue("perms"), http.formvalue("data")
-    if http.formvalue("is_dir") == 'true' then
-        stat = util.exec('mkdir -m "%s" -p "%s"' %{perms, path})
+    local path, perms = hvalue("newfile"), hvalue("perms")
+    if hvalue("is_dir") == 'true' then
+        stat = util.exec('mkdir -m "%s" -p "%s"' %{perms, path}) ~= nil
     else
         local file_handle = io.open(path, "w")
         file_handle:setvbuf("full", 1024 * 1024)
-        stat = file_handle:write(data)
+        stat = file_handle:write(hvalue("data"))
         file_handle:close()
         fs.chmod(path, perms)
     end
@@ -175,12 +163,10 @@ function createnewfile()
 end
 
 function uploadfile()
-    local fd
-    local filedir = http.formvalue("filedir")
-    local filename = http.formvalue("filename")
+    local fd, filedir, filename = nil, hvalue("filedir"), hvalue("filename")
     if filename:match(".*%.(.*)$") == "ipk" then
         filedir = '/tmp/ipkdir/'
-        if not isdirectory(filedir) then
+        if fs.stat(filedir, "type") ~= "dir" then
             util.exec('mkdir -p "%s"' %{filedir})
         end
     end
@@ -206,7 +192,7 @@ function uploadfile()
 end
 
 function downloadfile(filepath)
-    local fd, filename, isDir = nil, nil, isdirectory(filepath)
+    local fd, filename, isDir = nil, nil, fs.stat(filepath, "type") == "dir"
     if isDir then
         fd = io.popen('tar -C "%s" -cz .' %{filepath}, "r")
         filename = fs.basename(filepath) .. ".tar.gz"
@@ -230,10 +216,8 @@ function to_mime(filename, download)
 end
 
 function dpfile()
-    local path = http.formvalue("path")
-    local linkfile = http.formvalue("linkfile")
-    local filename = http.formvalue("filename")
-    local download = http.formvalue("download")
+    local path, linkfile = hvalue("path"), hvalue("linkfile")
+    local filename, download = hvalue("filename"), hvalue("download")
     local filepath = ((linkfile == "1") and "" or path) .. filename
     local mime = to_mime(filename, download)
     http.prepare_content(mime)
@@ -241,8 +225,8 @@ function dpfile()
         downloadfile(filepath)
     else
         http.header('Content-Disposition', 'inline; filename="%s"' %{filename})
-        local stat = luci.ltn12.pump.all(luci.ltn12.source.file(io.open(filepath, "r")), http.write)
-        if not stat then
+        local lstat = luci.ltn12.pump.all(luci.ltn12.source.file(io.open(filepath, "r")), http.write)
+        if not lstat then
             http.write(luci.i18n.translatef("Unable to open file: %s", filepath))
         end
     end
