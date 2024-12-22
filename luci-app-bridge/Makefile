@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-bridge
-PKG_VERSION=v0.1.1
+PKG_VERSION=0.1.1
 PKG_RELEASE:=23
 
 LUCI_TITLE:=Luci for support bridge

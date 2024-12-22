@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 LUCI_TITLE:=LuCI support for cow B ping by wulishui
 LUCI_DEPENDS:=
 LUCI_PKGARCH:=all
-PKG_VERSION:=v1.7
+PKG_VERSION:=1.7
 PKG_RELEASE:=20230131
 
 include $(TOPDIR)/feeds/luci/luci.mk
