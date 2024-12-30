@@ -28,54 +28,58 @@
 
 	XHR.poll(interval, '<%=luci.dispatcher.build_url("admin/services/docker/container_stats")%>/<%=self.container_id%>', { status: 1 },
 		function (x, info) {
-			var e;
+			var cpuElement = document.getElementById('cbi-table-cpu-value');
+			if (cpuElement && info.cpu_percent) {
+				cpuElement.innerHTML = progressbar(
+					info.cpu_percent, 100, (info.cpu_percent ? info.cpu_percent : 0));
+			}
 
-			if (e = document.getElementById('cbi-table-cpu-value'))
-				e.innerHTML = progressbar(
-					(info.cpu_percent), 100, (info.cpu_percent ? info.cpu_percent : 0));
-			if (e = document.getElementById('cbi-table-memory-value'))
-				e.innerHTML = progressbar(
+			var memoryElement = document.getElementById('cbi-table-memory-value');
+			if (memoryElement && info.memory) {
+				memoryElement.innerHTML = progressbar(
 					niceBytes(info.memory.mem_useage),
 					niceBytes(info.memory.mem_limit),
 					((100 / (info.memory.mem_limit ? info.memory.mem_limit : 100)) * (info.memory.mem_useage ? info.memory.mem_useage : 0))
 				);
-
-			for (var eth in info.bw_rxtx) {
-				if (!document.getElementById("cbi-table-speed_" + eth + "-value")) {
-					let tab = document.getElementById("cbi-table-cpu").parentNode
-					let div = document.getElementById('cbi-table-cpu').cloneNode(true);
-					div.id = "cbi-table-speed_" + eth;
-					div.children[0].innerHTML = "<%:Upload/Download%>: " + eth
-					div.children[1].id = "cbi-table-speed_" + eth + "-value"
-					tab.appendChild(div)
-				}
-				if (!document.getElementById("cbi-table-network_" + eth + "-value")) {
-					let tab = document.getElementById("cbi-table-cpu").parentNode
-					let div = document.getElementById('cbi-table-cpu').cloneNode(true);
-					div.id = "cbi-table-network_" + eth;
-					div.children[0].innerHTML = "<%:TX/RX%>: " + eth
-					div.children[1].id = "cbi-table-network_" + eth + "-value"
-					tab.appendChild(div)
-				}
-				e = document.getElementById("cbi-table-network_" + eth + "-value")
-				e.innerHTML = progressbar(
-					'￪'+niceBytes(info.bw_rxtx[eth].bw_tx),
-					'￬'+niceBytes(info.bw_rxtx[eth].bw_rx),
-					null,
-					true, " "
-				);
-				e = document.getElementById("cbi-table-speed_" + eth + "-value")
-				if (! last_bw_tx) last_bw_tx = info.bw_rxtx[eth].bw_tx
-				if (! last_bw_rx) last_bw_rx = info.bw_rxtx[eth].bw_rx
-				e.innerHTML = progressbar(
-					'￪'+niceBytes((info.bw_rxtx[eth].bw_tx - last_bw_tx)/interval)+'/s',
-					'￬'+niceBytes((info.bw_rxtx[eth].bw_rx - last_bw_rx)/interval)+'/s',
-					null,
-					true, " "
-				);
-				last_bw_tx = info.bw_rxtx[eth].bw_tx
-				last_bw_rx = info.bw_rxtx[eth].bw_rx
 			}
+			for (let eth in info.bw_rxtx) {
+				if (!document.getElementById(`cbi-table-speed_${eth}-value`)) {
+					const tab = document.getElementById("cbi-table-cpu").parentNode;
+					const div = document.getElementById('cbi-table-cpu').cloneNode(true);
+					div.id = `cbi-table-speed_${eth}`;
+					div.children[0].innerHTML = `<%:Upload/Download%>: ${eth}`;
+					div.children[1].id = `cbi-table-speed_${eth}-value`;
+					tab.appendChild(div);
+				}
 
+				if (!document.getElementById(`cbi-table-network_${eth}-value`)) {
+					const tab = document.getElementById("cbi-table-cpu").parentNode;
+					const div = document.getElementById('cbi-table-cpu').cloneNode(true);
+					div.id = `cbi-table-network_${eth}`;
+					div.children[0].innerHTML = `<%:TX/RX%>: ${eth}`;
+					div.children[1].id = `cbi-table-network_${eth}-value`;
+					tab.appendChild(div);
+				}
+
+				let e = document.getElementById(`cbi-table-network_${eth}-value`);
+				e.innerHTML = progressbar(
+					`￪${niceBytes(info.bw_rxtx[eth].bw_tx)}`,
+					`￬${niceBytes(info.bw_rxtx[eth].bw_rx)}`,
+					null, true, " "
+				);
+
+				e = document.getElementById(`cbi-table-speed_${eth}-value`);
+				if (last_bw_tx === undefined) last_bw_tx = info.bw_rxtx[eth].bw_tx;
+				if (last_bw_rx === undefined) last_bw_rx = info.bw_rxtx[eth].bw_rx;
+
+				e.innerHTML = progressbar(
+					`￪${niceBytes((info.bw_rxtx[eth].bw_tx - last_bw_tx) / interval)}/s`,
+					`￬${niceBytes((info.bw_rxtx[eth].bw_rx - last_bw_rx) / interval)}/s`,
+					null, true, " "
+				);
+
+				last_bw_tx = info.bw_rxtx[eth].bw_tx;
+				last_bw_rx = info.bw_rxtx[eth].bw_rx;
+			}
 		});
 //]]></script>

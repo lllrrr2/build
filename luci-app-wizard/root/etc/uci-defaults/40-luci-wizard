@@ -7,10 +7,9 @@ uci -q batch <<-EOF >/dev/null
     commit ucitrack
 EOF
 
-[ ! -f /etc/config/bk_dhcp     -a -s /etc/config/dhcp     ] && cp /etc/config/dhcp     /etc/config/bk_dhcp
-[ ! -f /etc/config/bk_network  -a -s /etc/config/network  ] && cp /etc/config/network  /etc/config/bk_network
-[ ! -f /etc/config/bk_firewall -a -s /etc/config/firewall ] && cp /etc/config/firewall /etc/config/bk_firewall
-[ ! -f /etc/config/bk_wireless -a -s /etc/config/wireless ] && cp /etc/config/wireless /etc/config/bk_wireless
+for file in dhcp network firewall wireless; do
+    [ ! -f /etc/config/bk_$file -a -s /etc/config/$file ] && cp /etc/config/$file /etc/config/bk_$file
+done
 
 rm -f /tmp/luci-*
 

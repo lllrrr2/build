@@ -5,7 +5,11 @@
 <h3><%:Events%></h3>
 <% end %>
 <div id="content_syslog">
-<textarea readonly="readonly" wrap="off" rows="<%=self.syslog:cmatch('\n')+2%>" id="syslog"><%=self.syslog:pcdata()%></textarea>
+<%
+local rows = self.syslog:cmatch('\n')
+if rows == 0 then rows=25 end
+%>
+<textarea readonly="readonly" wrap="off" rows="<%=rows+2%>" id="syslog"><%=self.syslog:pcdata()%></textarea>
 </div>
 <% if self.title == "Events" then %>
 </div>

@@ -10,17 +10,14 @@ end
 
 local function new_write_file(path, note_suffix, value)
     local note_suffix_array = {
-        sh  = "#!/usr/bin/env sh\n" ..
-              ". /lib/functions.sh\n" ..
-              ". /lib/functions/service.sh\n",
+        sh  = "#!/bin/sh /etc/rc.common\n",
         py  = "#!/usr/bin/env python\n" ..
               "import os\n" ..
               "import re\n" ..
               "import sys\n" ..
               "import time\n",
         lua = "#!/usr/bin/env lua\n" ..
-              "local lfs  = require 'luci.fs'\n" ..
-              "local nfs  = require 'nixio.fs'\n" ..
+              "local fs   = require 'nixio.fs'\n" ..
               "local sys  = require 'luci.sys'\n" ..
               "local util = require 'luci.util'\n" ..
               "local uci  = require 'luci.model.uci'.cursor()\n",

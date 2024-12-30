@@ -2,6 +2,28 @@ local sys = require "luci.sys"
 local uci = require "luci.model.uci".cursor()
 local wizard = uci:get_all("wizard", "default")
 
+if wizard.wan_proto == nil then
+    local network_lan = uci:get_all("network", "lan")
+    local network_wan = uci:get_all("network", "wan")
+    uci:set('wizard', 'default', 'ipv6', network_wan.ipv6)
+    uci:set('wizard', 'default', 'lan_dns', network_wan.dns)
+    uci:set('wizard', 'default', 'wan_proto', network_wan.proto)
+    uci:set('wizard', 'default', 'pppoe_user', network_wan.username)
+    uci:set('wizard', 'default', 'pppoe_pass', network_wan.password)
+    uci:set('wizard', 'default', 'lan_ipaddr', network_lan.ipaddr)
+    uci:set('wizard', 'default', 'lan_netmask', network_lan.netmask)
+    uci:set('wizard', 'default', 'lan_gateway', network_lan.gateway)
+    uci:set_list('wizard', 'default', 'lan_dns', uci:get_list("network", "lan", 'dns'))
+    if uci:get("dhcp", "lan", 'ignore') then
+        uci:set('wizard', 'default', 'dhcp', '0')
+    else
+        uci:delete('wizard', 'default', 'dhcp')
+    end
+    uci:commit('wizard')
+    luci.http.redirect(luci.dispatcher.build_url("admin/system/wizard"))
+    return
+end
+
 local ip_mac = {}
 sys.net.ipv4_hints(
     function(ip, name)
@@ -22,7 +44,7 @@ s.anonymous = true
 wan_proto = s:option(ListValue, 'wan_proto', translate('Protocol'))
 wan_proto:value('pppoe', translate('PPPoE'))
 wan_proto:value('dhcp', translate('DHCP client'))
-wan_proto:value('siderouter', translate('Siderouter'))
+-- wan_proto:value('siderouter', translate('Siderouter'))
 -- wan_proto:value('static', translate('Static address'))
 
 pppoe_user = s:option(Value, 'pppoe_user', translate('PAP/CHAP username'))
@@ -92,7 +114,8 @@ ipaddr.datatype="ip4addr"
 ipaddr.anonymous = false
 ipaddr:depends('enable_siderouter', true)
 
-lan_gateway = s:option(Value, 'lan_gateway', translate('IPv4 gateway'), translate('这里输入主路由IP地址<b><font color="red"> 必须填写</font></b>'))
+lan_gateway = s:option(Value, 'lan_gateway', translate('IPv4 gateway'),
+    translate('这里输入主路由IP地址<b><font color="red"> 必须填写</font></b>'))
 lan_gateway:depends('enable_siderouter', true)
 lan_gateway.datatype = 'ip4addr'
 lan_gateway.rmempty = true
@@ -119,7 +142,7 @@ dns:value("218.30.118.6", translate("DNS派：218.30.118.6"))
 dns:value("180.76.76.76", translate("百度DNS：180.76.76.76"))
 dns:value("114.114.114.114", translate("114DNS：114.114.114.114"))
 dns:value("114.114.115.115", translate("114DNS：114.114.115.115"))
-dns.default = "223.5.5.5"
+dns.default = ""
 dns.anonymous = false
 dns.datatype = "ip4addr"
 -- dns.cast = "string"
@@ -197,5 +220,9 @@ ip_tables = s:option(DynamicList, "ip_tables", translate(" "))
 ip_tables.default = "iptables -t nat -I POSTROUTING -o eth0 -j MASQUERADE"
 ip_tables.anonymous = false
 ip_tables:depends("omasq", true)
+
+-- if luci.http.formvalue("cbi.apply") then
+--     sys.exec("/etc/init.d/wizard start &")
+-- end
 
 return m

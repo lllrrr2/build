@@ -1,24 +1,21 @@
 #!/bin/sh /etc/rc.common
 
 START=99
-enable=$(uci_get ddnsto ddnsto enable)
-threads=$(uci_get ddnsto ddnsto threads)
-routerId=$(uci_get ddnsto ddnsto routerId)
-username=$(uci_get ddnsto ddnsto username)
-log_level=$(uci_get ddnsto ddnsto log_level)
 
-if [ "$threads" == "0" ]; then
-    threads=$(grep 'processor' /proc/cpuinfo | wc -l)
-fi
+enable=$(uci_get ddnsto ddnsto enable 0)
+log_level=$(uci_get ddnsto ddnsto log_level)
+routerId=$(uci_get ddnsto ddnsto routerId '')
+username=$(uci_get ddnsto ddnsto username '')
+threads=$(uci_get ddnsto ddnsto threads $(grep -c 'processor' /proc/cpuinfo))
 
 start() {
-    [ x$enable = x1 ] || return 0
+    [ "$enable" -eq 0 ] && return 0
     [ -z $username ] && {
         logger -t ddnsto "username值为空"
         return 1
     }
     idx=${routerId:+"-x $routerId"}
-    /usr/bin/ddnsto -u $username -c $threads -l $log_level $idx -d >/dev/null 2>&1 && \
+    /usr/bin/ddnsto $idx -u $username -c $threads -l $log_level -d -F >/dev/null 2>&1 && \
         logger -t ddnsto "启动 ddnsto 服务"
 }
 
@@ -30,7 +27,7 @@ stop() {
 }
 
 boot() {
-    [ x$enable = x1 ] || return 0
+    [ "$enable" -eq 0 ] && return 0
     logger -t ddnsto "延时 $delay_start 秒启动 ddnsto"
     sleep $(uci_get ddnsto ddnsto start_delay)
     start
