@@ -1,18 +1,16 @@
 local sys = require "luci.sys"
 local uci = require "luci.model.uci".cursor()
 local wizard = uci:get_all("wizard", "default")
+local network = uci:get_all("network")
 
-if wizard.wan_proto == nil then
-    local network_lan = uci:get_all("network", "lan")
-    local network_wan = uci:get_all("network", "wan")
-    uci:set('wizard', 'default', 'ipv6', network_wan.ipv6)
-    uci:set('wizard', 'default', 'lan_dns', network_wan.dns)
-    uci:set('wizard', 'default', 'wan_proto', network_wan.proto)
-    uci:set('wizard', 'default', 'pppoe_user', network_wan.username)
-    uci:set('wizard', 'default', 'pppoe_pass', network_wan.password)
-    uci:set('wizard', 'default', 'lan_ipaddr', network_lan.ipaddr)
-    uci:set('wizard', 'default', 'lan_netmask', network_lan.netmask)
-    uci:set('wizard', 'default', 'lan_gateway', network_lan.gateway)
+if not wizard.wan_proto then
+    uci:set('wizard', 'default', 'ipv6', network.wan.ipv6)
+    uci:set('wizard', 'default', 'wan_proto', network.wan.proto)
+    uci:set('wizard', 'default', 'pppoe_user', network.wan.username)
+    uci:set('wizard', 'default', 'pppoe_pass', network.wan.password)
+    uci:set('wizard', 'default', 'lan_ipaddr', network.lan.ipaddr)
+    uci:set('wizard', 'default', 'lan_netmask', network.lan.netmask)
+    uci:set('wizard', 'default', 'lan_gateway', network.lan.gateway)
     uci:set_list('wizard', 'default', 'lan_dns', uci:get_list("network", "lan", 'dns'))
     if uci:get("dhcp", "lan", 'ignore') then
         uci:set('wizard', 'default', 'dhcp', '0')
@@ -21,7 +19,7 @@ if wizard.wan_proto == nil then
     end
     uci:commit('wizard')
     luci.http.redirect(luci.dispatcher.build_url("admin/system/wizard"))
-    return
+    -- return
 end
 
 local ip_mac = {}
@@ -84,22 +82,13 @@ ipv6:depends('wan_proto', 'pppoe')
 siderouter = s:option(Flag, "enable_siderouter", translate("旁路由设置"))
 siderouter:depends('wan_proto', 'siderouter')
 
-local lan_ipaddr = uci:get("network", "lan", "ipaddr") or ""
+local lan_ipaddr = network.lan.ipaddr or ""
 ipaddr = s:option(Value, "lan_ipaddr", translate("IPv4 address"))
 ipaddr:value(lan_ipaddr, translate(lan_ipaddr .. " --当前LAN的IP--"))
 ipaddr.default = lan_ipaddr
 ipaddr.datatype="ip4addr"
 ipaddr.anonymous = false
 ipaddr:depends('enable_siderouter', false)
-
-local sys_hostname = sys.hostname() or ""
-hostname = s:option(Value, "hostname", translate("Hostname"))
-hostname.default = sys_hostname
-hostname:depends('enable_siderouter', true)
-
-if wizard.hostname and wizard.hostname ~= sys_hostname then
-    sys.hostname(wizard.hostname)
-end
 
 ipaddr = s:option(Value, "siderouter_lan_ipaddr", translate("IPv4 address"))
 local descr = {[[设置主路由同网段未冲突的IP地址<font color=red>(即是该路由web访问的IP)</font><br>当前的内网主机列表：<ol>]]}
@@ -113,6 +102,15 @@ ipaddr.default = lan_ipaddr
 ipaddr.datatype="ip4addr"
 ipaddr.anonymous = false
 ipaddr:depends('enable_siderouter', true)
+
+local sys_hostname = sys.hostname() or ""
+hostname = s:option(Value, "hostname", translate("Hostname"))
+hostname.default = sys_hostname
+hostname:depends('enable_siderouter', true)
+
+if wizard.hostname and wizard.hostname ~= sys_hostname then
+    sys.hostname(wizard.hostname)
+end
 
 lan_gateway = s:option(Value, 'lan_gateway', translate('IPv4 gateway'),
     translate('这里输入主路由IP地址<b><font color="red"> 必须填写</font></b>'))
@@ -221,8 +219,12 @@ ip_tables.default = "iptables -t nat -I POSTROUTING -o eth0 -j MASQUERADE"
 ip_tables.anonymous = false
 ip_tables:depends("omasq", true)
 
--- if luci.http.formvalue("cbi.apply") then
---     sys.exec("/etc/init.d/wizard start &")
--- end
+if luci.http.formvalue("cbi.apply") then
+    sys.exec("/etc/init.d/wizard start &")
+end
+
+--if wizard.lan_ipaddr ~= uci:get("network", "lan", "ipaddr") then
+--    m:append(Template("wizard/apply_widget"))
+--end
 
 return m
