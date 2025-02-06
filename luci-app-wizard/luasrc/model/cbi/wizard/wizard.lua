@@ -3,7 +3,7 @@ local uci = require "luci.model.uci".cursor()
 local wizard = uci:get_all("wizard", "default")
 local network = uci:get_all("network")
 
-if not wizard.wan_proto then
+if wizard.wan_proto ~= network.wan.proto then
     uci:set('wizard', 'default', 'ipv6', network.wan.ipv6)
     uci:set('wizard', 'default', 'wan_proto', network.wan.proto)
     uci:set('wizard', 'default', 'pppoe_user', network.wan.username)
