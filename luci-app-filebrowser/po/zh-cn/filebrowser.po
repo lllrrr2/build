@@ -273,3 +273,12 @@ msgstr "换行"
 
 msgid "NAS"
 msgstr "网络存储"
+
+msgid "Scroll to tail"
+msgstr "滚动到尾部"
+
+msgid "Scroll to head"
+msgstr "滚动到顶部"
+
+msgid "Reverse Log Order"
+msgstr "反转日志顺序"
